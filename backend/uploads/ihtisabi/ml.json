@@ -1,0 +1,2462 @@
+[
+  {
+    "Area": "ALATHIYUR",
+    "Unit": "Alathiyur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "ALATHIYUR",
+    "Unit": "Chamravattam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "ALATHIYUR",
+    "Unit": "Chennara",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "ALATHIYUR",
+    "Unit": "Kaimalasheri",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "ALATHIYUR",
+    "Unit": "Kottayi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "ALATHIYUR",
+    "Unit": "Kurumbadi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "ALATHIYUR",
+    "Unit": "Mangalam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "ALATHIYUR",
+    "Unit": "Poyilisheri",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "ALATHIYUR",
+    "Unit": "Purathur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Kolappuram",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Dharmagiri",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Thottasseriyara",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Cherur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Edakkapparamba",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Poonholamadu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Santhivayal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Vk padi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Achanambalam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Muthuvilkund",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Memattupara",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Irumbuchola",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Pukayur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Kunnumpuram",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "A.R.NAGAR",
+    "Unit": "Ar nagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Madathumpuram",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Kokkur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Highway",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Othaloor",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Changaramkulam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Mookkuthala",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Perumukku",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Kolalamba",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Olambakadav",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Pookarathara",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Ayilakkad",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Edappal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Icc edappal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Vattamkulam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "EDAPPAL",
+    "Unit": "Chekannur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "KOTTAKKAL",
+    "Unit": "Chengotur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "KOTTAKKAL",
+    "Unit": "Parangi moochikkal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "KOTTAKKAL",
+    "Unit": "Ponmala",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "KOTTAKKAL",
+    "Unit": "Chapanagadi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "KOTTAKKAL",
+    "Unit": "Kooriyad",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "KOTTAKKAL",
+    "Unit": "Kottakkal town",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "KOTTAKKAL",
+    "Unit": "Parambilangadi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "KOTTAKKAL",
+    "Unit": "Puthuparambu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "KOTTAKKAL",
+    "Unit": "Edarikode",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "KOTTAKKAL",
+    "Unit": "Mammalipadi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "KOTTAKKAL",
+    "Unit": "Klari south",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "MARANCHERY",
+    "Unit": "Eramangalam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "MARANCHERY",
+    "Unit": "Parichakam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "MARANCHERY",
+    "Unit": "Maranchery",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "MARANCHERY",
+    "Unit": "Vadamukku",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "MARANCHERY",
+    "Unit": "Mg road mukkala",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "MARANCHERY",
+    "Unit": "Panambbattu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "MARANCHERY",
+    "Unit": "Kanjiramukku",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "MARANCHERY",
+    "Unit": "Kundu kadavu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "MARANCHERY",
+    "Unit": "Maramuttam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PARAPPUR",
+    "Unit": "Moolapparambu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PARAPPUR",
+    "Unit": "Othukkungal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PARAPPUR",
+    "Unit": "Ganthinagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PARAPPUR",
+    "Unit": "Kuzhippuram",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PARAPPUR",
+    "Unit": "Atteeri",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PARAPPUR",
+    "Unit": "Shanthinagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PARAPPUR",
+    "Unit": "Veenalukkal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PARAPPUR",
+    "Unit": "Parayil",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PARAPPUR",
+    "Unit": "Cholakkundu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PARAPPUR",
+    "Unit": "Parappur south",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PERUMBADAPP",
+    "Unit": "Veliymakodu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PERUMBADAPP",
+    "Unit": "Veliymakodu south",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PERUMBADAPP",
+    "Unit": "Veliymakodu west",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PERUMBADAPP",
+    "Unit": "Palappetti",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PERUMBADAPP",
+    "Unit": "Kappirikkad",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PERUMBADAPP",
+    "Unit": "Ayirur north",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PERUMBADAPP",
+    "Unit": "Ayirur south",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PERUMBADAPP",
+    "Unit": "Kodathur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PERUMBADAPP",
+    "Unit": "Perumpadappu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PERUMBADAPP",
+    "Unit": "Pazhanji",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PONNANI",
+    "Unit": "Puthuponnani",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PONNANI",
+    "Unit": "Ponnani south",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PONNANI",
+    "Unit": "Kollanpadi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PONNANI",
+    "Unit": "Marakkadavu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PONNANI",
+    "Unit": "Ponnani town",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PONNANI",
+    "Unit": "Chanthappadi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PONNANI",
+    "Unit": "Cv junction",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PONNANI",
+    "Unit": "Kk junction",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PONNANI",
+    "Unit": "Theyyangad",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PONNANI",
+    "Unit": "M l a road",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PUTHANATHANI",
+    "Unit": "Kadungathukund",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PUTHANATHANI",
+    "Unit": "Kalpakancheri kallingal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PUTHANATHANI",
+    "Unit": "Kanancheri",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PUTHANATHANI",
+    "Unit": "Kanmanam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PUTHANATHANI",
+    "Unit": "Kattilangadi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PUTHANATHANI",
+    "Unit": "Pattarnadakkavu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PUTHANATHANI",
+    "Unit": "Puthanathani",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PUTHANATHANI",
+    "Unit": "Randathani",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PUTHANATHANI",
+    "Unit": "Thirunavazha",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PUTHANATHANI",
+    "Unit": "Valavannur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "PUTHANATHANI",
+    "Unit": "Varanakkara",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Tanalur town",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Tanalur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Puthntheru",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Moolakkal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Mythri nagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Kundungal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Rahmath nagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Alinchuvadu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Moochikkal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Mangad",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Vllikanhiram",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Shandhi nagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Janatha bazar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Unniyal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANALUR",
+    "Unit": "Ozhur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANUR",
+    "Unit": "Tanur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANUR",
+    "Unit": "Korman beach",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANUR",
+    "Unit": "Block",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANUR",
+    "Unit": "Thwaha beach",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANUR",
+    "Unit": "Harbor",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANUR",
+    "Unit": "Panangattur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANUR",
+    "Unit": "Cheeran kadapuram",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANUR",
+    "Unit": "Aattillam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TANUR",
+    "Unit": "Olappeedika",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "THALAKKAD",
+    "Unit": "Bp angadi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "THALAKKAD",
+    "Unit": "Pulinjodu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "THALAKKAD",
+    "Unit": "North bp angadi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "THALAKKAD",
+    "Unit": "Kattachira",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "THALAKKAD",
+    "Unit": "Kattachira town",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "THALAKKAD",
+    "Unit": "Inthira nagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "THALAKKAD",
+    "Unit": "North pullor",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "THALAKKAD",
+    "Unit": "Pullur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "THALAKKAD",
+    "Unit": "Thekkan kuttoor",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "THALAKKAD",
+    "Unit": "Vengaloor",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Alinchuvadu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Kott",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Muthur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Illathapadam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Chembra",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Tirur town",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Pookkayil",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "South annara",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Thekkumuri",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Pachattiri",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "North annara",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Pariyapuram",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Kanoor",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Vettom",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRUR",
+    "Unit": "Vidyanagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Parappanangadi town",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Parappanangadi beach",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Neduva",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Ullanam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Palam pallippdi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Farooq nagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Kottath",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Chullikkunnu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Cherupara",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Kodinhi east",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Velliyampuram",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Kundoor",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Chullippara",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Venniyur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Karimbil",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Tirurangadi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Chemmad",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "TIRURANGADI",
+    "Unit": "Kariparamb",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Pallikkal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Puthur pallikkal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Devathiyal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Parambil peedika",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Kadapadi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Chathrathodi",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Karuvankallu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Spinning mil",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Paingotur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Palapetty",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Salamath nagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "UNIVERSITY",
+    "Unit": "Paruthikode",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VAILATHUR",
+    "Unit": "Chettiyamkinar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VAILATHUR",
+    "Unit": "Vailathur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VAILATHUR",
+    "Unit": "Thalakkadathur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VAILATHUR",
+    "Unit": "Kuttippala",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VAILATHUR",
+    "Unit": "Parammal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VAILATHUR",
+    "Unit": "Parapputhdam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VAILATHUR",
+    "Unit": "Ponmundam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Edayur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Irimbiliyam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Karekad",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Kazhuthallur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Kolamangalam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Kuttpuram",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Mavandiyur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Mecheriparamba",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Moochikkal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Moonnakkal",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Painkannur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Rahmath Nagr",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VALANCHERY",
+    "Unit": "Valiyakunnu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Saad nagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Pakkadapuraya",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Gandhikunnu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Poocholamadu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Muthuvilkundu",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Cherur",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Parakkanni",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Oorakam",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Salamath nagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Valiyora",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Hira nagar",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "VENGARA",
+    "Unit": "Vengara",
+    "District": "MALAPPURAM WEST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Keezhuparamba",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Keezhuparamba west",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Keezhuparamba north",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Keezhparamba south",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Kuniyil",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Kuniyil south",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Thrikalayur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Valillapuzha",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Kuttooli",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Therattammal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Thekumuri",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Vadakumuri",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Areekode",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "AREEKODE",
+    "Unit": "Kavanoor",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "CHUNGATHARA",
+    "Unit": "Erumamunda",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "CHUNGATHARA",
+    "Unit": "Cheerakkuzhi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "CHUNGATHARA",
+    "Unit": "Pallikkuth",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "CHUNGATHARA",
+    "Unit": "Chungathara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "CHUNGATHARA",
+    "Unit": "Edakkara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "CHUNGATHARA",
+    "Unit": "Mamangara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "CHUNGATHARA",
+    "Unit": "Muthedam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "CHUNGATHARA",
+    "Unit": "Pothukallu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "CHUNGATHARA",
+    "Unit": "Narokavu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "CHUNGATHARA",
+    "Unit": "Palemadu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Edavanna",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Ainthur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Chembkkuth",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Pathppiriyam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Pannippara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Tharikkulam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Elankur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Pathiriyal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Karakkunnu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Pulath",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Oruma",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "EDAVANNA",
+    "Unit": "Othayi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Maliyekkal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Manjapopetti",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Srambikkallu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Anchachavidy",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Puttamanna",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Kalikavu town",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Kalikavu jn",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Udrampoyil",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Kerala",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Mampetta",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Tharish",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Karuvarakundu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Pulvetta",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Puthanazhi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Tuvvur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Madoth",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KARUVARAKKUND",
+    "Unit": "Thekkumpuram",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KONDOTTY",
+    "Unit": "Chirayil chungam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KONDOTTY",
+    "Unit": "Ekkaparamb",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KONDOTTY",
+    "Unit": "Kalambram",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KONDOTTY",
+    "Unit": "Kaloth",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KONDOTTY",
+    "Unit": "Kizhisseri",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KONDOTTY",
+    "Unit": "Kondotty",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KONDOTTY",
+    "Unit": "Kurupath",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KONDOTTY",
+    "Unit": "Musliyrangdadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KONDOTTY",
+    "Unit": "Onnam mile",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KONDOTTY",
+    "Unit": "Muthuvallur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "KONDOTTY",
+    "Unit": "Thavanur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Cholakkal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Chemmankadavu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Pattakadavu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Paithinipparambu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Munduparambu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Civil",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Meelmuri",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Thanikkal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "East kodur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Kalambadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Mangattupulam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Valiyad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "West kodur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Valiyangadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Varikkodu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Hajiyar palli",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Kottappadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Mailappuram",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Ummathur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Kunnmmel",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MALAPPURAM",
+    "Unit": "Panakkad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Vadakkangara centre",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Vadakkangara south",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Vadakkangara west",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Kalavu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Makkaraparampa",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Kadungooth",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Keeramkundu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Koottilangadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Paradi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Parammal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Padinnaramanna",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Munhakulam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Padinhattumuri",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Vallikkapatta",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAKKARAPARAMBA",
+    "Unit": "Mottammal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAMPAD",
+    "Unit": "Kottala",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAMPAD",
+    "Unit": "Panthalingal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAMPAD",
+    "Unit": "Rahmaniya",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAMPAD",
+    "Unit": "Salamath nagar",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAMPAD",
+    "Unit": "Thottintakkara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAMPAD",
+    "Unit": "Pongallur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAMPAD",
+    "Unit": "Mampad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAMPAD",
+    "Unit": "Pallikkunnu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAMPAD",
+    "Unit": "Naduvakkad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAMPAD",
+    "Unit": "Kattumunda",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MAMPAD",
+    "Unit": "Palaparamba",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Manjeri",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Manjeri town",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Cherani",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Pullur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Elayur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Palakkulam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Kohzikkattu kunnu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Mullampara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Vattappara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Pappinippara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Pattarkulam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "twenty two th mile",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Perimbalam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Anakkayam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Irumbuzhi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Panthallur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Amkkad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Thottupoyil",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Vadakkangara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Payyanad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "MANJERI",
+    "Unit": "Kuttippara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "NILAMBUR",
+    "Unit": "Namboorippotty",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "NILAMBUR",
+    "Unit": "Elambilakkode",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "NILAMBUR",
+    "Unit": "Moleppadam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "NILAMBUR",
+    "Unit": "Chandakkunn",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "NILAMBUR",
+    "Unit": "Nilambur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "NILAMBUR",
+    "Unit": "Karulai",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "NILAMBUR",
+    "Unit": "Thondi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "NILAMBUR",
+    "Unit": "Koottampara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "NILAMBUR",
+    "Unit": "Parathammal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "NILAMBUR",
+    "Unit": "Pokkottumpadam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Cheru kulamba",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Kolathur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Kk angadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Ramapuram",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Kuruva",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Kdungapuram",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Paravakkal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Kuruooathal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Moorkkanad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Vengad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Padaparamba",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Ramapuram town",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PADAPPARAMBU",
+    "Unit": "Padaparamba youth",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "Pandikkad town",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "Kodasheri",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "Poolamanna",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "Olippuzha",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "Melatur town",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "Chemmaniyod",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "Irshad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "East pandikkad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "Odompatta",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "Velluvangad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "Cheripparambu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PANDIKKAD",
+    "Unit": "Vadi Rahma edappatta",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Kattupara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Kunnakavu central",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Eravimangalam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Manathumangalam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Pulamathol",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Kunnakavu kanal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Perinthalmanna town",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Perinthalmanna jubli road",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Kunnapalli",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Muthukurssi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Anmangad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Thootha",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Karingallathani",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Puvathani",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Thazhakode",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PERINTHALMANNA",
+    "Unit": "Elakulam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Aroor",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Ayikkarapadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Alungal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Daya nagar",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Kanhiraparamb",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Kolathur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Karipur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Melangadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Neerad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Periyambalam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Pulikkal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "PULIKKAL",
+    "Unit": "Thurakkal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Mullyakurshi south",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Mullyakurshi north",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Pattikkad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Mullyakurshi centre",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Valiya parambu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Railway gate",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Pattikkad 18",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Vengur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Vettathur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Karuvambara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "East pallikkuth",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Kanjirppalli",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Chungam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Chirakkal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Santhapuram north",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "SANTHAPURAM",
+    "Unit": "Nenmini",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Tirurkkad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Tirurkkad town",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Kadanamana",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Mankada",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Koottil",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Verumpulakal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Santhigram",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Cheriyam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Elachola",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Kuzhaparamb",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Mannarb",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Pulikalparamb",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Aripra",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Valambur west",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Oradampalam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Angadippuram",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Chathanallur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Valambur east",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Poppalam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Parachotilpadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "TIRURKAD",
+    "Unit": "Panchayathpadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Morayur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Ozhukur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Arimbra",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Valanchery",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Mongam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Cheruputhur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Trippanachy",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Velluvambram",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Nellikunnu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Athanikkal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Vellur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Pookkottur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Mundithodika",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Melangadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VALLUVAMBRAM",
+    "Unit": "Pallimukku",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Shanthigram",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Oorkkadavu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Mundumuzhi korappat",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Mundumuzhi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Vazhakkad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Vadihuda",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Edavannappara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Olavattur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Elamaram",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Panikkarappuraya",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Vettupara",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Vavur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "VAZHAKKAD",
+    "Unit": "Vilayil parapur",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Thathamparambu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Kuttiyil",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Eriyad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Vaniyambalam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Athanikkal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Koorad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Santhinagar",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Thodikapulam",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Chettiyarammal",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Cherukod",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Karunayappadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Emangad",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Wandoor town",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Karakkaparambu",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Vidyapuram",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Thaliyamkund",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Kakkund",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Asarippadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Khadarpadi",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Chakkala",
+    "District": "MALAPPURAM EAST"
+  },
+  {
+    "Area": "WANDOOR",
+    "Unit": "Kozhipparambu",
+    "District": "MALAPPURAM EAST"
+  }
+]

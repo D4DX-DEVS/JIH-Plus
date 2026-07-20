@@ -1,0 +1,745 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import {
+  ArrowLeft, Search, Edit, Trash2, Eye, Plus, Save, Menu,
+  FileText, Globe, EyeOff, X, Settings, CheckCircle2, ChevronDown, ChevronUp
+} from 'lucide-react';
+import axios from 'axios';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
+import AdminSidebar from '../components/sidebars/AdminSidebar';
+import PageTabs from '../components/reportBuilder/PageTabs';
+import FieldCanvas from '../components/reportBuilder/FieldCanvas';
+import FieldTypeSelector from '../components/reportBuilder/FieldTypeSelector';
+import jihLogo from '../assets/LogoColor.png';
+
+const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
+const TYPE_LABELS = { monthly: 'Monthly', special: 'Special', yearly: 'Yearly' };
+
+let _nextFieldId = 1;
+function nextId() { return _nextFieldId++; }
+function makeNewPage(order = 0) { return { id: nextId(), title: '', description: '', order, fields: [] }; }
+function makeNewField(type) {
+  return {
+    id: nextId(), type, label: '', required: false, placeholder: '', helpText: '',
+    options: ['select', 'dropdown', 'radio', 'checkbox', 'multiselect'].includes(type) ? ['Option 1', 'Option 2'] : [],
+    validation: {}, conditionalLogic: null, rowTitles: type === 'row' ? ['Row 1'] : [], columnTitles: type === 'row' ? ['Col 1'] : [],
+  };
+}
+
+// ─── List View ────────────────────────────────────────────────────────────────
+function ReportListView({ onLogout }) {
+  const navigate = useNavigate();
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [reportForFilter, setReportForFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [adminData, setAdminData] = useState(null);
+
+  useEffect(() => {
+    const d = localStorage.getItem('adminData');
+    if (d) setAdminData(JSON.parse(d));
+  }, []);
+
+  const loadReports = useCallback(async (page = 1) => {
+    setLoading(true); setError('');
+    try {
+      const params = new URLSearchParams({ page, limit: 15 });
+      if (typeFilter) params.append('type', typeFilter);
+      if (reportForFilter) params.append('reportFor', reportForFilter);
+      if (statusFilter === 'active') params.append('isActive', 'true');
+      else if (statusFilter === 'inactive') params.append('isActive', 'false');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/reports?${params}`);
+      if (res.data.success) {
+        setReports(res.data.data || []);
+        setTotalPages(res.data.totalPages || 1);
+        setTotalCount(res.data.totalCount || 0);
+        setCurrentPage(res.data.currentPage || 1);
+      }
+    } catch { setError('Failed to load reports'); }
+    finally { setLoading(false); }
+  }, [typeFilter, reportForFilter, statusFilter]);
+
+  useEffect(() => { setCurrentPage(1); }, [typeFilter, reportForFilter, statusFilter]);
+  useEffect(() => { loadReports(currentPage); }, [loadReports, currentPage]);
+
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/reports/${reportToDelete._id}`, authHeader());
+      setSuccess('Report deleted'); setShowDeleteModal(false); setReportToDelete(null);
+      loadReports(currentPage); setTimeout(() => setSuccess(''), 3000);
+    } catch (err) { setError(err.response?.data?.message || 'Failed to delete'); }
+  };
+
+  const togglePublish = async (report) => {
+    try {
+      const res = await axios.patch(
+        `${import.meta.env.VITE_API_URL}/api/admin/reports/${report._id}/publish`,
+        { isPublished: !report.isPublished }, authHeader()
+      );
+      if (res.data.success) setReports(prev => prev.map(r => r._id === report._id ? { ...r, isPublished: !r.isPublished } : r));
+    } catch { setError('Failed to update publish status'); }
+  };
+
+  const filtered = search ? reports.filter(r => r.title?.toLowerCase().includes(search.toLowerCase())) : reports;
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="bg-white border-b px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
+        <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 hover:text-gray-700 lg:hidden"><Menu size={22} /></button>
+        <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
+        <div className="flex-1 min-w-0"><h1 className="text-lg font-bold text-[#002349] truncate">Reports</h1></div>
+        <button onClick={() => navigate('/create-report')} className="flex items-center gap-1.5 bg-[#002349] text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-[#1a3a5c]">
+          <Plus size={16} /> New Report
+        </button>
+      </div>
+      <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={() => setShowLogoutModal(true)} adminData={adminData} />
+      <div className="flex-1 p-4 max-w-5xl mx-auto w-full">
+        {error && <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>}
+        {success && <div className="mb-3 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">{success}</div>}
+        <div className="bg-white rounded-xl border p-3 mb-4 flex flex-wrap gap-2">
+          <div className="relative flex-1 min-w-40">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm w-full outline-none focus:ring-2 focus:ring-blue-300" />
+          </div>
+          <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none">
+            <option value="">All Types</option>
+            <option value="monthly">Monthly</option>
+            <option value="special">Special</option>
+            <option value="yearly">Yearly</option>
+          </select>
+          <select value={reportForFilter} onChange={e => setReportForFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none">
+            <option value="">All Levels</option>
+            <option value="district">District</option>
+            <option value="area">Area</option>
+            <option value="unit">Unit</option>
+          </select>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div className="bg-white rounded-xl border overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center py-12"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-12 text-gray-400"><FileText size={32} className="mx-auto mb-2" />No reports found</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Title</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Type</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">For</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Fields</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filtered.map(r => (
+                    <tr key={r._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-gray-800">{r.title}</p>
+                        {r.legacy && <span className="text-xs text-orange-500">legacy</span>}
+                        {r.recurringMonthly && <span className="ml-1 text-xs text-blue-500">template</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${r.type === 'monthly' ? 'bg-blue-100 text-blue-700' : r.type === 'special' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {TYPE_LABELS[r.type] || r.type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 capitalize">{r.reportFor}</td>
+                      <td className="px-4 py-3 text-gray-500">{r.legacy ? `${r.pageCount ?? 0}p` : `${r.pageCount ?? 0}p / ${r.fieldCount ?? 0}f`}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col gap-0.5">
+                          <span className={`text-xs ${r.isActive ? 'text-green-600' : 'text-gray-400'}`}>{r.isActive ? 'Active' : 'Inactive'}</span>
+                          <span className={`text-xs ${r.isPublished ? 'text-blue-600' : 'text-gray-400'}`}>{r.isPublished ? 'Published' : 'Draft'}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1 justify-end">
+                          <button onClick={() => navigate(`/view-report/${r._id}`)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded" title="View"><Eye size={15} /></button>
+                          <button onClick={() => navigate(`/edit-report/${r._id}`)} className="p-1.5 text-gray-400 hover:text-green-600 rounded" title="Edit"><Edit size={15} /></button>
+                          <button onClick={() => togglePublish(r)} className="p-1.5 text-gray-400 hover:text-purple-600 rounded" title={r.isPublished ? 'Unpublish' : 'Publish'}>{r.isPublished ? <EyeOff size={15} /> : <Globe size={15} />}</button>
+                          <button onClick={() => { setReportToDelete(r); setShowDeleteModal(true); }} className="p-1.5 text-gray-400 hover:text-red-500 rounded" title="Delete"><Trash2 size={15} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
+            <span>{totalCount} total</span>
+            <div className="flex gap-2">
+              <button disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1 border rounded disabled:opacity-40 hover:bg-gray-50">Prev</button>
+              <span className="px-3 py-1">{currentPage} / {totalPages}</span>
+              <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1 border rounded disabled:opacity-40 hover:bg-gray-50">Next</button>
+            </div>
+          </div>
+        )}
+      </div>
+      <ConfirmationModal isOpen={showDeleteModal} onClose={() => { setShowDeleteModal(false); setReportToDelete(null); }} onConfirm={handleDelete} title="Delete Report" message={`Delete "${reportToDelete?.title}"? This cannot be undone.`} confirmText="Delete" type="danger" />
+      <ConfirmationModal isOpen={showLogoutModal} onClose={() => setShowLogoutModal(false)} onConfirm={() => { setShowLogoutModal(false); onLogout && onLogout(); }} title="Logout" message="Are you sure you want to logout?" confirmText="Logout" type="logout" />
+    </div>
+  );
+}
+
+// ─── Builder View ─────────────────────────────────────────────────────────────
+function ReportBuilderView({ reportId, onLogout }) {
+  const navigate = useNavigate();
+  const isEdit = Boolean(reportId);
+  const [pages, setPages] = useState([makeNewPage(0)]);
+  const [activePage, setActivePage] = useState(0);
+  const [showFieldSelector, setShowFieldSelector] = useState(false);
+  const [reportMeta, setReportMeta] = useState({
+    type: 'monthly', reportFor: 'unit', title: '', description: '',
+    isActive: true, recurringMonthly: false,
+  });
+  const [loading, setLoading] = useState(isEdit);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showConfigPanel, setShowConfigPanel] = useState(false);
+  const [adminData, setAdminData] = useState(null);
+
+  useEffect(() => { const d = localStorage.getItem('adminData'); if (d) setAdminData(JSON.parse(d)); }, []);
+
+  useEffect(() => {
+    if (!isEdit) return;
+    (async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/reports/${reportId}`, authHeader());
+        if (res.data.success) {
+          const r = res.data.data;
+          setReportMeta({
+            type: r.type || 'monthly', reportFor: r.reportFor || 'unit',
+            title: r.title || '', description: r.description || '',
+            isActive: r.isActive !== false, recurringMonthly: r.recurringMonthly || false,
+          });
+          if (r.pages && r.pages.length > 0) {
+            const maxId = Math.max(0, ...r.pages.flatMap(p => [p.id || 0, ...(p.fields || []).map(f => f.id || 0)]));
+            _nextFieldId = maxId + 1;
+            setPages(r.pages);
+          } else if (r.parts && r.parts.length > 0) {
+            const converted = r.parts.map((part, pi) => ({
+              id: nextId(), title: part.partName || `Part ${pi + 1}`, description: '', order: pi,
+              fields: (part.questions || []).map(q => ({
+                id: nextId(), type: q.answerType === 'multiple_choice' ? 'radio' : q.answerType || 'text',
+                label: q.questionText || '', required: q.isRequired || false,
+                placeholder: q.placeholder || '', helpText: '', options: q.options || [],
+                validation: {}, conditionalLogic: null, rowTitles: [], columnTitles: [],
+              }))
+            }));
+            setPages(converted);
+          }
+        }
+      } catch { setError('Failed to load report'); }
+      finally { setLoading(false); }
+    })();
+  }, [reportId, isEdit]);
+
+  const allFields = pages.flatMap(p => p.fields || []);
+
+  const handleAddField = (type) => {
+    const newField = makeNewField(type);
+    setPages(prev => prev.map((p, pi) => pi !== activePage ? p : { ...p, fields: [...(p.fields || []), newField] }));
+  };
+
+  const handleAddPage = () => {
+    setPages(prev => [...prev, makeNewPage(prev.length)]);
+    setActivePage(pages.length);
+  };
+
+  const handleRemovePage = (i) => {
+    if (pages.length <= 1) return;
+    const np = pages.filter((_, pi) => pi !== i);
+    setPages(np);
+    setActivePage(Math.min(activePage, np.length - 1));
+  };
+
+  const handleSave = async () => {
+    if (!reportMeta.title.trim()) { setError('Report title is required'); return; }
+    setSaving(true); setError('');
+    try {
+      const body = { ...reportMeta, pages };
+      const res = isEdit
+        ? await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/reports/${reportId}`, body, authHeader())
+        : await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/reports`, body, authHeader());
+      if (res.data.success) {
+        setSuccess(isEdit ? 'Report updated!' : 'Report created!');
+        setTimeout(() => navigate('/view-reports'), 1200);
+      } else setError(res.data.message || 'Save failed');
+    } catch (err) { setError(err.response?.data?.message || 'Save failed'); }
+    finally { setSaving(false); }
+  };
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-8 h-8 border-2 border-[#002349] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  const Toggle = ({ value, onChange }) => (
+    <button type="button" onClick={() => onChange(!value)}
+      className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${value ? 'bg-[#002349]' : 'bg-gray-300'}`}>
+      <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-5' : ''}`} />
+    </button>
+  );
+
+  const configPanel = (
+    <aside className="w-full lg:w-72 bg-white border-r flex-shrink-0 flex flex-col overflow-y-auto">
+      {/* Mobile header */}
+      <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b bg-gray-50">
+        <span className="text-sm font-semibold text-gray-700">Report Configuration</span>
+        <button onClick={() => setShowConfigPanel(false)} className="text-gray-400 hover:text-gray-700 p-1"><X size={18} /></button>
+      </div>
+
+      <div className="p-4 space-y-6 flex-1">
+        {/* ── Target Users ── */}
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Target Users</p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {[['district', 'District'], ['area', 'Area'], ['unit', 'Unit']].map(([val, lbl]) => (
+              <button key={val} type="button"
+                onClick={() => setReportMeta(m => ({ ...m, reportFor: val }))}
+                className={`py-2.5 rounded-xl text-xs font-semibold border-2 transition-all ${
+                  reportMeta.reportFor === val
+                    ? 'border-[#002349] bg-[#002349] text-white shadow-sm'
+                    : 'border-gray-200 text-gray-600 hover:border-[#002349]/40 bg-white'
+                }`}>{lbl}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Report Type ── */}
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Report Type</p>
+          <div className="space-y-1.5">
+            {[
+              ['monthly', 'Monthly', 'bg-blue-50 border-blue-400 text-blue-700'],
+              ['yearly', 'Yearly', 'bg-amber-50 border-amber-400 text-amber-700'],
+              ['special', 'Special', 'bg-purple-50 border-purple-400 text-purple-700'],
+            ].map(([val, lbl, cls]) => (
+              <button key={val} type="button"
+                onClick={() => setReportMeta(m => ({ ...m, type: val }))}
+                className={`w-full px-3 py-2.5 rounded-xl text-sm font-medium border-2 text-left flex items-center justify-between transition-all ${
+                  reportMeta.type === val ? cls : 'border-gray-200 text-gray-500 bg-gray-50 hover:border-gray-300'
+                }`}>
+                <span>{lbl}</span>
+                {reportMeta.type === val && <CheckCircle2 size={15} />}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Description ── */}
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Description</p>
+          <textarea
+            value={reportMeta.description}
+            onChange={e => setReportMeta(m => ({ ...m, description: e.target.value }))}
+            rows={2}
+            placeholder="Optional description..."
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-300 resize-none"
+          />
+        </div>
+
+        {/* ── Settings ── */}
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Settings</p>
+          <div className="space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <Toggle value={reportMeta.isActive} onChange={v => setReportMeta(m => ({ ...m, isActive: v }))} />
+              <span className="text-sm text-gray-700">Active (visible to users)</span>
+            </label>
+            {reportMeta.type === 'monthly' && (
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Toggle value={reportMeta.recurringMonthly} onChange={v => setReportMeta(m => ({ ...m, recurringMonthly: v }))} />
+                <span className="text-sm text-gray-700">Recurring monthly template</span>
+              </label>
+            )}
+          </div>
+        </div>
+
+        {/* ── Pages ── */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Pages</p>
+            <button type="button" onClick={handleAddPage}
+              className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-0.5">
+              <Plus size={12} /> Add Page
+            </button>
+          </div>
+          <div className="space-y-1">
+            {pages.map((p, pi) => (
+              <div key={pi}
+                onClick={() => { setActivePage(pi); setShowConfigPanel(false); }}
+                className={`flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer text-sm transition-colors ${
+                  pi === activePage
+                    ? 'bg-[#002349] text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}>
+                <span className="truncate flex-1">{p.title || `Page ${pi + 1}`}</span>
+                <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                  <span className={`text-xs ${pi === activePage ? 'text-blue-200' : 'text-gray-400'}`}>
+                    {(p.fields || []).length}f
+                  </span>
+                  {pages.length > 1 && (
+                    <button type="button"
+                      onClick={e => { e.stopPropagation(); handleRemovePage(pi); }}
+                      className={`p-0.5 rounded ${pi === activePage ? 'text-red-300 hover:text-red-100' : 'text-gray-300 hover:text-red-400'}`}>
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+
+  return (
+    <div className="h-screen bg-gray-100 flex flex-col overflow-hidden">
+      {/* ── Header ── */}
+      <header className="bg-white border-b px-3 sm:px-4 py-2.5 flex items-center gap-2 sm:gap-3 z-20 shadow-sm flex-shrink-0">
+        <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 hover:text-gray-700 lg:hidden p-1">
+          <Menu size={20} />
+        </button>
+        <button onClick={() => navigate('/view-reports')} className="text-gray-500 hover:text-gray-800 transition-colors p-1">
+          <ArrowLeft size={20} />
+        </button>
+        <img src={jihLogo} alt="JIH" className="h-7 w-auto hidden sm:block flex-shrink-0" />
+
+        <div className="flex-1 min-w-0 mx-1">
+          <input
+            type="text"
+            value={reportMeta.title}
+            onChange={e => setReportMeta(m => ({ ...m, title: e.target.value }))}
+            placeholder="Enter report title..."
+            className="w-full text-sm sm:text-base font-bold text-[#002349] border-0 border-b-2 border-transparent focus:border-blue-400 outline-none bg-transparent placeholder:text-gray-300"
+          />
+        </div>
+
+        {/* Mobile config toggle */}
+        <button
+          onClick={() => setShowConfigPanel(!showConfigPanel)}
+          className={`lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors flex-shrink-0 ${
+            showConfigPanel ? 'bg-[#002349] text-white border-[#002349]' : 'border-gray-300 text-gray-600 hover:border-gray-400'
+          }`}>
+          <Settings size={13} /> Config
+        </button>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-1.5 bg-[#002349] text-white px-3 sm:px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-[#1a3a5c] disabled:opacity-60 transition-colors flex-shrink-0">
+          <Save size={14} />
+          <span>{saving ? 'Saving...' : isEdit ? 'Update' : 'Save'}</span>
+        </button>
+      </header>
+
+      {/* ── Messages ── */}
+      {error && <div className="px-4 py-2 text-sm bg-red-50 text-red-700 border-b border-red-200 flex-shrink-0">{error}</div>}
+      {success && <div className="px-4 py-2 text-sm bg-green-50 text-green-700 border-b border-green-200 flex-shrink-0">{success}</div>}
+
+      {/* ── Body ── */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Mobile overlay */}
+        {showConfigPanel && (
+          <div className="lg:hidden absolute inset-0 z-30 flex flex-col overflow-y-auto bg-white">
+            {configPanel}
+          </div>
+        )}
+
+        {/* Desktop left panel */}
+        <div className="hidden lg:flex lg:flex-col lg:w-72 overflow-y-auto border-r bg-white flex-shrink-0">
+          {configPanel}
+        </div>
+
+        {/* ── Canvas ── */}
+        <main className="flex-1 flex flex-col overflow-hidden min-w-0 bg-gray-50">
+          {/* Page title bar */}
+          <div className="px-4 pt-3 bg-white border-b flex-shrink-0">
+            <div className="flex items-center gap-2 mb-2 overflow-x-auto">
+              {pages.map((p, pi) => (
+                <button key={pi}
+                  onClick={() => setActivePage(pi)}
+                  className={`flex-shrink-0 px-3 py-1.5 text-sm rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${
+                    pi === activePage
+                      ? 'border-[#002349] text-[#002349] font-semibold bg-blue-50'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}>
+                  {p.title || `Page ${pi + 1}`}
+                  <span className="ml-1 text-xs text-gray-400">({(p.fields || []).length})</span>
+                </button>
+              ))}
+              <button
+                onClick={handleAddPage}
+                className="flex-shrink-0 flex items-center gap-1 px-2 py-1.5 text-xs text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
+                <Plus size={13} /> Page
+              </button>
+            </div>
+          </div>
+
+          <FieldCanvas
+            pages={pages}
+            pageIndex={activePage}
+            allFields={allFields}
+            onPagesChange={setPages}
+            onAddField={() => setShowFieldSelector(true)}
+          />
+        </main>
+      </div>
+
+      <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={() => onLogout && onLogout()} adminData={adminData} />
+      {showFieldSelector && (
+        <FieldTypeSelector
+          onSelect={type => { handleAddField(type); setShowFieldSelector(false); }}
+          onClose={() => setShowFieldSelector(false)}
+        />
+      )}
+    </div>
+  );
+}
+    setPages(prev => prev.map((p, pi) => pi !== activePage ? p : { ...p, fields: [...(p.fields || []), newField] }));
+  };
+  const handleAddPage = () => { setPages(prev => [...prev, makeNewPage(prev.length)]); setActivePage(pages.length); };
+  const handleRemovePage = (i) => { if (pages.length <= 1) return; const np = pages.filter((_, pi) => pi !== i); setPages(np); setActivePage(Math.min(activePage, np.length - 1)); };
+
+  const handleSave = async () => {
+    if (!reportMeta.title.trim()) { setError('Report title is required'); return; }
+    setSaving(true); setError('');
+    try {
+      const body = { ...reportMeta, pages };
+      const res = isEdit
+        ? await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/reports/${reportId}`, body, authHeader())
+        : await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/reports`, body, authHeader());
+      if (res.data.success) { setSuccess(isEdit ? 'Report updated' : 'Report created'); setTimeout(() => navigate('/view-reports'), 1000); }
+      else setError(res.data.message || 'Save failed');
+    } catch (err) { setError(err.response?.data?.message || 'Save failed'); }
+    finally { setSaving(false); }
+  };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>;
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="bg-white border-b px-4 py-3 flex items-center gap-2 sticky top-0 z-10">
+        <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 lg:hidden"><Menu size={22} /></button>
+        <button onClick={() => navigate('/view-reports')} className="text-gray-500 hover:text-gray-700"><ArrowLeft size={20} /></button>
+        <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
+        <div className="flex-1 min-w-0 mx-2">
+          <input
+            type="text"
+            value={reportMeta.title}
+            onChange={e => setReportMeta(m => ({ ...m, title: e.target.value }))}
+            placeholder="Report title..."
+            className="w-full text-sm font-semibold border-0 border-b border-gray-200 focus:border-blue-400 outline-none bg-transparent py-0.5"
+          />
+        </div>
+        <div className="flex gap-1 flex-shrink-0">
+          {['builder', 'settings', 'preview'].map(t => (
+            <button key={t} onClick={() => setActiveTab(t)} className={`px-2.5 py-1.5 text-xs rounded-lg capitalize ${activeTab === t ? 'bg-[#002349] text-white' : 'text-gray-500 hover:bg-gray-100'}`}>{t}</button>
+          ))}
+        </div>
+        <button onClick={handleSave} disabled={saving} className="flex-shrink-0 flex items-center gap-1.5 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-60">
+          <Save size={15} />{saving ? 'Saving...' : 'Save'}
+        </button>
+      </div>
+      <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={() => onLogout && onLogout()} adminData={adminData} />
+      {error && <div className="mx-4 mt-3 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>}
+      {success && <div className="mx-4 mt-3 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">{success}</div>}
+
+      {activeTab === 'settings' && (
+        <div className="flex-1 p-4 max-w-2xl mx-auto w-full space-y-4">
+          <div className="bg-white rounded-xl border p-4 space-y-3">
+            <h2 className="font-semibold text-gray-800">Report Settings</h2>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Description</label>
+              <textarea value={reportMeta.description} onChange={e => setReportMeta(m => ({ ...m, description: e.target.value }))} rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400" placeholder="Optional description" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Type</label>
+                <select value={reportMeta.type} onChange={e => setReportMeta(m => ({ ...m, type: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                  <option value="monthly">Monthly</option>
+                  <option value="special">Special</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Report For</label>
+                <select value={reportMeta.reportFor} onChange={e => setReportMeta(m => ({ ...m, reportFor: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                  <option value="district">District</option>
+                  <option value="area">Area</option>
+                  <option value="unit">Unit</option>
+                </select>
+              </div>
+            </div>
+            {reportMeta.type === 'monthly' && (
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={reportMeta.recurringMonthly} onChange={e => setReportMeta(m => ({ ...m, recurringMonthly: e.target.checked }))} className="rounded" />
+                <span className="text-gray-700">Recurring monthly template</span>
+              </label>
+            )}
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={reportMeta.isActive} onChange={e => setReportMeta(m => ({ ...m, isActive: e.target.checked }))} className="rounded" />
+              <span className="text-gray-700">Active (visible to users)</span>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'builder' && (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="px-4 pt-3">
+            <PageTabs pages={pages} activeIndex={activePage} onSelect={setActivePage} onAdd={handleAddPage} onRemove={handleRemovePage} />
+          </div>
+          <FieldCanvas pages={pages} pageIndex={activePage} allFields={allFields} onPagesChange={setPages} onAddField={() => setShowFieldSelector(true)} />
+        </div>
+      )}
+
+      {activeTab === 'preview' && (
+        <div className="flex-1 p-4 max-w-2xl mx-auto w-full">
+          <div className="bg-white rounded-xl border p-5">
+            <h2 className="text-lg font-bold text-gray-800 mb-1">{reportMeta.title || 'Untitled Report'}</h2>
+            {reportMeta.description && <p className="text-sm text-gray-500 mb-4">{reportMeta.description}</p>}
+            {pages.map((page, pi) => (
+              <div key={pi} className="mb-6">
+                {page.title && <h3 className="font-semibold text-gray-700 mb-1 border-b pb-1">{page.title}</h3>}
+                <div className="space-y-2 mt-2">
+                  {(page.fields || []).map(f => (
+                    <div key={f.id} className="border border-gray-100 rounded-lg p-2">
+                      <p className="text-sm font-medium text-gray-700">{f.label || <em className="text-gray-400">(untitled {f.type})</em>}</p>
+                      <p className="text-xs text-gray-400">Type: {f.type}{f.required ? ' · Required' : ''}</p>
+                    </div>
+                  ))}
+                  {!(page.fields || []).length && <p className="text-sm text-gray-400 italic">No fields on this page</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showFieldSelector && (
+        <FieldTypeSelector onSelect={type => { handleAddField(type); setShowFieldSelector(false); }} onClose={() => setShowFieldSelector(false)} />
+      )}
+    </div>
+  );
+}
+
+// ─── Single View ──────────────────────────────────────────────────────────────
+function ReportSingleView({ reportId, onLogout }) {
+  const navigate = useNavigate();
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [adminData, setAdminData] = useState(null);
+
+  useEffect(() => { const d = localStorage.getItem('adminData'); if (d) setAdminData(JSON.parse(d)); }, []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/reports/${reportId}`, authHeader());
+        if (res.data.success) setReport(res.data.data);
+      } catch { setError('Failed to load report'); }
+      finally { setLoading(false); }
+    })();
+  }, [reportId]);
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>;
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="bg-white border-b px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
+        <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 lg:hidden"><Menu size={22} /></button>
+        <button onClick={() => navigate('/view-reports')} className="text-gray-500 hover:text-gray-700"><ArrowLeft size={20} /></button>
+        <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
+        <div className="flex-1 min-w-0"><h1 className="text-sm font-bold text-[#002349] truncate">{report?.title || 'Report'}</h1></div>
+        {report && <button onClick={() => navigate(`/edit-report/${reportId}`)} className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm"><Edit size={14} /> Edit</button>}
+      </div>
+      <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={() => onLogout && onLogout()} adminData={adminData} />
+      <div className="flex-1 p-4 max-w-3xl mx-auto w-full">
+        {error && <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg mb-4">{error}</div>}
+        {report && (
+          <div className="bg-white rounded-xl border p-5 space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${report.type === 'monthly' ? 'bg-blue-100 text-blue-700' : report.type === 'special' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'}`}>{TYPE_LABELS[report.type]}</span>
+              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 capitalize">{report.reportFor}</span>
+              {report.isPublished && <span className="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">Published</span>}
+              {!report.isActive && <span className="px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-600">Inactive</span>}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">{report.title}</h2>
+              {report.description && <p className="text-sm text-gray-600 mt-1">{report.description}</p>}
+            </div>
+            {(report.pages || []).length > 0 ? (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-gray-700">Pages ({report.pages.length})</h3>
+                {report.pages.map((page, pi) => (
+                  <div key={pi} className="border border-gray-100 rounded-lg p-3">
+                    <p className="font-medium text-gray-700">{page.title || `Page ${pi + 1}`}</p>
+                    <p className="text-xs text-gray-400">{(page.fields || []).length} fields</p>
+                    <div className="mt-2 grid grid-cols-2 gap-1">
+                      {(page.fields || []).map(f => (
+                        <div key={f.id} className="text-xs text-gray-500 flex gap-1">
+                          <span className="font-mono bg-gray-50 px-1 rounded">{f.type}</span>
+                          <span className="truncate">{f.label || '(untitled)'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (report.parts || []).length > 0 ? (
+              <div>
+                <p className="text-sm text-orange-600 mb-2">Legacy report (parts-based)</p>
+                {report.parts.map((part, pi) => (
+                  <div key={pi} className="border border-gray-100 rounded-lg p-3 mb-2">
+                    <p className="font-medium">{part.partName || `Part ${pi + 1}`}</p>
+                    <p className="text-xs text-gray-400">{(part.questions || []).length} questions</p>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-sm text-gray-400">No pages configured</p>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Router ───────────────────────────────────────────────────────────────────
+const ReportsPage = ({ onLogout }) => {
+  const { id } = useParams();
+  const location = useLocation();
+  const pathname = location.pathname;
+  if (pathname === '/view-reports') return <ReportListView onLogout={onLogout} />;
+  if (pathname === '/create-report') return <ReportBuilderView reportId={null} onLogout={onLogout} />;
+  if (pathname.startsWith('/edit-report/') && id) return <ReportBuilderView reportId={id} onLogout={onLogout} />;
+  if (pathname.startsWith('/view-report/') && id) return <ReportSingleView reportId={id} onLogout={onLogout} />;
+  return null;
+};
+export default ReportsPage;

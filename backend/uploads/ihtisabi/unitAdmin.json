@@ -1,0 +1,2352 @@
+[
+  {
+    "S.No.": 1,
+    "Unit": "Alappuzha",
+    "Area": "Alappuzha",
+    "District": "Alappuzha",
+    "Rukn ID": 109710,
+    "Ameer Name": "T K Saidumohammed",
+    "Contact No": 9447804250,
+    "Email Id": "tksaidmohammed@gmail.com"
+  },
+  {
+    "S.No.": 2,
+    "Unit": "Ambalapuzha",
+    "Area": "Ambalapuzha",
+    "District": "Alappuzha",
+    "Rukn ID": 109686,
+    "Ameer Name": "Muhammad Bilal",
+    "Contact No": 9846010163,
+    "Email Id": "muhammedbilal1961@gmail.com"
+  },
+  {
+    "S.No.": 3,
+    "Unit": "Aroor",
+    "Area": "Aroor",
+    "District": "Alappuzha",
+    "Rukn ID": 118177,
+    "Ameer Name": "Nasar E",
+    "Contact No": 9847481101,
+    "Email Id": "nasaresmail6@gmail.com"
+  },
+  {
+    "S.No.": 4,
+    "Unit": "Cherthala",
+    "Area": "Cherthala",
+    "District": "Alappuzha",
+    "Rukn ID": 109713,
+    "Ameer Name": "Abdul Hakeem H",
+    "Contact No": 9846996242,
+    "Email Id": "hakkimpanavally@gmail.com"
+  },
+  {
+    "S.No.": 5,
+    "Unit": "Haripad",
+    "Area": "Haripad",
+    "District": "Alappuzha",
+    "Rukn ID": 109678,
+    "Ameer Name": "Saji Fazil",
+    "Contact No": 9497192760,
+    "Email Id": "sajidream@gmail.com"
+  },
+  {
+    "S.No.": 6,
+    "Unit": "Kayamkulam",
+    "Area": "Kayamkulam",
+    "District": "Alappuzha",
+    "Rukn ID": 113120,
+    "Ameer Name": "Mujeeburahman S",
+    "Contact No": 9946667706,
+    "Email Id": "mujeebrahman.kit@gmail.com"
+  },
+  {
+    "S.No.": 7,
+    "Unit": "Vaduthala",
+    "Area": "Cherthala",
+    "District": "Alappuzha",
+    "Rukn ID": 109716,
+    "Ameer Name": "Mohammed Husain K.A",
+    "Contact No": 9846765287,
+    "Email Id": "kahusain111@gmail.com"
+  },
+  {
+    "S.No.": 8,
+    "Unit": "Aluva",
+    "Area": "Aluva",
+    "District": "Ernakulam",
+    "Rukn ID": 109814,
+    "Ameer Name": "Basheer K K",
+    "Contact No": 9446021975,
+    "Email Id": "kbasheerk@gmail.com"
+  },
+  {
+    "S.No.": 9,
+    "Unit": "Chalakkal",
+    "Area": "Keezhmad",
+    "District": "Ernakulam",
+    "Rukn ID": 109800,
+    "Ameer Name": "Abdul Sherief Ak",
+    "Contact No": 9400427270,
+    "Email Id": "akasaluva@gmail.com"
+  },
+  {
+    "S.No.": 10,
+    "Unit": "Chengamanad",
+    "Area": "Chengamanad",
+    "District": "Ernakulam",
+    "Rukn ID": 109927,
+    "Ameer Name": "Abdul Khader.K",
+    "Contact No": 9895412880,
+    "Email Id": "abdulkaderuveismanzil@gmail.com"
+  },
+  {
+    "S.No.": 11,
+    "Unit": "Edathala",
+    "Area": "Edathala",
+    "District": "Ernakulam",
+    "Rukn ID": 113869,
+    "Ameer Name": "Musthafa M M",
+    "Contact No": 9562999329,
+    "Email Id": "musthafa.powerplus@gmail.com"
+  },
+  {
+    "S.No.": 12,
+    "Unit": "Kadungalloor",
+    "Area": "Panayikulam",
+    "District": "Ernakulam",
+    "Rukn ID": 113363,
+    "Ameer Name": "Saydu Mohamed V M",
+    "Contact No": 7561037978,
+    "Email Id": "smvaliyara@gmail.com"
+  },
+  {
+    "S.No.": 13,
+    "Unit": "Kalamassery",
+    "Area": "Kalamassery",
+    "District": "Ernakulam",
+    "Rukn ID": 109842,
+    "Ameer Name": "Umer Muhammed",
+    "Contact No": 9447814250,
+    "Email Id": "umermuhammed.a@gmail.com"
+  },
+  {
+    "S.No.": 14,
+    "Unit": "Keezhmad",
+    "Area": "Keezhmad",
+    "District": "Ernakulam",
+    "Rukn ID": 109807,
+    "Ameer Name": "Abdulla Nm",
+    "Contact No": 9846040142,
+    "Email Id": "abdullanm610@gmail.com"
+  },
+  {
+    "S.No.": 15,
+    "Unit": "Kothamangalam",
+    "Area": "Kothamangalam",
+    "District": "Ernakulam",
+    "Rukn ID": 109737,
+    "Ameer Name": "Assainar E.M.",
+    "Contact No": 9745106024,
+    "Email Id": "assainar.em@gmail.com"
+  },
+  {
+    "S.No.": 16,
+    "Unit": "Kuttamassery",
+    "Area": "Keezhmad",
+    "District": "Ernakulam",
+    "Rukn ID": 113356,
+    "Ameer Name": "Ibrahim P Z",
+    "Contact No": 9846046463,
+    "Email Id": "ibrahimpz@gmail.com"
+  },
+  {
+    "S.No.": 17,
+    "Unit": "Manjali",
+    "Area": "Mannam",
+    "District": "Ernakulam",
+    "Rukn ID": 109901,
+    "Ameer Name": "Anas.A",
+    "Contact No": 9946664752,
+    "Email Id": "anaseranakulam@gmail.com"
+  },
+  {
+    "S.No.": 18,
+    "Unit": "Mannam",
+    "Area": "Mannam",
+    "District": "Ernakulam",
+    "Rukn ID": 109870,
+    "Ameer Name": "S.M.Sainudheen",
+    "Contact No": 9946665181,
+    "Email Id": "smsainudheen@gmail.com"
+  },
+  {
+    "S.No.": 19,
+    "Unit": "Muvattupuzha",
+    "Area": "Muvattupuzha",
+    "District": "Ernakulam",
+    "Rukn ID": 109736,
+    "Ameer Name": "Shaji M.M.",
+    "Contact No": 9961225352,
+    "Email Id": "shajimmmulavoor@gmail.com"
+  },
+  {
+    "S.No.": 20,
+    "Unit": "Nedumbassery",
+    "Area": "Nedumbassery",
+    "District": "Ernakulam",
+    "Rukn ID": 109918,
+    "Ameer Name": "Sabu P.M",
+    "Contact No": 9446953315,
+    "Email Id": "pmsabu@gmail.com"
+  },
+  {
+    "S.No.": 21,
+    "Unit": "Pallikkara",
+    "Area": "Kunnathunad",
+    "District": "Ernakulam",
+    "Rukn ID": 109762,
+    "Ameer Name": "Naushad",
+    "Contact No": 9946337674,
+    "Email Id": "noushadseenath@gmail.com"
+  },
+  {
+    "S.No.": 22,
+    "Unit": "Panayikulam",
+    "Area": "Panayikulam",
+    "District": "Ernakulam",
+    "Rukn ID": 109913,
+    "Ameer Name": "Abdulla.K.B",
+    "Contact No": 9447767066,
+    "Email Id": "kbabdulla@gmail.com"
+  },
+  {
+    "S.No.": 23,
+    "Unit": "Paravoor",
+    "Area": "Paravoor",
+    "District": "Ernakulam",
+    "Rukn ID": 113367,
+    "Ameer Name": "Ali  A .P.",
+    "Contact No": 8138808273,
+    "Email Id": "apali58@gmail.com"
+  },
+  {
+    "S.No.": 24,
+    "Unit": "Peringala",
+    "Area": "Kunnathunad",
+    "District": "Ernakulam",
+    "Rukn ID": 109779,
+    "Ameer Name": "Ebrahim Kk",
+    "Contact No": 9497680880,
+    "Email Id": "EBRAHIMETTAT@gmail.com"
+  },
+  {
+    "S.No.": 25,
+    "Unit": "Perumbavoor",
+    "Area": "Perumbavoor",
+    "District": "Ernakulam",
+    "Rukn ID": 109747,
+    "Ameer Name": "Abdul Jabbar T. M.",
+    "Contact No": 9446070166,
+    "Email Id": "2abduljabbartm@gmail.com"
+  },
+  {
+    "S.No.": 26,
+    "Unit": "Thaikattukara",
+    "Area": "Aluva",
+    "District": "Ernakulam",
+    "Rukn ID": 109824,
+    "Ameer Name": "K. H. Ibrahimkutty",
+    "Contact No": 9747249650,
+    "Email Id": "aboonajadh@gmail.com"
+  },
+  {
+    "S.No.": 27,
+    "Unit": "Thottumugham",
+    "Area": "Keezhmad",
+    "District": "Ernakulam",
+    "Rukn ID": 113091,
+    "Ameer Name": "Abdul Khadir P M",
+    "Contact No": 7907951896,
+    "Email Id": "khadir753@gmail.com"
+  },
+  {
+    "S.No.": 28,
+    "Unit": "Vazhakkulam",
+    "Area": "Vazhakkulam",
+    "District": "Ernakulam",
+    "Rukn ID": 109757,
+    "Ameer Name": "Abdul Khader K B",
+    "Contact No": 9895602027,
+    "Email Id": "kbakhader1967@gmail.com"
+  },
+  {
+    "S.No.": 29,
+    "Unit": "Veliyathunad",
+    "Area": "Veliyathunad",
+    "District": "Ernakulam",
+    "Rukn ID": 109890,
+    "Ameer Name": "Thajuddeen T A",
+    "Contact No": 9048800459,
+    "Email Id": "thaju.ta@gmail.com"
+  },
+  {
+    "S.No.": 30,
+    "Unit": "Adimali",
+    "Area": "Adimali",
+    "District": "Idukki",
+    "Rukn ID": 113644,
+    "Ameer Name": "Abdul Assis A P",
+    "Contact No": 8111902011,
+    "Email Id": "azeezadimali@gmail.com"
+  },
+  {
+    "S.No.": 31,
+    "Unit": "Kumali",
+    "Area": "High Range",
+    "District": "Idukki",
+    "Rukn ID": 109632,
+    "Ameer Name": "Abdul Rahim",
+    "Contact No": 9447612382,
+    "Email Id": "abulbushra@gmail.com"
+  },
+  {
+    "S.No.": 32,
+    "Unit": "Thodupuzha",
+    "Area": "Thodupuzha",
+    "District": "Idukki",
+    "Rukn ID": 109630,
+    "Ameer Name": "P P Kunjumuhammed",
+    "Contact No": 9447086564,
+    "Email Id": "kunjumuhamedidk@gmail.com"
+  },
+  {
+    "S.No.": 33,
+    "Unit": "Chakkarakkal",
+    "Area": "Chakkarakkal",
+    "District": "Kannur",
+    "Rukn ID": 113288,
+    "Ameer Name": "Kamal  T K",
+    "Contact No": 9840804116,
+    "Email Id": "kamalideal@gmail.com"
+  },
+  {
+    "S.No.": 34,
+    "Unit": "Edakkad",
+    "Area": "Edakkad",
+    "District": "Kannur",
+    "Rukn ID": 111469,
+    "Ameer Name": "Ahammed Pasha M",
+    "Contact No": 9447372777,
+    "Email Id": "mapkannur@gmail.com"
+  },
+  {
+    "S.No.": 35,
+    "Unit": "Iritty",
+    "Area": "Iritty",
+    "District": "Kannur",
+    "Rukn ID": 111489,
+    "Ameer Name": "Muhammed Ali T.K",
+    "Contact No": 9744321536,
+    "Email Id": "tkmali636@gmail.com"
+  },
+  {
+    "S.No.": 36,
+    "Unit": "Kannur City",
+    "Area": "Kannur",
+    "District": "Kannur",
+    "Rukn ID": 111457,
+    "Ameer Name": "Muhamed Haneef Kowayil",
+    "Contact No": 9496197140,
+    "Email Id": "mdhaneefk@gmail.com"
+  },
+  {
+    "S.No.": 37,
+    "Unit": "Kannur Town",
+    "Area": "Kannur",
+    "District": "Kannur",
+    "Rukn ID": 111472,
+    "Ameer Name": "Sidik U P",
+    "Contact No": 8590721177,
+    "Email Id": "upsidik@gmail.com"
+  },
+  {
+    "S.No.": 38,
+    "Unit": "Madayi",
+    "Area": "Madayi",
+    "District": "Kannur",
+    "Rukn ID": 111427,
+    "Ameer Name": "Muhammed Sajid Pk",
+    "Contact No": 9446706868,
+    "Email Id": "pkmdsajid@gmail.com"
+  },
+  {
+    "S.No.": 39,
+    "Unit": "Mattannur",
+    "Area": "Mattannur",
+    "District": "Kannur",
+    "Rukn ID": 111482,
+    "Ameer Name": "Basheer N M",
+    "Contact No": 9447087940,
+    "Email Id": "basheernmirk@gmail.com"
+  },
+  {
+    "S.No.": 40,
+    "Unit": "New Mahe",
+    "Area": "New Mahe",
+    "District": "Kannur",
+    "Rukn ID": 111535,
+    "Ameer Name": "Pp Abdurahman Peringadi",
+    "Contact No": 9961130807,
+    "Email Id": "pparperingadi@gmail.com"
+  },
+  {
+    "S.No.": 41,
+    "Unit": "Panoor",
+    "Area": "Panoor",
+    "District": "Kannur",
+    "Rukn ID": 111539,
+    "Ameer Name": "Abdul Nasir M",
+    "Contact No": 9846142700,
+    "Email Id": "abdullaabdulnasir@gmail.com"
+  },
+  {
+    "S.No.": 42,
+    "Unit": "Payyannur",
+    "Area": "Payyannur",
+    "District": "Kannur",
+    "Rukn ID": 111425,
+    "Ameer Name": "Shoukath Ali Thayyil Kizhakke Purayil",
+    "Contact No": 9605477163,
+    "Email Id": "tkshoukathali@gmail.com"
+  },
+  {
+    "S.No.": 43,
+    "Unit": "Peringathur",
+    "Area": "Panoor",
+    "District": "Kannur",
+    "Rukn ID": 118423,
+    "Ameer Name": "Muhammed Shameer",
+    "Contact No": 9645392982,
+    "Email Id": "shameer440561@gmail.com"
+  },
+  {
+    "S.No.": 44,
+    "Unit": "Thalassery",
+    "Area": "Thalassery",
+    "District": "Kannur",
+    "Rukn ID": 111507,
+    "Ameer Name": "Acm Basheer",
+    "Contact No": 9746975852,
+    "Email Id": "acharath.acm@gmail.com"
+  },
+  {
+    "S.No.": 45,
+    "Unit": "Valapatanam",
+    "Area": "Valapatanam",
+    "District": "Kannur",
+    "Rukn ID": 111448,
+    "Ameer Name": "Harris Chundagapoyil Puthiyapurayil",
+    "Contact No": 8089349747,
+    "Email Id": "harriscp@gmail.com"
+  },
+  {
+    "S.No.": 46,
+    "Unit": "Kanhangad",
+    "Area": "Kanhangad",
+    "District": "Kasaragode",
+    "Rukn ID": 111579,
+    "Ameer Name": "K.Mohammed Shafi",
+    "Contact No": 8129585460,
+    "Email Id": "shafikudroli@gmail.com"
+  },
+  {
+    "S.No.": 47,
+    "Unit": "Kasaragod",
+    "Area": "Kasaragod",
+    "District": "Kasaragode",
+    "Rukn ID": 114210,
+    "Ameer Name": "Moideen Kunhi C A",
+    "Contact No": 9947298565,
+    "Email Id": ""
+  },
+  {
+    "S.No.": 48,
+    "Unit": "Kumbala",
+    "Area": "Kumbala",
+    "District": "Kasaragode",
+    "Rukn ID": 111561,
+    "Ameer Name": "Ismail K K",
+    "Contact No": 9847960394,
+    "Email Id": "ismailsoorambail@gmail.com"
+  },
+  {
+    "S.No.": 49,
+    "Unit": "Padanna",
+    "Area": "Padanna",
+    "District": "Kasaragode",
+    "Rukn ID": 111584,
+    "Ameer Name": "Basheer Ahammed Shivapuram",
+    "Contact No": 9633714077,
+    "Email Id": "basheersivapuram@gmail.com"
+  },
+  {
+    "S.No.": 50,
+    "Unit": "Trikkaripur",
+    "Area": "Trikkaripur",
+    "District": "Kasaragode",
+    "Rukn ID": 111582,
+    "Ameer Name": "Saeed Omar",
+    "Contact No": 9747027344,
+    "Email Id": "Saeedomar1958@gmail.com"
+  },
+  {
+    "S.No.": 51,
+    "Unit": "Edappally",
+    "Area": "Thrikkakara",
+    "District": "Kochi City",
+    "Rukn ID": 109934,
+    "Ameer Name": "K.A.Muhamad",
+    "Contact No": 9447134212,
+    "Email Id": "muhamadkannachankudy@gmail.com"
+  },
+  {
+    "S.No.": 52,
+    "Unit": "Ernakulam North",
+    "Area": "Ernakulam",
+    "District": "Kochi City",
+    "Rukn ID": 109944,
+    "Ameer Name": "K.M.Abduiraheem",
+    "Contact No": 9447251738,
+    "Email Id": "abduraheem906@gmail.com"
+  },
+  {
+    "S.No.": 53,
+    "Unit": "Ernakulam South",
+    "Area": "Ernakulam",
+    "District": "Kochi City",
+    "Rukn ID": 116670,
+    "Ameer Name": "Aboobakkar Sidheeq M A",
+    "Contact No": 9447200597,
+    "Email Id": "sidheeqaboobakkar327@gmail.com"
+  },
+  {
+    "S.No.": 54,
+    "Unit": "Fort Kochi",
+    "Area": "Kochi",
+    "District": "Kochi City",
+    "Rukn ID": 109957,
+    "Ameer Name": "Mohd Jamal.  O A",
+    "Contact No": 9746393424,
+    "Email Id": "okeypack@gmail.com"
+  },
+  {
+    "S.No.": 55,
+    "Unit": "Palluruthy",
+    "Area": "Palluruthy",
+    "District": "Kochi City",
+    "Rukn ID": 109973,
+    "Ameer Name": "I M Saleem",
+    "Contact No": 9946366151,
+    "Email Id": "imsaleemekm@gmail.com"
+  },
+  {
+    "S.No.": 56,
+    "Unit": "Thoppumpady",
+    "Area": "Kochi",
+    "District": "Kochi City",
+    "Rukn ID": 109968,
+    "Ameer Name": "Sirajudheen S.A",
+    "Contact No": 8089106625,
+    "Email Id": "sirajmarhama@gmail.com"
+  },
+  {
+    "S.No.": 57,
+    "Unit": "Vypin North",
+    "Area": "Vypin",
+    "District": "Kochi City",
+    "Rukn ID": 112737,
+    "Ameer Name": "Mehboob Ks",
+    "Contact No": 9847777848,
+    "Email Id": "babuji.ks@gmail.com"
+  },
+  {
+    "S.No.": 58,
+    "Unit": "Vypin South",
+    "Area": "Vypin",
+    "District": "Kochi City",
+    "Rukn ID": 109861,
+    "Ameer Name": "Shihabuddeen Mi",
+    "Contact No": 9447155209,
+    "Email Id": "mishihabuddeen@gmail.com"
+  },
+  {
+    "S.No.": 59,
+    "Unit": "Vytila",
+    "Area": "Vytila",
+    "District": "Kochi City",
+    "Rukn ID": 109986,
+    "Ameer Name": "Asharafali . A",
+    "Contact No": 9446116149,
+    "Email Id": "ashrafptkd@gmail.com"
+  },
+  {
+    "S.No.": 60,
+    "Unit": "Anchal",
+    "Area": "Anchal",
+    "District": "Kollam",
+    "Rukn ID": 109621,
+    "Ameer Name": "Sajeed Khalid",
+    "Contact No": 8891163485,
+    "Email Id": "sajeedacl@gmail.com"
+  },
+  {
+    "S.No.": 61,
+    "Unit": "Chadayamangalam",
+    "Area": "Chadayamangalam",
+    "District": "Kollam",
+    "Rukn ID": 109606,
+    "Ameer Name": "M Salim",
+    "Contact No": 8086872959,
+    "Email Id": "salim34akkal@gmail.com"
+  },
+  {
+    "S.No.": 62,
+    "Unit": "Kadakkal",
+    "Area": "Kadakkal",
+    "District": "Kollam",
+    "Rukn ID": 109595,
+    "Ameer Name": "Sulaiman S",
+    "Contact No": 9074406103,
+    "Email Id": "hudaent@gmail.com"
+  },
+  {
+    "S.No.": 63,
+    "Unit": "Karunagapally",
+    "Area": "Karunagapally",
+    "District": "Kollam",
+    "Rukn ID": 109582,
+    "Ameer Name": "Rasheed Mytheen Kunju",
+    "Contact No": 9447860442,
+    "Email Id": "rasheedppm@yahoo.com"
+  },
+  {
+    "S.No.": 64,
+    "Unit": "Kollam",
+    "Area": "Kollam",
+    "District": "Kollam",
+    "Rukn ID": 109562,
+    "Ameer Name": "T A Khaleelulla",
+    "Contact No": 9847777418,
+    "Email Id": "khaleelsum58@gmail.com"
+  },
+  {
+    "S.No.": 65,
+    "Unit": "Kulathupuzha",
+    "Area": "Kulathupuzha",
+    "District": "Kollam",
+    "Rukn ID": 109601,
+    "Ameer Name": "Sainudeen A",
+    "Contact No": 9946041186,
+    "Email Id": "masmpm@gmail.com"
+  },
+  {
+    "S.No.": 66,
+    "Unit": "Pathanapuram",
+    "Area": "Pathanapuram",
+    "District": "Kollam",
+    "Rukn ID": 109590,
+    "Ameer Name": "Shahul Hameed Ph",
+    "Contact No": 9037433861,
+    "Email Id": "shaptnpuram@gmail.com"
+  },
+  {
+    "S.No.": 67,
+    "Unit": "Roaduvila",
+    "Area": "Chadayamangalam",
+    "District": "Kollam",
+    "Rukn ID": 109618,
+    "Ameer Name": "Dr. K Abdul Vahid",
+    "Contact No": 9061537801,
+    "Email Id": "dr.vahidk@gmail.com"
+  },
+  {
+    "S.No.": 68,
+    "Unit": "Changanassery",
+    "Area": "Changanassery",
+    "District": "Kottayam",
+    "Rukn ID": 109639,
+    "Ameer Name": "Noushad P A",
+    "Contact No": 7736892027,
+    "Email Id": "afsalknpa@gmail.com"
+  },
+  {
+    "S.No.": 69,
+    "Unit": "Erattupetta",
+    "Area": "Erattupetta",
+    "District": "Kottayam",
+    "Rukn ID": 109648,
+    "Ameer Name": "Ashraf Ps",
+    "Contact No": 7012624328,
+    "Email Id": "ashrafetpa@gmail.com"
+  },
+  {
+    "S.No.": 70,
+    "Unit": "Kanjirappally",
+    "Area": "Kanjirappally",
+    "District": "Kottayam",
+    "Rukn ID": 109658,
+    "Ameer Name": "Abdul Hakeem Pa",
+    "Contact No": 9645006015,
+    "Email Id": "paaabdulhakeem@gmail.com"
+  },
+  {
+    "S.No.": 71,
+    "Unit": "Kottayam",
+    "Area": "Kottayam",
+    "District": "Kottayam",
+    "Rukn ID": 109645,
+    "Ameer Name": "K M Abdul Salam",
+    "Contact No": 9447473758,
+    "Email Id": ""
+  },
+  {
+    "S.No.": 72,
+    "Unit": "Mudakkayam",
+    "Area": "Mudakkayam",
+    "District": "Kottayam",
+    "Rukn ID": 117504,
+    "Ameer Name": "Abdul Rahim P S",
+    "Contact No": 9447395741,
+    "Email Id": "New (20/06/2025)"
+  },
+  {
+    "S.No.": 73,
+    "Unit": "Ayanchery",
+    "Area": "Ayanchery",
+    "District": "Kozhikode",
+    "Rukn ID": 116133,
+    "Ameer Name": "Anvar Sadath V",
+    "Contact No": 9496697796,
+    "Email Id": "anvarvayeri@gmail.com"
+  },
+  {
+    "S.No.": 74,
+    "Unit": "Balussery",
+    "Area": "Balussery",
+    "District": "Kozhikode",
+    "Rukn ID": 111281,
+    "Ameer Name": "Abdullah Habeeb K",
+    "Contact No": 8086003677,
+    "Email Id": ""
+  },
+  {
+    "S.No.": 75,
+    "Unit": "Changaroth",
+    "Area": "Changaroth",
+    "District": "Kozhikode",
+    "Rukn ID": 111325,
+    "Ameer Name": "Ebrahim P K",
+    "Contact No": 9495536677,
+    "Email Id": "palery@gmail.com"
+  },
+  {
+    "S.No.": 76,
+    "Unit": "Chelannur",
+    "Area": "Chelannur",
+    "District": "Kozhikode",
+    "Rukn ID": 111039,
+    "Ameer Name": "Moosakoya V. T.",
+    "Contact No": 9895775998,
+    "Email Id": "moosakoyavt@gmail.com"
+  },
+  {
+    "S.No.": 77,
+    "Unit": "Chennamangallur",
+    "Area": "Mukkam",
+    "District": "Kozhikode",
+    "Rukn ID": 113967,
+    "Ameer Name": "Mohammed Abdurahiman K T",
+    "Contact No": 9846086915,
+    "Email Id": "ktmabdurahiman@gmail.com"
+  },
+  {
+    "S.No.": 78,
+    "Unit": "Cheriyakumbalam",
+    "Area": "Changaroth",
+    "District": "Kozhikode",
+    "Rukn ID": 111309,
+    "Ameer Name": "Shajeel Bin Hasan",
+    "Contact No": 9744696801,
+    "Email Id": "sbhkty@gmail.com"
+  },
+  {
+    "S.No.": 79,
+    "Unit": "Cheruvadi",
+    "Area": "Kodiyathur",
+    "District": "Kozhikode",
+    "Rukn ID": 111064,
+    "Ameer Name": "Abdu C",
+    "Contact No": 9497644801,
+    "Email Id": "cabdu47@gmail.com"
+  },
+  {
+    "S.No.": 80,
+    "Unit": "Farook College",
+    "Area": "Ramanattukara",
+    "District": "Kozhikode",
+    "Rukn ID": 111215,
+    "Ameer Name": "Muhammed Ibraheem Vettiyadan",
+    "Contact No": 9645001920,
+    "Email Id": "vmibrahim@gmail.com"
+  },
+  {
+    "S.No.": 81,
+    "Unit": "Feroke",
+    "Area": "Feroke",
+    "District": "Kozhikode",
+    "Rukn ID": 110694,
+    "Ameer Name": "Muhammed Koya.C",
+    "Contact No": 9497080460,
+    "Email Id": "3thaslupgikn@gmail.com"
+  },
+  {
+    "S.No.": 82,
+    "Unit": "Kakkodi",
+    "Area": "Kakkodi",
+    "District": "Kozhikode",
+    "Rukn ID": 111154,
+    "Ameer Name": "T.K. Huasin",
+    "Contact No": 7907424917,
+    "Email Id": "tkhusein@gmail.com"
+  },
+  {
+    "S.No.": 83,
+    "Unit": "Karassery",
+    "Area": "Karassery",
+    "District": "Kozhikode",
+    "Rukn ID": 111067,
+    "Ameer Name": "Subhan Babu M C",
+    "Contact No": 9495742924,
+    "Email Id": "mcsubhan@gmail.com"
+  },
+  {
+    "S.No.": 84,
+    "Unit": "Karuvanpoyil",
+    "Area": "Koduvally",
+    "District": "Kozhikode",
+    "Rukn ID": 111109,
+    "Ameer Name": "Abdulla. K",
+    "Contact No": 9745176495,
+    "Email Id": "kolappurathabdulla@gmail.com"
+  },
+  {
+    "S.No.": 85,
+    "Unit": "Kodiyathur",
+    "Area": "Kodiyathur",
+    "District": "Kozhikode",
+    "Rukn ID": 111074,
+    "Ameer Name": "Abdurahiman P P",
+    "Contact No": 9447701741,
+    "Email Id": "pparkdr@gmail.com"
+  },
+  {
+    "S.No.": 86,
+    "Unit": "Koduvally",
+    "Area": "Koduvally",
+    "District": "Kozhikode",
+    "Rukn ID": 117508,
+    "Ameer Name": "Abdullatheef K",
+    "Contact No": 8086360835,
+    "Email Id": "g@s80gmail.com"
+  },
+  {
+    "S.No.": 87,
+    "Unit": "Koyilandi",
+    "Area": "Koyilandi",
+    "District": "Kozhikode",
+    "Rukn ID": 111038,
+    "Ameer Name": "Mohammed Haneefa P.P.",
+    "Contact No": 8089828247,
+    "Email Id": "mhaneefa50@gmail.com"
+  },
+  {
+    "S.No.": 88,
+    "Unit": "Kunnamangalam",
+    "Area": "Kunnamangalam",
+    "District": "Kozhikode",
+    "Rukn ID": 112265,
+    "Ameer Name": "Abdul Khader P P",
+    "Contact No": 9497567836,
+    "Email Id": ""
+  },
+  {
+    "S.No.": 89,
+    "Unit": "Kuruvattoor",
+    "Area": "Kakkodi",
+    "District": "Kozhikode",
+    "Rukn ID": 111169,
+    "Ameer Name": "Abbas M",
+    "Contact No": 9567480148,
+    "Email Id": "abbasmalayil@gmail.com"
+  },
+  {
+    "S.No.": 90,
+    "Unit": "Kuttiady",
+    "Area": "Kuttiady",
+    "District": "Kozhikode",
+    "Rukn ID": 111204,
+    "Ameer Name": "Soopy Vadakka Thazha",
+    "Contact No": 9895458686,
+    "Email Id": "sooppyvt@gmail.com"
+  },
+  {
+    "S.No.": 91,
+    "Unit": "Madavoor",
+    "Area": "Narikkuni",
+    "District": "Kozhikode",
+    "Rukn ID": 111051,
+    "Ameer Name": "Ibrahim K T",
+    "Contact No": 9447338523,
+    "Email Id": "lbrahimthss@gmail.com"
+  },
+  {
+    "S.No.": 92,
+    "Unit": "Meppayyur",
+    "Area": "Meppayyur",
+    "District": "Kozhikode",
+    "Rukn ID": 114079,
+    "Ameer Name": "Shereef P",
+    "Contact No": 9447384115,
+    "Email Id": "sherecfpodayeli@gmail.com"
+  },
+  {
+    "S.No.": 93,
+    "Unit": "Mukkam",
+    "Area": "Mukkam",
+    "District": "Kozhikode",
+    "Rukn ID": 111252,
+    "Ameer Name": "Abdul Majeed.K",
+    "Contact No": 9946438838,
+    "Email Id": "majeedkilikkotte@gmail.com"
+  },
+  {
+    "S.No.": 94,
+    "Unit": "N I T",
+    "Area": "N I T",
+    "District": "Kozhikode",
+    "Rukn ID": 111256,
+    "Ameer Name": "Muhammed Ali.K.C",
+    "Contact No": 9745944404,
+    "Email Id": "kcmcmr@gmail.com"
+  },
+  {
+    "S.No.": 95,
+    "Unit": "Nadapuram",
+    "Area": "Nadapuram",
+    "District": "Kozhikode",
+    "Rukn ID": 111098,
+    "Ameer Name": "Kunhali V V",
+    "Contact No": 9446732257,
+    "Email Id": "vvkunjalimaster@gmail.com"
+  },
+  {
+    "S.No.": 96,
+    "Unit": "Narikkuni",
+    "Area": "Narikkuni",
+    "District": "Kozhikode",
+    "Rukn ID": 111289,
+    "Ameer Name": "Abdul Majeed R K",
+    "Contact No": 9048633508,
+    "Email Id": ""
+  },
+  {
+    "S.No.": 97,
+    "Unit": "Omassery",
+    "Area": "Omassery",
+    "District": "Kozhikode",
+    "Rukn ID": 111135,
+    "Ameer Name": "Abdul Latheef M",
+    "Contact No": 9895978213,
+    "Email Id": "latheefm2010@gmail.com"
+  },
+  {
+    "S.No.": 98,
+    "Unit": "Palath",
+    "Area": "Chelannur",
+    "District": "Kozhikode",
+    "Rukn ID": 111086,
+    "Ameer Name": "Kayyalakkel Abdurahiman",
+    "Contact No": 9400484962,
+    "Email Id": "edacherry@gmail.com"
+  },
+  {
+    "S.No.": 99,
+    "Unit": "Payyoli",
+    "Area": "Payyoli",
+    "District": "Kozhikode",
+    "Rukn ID": 111022,
+    "Ameer Name": "Assainar.T.M",
+    "Contact No": 9400470273,
+    "Email Id": "tmassainar4@gmail.com"
+  },
+  {
+    "S.No.": 100,
+    "Unit": "Poonoor",
+    "Area": "Thamarassery",
+    "District": "Kozhikode",
+    "Rukn ID": 113965,
+    "Ameer Name": "Abdul Fathah P C",
+    "Contact No": 7736895665,
+    "Email Id": "pcfathah@gmail.com"
+  },
+  {
+    "S.No.": 101,
+    "Unit": "Puthur",
+    "Area": "Omassery",
+    "District": "Kozhikode",
+    "Rukn ID": 111148,
+    "Ameer Name": "Yoosuf.Pt",
+    "Contact No": 9496835890,
+    "Email Id": "yoosephpt02@gmail.com"
+  },
+  {
+    "S.No.": 102,
+    "Unit": "Ramanattukara",
+    "Area": "Ramanattukara",
+    "District": "Kozhikode",
+    "Rukn ID": 111221,
+    "Ameer Name": "Muhammed Shajinas. T",
+    "Contact No": 8606178878,
+    "Email Id": "shajinast@gmail.com"
+  },
+  {
+    "S.No.": 103,
+    "Unit": "Sivapuram",
+    "Area": "Balussery",
+    "District": "Kozhikode",
+    "Rukn ID": 111261,
+    "Ameer Name": "Abdul Khader M.K",
+    "Contact No": 9744314103,
+    "Email Id": "khadersivapuram@gmail.com"
+  },
+  {
+    "S.No.": 104,
+    "Unit": "Thamarassery",
+    "Area": "Thamarassery",
+    "District": "Kozhikode",
+    "Rukn ID": 111296,
+    "Ameer Name": "M.A. Mohammed Yusuf",
+    "Contact No": 9846313215,
+    "Email Id": "mayalappuzha@gmail.com"
+  },
+  {
+    "S.No.": 105,
+    "Unit": "Ulliyeri",
+    "Area": "Ulliyeri",
+    "District": "Kozhikode",
+    "Rukn ID": 111329,
+    "Ameer Name": "Ahammed N",
+    "Contact No": 9846085854,
+    "Email Id": "ahammeneelapara@gmail.com"
+  },
+  {
+    "S.No.": 106,
+    "Unit": "Vatakara",
+    "Area": "Vatakara",
+    "District": "Kozhikode",
+    "Rukn ID": 111172,
+    "Ameer Name": "Abdulla K",
+    "Contact No": 9947651786,
+    "Email Id": "Kunhamikottaprath@gmail.com"
+  },
+  {
+    "S.No.": 107,
+    "Unit": "Velom",
+    "Area": "Kuttiady",
+    "District": "Kozhikode",
+    "Rukn ID": 113297,
+    "Ameer Name": "Abdurahman K",
+    "Contact No": 8086000430,
+    "Email Id": "arkodumayil@gmail.com"
+  },
+  {
+    "S.No.": 108,
+    "Unit": "Cheruvatta",
+    "Area": "Kozhikode East",
+    "District": "Kozhikode City",
+    "Rukn ID": 111331,
+    "Ameer Name": "A Abdul Haleem",
+    "Contact No": 9447886243,
+    "Email Id": "draahaleem@gmail.com"
+  },
+  {
+    "S.No.": 109,
+    "Unit": "Kozhikode North",
+    "Area": "Kozhikode North",
+    "District": "Kozhikode City",
+    "Rukn ID": 111378,
+    "Ameer Name": "Noushad Pk",
+    "Contact No": 9947873398,
+    "Email Id": "noushadpkn@gmail.com"
+  },
+  {
+    "S.No.": 110,
+    "Unit": "Kozhikode South",
+    "Area": "Kozhikode South",
+    "District": "Kozhikode City",
+    "Rukn ID": 111394,
+    "Ameer Name": "Abdul Azeez.P",
+    "Contact No": 9446559039,
+    "Email Id": "abdulazeezpparakal@gmail.com"
+  },
+  {
+    "S.No.": 111,
+    "Unit": "Kuttikkattur",
+    "Area": "Medical College",
+    "District": "Kozhikode City",
+    "Rukn ID": 114261,
+    "Ameer Name": "Zulfikar A",
+    "Contact No": 9744000584,
+    "Email Id": "ne18@gmail.com"
+  },
+  {
+    "S.No.": 112,
+    "Unit": "Mathottam",
+    "Area": "Kozhikode South",
+    "District": "Kozhikode City",
+    "Rukn ID": 111387,
+    "Ameer Name": "Abdul Mujeeb. Mv",
+    "Contact No": 9847548484,
+    "Email Id": "drabdulmujeeb@gmail.com"
+  },
+  {
+    "S.No.": 113,
+    "Unit": "Medical College",
+    "Area": "Medical College",
+    "District": "Kozhikode City",
+    "Rukn ID": 111363,
+    "Ameer Name": "Muhammad Najeeb C H",
+    "Contact No": 9633990078,
+    "Email Id": "najeebch@yahoo.com"
+  },
+  {
+    "S.No.": 114,
+    "Unit": "Moozhikkal",
+    "Area": "Kozhikode East",
+    "District": "Kozhikode City",
+    "Rukn ID": 111335,
+    "Ameer Name": "Rafeeq Rahman Malol",
+    "Contact No": 9995017263,
+    "Email Id": "rafeeqrahman.m@gmail.com"
+  },
+  {
+    "S.No.": 115,
+    "Unit": "Nadakkavu",
+    "Area": "Kozhikode North",
+    "District": "Kozhikode City",
+    "Rukn ID": 111210,
+    "Ameer Name": "Muhammed Najeeb K",
+    "Contact No": 9995506240,
+    "Email Id": "najeeb500@gmail.com"
+  },
+  {
+    "S.No.": 116,
+    "Unit": "Anakkayam",
+    "Area": "Manjeri",
+    "District": "Malappuram East",
+    "Rukn ID": 110633,
+    "Ameer Name": "Sainuddeen K.M",
+    "Contact No": 9495386901,
+    "Email Id": "sainukm@gmail.com"
+  },
+  {
+    "S.No.": 117,
+    "Unit": "Chungathara",
+    "Area": "Chungathara",
+    "District": "Malappuram East",
+    "Rukn ID": 110328,
+    "Ameer Name": "Usman C",
+    "Contact No": 9446880521,
+    "Email Id": "chemmalausman21@gmail.com"
+  },
+  {
+    "S.No.": 118,
+    "Unit": "Edakkara",
+    "Area": "Chungathara",
+    "District": "Malappuram East",
+    "Rukn ID": 110331,
+    "Ameer Name": "Muhammed Basheer P K",
+    "Contact No": 9895814879,
+    "Email Id": "pkmbedakkara@gmail.com"
+  },
+  {
+    "S.No.": 119,
+    "Unit": "Edavanna",
+    "Area": "Edavanna",
+    "District": "Malappuram East",
+    "Rukn ID": 110423,
+    "Ameer Name": "Abbasali. B",
+    "Contact No": 9048225100,
+    "Email Id": "abbasalipathapiriyam@gmail.com"
+  },
+  {
+    "S.No.": 120,
+    "Unit": "Hajiyarpally",
+    "Area": "Malappuram",
+    "District": "Malappuram East",
+    "Rukn ID": 110546,
+    "Ameer Name": "Aneesurahman.P",
+    "Contact No": 9496467992,
+    "Email Id": "aneesrahman7773@gmail.com"
+  },
+  {
+    "S.No.": 121,
+    "Unit": "Kadannamanna",
+    "Area": "Thirurkad",
+    "District": "Malappuram East",
+    "Rukn ID": 110587,
+    "Ameer Name": "Alavikuty.P",
+    "Contact No": 9846412031,
+    "Email Id": "kadannamannapj@gmail.com"
+  },
+  {
+    "S.No.": 122,
+    "Unit": "Karakunnu",
+    "Area": "Edavanna",
+    "District": "Malappuram East",
+    "Rukn ID": 110411,
+    "Ameer Name": "Abdul Latheef Basmala",
+    "Contact No": 9744815743,
+    "Email Id": "abdullatheefbasmala@gmail.com"
+  },
+  {
+    "S.No.": 123,
+    "Unit": "Karuvarakundu",
+    "Area": "Karuvarakundu",
+    "District": "Malappuram East",
+    "Rukn ID": 110637,
+    "Ameer Name": "Liyakathali V.P",
+    "Contact No": 9447682117,
+    "Email Id": "liyakhathaliva90@gmail.com"
+  },
+  {
+    "S.No.": 124,
+    "Unit": "Kizhissery",
+    "Area": "Kondotty",
+    "District": "Malappuram East",
+    "Rukn ID": 110441,
+    "Ameer Name": "Abooacker Master N C",
+    "Contact No": 7994332325,
+    "Email Id": "aboobackernnc@gmail.com"
+  },
+  {
+    "S.No.": 125,
+    "Unit": "Kizhuparamba",
+    "Area": "Areekode",
+    "District": "Malappuram East",
+    "Rukn ID": 110314,
+    "Ameer Name": "Abdulkader.K",
+    "Contact No": 9447889630,
+    "Email Id": "bkkader@gmail.com"
+  },
+  {
+    "S.No.": 126,
+    "Unit": "Kodur",
+    "Area": "Malappuram",
+    "District": "Malappuram East",
+    "Rukn ID": 110514,
+    "Ameer Name": "Koyakutty.M",
+    "Contact No": 9656256732,
+    "Email Id": "koyakuttym68@gmail.com"
+  },
+  {
+    "S.No.": 127,
+    "Unit": "Kondotty",
+    "Area": "Kondotty",
+    "District": "Malappuram East",
+    "Rukn ID": 110433,
+    "Ameer Name": "Kunhahmed Parambadan",
+    "Contact No": 9249433662,
+    "Email Id": "kunhahmedparambadan@gmail.com"
+  },
+  {
+    "S.No.": 128,
+    "Unit": "Koottilangadi",
+    "Area": "Makkarapparamba",
+    "District": "Malappuram East",
+    "Rukn ID": 110346,
+    "Ameer Name": "Mohamed Musthafa C",
+    "Contact No": 7012545656,
+    "Email Id": "musthafa.husain@gmail.com"
+  },
+  {
+    "S.No.": 129,
+    "Unit": "Kottapadi",
+    "Area": "Malappuram",
+    "District": "Malappuram East",
+    "Rukn ID": 111361,
+    "Ameer Name": "Shareef. Tm",
+    "Contact No": 9446877247,
+    "Email Id": "mailshareeftm@gmail.com"
+  },
+  {
+    "S.No.": 130,
+    "Unit": "Kuniyil",
+    "Area": "Areekode",
+    "District": "Malappuram East",
+    "Rukn ID": 110320,
+    "Ameer Name": "Abdul Kareem K.V",
+    "Contact No": 9447414138,
+    "Email Id": "kvabdulkareem925@gmail.com"
+  },
+  {
+    "S.No.": 131,
+    "Unit": "Kunnakkavu",
+    "Area": "Perinthalmanna",
+    "District": "Malappuram East",
+    "Rukn ID": 112277,
+    "Ameer Name": "Muhammed Nishad K",
+    "Contact No": 9847790965,
+    "Email Id": "mnishadk@gmail.com"
+  },
+  {
+    "S.No.": 132,
+    "Unit": "Kunnummal",
+    "Area": "Malappuram",
+    "District": "Malappuram East",
+    "Rukn ID": 110510,
+    "Ameer Name": "Mohamed Basheer Changampalli",
+    "Contact No": 7736242848,
+    "Email Id": "chmbasheer@gmail.com"
+  },
+  {
+    "S.No.": 133,
+    "Unit": "Makkarapparamba",
+    "Area": "Makkarapparamba",
+    "District": "Malappuram East",
+    "Rukn ID": 110359,
+    "Ameer Name": "Kunhimuhammed M",
+    "Contact No": 7994298643,
+    "Email Id": "kmmuringekkal@gmail.com"
+  },
+  {
+    "S.No.": 134,
+    "Unit": "Mampad",
+    "Area": "Mampad",
+    "District": "Malappuram East",
+    "Rukn ID": 110642,
+    "Ameer Name": "Abdul Latheef K.P",
+    "Contact No": 9496614734,
+    "Email Id": "kpalatheefmpad@gmail.com"
+  },
+  {
+    "S.No.": 135,
+    "Unit": "Manjeri",
+    "Area": "Manjeri",
+    "District": "Malappuram East",
+    "Rukn ID": 110555,
+    "Ameer Name": "Abdussalam Kodakkadan",
+    "Contact No": 9287000700,
+    "Email Id": "salamk@salamk.net"
+  },
+  {
+    "S.No.": 136,
+    "Unit": "Mankada",
+    "Area": "Thirurkad",
+    "District": "Malappuram East",
+    "Rukn ID": 110571,
+    "Ameer Name": "Mohammed Ali Moochikkal",
+    "Contact No": 9447678865,
+    "Email Id": "malimankada999@Gmail.com"
+  },
+  {
+    "S.No.": 137,
+    "Unit": "Morayur",
+    "Area": "Valluvambram",
+    "District": "Malappuram East",
+    "Rukn ID": 110952,
+    "Ameer Name": "Ahammed Sherif Kurungadan",
+    "Contact No": 8156856085,
+    "Email Id": "kahmedshareef@gmail.com"
+  },
+  {
+    "S.No.": 138,
+    "Unit": "Mulliakurissi",
+    "Area": "Santhapuram",
+    "District": "Malappuram East",
+    "Rukn ID": 110781,
+    "Ameer Name": "Ishaq Ali K V",
+    "Contact No": 9846332670,
+    "Email Id": "ishaqalimoidu@gmail.com"
+  },
+  {
+    "S.No.": 139,
+    "Unit": "Mundumuzhi",
+    "Area": "Vazhakkad",
+    "District": "Malappuram East",
+    "Rukn ID": 110956,
+    "Ameer Name": "Muhammed P T",
+    "Contact No": 9544094688,
+    "Email Id": "yempeetee@gmail.com"
+  },
+  {
+    "S.No.": 140,
+    "Unit": "Nilambur",
+    "Area": "Nilambur",
+    "District": "Malappuram East",
+    "Rukn ID": 110673,
+    "Ameer Name": "Mujeeburahman V.P",
+    "Contact No": 9446158810,
+    "Email Id": "ab@gmail.com"
+  },
+  {
+    "S.No.": 141,
+    "Unit": "Padaparamba",
+    "Area": "Padaparamba",
+    "District": "Malappuram East",
+    "Rukn ID": 110378,
+    "Ameer Name": "Asainar Op",
+    "Contact No": 9745115955,
+    "Email Id": "asainarop66@gmail.com"
+  },
+  {
+    "S.No.": 142,
+    "Unit": "Pandikkad",
+    "Area": "Pandikkad",
+    "District": "Malappuram East",
+    "Rukn ID": 110628,
+    "Ameer Name": "Moosa Kutty Pattath",
+    "Contact No": 9495140155,
+    "Email Id": "mkutty555@gmail.com"
+  },
+  {
+    "S.No.": 143,
+    "Unit": "Perinthalmanna",
+    "Area": "Perinthalmanna",
+    "District": "Malappuram East",
+    "Rukn ID": 115188,
+    "Ameer Name": "Kp Aboobacker",
+    "Contact No": 9744498110,
+    "Email Id": "abooliyana@gmail.com"
+  },
+  {
+    "S.No.": 144,
+    "Unit": "Pookkottur",
+    "Area": "Valluvambram",
+    "District": "Malappuram East",
+    "Rukn ID": 110941,
+    "Ameer Name": "Shihab Pookkottur",
+    "Contact No": 9946816996,
+    "Email Id": "shihabpktr83@gmail.com"
+  },
+  {
+    "S.No.": 145,
+    "Unit": "Pulikkal",
+    "Area": "Pulikkal",
+    "District": "Malappuram East",
+    "Rukn ID": 110453,
+    "Ameer Name": "Abdussamad  Master  C",
+    "Contact No": 9995614416,
+    "Email Id": "csamadpkl@gmail.com"
+  },
+  {
+    "S.No.": 146,
+    "Unit": "Rahmaniya",
+    "Area": "Mampad",
+    "District": "Malappuram East",
+    "Rukn ID": 110653,
+    "Ameer Name": "Muhammed Asharaf K",
+    "Contact No": 9496906959,
+    "Email Id": "muhammedashraf61@gmail.com"
+  },
+  {
+    "S.No.": 147,
+    "Unit": "Santhapuram",
+    "Area": "Santhapuram",
+    "District": "Malappuram East",
+    "Rukn ID": 110784,
+    "Ameer Name": "Saleem M",
+    "Contact No": 9446212791,
+    "Email Id": "saleemmambads@gmail.com"
+  },
+  {
+    "S.No.": 148,
+    "Unit": "Santhapuram Kanhirappally",
+    "Area": "Santhapuram",
+    "District": "Malappuram East",
+    "Rukn ID": 110785,
+    "Ameer Name": "Safir V M",
+    "Contact No": 9544885004,
+    "Email Id": "vmsafir27@gmail.com"
+  },
+  {
+    "S.No.": 149,
+    "Unit": "Thirurkad",
+    "Area": "Thirurkad",
+    "District": "Malappuram East",
+    "Rukn ID": 110789,
+    "Ameer Name": "Mohammed Shareef V P",
+    "Contact No": 9747614461,
+    "Email Id": "shareefvalamboor65@gmail.com"
+  },
+  {
+    "S.No.": 150,
+    "Unit": "Valluvambram",
+    "Area": "Valluvambram",
+    "District": "Malappuram East",
+    "Rukn ID": 110953,
+    "Ameer Name": "Abdunasasr. C",
+    "Contact No": 9447408306,
+    "Email Id": "naserchavikkadan@gmail.com"
+  },
+  {
+    "S.No.": 151,
+    "Unit": "Vaniyambalam",
+    "Area": "Wandoor",
+    "District": "Malappuram East",
+    "Rukn ID": 111006,
+    "Ameer Name": "Muhamed Akbar K",
+    "Contact No": 7034656658,
+    "Email Id": "akbarvaniyambalam@gmail.com"
+  },
+  {
+    "S.No.": 152,
+    "Unit": "Vazhakkad",
+    "Area": "Vazhakkad",
+    "District": "Malappuram East",
+    "Rukn ID": 113306,
+    "Ameer Name": "Mohammed Abdurahman K",
+    "Contact No": 9895200076,
+    "Email Id": "kmamashkoorvkd@gmail.com"
+  },
+  {
+    "S.No.": 153,
+    "Unit": "Wandoor",
+    "Area": "Wandoor",
+    "District": "Malappuram East",
+    "Rukn ID": 111000,
+    "Ameer Name": "Ali T",
+    "Contact No": 9495451905,
+    "Email Id": "alikunnummal31@gmail.com"
+  },
+  {
+    "S.No.": 154,
+    "Unit": "A R Nagar",
+    "Area": "A R Nagar",
+    "District": "Malappuram West",
+    "Rukn ID": 110994,
+    "Ameer Name": "K T    Hussain",
+    "Contact No": 9037948840,
+    "Email Id": "ktmhkuttoor@gmail.com"
+  },
+  {
+    "S.No.": 155,
+    "Unit": "Alathiyur",
+    "Area": "Alathiyur",
+    "District": "Malappuram West",
+    "Rukn ID": 110300,
+    "Ameer Name": "Mohammad Ali",
+    "Contact No": 7025852034,
+    "Email Id": "7078@gmail.com"
+  },
+  {
+    "S.No.": 156,
+    "Unit": "Changaramkulam",
+    "Area": "Edappal",
+    "District": "Malappuram West",
+    "Rukn ID": 110388,
+    "Ameer Name": "Dr.Siraj",
+    "Contact No": 9447150094,
+    "Email Id": "ssainudeen00@gmail.com"
+  },
+  {
+    "S.No.": 157,
+    "Unit": "Edappal",
+    "Area": "Edappal",
+    "District": "Malappuram West",
+    "Rukn ID": 110401,
+    "Ameer Name": "Korakuzhiyil Hussain",
+    "Contact No": 9947861886,
+    "Email Id": "deenar1975@gmail.com"
+  },
+  {
+    "S.No.": 158,
+    "Unit": "Edarikkode",
+    "Area": "Kottakkal",
+    "District": "Malappuram West",
+    "Rukn ID": 110482,
+    "Ameer Name": "Muhammed Yasir N M",
+    "Contact No": 9526288511,
+    "Email Id": "mohamedyasirnm@gmail.com"
+  },
+  {
+    "S.No.": 159,
+    "Unit": "Edayur",
+    "Area": "Valanchery",
+    "District": "Malappuram West",
+    "Rukn ID": 110902,
+    "Ameer Name": "Hassan .P",
+    "Contact No": 9946050541,
+    "Email Id": "hasanedr@gmail.com"
+  },
+  {
+    "S.No.": 160,
+    "Unit": "Kanmanam",
+    "Area": "Puthanathani",
+    "District": "Malappuram West",
+    "Rukn ID": 110742,
+    "Ameer Name": "Siddique Mohammed",
+    "Contact No": 9207220606,
+    "Email Id": "siddiquemhmd@yahoo.com"
+  },
+  {
+    "S.No.": 161,
+    "Unit": "Kannamangalam",
+    "Area": "A R Nagar",
+    "District": "Malappuram West",
+    "Rukn ID": 116969,
+    "Ameer Name": "Hamza Areekan",
+    "Contact No": 9495609702,
+    "Email Id": "hamzaareekan@gmail.com"
+  },
+  {
+    "S.No.": 162,
+    "Unit": "Kodinhi",
+    "Area": "Tirurangadi",
+    "District": "Malappuram West",
+    "Rukn ID": 110855,
+    "Ameer Name": "Abdul Naser Thaniyeppil",
+    "Contact No": 9895506547,
+    "Email Id": "2hamzapalkkat@gmail.com"
+  },
+  {
+    "S.No.": 163,
+    "Unit": "Kokkur",
+    "Area": "Edappal",
+    "District": "Malappuram West",
+    "Rukn ID": 110383,
+    "Ameer Name": "Cp Mohammed",
+    "Contact No": 9946304357,
+    "Email Id": "cpmumeri@gmail.com"
+  },
+  {
+    "S.No.": 164,
+    "Unit": "Kottakkal",
+    "Area": "Kottakkal",
+    "District": "Malappuram West",
+    "Rukn ID": 110474,
+    "Ameer Name": "Salavudheen Ayubi.K.",
+    "Contact No": 8606632213,
+    "Email Id": "kopilan.sa@gmail.com"
+  },
+  {
+    "S.No.": 165,
+    "Unit": "Maranchery",
+    "Area": "Maranchery",
+    "District": "Malappuram West",
+    "Rukn ID": 110622,
+    "Ameer Name": "Kunhimarakkar",
+    "Contact No": 9645703206,
+    "Email Id": "kunhimarakkarvk@gmail.com"
+  },
+  {
+    "S.No.": 166,
+    "Unit": "Othukungal",
+    "Area": "Parappur",
+    "District": "Malappuram West",
+    "Rukn ID": 114136,
+    "Ameer Name": "Moosa T K",
+    "Contact No": 7025850130,
+    "Email Id": "moosatk70@gmail.com"
+  },
+  {
+    "S.No.": 167,
+    "Unit": "Pallikkal Bazar",
+    "Area": "University",
+    "District": "Malappuram West",
+    "Rukn ID": 110888,
+    "Ameer Name": "Abubaker Kunzhu Me",
+    "Contact No": 9847306362,
+    "Email Id": "meakunju@gmail.com"
+  },
+  {
+    "S.No.": 168,
+    "Unit": "Parappanangadi",
+    "Area": "Tirurangadi",
+    "District": "Malappuram West",
+    "Rukn ID": 110692,
+    "Ameer Name": "Aboobacker P.K",
+    "Contact No": 7012711182,
+    "Email Id": "peekeypgdi49@gmail.com"
+  },
+  {
+    "S.No.": 169,
+    "Unit": "Parappur",
+    "Area": "Parappur",
+    "District": "Malappuram West",
+    "Rukn ID": 110491,
+    "Ameer Name": "Anvar Sadath Mankada *",
+    "Contact No": 9744936341,
+    "Email Id": "sadatmankada@gmail.com"
+  },
+  {
+    "S.No.": 170,
+    "Unit": "Perumpadappu",
+    "Area": "Perupadappu",
+    "District": "Malappuram West",
+    "Rukn ID": 110725,
+    "Ameer Name": "Abdul Majeed Pm",
+    "Contact No": 9645962468,
+    "Email Id": "majeedpm7@gmail.com"
+  },
+  {
+    "S.No.": 171,
+    "Unit": "Ponnani",
+    "Area": "Ponnani",
+    "District": "Malappuram West",
+    "Rukn ID": 110732,
+    "Ameer Name": "P.K.Abdul Azeez",
+    "Contact No": 9946202942,
+    "Email Id": "pkabdulazeez@gmail.com"
+  },
+  {
+    "S.No.": 172,
+    "Unit": "Puthur Pallikkal",
+    "Area": "University",
+    "District": "Malappuram West",
+    "Rukn ID": 110894,
+    "Ameer Name": "Faizal Pk",
+    "Contact No": 9846775199,
+    "Email Id": "faizaldevathyal@gmail.com"
+  },
+  {
+    "S.No.": 173,
+    "Unit": "Randathani",
+    "Area": "Puthanathani",
+    "District": "Malappuram West",
+    "Rukn ID": 114401,
+    "Ameer Name": "Kunhi Mohammed K P",
+    "Contact No": 9446535307,
+    "Email Id": "kkunhimohamed@gmail.com"
+  },
+  {
+    "S.No.": 174,
+    "Unit": "Salamath Nagar",
+    "Area": "University",
+    "District": "Malappuram West",
+    "Rukn ID": 110877,
+    "Ameer Name": "Moideen Koya P",
+    "Contact No": 9947221172,
+    "Email Id": "M.koyapallikkal@gmail.com"
+  },
+  {
+    "S.No.": 175,
+    "Unit": "Tanalur",
+    "Area": "Tanalur",
+    "District": "Malappuram West",
+    "Rukn ID": 117521,
+    "Ameer Name": "Jabir T T",
+    "Contact No": 9995210850,
+    "Email Id": "g@s86gmail.com"
+  },
+  {
+    "S.No.": 176,
+    "Unit": "Tanur",
+    "Area": "Tanur",
+    "District": "Malappuram West",
+    "Rukn ID": 110808,
+    "Ameer Name": "Abdul Nazir M.M",
+    "Contact No": 8593994348,
+    "Email Id": "nasirmm@gmail.com"
+  },
+  {
+    "S.No.": 177,
+    "Unit": "Thalakkad",
+    "Area": "Thalakkad",
+    "District": "Malappuram West",
+    "Rukn ID": 110834,
+    "Ameer Name": "Shamsudheen",
+    "Contact No": 9947348777,
+    "Email Id": "abushamsi@gmail.com"
+  },
+  {
+    "S.No.": 178,
+    "Unit": "Tirur",
+    "Area": "Tirur",
+    "District": "Malappuram West",
+    "Rukn ID": 110825,
+    "Ameer Name": "Abdul Naser Kurikkkal M.P",
+    "Contact No": 9447018800,
+    "Email Id": "drkurikkal@gmail.com"
+  },
+  {
+    "S.No.": 179,
+    "Unit": "University",
+    "Area": "University",
+    "District": "Malappuram West",
+    "Rukn ID": 114264,
+    "Ameer Name": "Najeeb K",
+    "Contact No": 9947407238,
+    "Email Id": "ne36@gmail.com"
+  },
+  {
+    "S.No.": 180,
+    "Unit": "Vailathur",
+    "Area": "Vailathur",
+    "District": "Malappuram West",
+    "Rukn ID": 110481,
+    "Ameer Name": "Nasar Abdulla Cherukara",
+    "Contact No": 9747664011,
+    "Email Id": "nasarcherukara@gmail.com"
+  },
+  {
+    "S.No.": 181,
+    "Unit": "Valanchery",
+    "Area": "Valanchery",
+    "District": "Malappuram West",
+    "Rukn ID": 110926,
+    "Ameer Name": "Mohammadali .U",
+    "Contact No": 9846693573,
+    "Email Id": "umalivly@gmail.com"
+  },
+  {
+    "S.No.": 182,
+    "Unit": "Vengara",
+    "Area": "Vengara",
+    "District": "Malappuram West",
+    "Rukn ID": 110971,
+    "Ameer Name": "Muhammed Ashraf  P",
+    "Contact No": 9847805838,
+    "Email Id": "ashrafoorakam5838@gmail.com"
+  },
+  {
+    "S.No.": 183,
+    "Unit": "Vettom",
+    "Area": "Tirur",
+    "District": "Malappuram West",
+    "Rukn ID": 111343,
+    "Ameer Name": "Abdul Shukkoor. Pv",
+    "Contact No": 9495174927,
+    "Email Id": "shukoored@gmail.com"
+  },
+  {
+    "S.No.": 184,
+    "Unit": "Alanallur",
+    "Area": "Alanallur",
+    "District": "Palakkad",
+    "Rukn ID": 110285,
+    "Ameer Name": "K Abdul Azeez",
+    "Contact No": 9048157864,
+    "Email Id": "kabdulazeeze@gmail.com"
+  },
+  {
+    "S.No.": 185,
+    "Unit": "Alathur",
+    "Area": "Alathur",
+    "District": "Palakkad",
+    "Rukn ID": 110174,
+    "Ameer Name": "M. Abdul Jabbar",
+    "Contact No": 8089592405,
+    "Email Id": "skylandtt19@gmail.com"
+  },
+  {
+    "S.No.": 186,
+    "Unit": "Cherpulassery",
+    "Area": "Cherpulassery",
+    "District": "Palakkad",
+    "Rukn ID": 113340,
+    "Ameer Name": "Bushairudheen Sharqi",
+    "Contact No": 9645714596,
+    "Email Id": "ne42@gmail.com"
+  },
+  {
+    "S.No.": 187,
+    "Unit": "Chittur",
+    "Area": "Chittur",
+    "District": "Palakkad",
+    "Rukn ID": 110152,
+    "Ameer Name": "Hydru N V",
+    "Contact No": 9446876027,
+    "Email Id": "hydruseli@gmail.c"
+  },
+  {
+    "S.No.": 188,
+    "Unit": "Kavassery",
+    "Area": "Kavassery",
+    "District": "Palakkad",
+    "Rukn ID": 110163,
+    "Ameer Name": "Muhammed Haneefa",
+    "Contact No": 9400802288,
+    "Email Id": "ne47@gmail.com"
+  },
+  {
+    "S.No.": 189,
+    "Unit": "Mannarkkad",
+    "Area": "Mannarkkad",
+    "District": "Palakkad",
+    "Rukn ID": 110247,
+    "Ameer Name": "Ummer Farook K",
+    "Contact No": 9645003777,
+    "Email Id": "kalathil.farooq@gmail.com"
+  },
+  {
+    "S.No.": 190,
+    "Unit": "Mundoor",
+    "Area": "Kongad",
+    "District": "Palakkad",
+    "Rukn ID": 112483,
+    "Ameer Name": "Sidheeque T A",
+    "Contact No": 9605774783,
+    "Email Id": "sidhiknalakath123@gmail.cm"
+  },
+  {
+    "S.No.": 191,
+    "Unit": "Ottappalam",
+    "Area": "Ottappalam",
+    "District": "Palakkad",
+    "Rukn ID": 110271,
+    "Ameer Name": "Mohamed Ali V P",
+    "Contact No": 9946740876,
+    "Email Id": "malisbotp@gmail.com"
+  },
+  {
+    "S.No.": 192,
+    "Unit": "Palakkad",
+    "Area": "Palakkad",
+    "District": "Palakkad",
+    "Rukn ID": 112480,
+    "Ameer Name": "Haris P M",
+    "Contact No": 9745738848,
+    "Email Id": "ne50@gmail.com"
+  },
+  {
+    "S.No.": 193,
+    "Unit": "Parali",
+    "Area": "Parali",
+    "District": "Palakkad",
+    "Rukn ID": 110219,
+    "Ameer Name": "Basheer Hassan",
+    "Contact No": 9496232832,
+    "Email Id": "basheerhasankadur@gmail.com"
+  },
+  {
+    "S.No.": 194,
+    "Unit": "Pattambi",
+    "Area": "Pattambi",
+    "District": "Palakkad",
+    "Rukn ID": 110160,
+    "Ameer Name": "Mohamed Musthafa. P",
+    "Contact No": 9946461297,
+    "Email Id": "muspanakkattil@gmail.com"
+  },
+  {
+    "S.No.": 195,
+    "Unit": "Pezhumkara",
+    "Area": "Palakkad",
+    "District": "Palakkad",
+    "Rukn ID": 110259,
+    "Ameer Name": "Abdussalam K A",
+    "Contact No": 9744627133,
+    "Email Id": "pkdabdussalam@gmail.com"
+  },
+  {
+    "S.No.": 196,
+    "Unit": "Puthukkod",
+    "Area": "Puthukkod",
+    "District": "Palakkad",
+    "Rukn ID": 110167,
+    "Ameer Name": "Firos A S",
+    "Contact No": 9946331601,
+    "Email Id": "ne85@gmail.com"
+  },
+  {
+    "S.No.": 197,
+    "Unit": "Thrithala",
+    "Area": "Thrithala",
+    "District": "Palakkad",
+    "Rukn ID": 110206,
+    "Ameer Name": "Kattetheyil Umarudheen",
+    "Contact No": 8606277913,
+    "Email Id": "umarudheenkattetheyil@gmail.com"
+  },
+  {
+    "S.No.": 198,
+    "Unit": "Vallapuzha",
+    "Area": "Cherpulassery",
+    "District": "Palakkad",
+    "Rukn ID": 110234,
+    "Ameer Name": "Abdul Hakeem Nadwi",
+    "Contact No": 9496821500,
+    "Email Id": "abdulhakeemnadwi@gmail.com"
+  },
+  {
+    "S.No.": 199,
+    "Unit": "Vengannur",
+    "Area": "Alathur",
+    "District": "Palakkad",
+    "Rukn ID": 112481,
+    "Ameer Name": "Abdul Gafoor P M",
+    "Contact No": 9567653778,
+    "Email Id": "agmazahiri@gmail.com"
+  },
+  {
+    "S.No.": 200,
+    "Unit": "Pathanamthitta",
+    "Area": "Pathanamthitta",
+    "District": "Pathanamthitta",
+    "Rukn ID": 109670,
+    "Ameer Name": "Shaji Mm",
+    "Contact No": 9447278742,
+    "Email Id": "mmsalapra@gmail.com"
+  },
+  {
+    "S.No.": 201,
+    "Unit": "Attingal",
+    "Area": "Attingal",
+    "District": "Thiruvananthapuram",
+    "Rukn ID": 109491,
+    "Ameer Name": "S.Salahudeen",
+    "Contact No": 9495583278,
+    "Email Id": "Salahudeentvhouse@gmail.com"
+  },
+  {
+    "S.No.": 202,
+    "Unit": "Chirayinkeezh",
+    "Area": "Chirayinkeezh",
+    "District": "Thiruvananthapuram",
+    "Rukn ID": 109525,
+    "Ameer Name": "Kabir.M",
+    "Contact No": 9446753505,
+    "Email Id": "adhilar.tvm2000@gmail.com"
+  },
+  {
+    "S.No.": 203,
+    "Unit": "Kamaleswaram",
+    "Area": "Thiruvananthapuram West",
+    "District": "Thiruvananthapuram",
+    "Rukn ID": 113372,
+    "Ameer Name": "Katharudheen S",
+    "Contact No": 9895102300,
+    "Email Id": "1arautoparts7@gmail.com"
+  },
+  {
+    "S.No.": 204,
+    "Unit": "Kazhakkoottam",
+    "Area": "Kazhakkoottam",
+    "District": "Thiruvananthapuram",
+    "Rukn ID": 109484,
+    "Ameer Name": "Subair Kunju.A",
+    "Contact No": 7356987245,
+    "Email Id": "3jihkerala@gmail.com"
+  },
+  {
+    "S.No.": 205,
+    "Unit": "Nedumangad",
+    "Area": "Nedumangad",
+    "District": "Thiruvananthapuram",
+    "Rukn ID": 109554,
+    "Ameer Name": "P. Naseemudeen",
+    "Contact No": 9447858381,
+    "Email Id": "pnaseem@gmail.com"
+  },
+  {
+    "S.No.": 206,
+    "Unit": "Palode",
+    "Area": "Palode",
+    "District": "Thiruvananthapuram",
+    "Rukn ID": 109518,
+    "Ameer Name": "Rahim.E",
+    "Contact No": 9946314377,
+    "Email Id": "Rahimkallara1973@gmail.com"
+  },
+  {
+    "S.No.": 207,
+    "Unit": "Thiruvananthapuram North",
+    "Area": "Thiruvananthapuram North",
+    "District": "Thiruvananthapuram",
+    "Rukn ID": 109463,
+    "Ameer Name": "Sameer S",
+    "Contact No": 9745933362,
+    "Email Id": "sameerthundil@gmail.com"
+  },
+  {
+    "S.No.": 208,
+    "Unit": "Thiruvananthapuram South",
+    "Area": "Thiruvananthapuram South",
+    "District": "Thiruvananthapuram",
+    "Rukn ID": 109529,
+    "Ameer Name": "Aarif M",
+    "Contact No": 9746237377,
+    "Email Id": "arifmashali@gmail.com"
+  },
+  {
+    "S.No.": 209,
+    "Unit": "Thiruvananthapuram West",
+    "Area": "Thiruvananthapuram West",
+    "District": "Thiruvananthapuram",
+    "Rukn ID": 109480,
+    "Ameer Name": "Shoukathali Mr",
+    "Contact No": 8943308574,
+    "Email Id": "shoukathnadwi@gmail.com"
+  },
+  {
+    "S.No.": 210,
+    "Unit": "Varkala",
+    "Area": "Varkala",
+    "District": "Thiruvananthapuram",
+    "Rukn ID": 109495,
+    "Ameer Name": "Abdul Khader",
+    "Contact No": 9495012815,
+    "Email Id": "abdulkhader.t.v.m@gmail.com"
+  },
+  {
+    "S.No.": 211,
+    "Unit": "Azhikode",
+    "Area": "Eriyad",
+    "District": "Thrissur",
+    "Rukn ID": 113149,
+    "Ameer Name": "K M Sidhique",
+    "Contact No": 9496333288,
+    "Email Id": "Sidhiquepazhangadan@gmail.com"
+  },
+  {
+    "S.No.": 212,
+    "Unit": "Chavakkad",
+    "Area": "Chavakkad",
+    "District": "Thrissur",
+    "Rukn ID": 110079,
+    "Ameer Name": "Abubacker Thacharakkal",
+    "Contact No": 9497063736,
+    "Email Id": "abubaker390@gmail.com"
+  },
+  {
+    "S.No.": 213,
+    "Unit": "Edakkazhiyur",
+    "Area": "Edakkazhiyur",
+    "District": "Thrissur",
+    "Rukn ID": 110139,
+    "Ameer Name": "I.Mohammad Ali",
+    "Contact No": 9446278419,
+    "Email Id": "mohamedaliikapadath@gmail.com"
+  },
+  {
+    "S.No.": 214,
+    "Unit": "Edavilang",
+    "Area": "Edavilang",
+    "District": "Thrissur",
+    "Rukn ID": 110031,
+    "Ameer Name": "C K Mohamed Najeeb",
+    "Contact No": 7736170780,
+    "Email Id": "ckmohammednajeeb@gmail.com"
+  },
+  {
+    "S.No.": 215,
+    "Unit": "Elanad",
+    "Area": "Chelakkara",
+    "District": "Thrissur",
+    "Rukn ID": 110001,
+    "Ameer Name": "Pa Musthafa",
+    "Contact No": 9847047042,
+    "Email Id": "mapattani8@gmail.com"
+  },
+  {
+    "S.No.": 216,
+    "Unit": "Eriyad",
+    "Area": "Eriyad",
+    "District": "Thrissur",
+    "Rukn ID": 110019,
+    "Ameer Name": "K. M. Veerankutty",
+    "Contact No": 9400108802,
+    "Email Id": "sabeedha@gmail.com"
+  },
+  {
+    "S.No.": 217,
+    "Unit": "Guruvayur",
+    "Area": "Guruvayur",
+    "District": "Thrissur",
+    "Rukn ID": 110105,
+    "Ameer Name": "Sulaiman Azhari V I",
+    "Contact No": 9846363719,
+    "Email Id": ""
+  },
+  {
+    "S.No.": 218,
+    "Unit": "Irinjalakuda",
+    "Area": "Irinjalakuda",
+    "District": "Thrissur",
+    "Rukn ID": 110149,
+    "Ameer Name": "T.M. Abdu Rahman",
+    "Contact No": 9446874263,
+    "Email Id": "tmabdultmr@gmai.com"
+  },
+  {
+    "S.No.": 219,
+    "Unit": "Kalathod",
+    "Area": "Thrissur",
+    "District": "Thrissur",
+    "Rukn ID": 113704,
+    "Ameer Name": "Saleem K M",
+    "Contact No": 9497073028,
+    "Email Id": ""
+  },
+  {
+    "S.No.": 220,
+    "Unit": "Karuvannur",
+    "Area": "Karuvannur",
+    "District": "Thrissur",
+    "Rukn ID": 113352,
+    "Ameer Name": "Ibrahim K K",
+    "Contact No": 9605553877,
+    "Email Id": "kkikutty@gmail.com"
+  },
+  {
+    "S.No.": 221,
+    "Unit": "Kathiyalam",
+    "Area": "Edavilang",
+    "District": "Thrissur",
+    "Rukn ID": 113864,
+    "Ameer Name": "R A Sabiq",
+    "Contact No": 9495881678,
+    "Email Id": "sabicksha@gmail.com"
+  },
+  {
+    "S.No.": 222,
+    "Unit": "Kodungallur",
+    "Area": "Kodungallur",
+    "District": "Thrissur",
+    "Rukn ID": 110009,
+    "Ameer Name": "Mohamed Rasheed E A",
+    "Contact No": 8086470811,
+    "Email Id": "rashhuda@gmail.com"
+  },
+  {
+    "S.No.": 223,
+    "Unit": "Kunnamkulam",
+    "Area": "Kunnamkulam",
+    "District": "Thrissur",
+    "Rukn ID": 117537,
+    "Ameer Name": "Shamsudeen P S",
+    "Contact No": 8547262934,
+    "Email Id": "shamsps@gmail.com"
+  },
+  {
+    "S.No.": 224,
+    "Unit": "Mala",
+    "Area": "Mala",
+    "District": "Thrissur",
+    "Rukn ID": 110071,
+    "Ameer Name": "T K Abdulsalam",
+    "Contact No": 9387528308,
+    "Email Id": "abdusalam@gmail.com"
+  },
+  {
+    "S.No.": 225,
+    "Unit": "Mathilakam",
+    "Area": "Mathilakam",
+    "District": "Thrissur",
+    "Rukn ID": 110043,
+    "Ameer Name": "P.A Vahid",
+    "Contact No": 9544914656,
+    "Email Id": "wahidmathilakam@gmail.com"
+  },
+  {
+    "S.No.": 226,
+    "Unit": "Nattika",
+    "Area": "Nattika",
+    "District": "Thrissur",
+    "Rukn ID": 110100,
+    "Ameer Name": "Abdul Rahman Pk",
+    "Contact No": 9846502887,
+    "Email Id": "parakkotar@gmail.com"
+  },
+  {
+    "S.No.": 227,
+    "Unit": "Padoor",
+    "Area": "Guruvayur",
+    "District": "Thrissur",
+    "Rukn ID": 110102,
+    "Ameer Name": "Hamsa A V",
+    "Contact No": 9447855415,
+    "Email Id": "hamzamass25@gmail.com"
+  },
+  {
+    "S.No.": 228,
+    "Unit": "Perumpilavu",
+    "Area": "Kunnamkulam",
+    "District": "Thrissur",
+    "Rukn ID": 110130,
+    "Ameer Name": "Shaju Mohammedunni. K.M.",
+    "Contact No": 8129808060,
+    "Email Id": "shajumohd.ansar@gmail.com"
+  },
+  {
+    "S.No.": 229,
+    "Unit": "S N Puram",
+    "Area": "S N Puram",
+    "District": "Thrissur",
+    "Rukn ID": 110046,
+    "Ameer Name": "V.A Fasalurahman",
+    "Contact No": 9995203933,
+    "Email Id": "kathikode2010@gmail.com"
+  },
+  {
+    "S.No.": 230,
+    "Unit": "Thrissur",
+    "Area": "Thrissur",
+    "District": "Thrissur",
+    "Rukn ID": 113705,
+    "Ameer Name": "Salim Hamza K H",
+    "Contact No": 9605893160,
+    "Email Id": "ne62@wgmial.com"
+  },
+  {
+    "S.No.": 231,
+    "Unit": "Vadakkekad",
+    "Area": "Vadakkekad",
+    "District": "Thrissur",
+    "Rukn ID": 110064,
+    "Ameer Name": "Muhammadali K.H.",
+    "Contact No": 9544052864,
+    "Email Id": "mohammedalikh001@gmail.com"
+  },
+  {
+    "S.No.": 232,
+    "Unit": "Vatanapally",
+    "Area": "Vatanapally",
+    "District": "Thrissur",
+    "Rukn ID": 112484,
+    "Ameer Name": "Asharaf A P",
+    "Contact No": 9846555256,
+    "Email Id": "ashrafap@yahoo.com"
+  },
+  {
+    "S.No.": 233,
+    "Unit": "Wadakkanchery",
+    "Area": "Wadakkanchery",
+    "District": "Thrissur",
+    "Rukn ID": 112495,
+    "Ameer Name": "Mohammed Kutty E M",
+    "Contact No": 9947996763,
+    "Email Id": "mkedayath@gmail.com"
+  },
+  {
+    "S.No.": 234,
+    "Unit": "Kalpatta",
+    "Area": "Kalpatta",
+    "District": "Wayanad",
+    "Rukn ID": 111412,
+    "Ameer Name": "Abdul Jalal Ev",
+    "Contact No": 9497085494,
+    "Email Id": "abduljalalev@gmail.com"
+  },
+  {
+    "S.No.": 235,
+    "Unit": "Sulthan Bathery",
+    "Area": "Sulthan Bathery",
+    "District": "Wayanad",
+    "Rukn ID": 111401,
+    "Ameer Name": "V. Muhammed Sherief",
+    "Contact No": 9447140114,
+    "Email Id": "vms0114@gmail.com"
+  }
+]

@@ -1,0 +1,220 @@
+{
+  "normalUsers": [
+    {
+      "name": "Abdul Jaleel Kunnumpurath",
+      "gender": "Male",
+      "unit": "Keezhmad",
+      "ruknId": "119941",
+      "serialNo": 93
+    },
+    {
+      "name": "Kabeer K A",
+      "gender": "Male",
+      "unit": "Kothamangalam",
+      "ruknId": "119942",
+      "serialNo": 108
+    },
+    {
+      "name": "Sadarudheen T A",
+      "gender": "Male",
+      "unit": "Vypin South",
+      "ruknId": "119783",
+      "serialNo": 111
+    },
+    {
+      "name": "Nayeem Langalath Vazhayil *",
+      "gender": "Male",
+      "unit": "Kannur Town",
+      "ruknId": "119984",
+      "serialNo": 68
+    },
+    {
+      "name": "Moosa N M",
+      "gender": "Male",
+      "unit": "Madayi",
+      "ruknId": "119784",
+      "serialNo": 87
+    },
+    {
+      "name": "Kochunny K M",
+      "gender": "Male",
+      "unit": "Kottayam",
+      "ruknId": "119785",
+      "serialNo": 49
+    },
+    {
+      "name": "Sadique Ayathuparambil *",
+      "gender": "Male",
+      "unit": "Chennamangallur",
+      "ruknId": "119786",
+      "serialNo": 94
+    },
+    {
+      "name": "Muhammed Anwar K C",
+      "gender": "Male",
+      "unit": "Cheruvadi",
+      "ruknId": "119985",
+      "serialNo": 109
+    },
+    {
+      "name": "Chennat Sadique Ali *",
+      "gender": "Male",
+      "unit": "Nadapuram",
+      "ruknId": "119986",
+      "serialNo": 309
+    },
+    {
+      "name": "Muneer Kaliamburath *",
+      "gender": "Male",
+      "unit": "Nadapuram",
+      "ruknId": "119787",
+      "serialNo": 313
+    },
+    {
+      "name": "Abdussalam M P",
+      "gender": "Male",
+      "unit": "Narikkuni",
+      "ruknId": "119987",
+      "serialNo": 323
+    },
+    {
+      "name": "Khalid V P",
+      "gender": "Male",
+      "unit": "Vatakara",
+      "ruknId": "119943",
+      "serialNo": 491
+    },
+    {
+      "name": "Mohammed Sadique C",
+      "gender": "Male",
+      "unit": "Kondotty",
+      "ruknId": "119944",
+      "serialNo": 357
+    },
+    {
+      "name": "Aliman K",
+      "gender": "Male",
+      "unit": "Kuniyil",
+      "ruknId": "119788",
+      "serialNo": 424
+    },
+    {
+      "name": "Sabira P M",
+      "gender": "Female",
+      "unit": "Makkarapparamba",
+      "ruknId": "119945",
+      "serialNo": 481
+    },
+    {
+      "name": "Soudha M K",
+      "gender": "Female",
+      "unit": "Makkarapparamba",
+      "ruknId": "119946",
+      "serialNo": 487
+    },
+    {
+      "name": "Subaida V",
+      "gender": "Female",
+      "unit": "Makkarapparamba",
+      "ruknId": "119947",
+      "serialNo": 488
+    },
+    {
+      "name": "Shihabudheen Nadwi P K *",
+      "gender": "Male",
+      "unit": "Mampad",
+      "ruknId": "119988",
+      "serialNo": 500
+    },
+    {
+      "name": "Abdul Azeez K",
+      "gender": "Male",
+      "unit": "Maranchery",
+      "ruknId": "119789",
+      "serialNo": 549
+    },
+    {
+      "name": "Jameela Kalliyath",
+      "gender": "Female",
+      "unit": "Mundumuzhi",
+      "ruknId": "119790",
+      "serialNo": 598
+    },
+    {
+      "name": "Thameem Abdulla *",
+      "gender": "Male",
+      "unit": "Rahmaniya",
+      "ruknId": "119791",
+      "serialNo": 837
+    },
+    {
+      "name": "Suhail Anamangadan *",
+      "gender": "Male",
+      "unit": "Santhapuram",
+      "ruknId": "119989",
+      "serialNo": 894
+    },
+    {
+      "name": "Kunhamina P",
+      "gender": "Female",
+      "unit": "Thirurkad",
+      "ruknId": "119948",
+      "serialNo": 962
+    },
+    {
+      "name": "Shameema Sakkeer",
+      "gender": "Female",
+      "unit": "Thirurkad",
+      "ruknId": "119792",
+      "serialNo": 973
+    },
+    {
+      "name": "Muneesh A C *",
+      "gender": "Male",
+      "unit": "Vailathur",
+      "ruknId": "119949",
+      "serialNo": 1019
+    },
+    {
+      "name": "Saleena M",
+      "gender": "Female",
+      "unit": "Chittur",
+      "ruknId": "119950",
+      "serialNo": 52
+    },
+    {
+      "name": "Suhara K M",
+      "gender": "Female",
+      "unit": "Chittur",
+      "ruknId": "119951",
+      "serialNo": 56
+    },
+    {
+      "name": "Shejeer M Abdul Rahiman *",
+      "gender": "Male",
+      "unit": "Kalathod",
+      "ruknId": "119990",
+      "serialNo": 113
+    },
+    {
+      "name": "Shameer V S",
+      "gender": "Male",
+      "unit": "S N Puram",
+      "ruknId": "119793",
+      "serialNo": 262
+    },
+    {
+      "name": "Salma K. P",
+      "gender": "Female",
+      "unit": "Sulthan Bathery",
+      "ruknId": "111921",
+      "serialNo": 28
+    }
+  ],
+  "unitAdmins": [],
+  "timestamp": "2025-12-10T06:49:15.429Z",
+  "summary": {
+    "normalUsersToMigrate": 30,
+    "unitAdminsToMigrate": 0
+  }
+}

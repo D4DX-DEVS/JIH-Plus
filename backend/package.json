@@ -1,0 +1,56 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "description": "Combined JIH and IHTHISABI Backend API",
+  "scripts": {
+    "start": "nodemon server.js",
+    "ihtisabi:analyze": "node scripts/analyzeihtisabiUserMigration.js",
+    "ihtisabi:migrate": "node scripts/migrateihtisabiUsers.js",
+    "ihtisabi:migrate:dry": "node scripts/migrateihtisabiUsers.js --dry-run",
+    "ihtisabi:migrate:enhanced": "node scripts/migrateEnhancedUsers.js",
+    "ihtisabi:migrate:enhanced:dry": "node scripts/migrateEnhancedUsers.js --dry-run",
+    "ihtisabi:fix:errors": "node scripts/fixErrorUsers.js",
+    "ihtisabi:verify": "node scripts/verifyMigration.js",
+    "ihtisabi:update": "node scripts/updateExistingUsers.js",
+    "ihtisabi:update:dry": "node scripts/updateExistingUsers.js --dry-run",
+    "ihtisabi:migrate:areas": "node scripts/migrateUnitAdminAreas.js",
+    "ihtisabi:migrate:areas:dry": "node scripts/migrateUnitAdminAreas.js --dry-run",
+    "migrate:gulf-to-aged": "node migrations/updateGulfToAged.js",
+    "migrate:locations": "node scripts/migrateLocationFromJson.js",
+    "migrate:locations:dry": "node scripts/migrateLocationFromJson.js --dry-run"
+  },
+  "keywords": [
+    "jih",
+    "ihthisabi",
+    "aikyam",
+    "mern",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1692.0",
+    "axios": "^1.12.2",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^6.10.0",
+    "helmet": "^7.0.0",
+    "joi": "^17.9.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.18.0",
+    "mongoose": "^8.17.2",
+    "morgan": "^1.10.0",
+    "multer": "^2.0.2",
+    "node-cron": "^4.2.1",
+    "nodemon": "^3.1.11",
+    "openai": "^4.104.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "jest": "^29.6.2",
+    "supertest": "^6.3.3"
+  }
+}
