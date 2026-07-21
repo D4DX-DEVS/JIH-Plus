@@ -674,28 +674,26 @@ const UserReportsPage = ({ onBack, userData }) => {
 
       {!selectedReport && (
         <>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-3">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-[#002349] bg-white"
-              >
-                <option value="">All Status</option>
-                <option value="submitted">Submitted</option>
-                <option value="pending">Pending</option>
-              </select>
-            </div>
-            <div className="relative w-full md:w-80">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="relative w-full sm:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by title or type..."
-                className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 bg-white shadow-sm"
+                className="w-full h-10 pl-10 pr-4 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 bg-white shadow-sm"
               />
             </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 border border-gray-300 rounded-xl px-3 text-sm focus:ring-2 focus:ring-[#002349] focus:border-[#002349] bg-white shadow-sm w-full sm:w-auto"
+            >
+              <option value="">All Status</option>
+              <option value="submitted">Submitted</option>
+              <option value="pending">Pending</option>
+            </select>
           </div>
 
           <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden min-w-0">
