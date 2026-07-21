@@ -33,6 +33,22 @@ const fieldSchema = new mongoose.Schema({
     rows: { type: Number },
     rowTitles: [{ type: String }],
     firstColumnHeader: { type: String, default: '' },
+    // Advanced table: per-column/row static-vs-input config, admin static cell
+    // values, and optional auto-totals. See frontend utils/rowColumnTable.js.
+    columnMeta: [{
+        kind: { type: String, enum: ['input', 'static'], default: 'input' },
+        inputType: { type: String, enum: ['text', 'number'], default: 'text' },
+        _id: false
+    }],
+    rowMeta: [{
+        kind: { type: String, enum: ['input', 'static'], default: 'input' },
+        _id: false
+    }],
+    staticCells: { type: mongoose.Schema.Types.Mixed, default: {} },
+    sumRow: { type: Boolean, default: false },
+    sumColumn: { type: Boolean, default: false },
+    sumRowLabel: { type: String, default: 'Total' },
+    sumColumnLabel: { type: String, default: 'Total' },
     // Conditional logic
     conditionalLogic: {
         field: { type: Number },

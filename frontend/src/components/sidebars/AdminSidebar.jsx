@@ -4,23 +4,26 @@ import {
   LogOut,
   Eye,
   Bell,
-  FileText, 
+  FileText,
   Calendar,
   CalendarDays,
   Star,
-  Users, 
+  Users,
   BarChart3,
   BarChart2,
   MapPin,
   Menu,
   X,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
   LayoutDashboard,
   Target as TargetIcon
 } from 'lucide-react';
 import jihLogoWhite from '../../assets/LogoWhite.png';
 import PoweredByD4DX from './PoweredByD4DX';
+import { SIDEBAR_THEME, DYNAMIC_REPORT_META, REPORT_TYPE_STYLES } from './sidebarTheme';
 
 const AdminSidebar = ({
   activeTab,
@@ -52,39 +55,33 @@ const AdminSidebar = ({
       id: 'dashboard',
       label: 'ഡാഷ്ബോർഡ്',
       icon: LayoutDashboard,
-      color: '#002349',
       onClick: () => navigate('/expansion-portal/dashboard')
     },
     {
       id: 'yearly',
       label: 'വാർഷിക റിപ്പോർട്ട്',
-      icon: FileText,
-      color: '#002349'
+      icon: FileText
     },
     {
       id: 'monthly',
       label: 'പ്രതിമാസ റിപ്പോർട്ട്',
-      icon: Calendar,
-      color: '#002349'
+      icon: Calendar
     },
     {
       id: 'membership',
       label: 'അംഗത്വം',
       icon: Users,
-      color: '#002349',
       onClick: onNavigateToMembership
     },
     {
       id: 'stats',
       label: 'സ്ഥിതിവിവരക്കണക്കുകൾ',
-      icon: BarChart3,
-      color: '#002349'
+      icon: BarChart3
     },
     {
       id: 'view-reports',
       label: 'റിപ്പോർട്ട് ജനറേഷൻ',
       icon: Eye,
-      color: '#002349',
       onClick: onNavigateToReports
     },
     {
@@ -92,29 +89,28 @@ const AdminSidebar = ({
       type: 'group',
       label: 'ഡൈനാമിക് സബ്മിഷൻ',
       icon: ClipboardList,
-      color: '#002349',
       children: [
         {
           id: 'dynamic-submissions-monthly',
-          label: 'മന്ത്ലി',
+          reportType: 'monthly',
           icon: Calendar,
           onClick: () => navigate('/admin/dynamic-submissions/monthly')
         },
         {
           id: 'dynamic-submissions-quarterly',
-          label: 'ക്വാർട്ടർലി',
+          reportType: 'quarterly',
           icon: BarChart2,
           onClick: () => navigate('/admin/dynamic-submissions/quarterly')
         },
         {
           id: 'dynamic-submissions-yearly',
-          label: 'ഇയർലി',
+          reportType: 'yearly',
           icon: CalendarDays,
           onClick: () => navigate('/admin/dynamic-submissions/yearly')
         },
         {
           id: 'dynamic-submissions-special',
-          label: 'സ്പെഷ്യൽ',
+          reportType: 'special',
           icon: Star,
           onClick: () => navigate('/admin/dynamic-submissions/special')
         }
@@ -124,21 +120,18 @@ const AdminSidebar = ({
       id: 'notifications',
       label: 'നോട്ടിഫിക്കേഷൻ',
       icon: Bell,
-      color: '#002349',
       onClick: onNavigateToNotifications
     },
     {
       id: 'targets',
       label: 'ടാർഗറ്റ്',
       icon: TargetIcon,
-      color: '#002349',
       onClick: () => navigate('/targets')
     },
     {
       id: 'master-data',
       label: 'മാസ്റ്റർ ഡാറ്റ',
       icon: MapPin,
-      color: '#002349',
       onClick: () => navigate('/admin/master-data')
     }
   ];
@@ -190,51 +183,53 @@ const AdminSidebar = ({
     <>
       {/* Mobile backdrop */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-30 bg-gray-900/50 backdrop-blur-sm lg:hidden"
           onClick={toggleSidebar}
         />
       )}
 
       {/* Sidebar */}
-      <aside 
-        className={`fixed inset-y-0 left-0 z-40 w-[min(18rem,85vw)] sm:w-72 bg-white shadow-2xl border-r border-gray-200 transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:translate-x-0 lg:flex-shrink-0 overflow-hidden ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72'} ${
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-[min(18rem,85vw)] sm:w-72 ${SIDEBAR_THEME.bg} shadow-2xl border-r ${SIDEBAR_THEME.border} transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:translate-x-0 lg:flex-shrink-0 overflow-hidden ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72'} ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{ willChange: 'transform' }}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full relative">
+          {/* Floating desktop collapse toggle */}
+          <button
+            onClick={() => setIsDesktopCollapsed((prev) => !prev)}
+            className={`hidden lg:flex absolute top-16 -right-3 z-10 h-6 w-6 items-center justify-center rounded-full transition-all ${SIDEBAR_THEME.toggleBtn}`}
+            title={isDesktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {isDesktopCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+          </button>
+
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-gradient-to-r from-[#002349] to-[#1a3a5c]">
+          <div className={`flex items-center h-16 justify-between px-4 border-b ${SIDEBAR_THEME.border} ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : ''}`}>
             <div className="flex items-center space-x-3 min-w-0">
-              <img 
-                src={jihLogoWhite} 
-                alt="JIH Logo" 
-                className="h-9 w-auto"
+              <img
+                src={jihLogoWhite}
+                alt="JIH Logo"
+                className="h-9 w-9 flex-shrink-0 object-contain"
               />
               <div className={isDesktopCollapsed ? 'lg:hidden' : ''}>
-                <h2 className="text-base font-bold text-white" style={{ fontFamily: 'Cinzel, serif' }}>Admin Dashboard</h2>
+                <h2 className="text-base font-bold text-white whitespace-nowrap" style={{ fontFamily: 'Cinzel, serif' }}>Admin Dashboard</h2>
               </div>
             </div>
             <button
-              onClick={() => setIsDesktopCollapsed((prev) => !prev)}
-              className="hidden lg:inline-flex text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors"
-              title={isDesktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <button
               onClick={toggleSidebar}
-              className="lg:hidden text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors"
+              className="lg:hidden text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors flex-shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* User Info */}
-          <div className={`px-4 py-3 border-b border-gray-200 bg-gray-50 ${isDesktopCollapsed ? 'lg:hidden' : ''}`}>
-            <p className="text-xs text-gray-600 font-medium">Welcome,</p>
-            <p className="text-xs text-[#002349] font-semibold truncate">{resolvedAdminEmail}</p>
+          <div className={`mx-3 mt-3 mb-1 rounded-xl p-3 ${SIDEBAR_THEME.infoCard} ${isDesktopCollapsed ? 'lg:hidden' : ''}`}>
+            <p className={`text-[10px] uppercase tracking-wide font-semibold ${SIDEBAR_THEME.infoLabel}`}>Welcome,</p>
+            <p className={`text-xs font-bold ${SIDEBAR_THEME.infoPrimary} truncate`}>{resolvedAdminEmail}</p>
           </div>
 
           {/* Navigation Tabs */}
@@ -250,24 +245,23 @@ const AdminSidebar = ({
                     <div key={item.id}>
                       <button
                         onClick={() => setExpandedGroup(isOpen ? null : item.id)}
-                        className={`w-full flex items-center ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : 'justify-between px-3'} py-2.5 text-xs font-medium rounded-lg transition-all duration-200 ${
-                          isGroupActive
-                            ? 'bg-gradient-to-r text-white shadow-lg'
-                            : 'text-gray-700 hover:bg-gray-100 hover:text-[#002349]'
+                        className={`w-full flex items-center ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : 'justify-between px-3'} py-2.5 text-xs font-medium rounded-xl transition-all duration-200 ${
+                          isGroupActive ? SIDEBAR_THEME.groupActive : SIDEBAR_THEME.navDefault
                         }`}
-                        style={isGroupActive ? { background: `linear-gradient(to right, ${item.color}, ${item.color}dd)` } : {}}
                       >
                         <div className={`flex items-center ${isDesktopCollapsed ? 'lg:space-x-0' : 'space-x-3'}`}>
-                          <Icon className={`w-4 h-4 ${isGroupActive ? 'text-white' : 'text-gray-500'}`} />
+                          <Icon className={`w-4 h-4 ${isGroupActive ? SIDEBAR_THEME.iconActive : SIDEBAR_THEME.iconDefault}`} />
                           <span className={isDesktopCollapsed ? 'lg:hidden' : ''}>{item.label}</span>
                         </div>
-                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${isGroupActive ? 'text-white' : 'text-gray-400'} ${isDesktopCollapsed ? 'lg:hidden' : ''}`} />
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} text-white/40 ${isDesktopCollapsed ? 'lg:hidden' : ''}`} />
                       </button>
                       {isOpen && !isDesktopCollapsed && (
-                        <div className="mt-0.5 ml-3 space-y-0.5">
+                        <div className="mt-1 ml-3 space-y-1">
                           {(item.children || []).map(child => {
                             const ChildIcon = child.icon;
                             const isChildActive = location.pathname === `/admin/dynamic-submissions/${child.id.replace('dynamic-submissions-', '')}`;
+                            const meta = DYNAMIC_REPORT_META[child.reportType];
+                            const style = REPORT_TYPE_STYLES[meta.color];
                             return (
                               <button
                                 key={child.id}
@@ -275,15 +269,13 @@ const AdminSidebar = ({
                                   child.onClick?.();
                                   if (toggleSidebar) toggleSidebar();
                                 }}
-                                className={`w-full flex items-center pl-3 pr-2 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                                  isChildActive
-                                    ? 'bg-[#002349]/10 text-[#002349] font-semibold'
-                                    : 'text-gray-600 hover:bg-gray-100 hover:text-[#002349]'
+                                className={`w-full flex items-center pl-3 pr-2 py-2 text-xs font-medium rounded-lg transition-colors ${
+                                  isChildActive ? style.active : style.base
                                 }`}
                               >
                                 <div className="flex items-center gap-2">
-                                  <ChildIcon className={`w-3.5 h-3.5 flex-shrink-0 ${isChildActive ? 'text-[#002349]' : 'text-gray-400'}`} />
-                                  <span>{child.label}</span>
+                                  <ChildIcon className={`w-3.5 h-3.5 flex-shrink-0 ${style.icon}`} />
+                                  <span>{meta.label}</span>
                                 </div>
                               </button>
                             );
@@ -314,17 +306,12 @@ const AdminSidebar = ({
                   <button
                     key={item.id}
                     onClick={handleClick}
-                    className={`w-full flex items-center ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : 'justify-between px-3'} py-2.5 text-xs font-medium rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-r text-white shadow-lg'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-[#002349]'
+                    className={`w-full flex items-center ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : 'justify-between px-3'} py-2.5 text-xs font-medium rounded-xl transition-all duration-200 ${
+                      isActive ? SIDEBAR_THEME.navActive : SIDEBAR_THEME.navDefault
                     }`}
-                    style={isActive ? {
-                      background: `linear-gradient(to right, ${item.color}, ${item.color}dd)`
-                    } : {}}
                   >
                     <div className={`flex items-center ${isDesktopCollapsed ? 'lg:space-x-0' : 'space-x-3'}`}>
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                      <Icon className={`w-4 h-4 ${isActive ? SIDEBAR_THEME.iconActive : SIDEBAR_THEME.iconDefault}`} />
                       <span className={isDesktopCollapsed ? 'lg:hidden' : ''}>{item.label}</span>
                     </div>
                   </button>
@@ -334,8 +321,8 @@ const AdminSidebar = ({
           </nav>
 
           {/* Powered by and Logout Buttons */}
-          <div className="p-3 space-y-1.5">
-            <PoweredByD4DX collapsed={isDesktopCollapsed} />
+          <div className="p-3 space-y-1.5 border-t border-white/10">
+            <PoweredByD4DX collapsed={isDesktopCollapsed} dark />
 
             {/* Logout Button */}
             <button
@@ -343,7 +330,7 @@ const AdminSidebar = ({
                 onLogout();
                 if (toggleSidebar) toggleSidebar();
               }}
-              className={`w-full flex items-center justify-center ${isDesktopCollapsed ? 'lg:space-x-0 lg:px-2' : 'space-x-2 px-3'} py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-[#002349] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#002349] rounded-lg transition-all duration-200 shadow-md hover:shadow-lg`}
+              className={`w-full flex items-center justify-center ${isDesktopCollapsed ? 'lg:space-x-0 lg:px-2' : 'space-x-2 px-3'} py-2.5 text-xs font-semibold rounded-xl transition-all duration-200 ${SIDEBAR_THEME.logout}`}
             >
               <LogOut className="w-4 h-4" />
               <span className={isDesktopCollapsed ? 'lg:hidden' : ''}>Logout</span>
@@ -356,4 +343,3 @@ const AdminSidebar = ({
 };
 
 export default AdminSidebar;
-

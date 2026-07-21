@@ -5,6 +5,7 @@ import axios from 'axios';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
+import RowColumnReadonly from '../components/reportRenderer/RowColumnReadonly';
 import jihLogo from '../assets/LogoColor.png';
 
 const ReportSubmissionsPage = ({ onLogout }) => {
@@ -240,50 +241,16 @@ const ReportSubmissionsPage = ({ onLogout }) => {
 
   // Render a field value from the new pages/formData format, respecting field type
   const renderFieldValue = (field, rawValue) => {
+    // ── Table / Row-Column field (renders even when blank, to show static cells) ──
+    if (field.type === 'row') {
+      return <RowColumnReadonly field={field} value={rawValue} />;
+    }
+
     const isEmpty = rawValue === undefined || rawValue === null || rawValue === '' ||
       (Array.isArray(rawValue) && rawValue.length === 0);
 
     if (isEmpty) {
       return <span className="text-gray-400 italic text-sm">Not answered</span>;
-    }
-
-    // ── Table / Row-Column field ──
-    if (field.type === 'row') {
-      const rows = field.rowTitles || [];
-      const cols = field.columnTitles || [];
-      const grid = Array.isArray(rawValue) ? rawValue : [];
-      return (
-        <div className="overflow-x-auto mt-1">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr>
-                <th className="border border-gray-300 bg-gray-100 px-3 py-2 text-left text-xs font-semibold text-gray-600 min-w-[7rem]">
-                  {field.firstColumnHeader || ''}
-                </th>
-                {cols.map((col, ci) => (
-                  <th key={ci} className="border border-gray-300 bg-gray-100 px-3 py-2 text-center text-xs font-semibold text-gray-600">
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, ri) => (
-                <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700">
-                    {row}
-                  </td>
-                  {cols.map((_, ci) => (
-                    <td key={ci} className="border border-gray-300 px-3 py-2 text-sm text-center text-gray-900">
-                      {grid[ri]?.[ci] ?? ''}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
     }
 
     // ── Checkbox / Multi-select: array of selected options ──
@@ -465,6 +432,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
           onDynamicReports={handleUnitDynamicShortcut}
           unitName={unitName}
           areaName={unitAreaName}
+          districtName={userData?.district || userData?.districtName || ''}
           isMobileOpen={isUnitSidebarOpen}
           onMobileToggle={() => setIsUnitSidebarOpen((prev) => !prev)}
         />

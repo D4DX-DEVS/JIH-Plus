@@ -195,6 +195,7 @@ const RuknDetailPage = () => {
           onDynamicReports={handleDynamicReports}
           onNavigateToMembership={handleNavigateToMembership}
           areaName={userData?.area || userData?.areaName || '—'}
+          districtName={userData?.district || userData?.districtName || ''}
           isMobileOpen={isSidebarOpen}
           onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
         />
@@ -210,6 +211,7 @@ const RuknDetailPage = () => {
           onNavigateToMembership={handleNavigateToMembership}
           unitName={userData?.unit || userData?.unitName || '—'}
           areaName={userData?.area || userData?.areaName || ''}
+          districtName={userData?.district || userData?.districtName || ''}
           isMobileOpen={isSidebarOpen}
           onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
         />

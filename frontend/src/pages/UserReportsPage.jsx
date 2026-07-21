@@ -14,7 +14,8 @@ import {
   Pencil,
   Trash2,
   Eye,
-  Download
+  Download,
+  FileText
 } from 'lucide-react';
 import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
@@ -587,6 +588,16 @@ const UserReportsPage = ({ onBack, userData }) => {
       );
   }, [reports, searchTerm, activeType, statusFilter]);
 
+  // The report's "reportFor" field only tells us the target user type
+  // (unit/area/district). Show the viewer's own entity name instead.
+  const targetEntityName = isDistrictUser
+    ? districtName
+    : isAreaUser
+      ? areaName
+      : isUnitUser
+        ? unitName
+        : '';
+
   const pageContent = (
     <div className="space-y-6 min-w-0 overflow-x-hidden">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -607,24 +618,39 @@ const UserReportsPage = ({ onBack, userData }) => {
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#002349] break-words">റിപ്പോർട്ട് ശേഖരണം</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#002349] break-words">റിപ്പോർട്ട് ശേഖരണം</h1>
         </div>
-        <div className="grid grid-cols-3 gap-3 sm:flex sm:items-center sm:gap-6 w-full sm:w-auto">
-          <div className="text-right">
-            <p className="text-xs text-gray-500">ആകെ</p>
-            <p className="text-base font-semibold text-[#002349]">{reports.length}</p>
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2 sm:gap-2.5 rounded-xl sm:rounded-2xl border border-gray-200 bg-white p-2 sm:p-3 shadow-sm">
+            <span className="flex h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#002349]/10 text-[#002349]">
+              <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-base sm:text-xl font-bold text-[#002349] leading-none">{reports.length}</p>
+              <p className="text-[9px] sm:text-[11px] leading-tight text-gray-500 mt-0.5">ആകെ</p>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-gray-500">സമർപ്പിച്ചത്</p>
-            <p className="text-base font-semibold text-green-600">
-              {reports.filter((r) => r.status === 'submitted').length}
-            </p>
+          <div className="flex items-center gap-2 sm:gap-2.5 rounded-xl sm:rounded-2xl border border-green-200 bg-green-50 p-2 sm:p-3 shadow-sm">
+            <span className="flex h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700">
+              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-base sm:text-xl font-bold text-green-700 leading-none">
+                {reports.filter((r) => r.status === 'submitted').length}
+              </p>
+              <p className="text-[9px] sm:text-[11px] leading-tight text-green-700/70 mt-0.5">സമർപ്പിച്ചത്</p>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-gray-500">ബാക്കിയായത്</p>
-            <p className="text-base font-semibold text-amber-600">
-              {reports.filter((r) => r.status !== 'submitted').length}
-            </p>
+          <div className="flex items-center gap-2 sm:gap-2.5 rounded-xl sm:rounded-2xl border border-amber-200 bg-amber-50 p-2 sm:p-3 shadow-sm">
+            <span className="flex h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-base sm:text-xl font-bold text-amber-700 leading-none">
+                {reports.filter((r) => r.status !== 'submitted').length}
+              </p>
+              <p className="text-[9px] sm:text-[11px] leading-tight text-amber-700/70 mt-0.5">ബാക്കിയായത്</p>
+            </div>
           </div>
         </div>
       </div>
@@ -683,7 +709,26 @@ const UserReportsPage = ({ onBack, userData }) => {
                 No reports found. Try adjusting your search.
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                {/* Mobile: report name + a single Open action only — the full
+                    table needs horizontal scroll to reach the action column,
+                    which is a critical UX problem on small screens. */}
+                <div className="sm:hidden divide-y divide-gray-200">
+                  {filteredReports.map((report) => (
+                    <div key={report._id} className="flex items-center justify-between gap-3 px-4 py-3.5">
+                      <p className="flex-1 min-w-0 text-sm font-semibold text-[#002349] break-words">{report.title}</p>
+                      <button
+                        onClick={() => handleSelectReport(report._id)}
+                        className="flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#002349] text-white font-semibold text-xs shadow-sm hover:bg-[#1a3a5c] transition-colors"
+                      >
+                        Open Report
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tablet / desktop: full detail table */}
+                <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full min-w-[640px]">
                   <thead className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white">
                     <tr>
@@ -705,7 +750,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex ${typeBadgeClass(
+                            className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-flex ${typeBadgeClass(
                               report.type
                             )}`}
                           >
@@ -794,7 +839,8 @@ const UserReportsPage = ({ onBack, userData }) => {
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             )}
           </div>
         </>
@@ -819,19 +865,19 @@ const UserReportsPage = ({ onBack, userData }) => {
             <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-4 sm:p-6 space-y-3">
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex-1">
-                  <p className="text-xs uppercase tracking-wide text-gray-500 font-medium">
-                    {selectedReport.reportFor?.toUpperCase() || 'REPORT'}
+                  <p className="text-xs uppercase tracking-wide text-gray-500 font-medium truncate">
+                    {targetEntityName || selectedReport.reportFor || 'REPORT'}
                   </p>
-                  <h2 className="text-2xl font-bold text-[#002349] mt-1">{selectedReport.title}</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#002349] mt-1">{selectedReport.title}</h2>
                   {selectedReport.description && <p className="text-sm text-gray-600 mt-1">{selectedReport.description}</p>}
                   {isNewFormat && currentPageInfo?.title && (
-                    <p className="text-sm font-semibold text-[#957C3D] mt-2">
+                    <p className="text-base sm:text-lg font-semibold text-[#957C3D] mt-2">
                       {currentPageInfo.title}
                     </p>
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex ${typeBadgeClass(selectedReport.type)}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-flex ${typeBadgeClass(selectedReport.type)}`}>
                     {selectedReport.type}
                   </span>
                   {currentStatus && (
@@ -912,6 +958,27 @@ const UserReportsPage = ({ onBack, userData }) => {
                       {part.questions?.map((question, questionIndex) => {
                         const key = `${partIndex}_${questionIndex}`;
                         const value = answers[key] ?? (question.answerType === 'checkbox' ? [] : '');
+                        const inputClass = `border border-gray-200 rounded-lg px-3 py-2 text-sm ${isReadOnly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`;
+
+                        // text/number questions: label and input sit on the same row.
+                        if (['text', 'number'].includes(question.answerType)) {
+                          return (
+                            <div key={questionIndex} className="border border-gray-200 rounded-xl p-4 bg-gray-50 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                              <span className="text-sm font-semibold text-gray-900 sm:w-1/2 sm:flex-shrink-0">
+                                {question.questionText}
+                                {question.isRequired && <span className="text-red-500 ml-1">*</span>}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                {question.answerType === 'text' ? (
+                                  <input type="text" value={value || ''} onChange={e => handleAnswerChange(key, e.target.value)} placeholder={question.placeholder || 'Enter your answer'} disabled={isReadOnly} className={`w-full ${inputClass}`} />
+                                ) : (
+                                  <input type="number" value={value ?? ''} onChange={e => handleAnswerChange(key, e.target.value)} disabled={isReadOnly} className={`w-full sm:w-40 ${inputClass}`} />
+                                )}
+                              </div>
+                            </div>
+                          );
+                        }
+
                         return (
                           <div key={questionIndex} className="border border-gray-200 rounded-xl p-4 bg-gray-50">
                             <label className="flex items-start justify-between gap-3">
@@ -922,17 +989,11 @@ const UserReportsPage = ({ onBack, userData }) => {
                               <span className="text-[11px] uppercase tracking-wide text-gray-400">{question.answerType}</span>
                             </label>
                             <div className="mt-3">
-                              {question.answerType === 'text' && (
-                                <input type="text" value={value || ''} onChange={e => handleAnswerChange(key, e.target.value)} placeholder={question.placeholder || 'Enter your answer'} disabled={isReadOnly} className={`w-full border border-gray-200 rounded-lg px-3 py-2 text-sm ${isReadOnly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`} />
-                              )}
                               {question.answerType === 'textarea' && (
-                                <textarea value={value || ''} onChange={e => handleAnswerChange(key, e.target.value)} placeholder={question.placeholder || 'Enter your answer'} rows={3} disabled={isReadOnly} className={`w-full border border-gray-200 rounded-lg px-3 py-2 text-sm ${isReadOnly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`} />
-                              )}
-                              {question.answerType === 'number' && (
-                                <input type="number" value={value ?? ''} onChange={e => handleAnswerChange(key, e.target.value)} disabled={isReadOnly} className={`w-40 border border-gray-200 rounded-lg px-3 py-2 text-sm ${isReadOnly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`} />
+                                <textarea value={value || ''} onChange={e => handleAnswerChange(key, e.target.value)} placeholder={question.placeholder || 'Enter your answer'} rows={3} disabled={isReadOnly} className={`w-full ${inputClass}`} />
                               )}
                               {question.answerType === 'date' && (
-                                <input type="date" value={value || ''} onChange={e => handleAnswerChange(key, e.target.value)} disabled={isReadOnly} className={`border border-gray-200 rounded-lg px-3 py-2 text-sm ${isReadOnly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`} />
+                                <input type="date" value={value || ''} onChange={e => handleAnswerChange(key, e.target.value)} disabled={isReadOnly} className={inputClass} />
                               )}
                               {['radio', 'dropdown'].includes(question.answerType) && (
                                 question.answerType === 'radio' ? (
@@ -945,7 +1006,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                                     ))}
                                   </div>
                                 ) : (
-                                  <select value={value || ''} onChange={e => handleAnswerChange(key, e.target.value)} disabled={isReadOnly} className={`w-full border border-gray-200 rounded-lg px-3 py-2 text-sm ${isReadOnly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`}>
+                                  <select value={value || ''} onChange={e => handleAnswerChange(key, e.target.value)} disabled={isReadOnly} className={`w-full ${inputClass}`}>
                                     <option value="" disabled>Select an option</option>
                                     {question.options?.map((option, idx) => <option key={idx} value={option}>{option}</option>)}
                                   </select>
@@ -1081,6 +1142,7 @@ const UserReportsPage = ({ onBack, userData }) => {
             onReportTypeSelect={handleReportTypeSelect}
             reportCounts={reportCounts}
             areaName={areaName}
+            districtName={districtName}
             isMobileOpen={isAreaSidebarOpen}
             onMobileToggle={() => setIsAreaSidebarOpen((prev) => !prev)}
           />
@@ -1196,6 +1258,7 @@ const UserReportsPage = ({ onBack, userData }) => {
             reportCounts={reportCounts}
             unitName={unitName}
             areaName={unitAreaName}
+            districtName={districtName}
             isMobileOpen={isUnitSidebarOpen}
             onMobileToggle={() => setIsUnitSidebarOpen((prev) => !prev)}
           />

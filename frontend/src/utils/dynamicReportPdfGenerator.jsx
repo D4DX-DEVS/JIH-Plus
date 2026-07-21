@@ -9,6 +9,9 @@ import {
   safeToString,
   formatDateTime,
 } from './pdfStyleConfig';
+import {
+  displayCellValue, showSumRow, showSumColumn, columnTotals, rowTotals, grandTotal,
+} from './rowColumnTable';
 
 Font.register({ family: 'Noto Serif Malayalam', src: NotoSerifMalayalam });
 
@@ -130,16 +133,18 @@ const isEmptyValue = (value) =>
   value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
 
 const FieldValue = ({ field, value }) => {
-  if (isEmptyValue(value)) {
-    return <Text style={styles.emptyValue}>ഉത്തരം നൽകിയിട്ടില്ല</Text>;
-  }
-
+  // Row/table renders even when blank, so admin static cells still show.
   if (field?.type === 'row') {
     const rows = field.rowTitles || [];
     const cols = field.columnTitles || [];
     const grid = Array.isArray(value) ? value : [];
+    const withSumRow = showSumRow(field);
+    const withSumCol = showSumColumn(field);
+    const colTotals = withSumRow ? columnTotals(field, grid) : [];
+    const rTotals = withSumCol ? rowTotals(field, grid) : [];
     const firstColWidth = '30%';
-    const dataColWidth = `${70 / Math.max(cols.length, 1)}%`;
+    const dataCount = cols.length + (withSumCol ? 1 : 0);
+    const dataColWidth = `${70 / Math.max(dataCount, 1)}%`;
     return (
       <View style={styles.rowTable}>
         <View style={styles.rowTableRow}>
@@ -147,17 +152,38 @@ const FieldValue = ({ field, value }) => {
           {cols.map((col, ci) => (
             <Text key={ci} style={{ ...styles.rowTableHeaderCell, width: dataColWidth }}>{col}</Text>
           ))}
+          {withSumCol && (
+            <Text style={{ ...styles.rowTableHeaderCell, width: dataColWidth }}>{field.sumColumnLabel || 'Total'}</Text>
+          )}
         </View>
         {rows.map((row, ri) => (
           <View key={ri} style={styles.rowTableRow}>
             <Text style={{ ...styles.rowTableFirstCell, width: firstColWidth }}>{row}</Text>
             {cols.map((_, ci) => (
-              <Text key={ci} style={{ ...styles.rowTableCell, width: dataColWidth }}>{safeToString(grid[ri]?.[ci])}</Text>
+              <Text key={ci} style={{ ...styles.rowTableCell, width: dataColWidth }}>{safeToString(displayCellValue(field, grid, ri, ci))}</Text>
             ))}
+            {withSumCol && (
+              <Text style={{ ...styles.rowTableHeaderCell, width: dataColWidth }}>{rTotals[ri] == null ? '' : safeToString(rTotals[ri])}</Text>
+            )}
           </View>
         ))}
+        {withSumRow && (
+          <View style={styles.rowTableRow}>
+            <Text style={{ ...styles.rowTableFirstHeaderCell, width: firstColWidth }}>{field.sumRowLabel || 'Total'}</Text>
+            {cols.map((_, ci) => (
+              <Text key={ci} style={{ ...styles.rowTableHeaderCell, width: dataColWidth }}>{colTotals[ci] == null ? '' : safeToString(colTotals[ci])}</Text>
+            ))}
+            {withSumCol && (
+              <Text style={{ ...styles.rowTableHeaderCell, width: dataColWidth }}>{safeToString(grandTotal(field, grid))}</Text>
+            )}
+          </View>
+        )}
       </View>
     );
+  }
+
+  if (isEmptyValue(value)) {
+    return <Text style={styles.emptyValue}>ഉത്തരം നൽകിയിട്ടില്ല</Text>;
   }
 
   if (Array.isArray(value)) {

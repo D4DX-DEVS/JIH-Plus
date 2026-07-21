@@ -470,6 +470,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         onDynamicReports={handleAreaDynamicShortcut}
         onNavigateToMembership={handleNavigateToMembership}
         areaName={areaName}
+        districtName={districtName}
         isMobileOpen={areaSidebarOpen}
         onMobileToggle={() => setAreaSidebarOpen((prev) => !prev)}
       />
@@ -502,6 +503,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         onNavigateToMembership={handleNavigateToMembership}
         unitName={unitName}
         areaName={unitAreaName}
+        districtName={districtName}
         isMobileOpen={unitSidebarOpen}
         onMobileToggle={() => setUnitSidebarOpen((prev) => !prev)}
       />

@@ -883,8 +883,8 @@ const TargetsPage = ({ onLogout }) => {
     : role === 'district'
       ? <DistrictAdminSidebar {...sidebarProps} districtName={userData.district || '—'} />
       : role === 'area'
-        ? <AreaAdminSidebar {...sidebarProps} areaName={userData.areaName || '—'} />
-        : <UnitAdminSidebar {...sidebarProps} unitName={userData.unitName || '—'} />;
+        ? <AreaAdminSidebar {...sidebarProps} areaName={userData.areaName || '—'} districtName={userData.district || ''} />
+        : <UnitAdminSidebar {...sidebarProps} unitName={userData.unitName || '—'} areaName={userData.areaName || userData.area || ''} districtName={userData.district || ''} />;
 
   return (
     <div className="h-screen bg-gray-50 flex overflow-hidden">
