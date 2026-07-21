@@ -14,11 +14,14 @@ import {
   Menu,
   X,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   LayoutDashboard,
   Target as TargetIcon
 } from 'lucide-react';
 import jihLogoWhite from '../../assets/LogoWhite.png';
 import PoweredByD4DX from './PoweredByD4DX';
+import { SIDEBAR_THEME, DYNAMIC_REPORT_META, REPORT_TYPE_STYLES } from './sidebarTheme';
 
 /**
  * Sidebar component for unit administrators.
@@ -35,6 +38,7 @@ const UnitAdminSidebar = ({
   reportCounts = null,
   unitName = '—',
   areaName = '',
+  districtName = '',
   isMobileOpen = false,
   onMobileToggle
 }) => {
@@ -61,10 +65,10 @@ const UnitAdminSidebar = ({
       label: 'ഡൈനാമിക് റിപ്പോർട്ടുകൾ',
       icon: FileText,
       children: [
-        { id: 'monthly-report-type', label: 'മന്ത്ലി', icon: Calendar, onClick: () => handleReportType('monthly'), count: reportCounts?.monthly },
-        { id: 'quarterly-report-type', label: 'ക്വാർട്ടർലി', icon: BarChart2, onClick: () => handleReportType('quarterly'), count: reportCounts?.quarterly },
-        { id: 'yearly-report-type', label: 'ഇയർലി', icon: CalendarDays, onClick: () => handleReportType('yearly'), count: reportCounts?.yearly },
-        { id: 'special-report-type', label: 'സ്പെഷ്യൽ', icon: Star, onClick: () => handleReportType('special'), count: reportCounts?.special },
+        { id: 'monthly-report-type', reportType: 'monthly', icon: Calendar, onClick: () => handleReportType('monthly'), count: reportCounts?.monthly },
+        { id: 'quarterly-report-type', reportType: 'quarterly', icon: BarChart2, onClick: () => handleReportType('quarterly'), count: reportCounts?.quarterly },
+        { id: 'yearly-report-type', reportType: 'yearly', icon: CalendarDays, onClick: () => handleReportType('yearly'), count: reportCounts?.yearly },
+        { id: 'special-report-type', reportType: 'special', icon: Star, onClick: () => handleReportType('special'), count: reportCounts?.special },
       ]
     },
     {
@@ -103,19 +107,28 @@ const UnitAdminSidebar = ({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-[min(18rem,85vw)] sm:w-72 bg-white shadow-2xl border-r border-gray-200 transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:translate-x-0 lg:flex-shrink-0 overflow-hidden ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72'} ${
+        className={`fixed inset-y-0 left-0 z-40 w-[min(18rem,85vw)] sm:w-72 ${SIDEBAR_THEME.bg} shadow-2xl border-r ${SIDEBAR_THEME.border} transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:translate-x-0 lg:flex-shrink-0 overflow-hidden ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72'} ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{ willChange: 'transform' }}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full relative">
+          {/* Floating desktop collapse toggle */}
+          <button
+            onClick={() => setIsDesktopCollapsed((prev) => !prev)}
+            className={`hidden lg:flex absolute top-16 -right-3 z-10 h-6 w-6 items-center justify-center rounded-full transition-all ${SIDEBAR_THEME.toggleBtn}`}
+            title={isDesktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {isDesktopCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+          </button>
+
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-gradient-to-r from-[#002349] to-[#1a3a5c]">
+          <div className={`flex items-center h-16 justify-between px-4 border-b ${SIDEBAR_THEME.border} ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : ''}`}>
             <div className="flex items-center space-x-3 min-w-0">
-              <img src={jihLogoWhite} alt="JIH Logo" className="h-9 w-auto" />
+              <img src={jihLogoWhite} alt="JIH Logo" className="h-9 w-9 flex-shrink-0 object-contain" />
               <div className={isDesktopCollapsed ? 'lg:hidden' : ''}>
                 <h2
-                  className="text-base font-bold text-white"
+                  className="text-base font-bold text-white whitespace-nowrap"
                   style={{ fontFamily: 'Cinzel, serif' }}
                 >
                   JIH Plus
@@ -123,31 +136,37 @@ const UnitAdminSidebar = ({
               </div>
             </div>
             <button
-              onClick={() => setIsDesktopCollapsed((prev) => !prev)}
-              className="hidden lg:inline-flex text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors"
-              title={isDesktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <button
               onClick={onMobileToggle}
-              className="lg:hidden text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors"
+              className="lg:hidden text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors flex-shrink-0"
             >
               {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
 
-  {/* Unit Info */}
-  <div className={`px-4 py-3 border-b border-gray-200 bg-gray-50 space-y-0.5 ${isDesktopCollapsed ? 'lg:hidden' : ''}`}>
-    {areaName && (
-      <>
-        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Area</p>
-        <p className="text-sm text-[#002349] font-semibold truncate uppercase">{areaName}</p>
-      </>
-    )}
-    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Unit</p>
-    <p className="text-sm text-[#002349] font-semibold truncate uppercase">{unitName}</p>
-  </div>
+          {/* Hierarchical location info: District -> Area -> Unit */}
+          {(districtName || areaName || unitName) && (
+            <div className={`mx-3 mt-3 mb-1 rounded-xl p-3 ${SIDEBAR_THEME.infoCard} ${isDesktopCollapsed ? 'lg:hidden' : ''}`}>
+              <div className="relative pl-3">
+                <div className="absolute left-0 top-1 bottom-1 w-px bg-white/15" />
+                {districtName && (
+                  <div className="mb-1.5">
+                    <p className={`text-[10px] uppercase tracking-wide font-semibold ${SIDEBAR_THEME.infoLabel}`}>District</p>
+                    <p className={`text-xs font-medium ${SIDEBAR_THEME.infoMuted} truncate uppercase`}>{districtName}</p>
+                  </div>
+                )}
+                {areaName && (
+                  <div className="mb-1.5 pl-3">
+                    <p className={`text-[10px] uppercase tracking-wide font-semibold ${SIDEBAR_THEME.infoLabel}`}>Area</p>
+                    <p className={`text-xs font-medium ${SIDEBAR_THEME.infoMuted} truncate uppercase`}>{areaName}</p>
+                  </div>
+                )}
+                <div className="pl-6">
+                  <p className={`text-[10px] uppercase tracking-wide font-bold ${SIDEBAR_THEME.infoLabel}`}>Unit</p>
+                  <p className={`text-sm font-bold ${SIDEBAR_THEME.infoPrimary} truncate uppercase`}>{unitName}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Navigation */}
           <nav className="flex-1 px-3 py-4 overflow-y-auto">
@@ -162,35 +181,36 @@ const UnitAdminSidebar = ({
                     <div key={item.id}>
                       <button
                         onClick={() => setExpandedGroup(isOpen ? null : item.id)}
-                        className={`w-full flex items-center ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : 'justify-between px-3'} py-2.5 text-xs font-medium rounded-lg transition-all duration-200 ${
-                          isGroupActive ? 'bg-gradient-to-r text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100 hover:text-[#002349]'
+                        className={`w-full flex items-center ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : 'justify-between px-3'} py-2.5 text-xs font-medium rounded-xl transition-all duration-200 ${
+                          isGroupActive ? SIDEBAR_THEME.groupActive : SIDEBAR_THEME.navDefault
                         }`}
-                        style={isGroupActive ? { background: 'linear-gradient(to right, #002349, #002349dd)' } : {}}
                       >
                         <div className={`flex items-center ${isDesktopCollapsed ? 'lg:space-x-0' : 'space-x-3'}`}>
-                          <Icon className={`w-4 h-4 ${isGroupActive ? 'text-white' : 'text-gray-500'}`} />
+                          <Icon className={`w-4 h-4 ${isGroupActive ? SIDEBAR_THEME.iconActive : SIDEBAR_THEME.iconDefault}`} />
                           <span className={isDesktopCollapsed ? 'lg:hidden' : ''}>{item.label}</span>
                         </div>
-                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${isGroupActive ? 'text-white' : 'text-gray-400'} ${isDesktopCollapsed ? 'lg:hidden' : ''}`} />
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} text-white/40 ${isDesktopCollapsed ? 'lg:hidden' : ''}`} />
                       </button>
                       {isOpen && !isDesktopCollapsed && (
-                        <div className="mt-0.5 ml-3 space-y-0.5">
+                        <div className="mt-1 ml-3 space-y-1">
                           {(item.children || []).map(child => {
                             const isChildActive = activeTab === child.id;
+                            const meta = DYNAMIC_REPORT_META[child.reportType];
+                            const style = REPORT_TYPE_STYLES[meta.color];
                             return (
                               <button
                                 key={child.id}
                                 onClick={() => { child.onClick?.(); if (onMobileToggle) onMobileToggle(); }}
-                                className={`w-full flex items-center justify-between pl-3 pr-2 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                                  isChildActive ? 'bg-[#002349]/10 text-[#002349] font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-[#002349]'
+                                className={`w-full flex items-center justify-between pl-3 pr-2 py-2 text-xs font-medium rounded-lg transition-colors ${
+                                  isChildActive ? style.active : style.base
                                 }`}
                               >
                                 <div className="flex items-center gap-2">
-                                  {child.icon && (() => { const CI = child.icon; return <CI className={`w-3.5 h-3.5 flex-shrink-0 ${isChildActive ? 'text-[#002349]' : 'text-gray-400'}`} />; })()}
-                                  <span>{child.label}</span>
+                                  {(() => { const CI = child.icon; return <CI className={`w-3.5 h-3.5 flex-shrink-0 ${style.icon}`} />; })()}
+                                  <span>{meta.label}</span>
                                 </div>
                                 {child.count > 0 && (
-                                  <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{child.count}</span>
+                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${style.badge}`}>{child.count}</span>
                                 )}
                               </button>
                             );
@@ -207,19 +227,12 @@ const UnitAdminSidebar = ({
                   <button
                     key={item.id}
                     onClick={() => handleNavigate(item)}
-                    className={`w-full flex items-center ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : 'justify-between px-3'} py-2.5 text-xs font-medium rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-r text-white shadow-lg'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-[#002349]'
+                    className={`w-full flex items-center ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : 'justify-between px-3'} py-2.5 text-xs font-medium rounded-xl transition-all duration-200 ${
+                      isActive ? SIDEBAR_THEME.navActive : SIDEBAR_THEME.navDefault
                     }`}
-                    style={
-                      isActive
-                        ? { background: 'linear-gradient(to right, #002349, #002349dd)' }
-                        : {}
-                    }
                   >
                     <div className={`flex items-center ${isDesktopCollapsed ? 'lg:space-x-0' : 'space-x-3'}`}>
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                      <Icon className={`w-4 h-4 ${isActive ? SIDEBAR_THEME.iconActive : SIDEBAR_THEME.iconDefault}`} />
                       <span className={isDesktopCollapsed ? 'lg:hidden' : ''}>{item.label}</span>
                     </div>
                   </button>
@@ -229,14 +242,14 @@ const UnitAdminSidebar = ({
           </nav>
 
           {/* Logout */}
-          <div className="p-3 border-t border-gray-100">
-            <PoweredByD4DX collapsed={isDesktopCollapsed} />
+          <div className="p-3 border-t border-white/10">
+            <PoweredByD4DX collapsed={isDesktopCollapsed} dark />
             <button
               onClick={() => {
                 if (onLogout) onLogout();
                 if (onMobileToggle) onMobileToggle();
               }}
-              className={`w-full flex items-center justify-center ${isDesktopCollapsed ? 'lg:space-x-0 lg:px-2' : 'space-x-2 px-3'} py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-[#002349] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#002349] rounded-lg transition-all duration-200 shadow-md hover:shadow-lg`}
+              className={`w-full flex items-center justify-center ${isDesktopCollapsed ? 'lg:space-x-0 lg:px-2' : 'space-x-2 px-3'} py-2.5 text-xs font-semibold rounded-xl transition-all duration-200 ${SIDEBAR_THEME.logout}`}
             >
               <LogOut className="w-4 h-4" />
               <span className={isDesktopCollapsed ? 'lg:hidden' : ''}>Logout</span>
@@ -249,5 +262,3 @@ const UnitAdminSidebar = ({
 };
 
 export default UnitAdminSidebar;
-
-

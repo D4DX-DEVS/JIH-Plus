@@ -25,6 +25,13 @@ function makeNewField(type) {
     validation: {}, conditionalLogic: null,
     rowTitles: type === 'row' ? ['Row 1'] : [],
     columnTitles: type === 'row' ? ['Col 1'] : [],
+    rowMeta: type === 'row' ? [{ kind: 'input' }] : [],
+    columnMeta: type === 'row' ? [{ kind: 'input', inputType: 'text' }] : [],
+    staticCells: type === 'row' ? {} : undefined,
+    sumRow: false,
+    sumColumn: false,
+    sumRowLabel: 'Total',
+    sumColumnLabel: 'Total',
   };
 }
 

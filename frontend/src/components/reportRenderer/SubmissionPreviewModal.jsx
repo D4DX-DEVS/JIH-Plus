@@ -1,48 +1,22 @@
 import React from 'react';
 import { X, Download, Loader2, CheckCircle2, Clock } from 'lucide-react';
+import RowColumnReadonly from './RowColumnReadonly';
+
+// Mirrors DynamicFormRenderer's layout rule: simple value fields show
+// label + value on one row, everything else stays stacked.
+const INLINE_FIELD_TYPES = new Set(['text', 'number', 'phone', 'email']);
 
 const renderFieldValue = (field, rawValue) => {
+  // Row/table renders even when the user left it blank, so admin static cells still show.
+  if (field.type === 'row') {
+    return <RowColumnReadonly field={field} value={rawValue} />;
+  }
+
   const isEmpty = rawValue === undefined || rawValue === null || rawValue === '' ||
     (Array.isArray(rawValue) && rawValue.length === 0);
 
   if (isEmpty) {
     return <span className="text-gray-400 italic text-sm">ഉത്തരം നൽകിയിട്ടില്ല</span>;
-  }
-
-  if (field.type === 'row') {
-    const rows = field.rowTitles || [];
-    const cols = field.columnTitles || [];
-    const grid = Array.isArray(rawValue) ? rawValue : [];
-    return (
-      <div className="overflow-x-auto mt-1">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr>
-              <th className="border border-gray-300 bg-gray-100 px-3 py-2 text-left text-xs font-semibold text-gray-600 min-w-[7rem]">
-                {field.firstColumnHeader || ''}
-              </th>
-              {cols.map((col, ci) => (
-                <th key={ci} className="border border-gray-300 bg-gray-100 px-3 py-2 text-center text-xs font-semibold text-gray-600">
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, ri) => (
-              <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                <td className="border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700">{row}</td>
-                {cols.map((_, ci) => (
-                  <td key={ci} className="border border-gray-300 px-3 py-2 text-sm text-center text-gray-900">
-                    {grid[ri]?.[ci] ?? ''}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
   }
 
   if (field.type === 'checkbox' || field.type === 'multiselect') {
@@ -164,10 +138,17 @@ export default function SubmissionPreviewModal({ open, loading, data, onClose, o
                         {(page.fields || [])
                           .filter(f => !['title', 'html'].includes(f.type))
                           .map(field => (
-                            <div key={field.id} className="border-l-4 border-[#002349]/60 pl-3 py-1">
-                              <div className="text-xs font-semibold text-gray-600 mb-1">{field.label}</div>
-                              {renderFieldValue(field, submission.formData?.[`field_${field.id}`])}
-                            </div>
+                            INLINE_FIELD_TYPES.has(field.type) ? (
+                              <div key={field.id} className="border-l-4 border-[#002349]/60 pl-3 py-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                                <div className="text-xs font-semibold text-gray-600 sm:w-1/3 sm:flex-shrink-0">{field.label}</div>
+                                <div className="sm:flex-1 min-w-0">{renderFieldValue(field, submission.formData?.[`field_${field.id}`])}</div>
+                              </div>
+                            ) : (
+                              <div key={field.id} className="border-l-4 border-[#002349]/60 pl-3 py-1">
+                                <div className="text-xs font-semibold text-gray-600 mb-1">{field.label}</div>
+                                {renderFieldValue(field, submission.formData?.[`field_${field.id}`])}
+                              </div>
+                            )
                           ))}
                       </div>
                     </div>
@@ -178,10 +159,17 @@ export default function SubmissionPreviewModal({ open, loading, data, onClose, o
                       <h4 className="text-sm font-bold text-[#002349] mb-3 border-b border-gray-200 pb-2">{part.partName || `Section ${partIndex + 1}`}</h4>
                       <div className="space-y-3">
                         {(part.questions || []).map((question, questionIndex) => (
-                          <div key={questionIndex} className="border-l-4 border-[#002349]/60 pl-3 py-1">
-                            <div className="text-xs font-semibold text-gray-600 mb-1">{question.questionText}</div>
-                            {formatLegacyAnswer(getLegacyAnswer(submission, partIndex, questionIndex))}
-                          </div>
+                          INLINE_FIELD_TYPES.has(question.answerType) ? (
+                            <div key={questionIndex} className="border-l-4 border-[#002349]/60 pl-3 py-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                              <div className="text-xs font-semibold text-gray-600 sm:w-1/3 sm:flex-shrink-0">{question.questionText}</div>
+                              <div className="sm:flex-1 min-w-0">{formatLegacyAnswer(getLegacyAnswer(submission, partIndex, questionIndex))}</div>
+                            </div>
+                          ) : (
+                            <div key={questionIndex} className="border-l-4 border-[#002349]/60 pl-3 py-1">
+                              <div className="text-xs font-semibold text-gray-600 mb-1">{question.questionText}</div>
+                              {formatLegacyAnswer(getLegacyAnswer(submission, partIndex, questionIndex))}
+                            </div>
+                          )
                         ))}
                       </div>
                     </div>

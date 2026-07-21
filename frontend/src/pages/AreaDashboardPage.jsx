@@ -1856,6 +1856,7 @@ const AreaDashboardPage = ({ onLogout }) => {
           onNavigateToMembership={handleNavigateToMembership}
           onReportTypeSelect={(type) => navigate('/user-reports', { state: { initialType: type } })}
           areaName={area?.name || '—'}
+          districtName={userData?.district || userData?.districtName || ''}
           isMobileOpen={isSidebarOpen}
           onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
         />

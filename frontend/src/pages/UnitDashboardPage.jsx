@@ -964,6 +964,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
   const sidebarActiveTab = activeTab;
   const unitName = unit?.name || userData?.unit || userData?.unitName || '—';
   const areaName = area?.name || userData?.area || userData?.areaName || '';
+  const districtName = userData?.district || userData?.districtName || '';
 
   if (showDetailView && viewingSurvey) {
     const detailViewContent = (
@@ -1420,6 +1421,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
             onReportTypeSelect={(type) => navigate('/user-reports', { state: { initialType: type } })}
             unitName={unitName}
             areaName={areaName}
+            districtName={districtName}
             isMobileOpen={isUnitSidebarOpen}
             onMobileToggle={() => setIsUnitSidebarOpen((prev) => !prev)}
           />
@@ -2108,6 +2110,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
           onReportTypeSelect={(type) => navigate('/user-reports', { state: { initialType: type } })}
           unitName={unitName}
           areaName={areaName}
+          districtName={districtName}
           isMobileOpen={isUnitSidebarOpen}
           onMobileToggle={() => setIsUnitSidebarOpen((prev) => !prev)}
         />

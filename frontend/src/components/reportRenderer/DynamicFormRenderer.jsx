@@ -2,6 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Send, Save } from 'lucide-react';
 import FieldRenderer from './FieldRenderer';
 
+// Simple value fields read better with the label and input on the same
+// row; everything else (textarea, html, row/column, choice fields, etc.)
+// keeps the label-above-field stacked layout.
+const INLINE_FIELD_TYPES = new Set(['text', 'number', 'phone', 'email']);
+
 function evaluateCondition(logic, formData) {
   if (!logic || !logic.field) return null; // no condition
   const triggerKey = `field_${logic.field}`;
@@ -151,6 +156,31 @@ export default function DynamicFormRenderer({
             );
           }
 
+          if (INLINE_FIELD_TYPES.has(field.type)) {
+            return (
+              <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                <label className="text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0">
+                  {field.label}
+                  {required && <span className="text-red-500 ml-0.5">*</span>}
+                  {field.helpText && (
+                    <span className="block text-xs font-normal text-gray-500">{field.helpText}</span>
+                  )}
+                </label>
+                <div className="flex-1 min-w-0">
+                  <FieldRenderer
+                    field={field}
+                    value={formData[errorKey]}
+                    onChange={val => handleChange(field.id, val)}
+                    disabled={disabled}
+                  />
+                  {errors[errorKey] && (
+                    <p className="text-xs text-red-500 mt-1">{errors[errorKey]}</p>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div key={field.id}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -174,21 +204,10 @@ export default function DynamicFormRenderer({
         })}
       </div>
 
-      {/* Navigation */}
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+      {/* Navigation — Previous and Next/Submit are kept next to each other
+          rather than pinned to opposite ends of the row. */}
+      <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-100">
         <div>
-          {currentPage > 0 && (
-            <button
-              type="button"
-              onClick={goPrev}
-              disabled={submitting}
-              className="flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-            >
-              <ChevronLeft size={16} /> Previous
-            </button>
-          )}
-        </div>
-        <div className="flex gap-2">
           {!disabled && onSaveDraft && (
             <button
               type="button"
@@ -197,6 +216,18 @@ export default function DynamicFormRenderer({
               className="flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
             >
               <Save size={16} /> Save Draft
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {currentPage > 0 && (
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={submitting}
+              className="flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <ChevronLeft size={16} /> Previous
             </button>
           )}
           {!disabled && allowSubmitOnEveryPage && !isLastPage && (
