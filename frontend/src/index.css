@@ -74,6 +74,16 @@ input[type="number"] {
   .malayalam-text {
     font-family: 'NotoSansMalayalam', 'NotoSerifMalayalam', sans-serif;
   }
+
+  /* Tailwind's preflight resets buttons to the native "default" cursor;
+     modern web UX expects a pointer on anything clickable. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  select,
+  summary {
+    cursor: pointer;
+  }
 }
 
 @layer components {
