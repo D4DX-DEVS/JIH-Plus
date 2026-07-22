@@ -748,7 +748,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-flex ${typeBadgeClass(
+                            className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-flex items-center justify-center ${typeBadgeClass(
                               report.type
                             )}`}
                           >
@@ -770,7 +770,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex ${statusBadgeClass(
+                            className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center justify-center ${statusBadgeClass(
                               report.status
                             )}`}
                           >
@@ -875,11 +875,11 @@ const UserReportsPage = ({ onBack, userData }) => {
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-flex ${typeBadgeClass(selectedReport.type)}`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize inline-flex items-center justify-center ${typeBadgeClass(selectedReport.type)}`}>
                     {selectedReport.type}
                   </span>
                   {currentStatus && (
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex ${statusBadgeClass(currentStatus)}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center justify-center ${statusBadgeClass(currentStatus)}`}>
                       {currentStatus === 'submitted'
                         ? <span className="inline-flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Submitted</span>
                         : <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" /> Pending</span>}

@@ -104,21 +104,12 @@ const DistrictAdminSidebar = ({
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-[min(18rem,85vw)] sm:w-72 ${SIDEBAR_THEME.bg} shadow-2xl border-r ${SIDEBAR_THEME.border} transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:translate-x-0 lg:flex-shrink-0 overflow-hidden ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72'} ${
+        className={`fixed inset-y-0 left-0 z-40 w-[min(18rem,85vw)] sm:w-72 ${SIDEBAR_THEME.bg} shadow-2xl border-r ${SIDEBAR_THEME.border} transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:translate-x-0 lg:flex-shrink-0 ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72'} ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{ willChange: 'transform' }}
       >
-        <div className="flex flex-col h-full relative">
-          {/* Floating desktop collapse toggle */}
-          <button
-            onClick={() => setIsDesktopCollapsed((prev) => !prev)}
-            className={`hidden lg:flex absolute top-16 -right-3 z-10 h-6 w-6 items-center justify-center rounded-full transition-all ${SIDEBAR_THEME.toggleBtn}`}
-            title={isDesktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {isDesktopCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
-          </button>
-
+        <div className="flex flex-col h-full overflow-hidden">
           {/* Sidebar Header */}
           <div className={`flex items-center h-16 justify-between px-4 border-b ${SIDEBAR_THEME.border} ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : ''}`}>
             <div className="flex items-center space-x-3 min-w-0">
@@ -234,6 +225,16 @@ const DistrictAdminSidebar = ({
             </button>
           </div>
         </div>
+
+        {/* Floating desktop collapse toggle — a sibling of the clipped inner
+            wrapper so half the circle can sit outside the sidebar edge. */}
+        <button
+          onClick={() => setIsDesktopCollapsed((prev) => !prev)}
+          className={`hidden lg:flex absolute top-16 -right-3 z-10 h-6 w-6 items-center justify-center rounded-full transition-all ${SIDEBAR_THEME.toggleBtn}`}
+          title={isDesktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {isDesktopCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+        </button>
       </aside>
     </>
   );
