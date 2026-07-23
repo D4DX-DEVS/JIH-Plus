@@ -145,7 +145,7 @@ router.post('/districts', adminAuth, async (req, res) => {
     const state = await State.findById(stateId);
     if (!state) return res.status(404).json({ success: false, message: 'State not found' });
 
-    const { uniqueCode, sequentialNumber, seqCode } = await generateDistrictCode(name.trim(), District);
+    const { uniqueCode, sequentialNumber, seqCode } = await generateDistrictCode(name.trim(), District, [AreaMaster, UnitMaster]);
     const password = generateDistrictPassword();
 
     const district = new District({
@@ -268,7 +268,7 @@ router.post('/areas', adminAuth, async (req, res) => {
     if (!district) return res.status(404).json({ success: false, message: 'District not found' });
 
     const districtSeqCode = String(district.sequentialNumber).padStart(2, '0');
-    const { uniqueCode, randomCode } = await generateAreaCode(name.trim(), districtSeqCode, AreaMaster);
+    const { uniqueCode, randomCode } = await generateAreaCode(name.trim(), districtSeqCode, AreaMaster, [District, UnitMaster]);
     const password = generateAreaPassword();
 
     const area = new AreaMaster({
@@ -399,7 +399,7 @@ router.post('/units', adminAuth, async (req, res) => {
     if (!area) return res.status(404).json({ success: false, message: 'Area not found' });
 
     const districtSeqCode = String(district.sequentialNumber).padStart(2, '0');
-    const { uniqueCode } = await generateUnitCode(name.trim(), districtSeqCode, area.randomCode, UnitMaster);
+    const { uniqueCode } = await generateUnitCode(name.trim(), districtSeqCode, area.randomCode, UnitMaster, [District, AreaMaster]);
     const password = generateUnitPassword();
 
     const unit = new UnitMaster({
@@ -511,7 +511,7 @@ router.post('/districts/:id/split', adminAuth, async (req, res) => {
     if (!originalDistrict) return res.status(404).json({ success: false, message: 'District not found' });
 
     // Generate new district code/password for side B
-    const { uniqueCode, sequentialNumber, seqCode } = await generateDistrictCode(sideBName, District);
+    const { uniqueCode, sequentialNumber, seqCode } = await generateDistrictCode(sideBName, District, [AreaMaster, UnitMaster]);
     const password = generateDistrictPassword();
 
     let newDistrict;
@@ -586,7 +586,7 @@ router.post('/areas/:id/split', adminAuth, async (req, res) => {
     if (!district) return res.status(404).json({ success: false, message: 'Parent district not found' });
 
     const districtSeqCode = String(district.sequentialNumber).padStart(2, '0');
-    const { uniqueCode, randomCode } = await generateAreaCode(sideBName, districtSeqCode, AreaMaster);
+    const { uniqueCode, randomCode } = await generateAreaCode(sideBName, districtSeqCode, AreaMaster, [District, UnitMaster]);
     const password = generateAreaPassword();
 
     let newArea;
@@ -654,7 +654,7 @@ router.post('/units/:id/split', adminAuth, async (req, res) => {
     if (!district) return res.status(404).json({ success: false, message: 'Parent district not found' });
 
     const districtSeqCode = String(district.sequentialNumber).padStart(2, '0');
-    const { uniqueCode } = await generateUnitCode(sideBName, districtSeqCode, area.randomCode, UnitMaster);
+    const { uniqueCode } = await generateUnitCode(sideBName, districtSeqCode, area.randomCode, UnitMaster, [District, AreaMaster]);
     const password = generateUnitPassword();
 
     let newUnit;

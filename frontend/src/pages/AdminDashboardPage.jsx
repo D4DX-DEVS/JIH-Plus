@@ -44,7 +44,7 @@ const AdminDashboardPage = ({ onLogout }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showMonthlyDetail, setShowMonthlyDetail] = useState(false);
   const [viewingMonthlySurvey, setViewingMonthlySurvey] = useState(null);
-  const [activeTab, setActiveTab] = useState('yearly'); // 'yearly', 'monthly', 'membership', 'stats'
+  const [activeTab, setActiveTab] = useState('stats'); // 'membership', 'stats' (legacy 'yearly'/'monthly' pages removed)
   const DISTRICT_PAGE_SIZE = 10;
   const [districtPage, setDistrictPage] = useState(1);
   const [selectedDistrict, setSelectedDistrict] = useState(null);

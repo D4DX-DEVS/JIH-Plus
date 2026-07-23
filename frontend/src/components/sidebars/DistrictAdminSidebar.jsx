@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Home,
   Calendar,
   CalendarDays,
   Star,
@@ -43,7 +42,9 @@ const DistrictAdminSidebar = ({
   onMobileToggle
 }) => {
   const [isDesktopCollapsed, setIsDesktopCollapsed] = React.useState(false);
-  const [expandedGroup, setExpandedGroup] = React.useState('dynamic-reports');
+  const [expandedGroup, setExpandedGroup] = React.useState(
+    String(activeView).startsWith('submissions') ? 'submissions' : 'dynamic-reports'
+  );
   const navigate = useNavigate();
 
   const handleReportType = (type) => {
@@ -56,11 +57,20 @@ const DistrictAdminSidebar = ({
 
   const navItems = [
     { id: 'dashboard', label: 'ഡാഷ്ബോർഡ്', icon: LayoutDashboard },
-    { id: 'home', label: 'റിപ്പോർട്ട് ഓപ്ഷനുകൾ', icon: Home },
-    { id: 'yearly-dashboard', label: 'വാർഷിക റിപ്പോർട്ടുകൾ', icon: Calendar },
-    { id: 'monthly-dashboard', label: 'പ്രതിമാസ റിപ്പോർട്ടുകൾ', icon: ClipboardList },
     { id: 'stats', label: 'സ്ഥിതിവിവരക്കണക്കുകൾ', icon: BarChart3 },
     { id: 'membership', label: 'അംഗത്വം', icon: Users, onClick: onNavigateToMembership },
+    {
+      id: 'submissions',
+      type: 'group',
+      label: 'സബ്മിഷനുകൾ',
+      icon: ClipboardList,
+      children: [
+        { id: 'submissions-monthly', reportType: 'monthly', icon: Calendar, onClick: () => navigate('/district/dynamic-submissions/monthly') },
+        { id: 'submissions-quarterly', reportType: 'quarterly', icon: BarChart2, onClick: () => navigate('/district/dynamic-submissions/quarterly') },
+        { id: 'submissions-yearly', reportType: 'yearly', icon: CalendarDays, onClick: () => navigate('/district/dynamic-submissions/yearly') },
+        { id: 'submissions-special', reportType: 'special', icon: Star, onClick: () => navigate('/district/dynamic-submissions/special') },
+      ]
+    },
     {
       id: 'dynamic-reports',
       type: 'group',

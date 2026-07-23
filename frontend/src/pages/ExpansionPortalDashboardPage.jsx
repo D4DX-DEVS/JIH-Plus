@@ -10,6 +10,7 @@ import {
   Building2, Map, Layers, TrendingUp, ArrowRight
 } from 'lucide-react';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
+import SubmissionsAnalytics from '../components/dashboard/SubmissionsAnalytics';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import jihLogo from '../assets/LogoColor.png';
 
@@ -202,6 +203,11 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
                   <StatCard icon={Layers} label="യൂണിറ്റുകൾ" value={data.locations.units} color={COLORS.teal} />
                   <StatCard icon={MapPin} label="മൊത്തം ലൊക്കേഷൻ" value={data.locations.total} color={COLORS.purple} />
                 </div>
+              </section>
+
+              {/* Section: Submission Analytics */}
+              <section>
+                <SubmissionsAnalytics scope="admin" />
               </section>
 
               {/* Section: Reports Overview */}

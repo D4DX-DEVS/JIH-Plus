@@ -367,10 +367,7 @@ router.post('/login/unified', async (req, res) => {
       // Check District
       const district = await District.findOne({ uniqueCode: normalizedUsername, isActive: true })
         .populate('stateId', 'name');
-      if (district) {
-        if (district.password !== password) {
-          return res.status(401).json({ message: 'Invalid username or password' });
-        }
+      if (district && district.password === password) {
         const token = jwt.sign(
           {
             id: district._id,
@@ -402,10 +399,7 @@ router.post('/login/unified', async (req, res) => {
       // Check Area
       const area = await AreaMaster.findOne({ uniqueCode: normalizedUsername, isActive: true })
         .populate('districtId', 'name uniqueCode sequentialNumber');
-      if (area) {
-        if (area.password !== password) {
-          return res.status(401).json({ message: 'Invalid username or password' });
-        }
+      if (area && area.password === password) {
         const token = jwt.sign(
           {
             id: area._id,
@@ -443,10 +437,7 @@ router.post('/login/unified', async (req, res) => {
       const unit = await UnitMaster.findOne({ uniqueCode: normalizedUsername, isActive: true })
         .populate('districtId', 'name uniqueCode sequentialNumber')
         .populate('areaId', 'name uniqueCode randomCode');
-      if (unit) {
-        if (unit.password !== password) {
-          return res.status(401).json({ message: 'Invalid username or password' });
-        }
+      if (unit && unit.password === password) {
         const token = jwt.sign(
           {
             id: unit._id,

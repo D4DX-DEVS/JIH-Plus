@@ -909,6 +909,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                   onSubmit={(formData, pageIdx) => submitReport('submitted', formData, pageIdx)}
                   submitting={submitLoading}
                   allowSubmitOnEveryPage={isSubmitted && isEditing}
+                  onCancelEdit={isSubmitted && isEditing ? () => setIsEditing(false) : undefined}
                 />
                 {isSubmitted && !isEditing && (
                   <div className="p-4 border-t border-gray-100 space-y-3">
@@ -934,9 +935,6 @@ const UserReportsPage = ({ onBack, userData }) => {
                     <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-center gap-2">
                       <Clock className="w-4 h-4" /> Editing a submitted report. Use the Submit button above to update.
                     </div>
-                    <button onClick={() => setIsEditing(false)} className="mt-2 px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">
-                      Cancel Edit
-                    </button>
                   </div>
                 )}
               </div>

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, Users, Building, BookOpen, TrendingUp, BarChart3, MapPin, ChevronRight, ChevronDown } from 'lucide-react';
+import { Menu, Users, Building, BookOpen, TrendingUp, BarChart3, MapPin, ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import axios from 'axios';
 import { validateUserToken } from '../utils/auth';
 import { Navigate } from 'react-router-dom';
 import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
+import SubmissionsAnalytics from '../components/dashboard/SubmissionsAnalytics';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import HomePage from './HomePage';
 import FormSubmissionPage from './FormSubmissionPage';
@@ -16,7 +17,6 @@ import SurveyBarChart from '../components/charts/SurveyBarChart';
 import StatisticsCard from '../components/charts/StatisticsCard';
 import DistrictMonthlyStatsTable from '../components/tables/DistrictMonthlyStatsTable';
 import AreaMonthlyStatsTable from '../components/tables/AreaMonthlyStatsTable';
-import UnitMonthlyStatsTable from '../components/tables/UnitMonthlyStatsTable';
 import ActiveReportsCard from '../components/dashboard/ActiveReportsCard';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -577,6 +577,8 @@ const DistrictDashboardPage = ({ onLogout }) => {
           {districtName && <p className="text-white/80 text-sm mt-1">{districtName}</p>}
         </div>
 
+        <SubmissionsAnalytics scope="district" />
+
         {/* Stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-2xl shadow border border-gray-100 p-5 flex flex-col items-start gap-2">
@@ -1000,106 +1002,70 @@ const DistrictDashboardPage = ({ onLogout }) => {
               </div>
               <span className="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700 font-medium">{areas.length} areas</span>
             </div>
-            <div className="divide-y rounded-2xl border border-gray-200">
+            <div className="space-y-3">
               {areas.map((a) => {
                 const areaId = a.id || a._id || a.code;
+                const areaName = a.title || a.name || areaId;
                 const isExpanded = expandedAreaId === areaId;
                 return (
-                  <div key={areaId} className="bg-white">
-                    <button
-                      onClick={() => handleAreaClick(a)}
-                      className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gradient-to-br hover:from-white hover:to-gray-50 transition-all duration-300 ${isExpanded ? 'bg-gray-50' : ''}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        {isExpanded ? <ChevronDown className="w-4 h-4 text-[#002349]" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
-                        <span className="text-sm font-semibold text-[#002349]">{a.title || a.name || areaId}</span>
-                      </div>
-                      <span className="text-xs text-gray-500 font-medium">View units</span>
-                    </button>
+                  <div key={areaId} className="rounded-2xl border border-gray-200 bg-white overflow-hidden hover:shadow-md transition-all duration-300">
+                    <div className={`flex items-center justify-between gap-3 px-4 py-3 ${isExpanded ? 'bg-gradient-to-r from-[#002349]/5 to-[#957C3D]/5' : ''}`}>
+                      <button
+                        onClick={() => handleAreaClick(a)}
+                        className="flex items-center gap-3 min-w-0 text-left"
+                      >
+                        <span className="flex-shrink-0 w-9 h-9 rounded-xl bg-[#957C3D]/10 flex items-center justify-center">
+                          <MapPin className="w-4 h-4 text-[#957C3D]" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-bold text-[#002349] truncate">{areaName}</span>
+                          <span className="flex items-center gap-1 text-xs text-gray-500">
+                            {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                            {isExpanded ? 'Hide units' : 'View units'}
+                          </span>
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => navigate('/district/dynamic-submissions/monthly', { state: { areaFilter: a.name || a.title } })}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#002349] text-white text-xs font-semibold hover:bg-[#1a3a5c] transition-colors"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">സബ്മിഷനുകൾ</span>
+                      </button>
+                    </div>
 
                     {isExpanded && (
-                      <div className="px-4 pb-4">
-                        <div className="border rounded-lg">
-                          <div className="px-4 py-2 bg-gray-50 border-b flex items-center gap-2">
+                      <div className="px-4 pb-4 pt-1">
+                        <div className="rounded-xl border border-gray-200 divide-y">
+                          <div className="px-4 py-2 bg-gray-50 flex items-center gap-2">
                             <h4 className="text-sm font-semibold text-gray-900">Units</h4>
-                            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">Unit</span>
+                            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                              {expandedAreaUnits.length}
+                            </span>
                           </div>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead className="bg-gray-100 sticky top-0">
-                                <tr>
-                                  <th className="px-4 py-2 text-left font-medium text-gray-600">Unit</th>
-                                  <th className="px-4 py-2 text-left font-medium text-gray-600">Action</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y">
-                                {expandedAreaUnits.map((u, idx) => {
-                                  const unitId = u.id || u._id || u.code;
-                                  const isUnitExpanded = expandedUnitId === unitId;
-                                  const zebra = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-                                  return (
-                                    <React.Fragment key={unitId}>
-                                      <tr className={`${zebra} hover:bg-gray-100`}>
-                                        <td className="px-4 py-2 font-medium text-blue-700">
-                                          <button
-                                            className="flex items-center gap-2 hover:underline"
-                                            onClick={() => setExpandedUnitId(prev => prev === unitId ? null : unitId)}
-                                          >
-                                            {isUnitExpanded ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
-                                            <span>{u.name || u.title || unitId}</span>
-                                          </button>
-                                        </td>
-                                        <td className="px-4 py-2 text-gray-500">{isUnitExpanded ? 'Hide' : 'View'} unit monthly data</td>
-                                      </tr>
-                                      {isUnitExpanded && (
-                                        <tr className="bg-white">
-                                          <td className="px-0 py-0" colSpan={2}>
-                                            <div className="border-t">
-                                              <div className="flex items-center justify-between px-4 py-3 bg-gray-50">
-                                                <div className="text-sm font-medium text-gray-900">
-                                                  {u.name || u.title || unitId}
-                                                </div>
-                                                <button className="text-xs text-gray-600 hover:text-gray-900" onClick={() => setExpandedUnitId(null)}>Close</button>
-                                              </div>
-                                              <div className="p-4 overflow-x-auto">
-                                                {(() => {
-                                                  const unitSurveys = expandedAreaAllUnitSurveys.filter(s => (s.__unitId || s.unitId || s.component) === unitId);
-                                                  return (
-                                                    <UnitMonthlyStatsTable
-                                                      surveys={unitSurveys}
-                                                      onRowClick={(survey) => handleViewUnitSurvey(survey)}
-                                                    />
-                                                  );
-                                                })()}
-                                              </div>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      )}
-                                    </React.Fragment>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
+                          {expandedAreaUnits.length === 0 ? (
+                            <p className="px-4 py-3 text-sm text-gray-500">No units under this area.</p>
+                          ) : (
+                            expandedAreaUnits.map((u) => {
+                              const unitId = u.id || u._id || u.code;
+                              return (
+                                <div key={unitId} className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-gray-50">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Building className="w-4 h-4 text-[#002349] flex-shrink-0" />
+                                    <span className="text-sm font-medium text-gray-800 truncate">{u.name || u.title || unitId}</span>
+                                  </div>
+                                  <button
+                                    onClick={() => navigate('/district/dynamic-submissions/monthly', { state: { unitFilter: u.name || u.title } })}
+                                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#002349]/10 text-[#002349] text-xs font-semibold hover:bg-[#002349]/20 transition-colors"
+                                  >
+                                    <FileText className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">സബ്മിഷനുകൾ</span>
+                                  </button>
+                                </div>
+                              );
+                            })
+                          )}
                         </div>
-
-                        {showUnitDetailView && viewingUnitSurvey && (
-                          <div className="border rounded-lg p-4 mt-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <h4 className="text-sm font-semibold text-gray-900">Unit Reports Details</h4>
-                              <button className="text-xs text-gray-600 hover:text-gray-900" onClick={() => { setShowUnitDetailView(false); setViewingUnitSurvey(null); }}>Close</button>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                              <div><span className="text-gray-600">District:</span> <span className="font-medium">{viewingUnitSurvey?.district}</span></div>
-                              <div><span className="text-gray-600">Area:</span> <span className="font-medium">{viewingUnitSurvey?.area}</span></div>
-                              <div><span className="text-gray-600">Unit:</span> <span className="font-medium">{viewingUnitSurvey?.component}</span></div>
-                              <div><span className="text-gray-600">Month:</span> <span className="font-medium">{viewingUnitSurvey?.month}</span></div>
-                              <div><span className="text-gray-600">Year:</span> <span className="font-medium">{viewingUnitSurvey?.year}</span></div>
-                              <div><span className="text-gray-600">Submitted At:</span> <span className="font-medium">{new Date(viewingUnitSurvey?.submittedAt).toLocaleDateString()}</span></div>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>

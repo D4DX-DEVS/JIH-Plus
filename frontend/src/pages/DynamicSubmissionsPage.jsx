@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Search,
   Menu,
@@ -12,11 +12,17 @@ import {
   ClipboardList,
   BarChart2,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Download,
+  ArrowDownUp
 } from 'lucide-react';
 import axios from 'axios';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
+import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
+import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
+import SubmissionPreviewModal from '../components/reportRenderer/SubmissionPreviewModal';
+import { downloadDynamicReportPdf } from '../utils/dynamicReportPdfGenerator';
 import jihLogo from '../assets/LogoColor.png';
 
 const TYPE_LABELS = {
@@ -47,9 +53,46 @@ const REPORT_FOR_BADGE = {
 
 const ITEMS_PER_PAGE = 20;
 
-const AdminDynamicSubmissionsPage = ({ onLogout }) => {
-  const { type } = useParams(); // 'monthly' | 'yearly' | 'special'
+// Per-scope behaviour: which API + token to use, which sidebar to render,
+// and which hierarchy filters are relevant for that role.
+const SCOPE_CONFIG = {
+  admin: {
+    submissionsEndpoint: '/api/admin/report-submissions',
+    reportsEndpoint: '/api/admin/reports',
+    tokenKey: 'adminToken',
+    basePath: '/admin/dynamic-submissions',
+    showDistrictFilter: true,
+    showAreaFilter: true,
+    showUnitFilter: true,
+    showUserTypeFilter: true,
+  },
+  district: {
+    submissionsEndpoint: '/api/user/report-submissions',
+    reportsEndpoint: '/api/user/reports',
+    tokenKey: 'userToken',
+    basePath: '/district/dynamic-submissions',
+    showDistrictFilter: false,
+    showAreaFilter: true,
+    showUnitFilter: true,
+    showUserTypeFilter: true,
+  },
+  area: {
+    submissionsEndpoint: '/api/user/report-submissions',
+    reportsEndpoint: '/api/user/reports',
+    tokenKey: 'userToken',
+    basePath: '/area/dynamic-submissions',
+    showDistrictFilter: false,
+    showAreaFilter: false,
+    showUnitFilter: true,
+    showUserTypeFilter: false,
+  },
+};
+
+const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
+  const { type } = useParams(); // 'monthly' | 'yearly' | 'special' | 'quarterly'
   const navigate = useNavigate();
+  const location = useLocation();
+  const config = SCOPE_CONFIG[scope] || SCOPE_CONFIG.admin;
 
   const [submissions, setSubmissions] = useState([]);
   const [reportList, setReportList] = useState([]);
@@ -57,34 +100,43 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
   const [error, setError] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [adminData, setAdminData] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [previewSub, setPreviewSub] = useState(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [districtFilter, setDistrictFilter] = useState('');
-  const [areaFilter, setAreaFilter] = useState('');
-  const [unitFilter, setUnitFilter] = useState('');
+  const [areaFilter, setAreaFilter] = useState(location.state?.areaFilter || '');
+  const [unitFilter, setUnitFilter] = useState(location.state?.unitFilter || '');
   const [reportForFilter, setReportForFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [reportIdFilter, setReportIdFilter] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
 
   const validType = ['monthly', 'yearly', 'special', 'quarterly'].includes(type) ? type : 'monthly';
   const TypeIcon = TYPE_ICONS[validType] || ClipboardList;
 
-  // Load admin data
+  // Load stored identity for whichever role is viewing.
   useEffect(() => {
-    const stored = localStorage.getItem('adminData');
-    if (stored) setAdminData(JSON.parse(stored));
-  }, []);
+    if (scope === 'admin') {
+      const stored = localStorage.getItem('adminData');
+      if (stored) setAdminData(JSON.parse(stored));
+    } else {
+      const stored = localStorage.getItem('userData');
+      if (stored) setUserData(JSON.parse(stored));
+    }
+  }, [scope]);
 
   // Fetch submissions and report list whenever type changes
   useEffect(() => {
     fetchSubmissions();
     fetchReportList();
-    // Reset filters on type change
+    // Reset filters on type change (keep any incoming pre-filter only on first mount)
     setSearchTerm('');
     setDistrictFilter('');
     setAreaFilter('');
@@ -94,17 +146,19 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
     setReportIdFilter('');
     setMonthFilter('');
     setYearFilter('');
+    setSortBy('newest');
     setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validType]);
 
   const fetchSubmissions = async () => {
     try {
       setIsLoading(true);
       setError('');
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem(config.tokenKey);
       const params = new URLSearchParams({ reportType: validType, limit: 1000 });
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/report-submissions?${params}`,
+        `${import.meta.env.VITE_API_URL}${config.submissionsEndpoint}?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.data.success) {
@@ -119,11 +173,11 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
 
   const fetchReportList = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/reports?limit=200&type=${validType}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const token = localStorage.getItem(config.tokenKey);
+      const url = scope === 'admin'
+        ? `${import.meta.env.VITE_API_URL}${config.reportsEndpoint}?limit=200&type=${validType}`
+        : `${import.meta.env.VITE_API_URL}${config.reportsEndpoint}?type=${validType}`;
+      const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
       if (res.data.success) setReportList(res.data.data || []);
     } catch (_) {}
   };
@@ -164,14 +218,10 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
     setAreaFilter('');
     setUnitFilter('');
     setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [districtFilter]);
 
-  useEffect(() => {
-    setUnitFilter('');
-    setCurrentPage(1);
-  }, [areaFilter]);
-
-  // Apply all filters
+  // Apply all filters + sorting
   const filteredSubmissions = useMemo(() => {
     let result = [...submissions];
 
@@ -216,8 +266,19 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
       });
     }
 
+    const dateOf = (s) => new Date(s.submittedAt || s.createdAt || 0).getTime();
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest': return dateOf(a) - dateOf(b);
+        case 'title': return (a.reportId?.title || '').localeCompare(b.reportId?.title || '');
+        case 'status': return (a.status || '').localeCompare(b.status || '');
+        case 'newest':
+        default: return dateOf(b) - dateOf(a);
+      }
+    });
+
     return result;
-  }, [submissions, reportIdFilter, reportForFilter, statusFilter, monthFilter, yearFilter, districtFilter, areaFilter, unitFilter, searchTerm]);
+  }, [submissions, reportIdFilter, reportForFilter, statusFilter, monthFilter, yearFilter, districtFilter, areaFilter, unitFilter, searchTerm, sortBy]);
 
   useEffect(() => { setCurrentPage(1); }, [filteredSubmissions.length]);
 
@@ -246,7 +307,28 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
     return parts.length ? parts.join(' / ') : u.accessCode || '—';
   };
 
-  const hasActiveFilters = reportIdFilter || reportForFilter || statusFilter || districtFilter || areaFilter || unitFilter || searchTerm || monthFilter || yearFilter;
+  const handleExport = async (sub) => {
+    if (!sub?.reportId || typeof sub.reportId !== 'object') {
+      setError('Report structure unavailable for export.');
+      return;
+    }
+    setDownloadingId(sub._id);
+    try {
+      const ctx = sub.userId || {};
+      await downloadDynamicReportPdf(sub.reportId, sub, {
+        district: ctx.districtName,
+        area: ctx.areaName,
+        unit: ctx.unitName,
+      });
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      setError('Failed to generate PDF.');
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const hasActiveFilters = reportIdFilter || reportForFilter || statusFilter || districtFilter || areaFilter || unitFilter || searchTerm || monthFilter || yearFilter || sortBy !== 'newest';
 
   const clearAllFilters = () => {
     setSearchTerm('');
@@ -258,45 +340,70 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
     setReportIdFilter('');
     setMonthFilter('');
     setYearFilter('');
+    setSortBy('newest');
     setCurrentPage(1);
-  };
-
-  // Sidebar handlers
-  const handleTabChange = (tabId) => {
-    if (tabId === 'membership') {
-      navigate('/membership', { state: { roleHint: 'admin' } });
-      return;
-    }
-    if (['yearly', 'monthly', 'stats'].includes(tabId)) {
-      navigate('/admin-dashboard', { state: { activeTab: tabId } });
-    }
   };
 
   const handleLogout = () => setShowLogoutModal(true);
   const confirmLogout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminData');
+    if (scope === 'admin') {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminData');
+    } else {
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('userData');
+    }
     setShowLogoutModal(false);
     if (onLogout) onLogout();
     navigate('/', { replace: true });
   };
 
-  return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+  const renderSidebar = () => {
+    const commonMobile = {
+      isMobileOpen: isSidebarOpen,
+      onMobileToggle: () => setIsSidebarOpen(prev => !prev),
+      onLogout: handleLogout,
+    };
+    if (scope === 'district') {
+      return (
+        <DistrictAdminSidebar
+          {...commonMobile}
+          activeView={`submissions-${validType}`}
+          districtName={userData?.district || userData?.districtName || '—'}
+          onNotifications={() => navigate('/notifications')}
+          onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'district' } })}
+        />
+      );
+    }
+    if (scope === 'area') {
+      return (
+        <AreaAdminSidebar
+          {...commonMobile}
+          activeTab={`submissions-${validType}`}
+          areaName={userData?.area || userData?.areaName || '—'}
+          districtName={userData?.district || userData?.districtName || ''}
+          onNotifications={() => navigate('/notifications')}
+          onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'area' } })}
+        />
+      );
+    }
+    return (
       <AdminSidebar
+        {...commonMobile}
         activeTab="dynamic-submissions"
-        onTabChange={handleTabChange}
         onNavigateToReports={() => navigate('/view-reports')}
         onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'admin' } })}
-        onDownloadCSV={() => {}}
         onNavigateToNotifications={() => navigate('/notifications')}
-        onLogout={handleLogout}
         adminEmail={adminData?.email || 'Admin'}
         totalForms={0}
         totalSurveys={0}
-        isMobileOpen={isSidebarOpen}
-        onMobileToggle={() => setIsSidebarOpen(prev => !prev)}
       />
+    );
+  };
+
+  return (
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+      {renderSidebar()}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header */}
@@ -325,7 +432,7 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
               </div>
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-[#002349]">
-                  ഡൈനാമിക് സബ്മിഷൻ — {TYPE_LABELS[validType]}
+                  സബ്മിഷനുകൾ — {TYPE_LABELS[validType]}
                 </h1>
                 <p className="text-sm text-gray-500 mt-0.5">
                   {isLoading ? 'Loading...' : `${filteredSubmissions.length} submissions`}
@@ -334,13 +441,13 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
             </div>
 
             {/* Type switcher tabs */}
-            <div className="flex gap-2 mt-4">
+            <div className="flex flex-wrap gap-2 mt-4">
               {(['monthly', 'yearly', 'quarterly', 'special']).map(t => {
                 const TIcon = TYPE_ICONS[t];
                 return (
                   <button
                     key={t}
-                    onClick={() => navigate(`/admin/dynamic-submissions/${t}`)}
+                    onClick={() => navigate(`${config.basePath}/${t}`)}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                       validType === t
                         ? 'bg-[#002349] text-white shadow-md'
@@ -368,7 +475,7 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input
               type="text"
-              placeholder="ഡിസ്ട്രിക്ട്, ഏരിയ, യൂണിറ്റ്, റിപ്പോർട്ട് തലക്കെട്ട്... എന്നിവ തിരഞ്ഞ് നോക്കൂ"
+              placeholder="ഏരിയ, യൂണിറ്റ്, റിപ്പോർട്ട് തലക്കെട്ട്... എന്നിവ തിരഞ്ഞ് നോക്കൂ"
               value={searchTerm}
               onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent bg-white shadow-sm"
@@ -398,21 +505,23 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
               )}
             </div>
             <div className="flex flex-wrap gap-3">
-              {/* District */}
-              <select
-                value={districtFilter}
-                onChange={e => setDistrictFilter(e.target.value)}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349] min-w-[160px]"
-              >
-                <option value="">എല്ലാ ജില്ലകളും</option>
-                {allDistricts.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
+              {/* District (admin only) */}
+              {config.showDistrictFilter && (
+                <select
+                  value={districtFilter}
+                  onChange={e => setDistrictFilter(e.target.value)}
+                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349] min-w-[160px]"
+                >
+                  <option value="">എല്ലാ ജില്ലകളും</option>
+                  {allDistricts.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              )}
 
-              {/* Area (only if district selected) */}
-              {districtFilter && (
+              {/* Area */}
+              {config.showAreaFilter && (!config.showDistrictFilter || districtFilter) && (
                 <select
                   value={areaFilter}
-                  onChange={e => setAreaFilter(e.target.value)}
+                  onChange={e => { setAreaFilter(e.target.value); setUnitFilter(''); setCurrentPage(1); }}
                   className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349] min-w-[150px]"
                 >
                   <option value="">എല്ലാ ഏരിയകളും</option>
@@ -420,11 +529,11 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
                 </select>
               )}
 
-              {/* Unit (only if area selected) */}
-              {areaFilter && (
+              {/* Unit */}
+              {config.showUnitFilter && (
                 <select
                   value={unitFilter}
-                  onChange={e => setUnitFilter(e.target.value)}
+                  onChange={e => { setUnitFilter(e.target.value); setCurrentPage(1); }}
                   className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349] min-w-[150px]"
                 >
                   <option value="">എല്ലാ യൂണിറ്റുകളും</option>
@@ -432,17 +541,19 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
                 </select>
               )}
 
-              {/* Report For */}
-              <select
-                value={reportForFilter}
-                onChange={e => { setReportForFilter(e.target.value); setCurrentPage(1); }}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-              >
-                <option value="">എല്ലാ ലെവലുകളും</option>
-                <option value="district">ജില്ല</option>
-                <option value="area">ഏരിയ</option>
-                <option value="unit">യൂണിറ്റ്</option>
-              </select>
+              {/* Report For (user type) */}
+              {config.showUserTypeFilter && (
+                <select
+                  value={reportForFilter}
+                  onChange={e => { setReportForFilter(e.target.value); setCurrentPage(1); }}
+                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                >
+                  <option value="">എല്ലാ ലെവലുകളും</option>
+                  <option value="district">ജില്ല</option>
+                  <option value="area">ഏരിയ</option>
+                  <option value="unit">യൂണിറ്റ്</option>
+                </select>
+              )}
 
               {/* Specific Report */}
               <select
@@ -467,42 +578,20 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
                 <option value="pending">Pending</option>
               </select>
 
-              {/* Month filter — only for monthly type */}
-              {validType === 'monthly' && (
+              {/* Sort */}
+              <div className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 bg-white">
+                <ArrowDownUp className="w-3.5 h-3.5 text-gray-400" />
                 <select
-                  value={monthFilter}
-                  onChange={e => { setMonthFilter(e.target.value); setCurrentPage(1); }}
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                  value={sortBy}
+                  onChange={e => { setSortBy(e.target.value); setCurrentPage(1); }}
+                  className="text-sm text-gray-700 bg-transparent focus:outline-none"
                 >
-                  <option value="">എല്ലാ മാസവും</option>
-                  <option value="1">ജനുവരി</option>
-                  <option value="2">ഫെബ്രുവരി</option>
-                  <option value="3">മാർച്ച്</option>
-                  <option value="4">ഏപ്രിൽ</option>
-                  <option value="5">മേയ്</option>
-                  <option value="6">ജൂൺ</option>
-                  <option value="7">ജൂലൈ</option>
-                  <option value="8">ഓഗസ്റ്റ്</option>
-                  <option value="9">സെപ്റ്റംബർ</option>
-                  <option value="10">ഒക്‌ടോബർ</option>
-                  <option value="11">നവംബർ</option>
-                  <option value="12">ഡിസംബർ</option>
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="title">Title (A–Z)</option>
+                  <option value="status">Status</option>
                 </select>
-              )}
-
-              {/* Year filter — for monthly and yearly types */}
-              {(validType === 'monthly' || validType === 'yearly') && (
-                <select
-                  value={yearFilter}
-                  onChange={e => { setYearFilter(e.target.value); setCurrentPage(1); }}
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                >
-                  <option value="">എല്ലാ വർഷവും</option>
-                  {Array.from({ length: new Date().getFullYear() - 2023 }, (_, i) => 2024 + i).map(y => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              )}
+              </div>
 
               <span className="ml-auto self-center text-sm font-semibold text-[#002349]">
                 {filteredSubmissions.length} submissions
@@ -565,6 +654,8 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
                       {paginatedSubmissions.map((sub, idx) => {
                         const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + idx + 1;
                         const reportFor = sub.reportId?.reportFor || '';
+                        const isDownloading = downloadingId === sub._id;
+                        const canExport = sub.status === 'submitted' && typeof sub.reportId === 'object';
                         return (
                           <tr key={sub._id} className="hover:bg-blue-50/30 transition-colors">
                             <td className="px-4 py-3 text-xs text-gray-400 font-mono">{rowNum}</td>
@@ -595,12 +686,27 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
                               {formatDate(sub.submittedAt || sub.createdAt)}
                             </td>
                             <td className="px-4 py-3">
-                              <button
-                                onClick={() => navigate(`/report-submissions/${sub.reportId?._id || sub.reportId}`)}
-                                className="text-xs px-3 py-1.5 bg-[#002349]/10 text-[#002349] rounded-lg hover:bg-[#002349]/20 font-medium transition-colors"
-                              >
-                                View
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setPreviewSub(sub)}
+                                  className="text-xs px-3 py-1.5 bg-[#002349]/10 text-[#002349] rounded-lg hover:bg-[#002349]/20 font-medium transition-colors"
+                                >
+                                  View
+                                </button>
+                                <button
+                                  onClick={() => handleExport(sub)}
+                                  disabled={!canExport || isDownloading}
+                                  title={canExport ? 'Export PDF' : 'Only submitted reports can be exported'}
+                                  className="flex items-center gap-1 text-xs px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  {isDownloading ? (
+                                    <span className="inline-block w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <Download className="w-3.5 h-3.5" />
+                                  )}
+                                  <span className="hidden sm:inline">Export</span>
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -664,6 +770,18 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
         </main>
       </div>
 
+      {/* Submission detail modal */}
+      <SubmissionPreviewModal
+        open={!!previewSub}
+        loading={false}
+        data={previewSub ? { report: previewSub.reportId, submission: previewSub } : null}
+        onClose={() => setPreviewSub(null)}
+        onDownload={previewSub && previewSub.status === 'submitted' && typeof previewSub.reportId === 'object'
+          ? () => handleExport(previewSub)
+          : undefined}
+        downloading={previewSub && downloadingId === previewSub._id}
+      />
+
       {/* Logout confirmation modal */}
       {showLogoutModal && (
         <ConfirmationModal
@@ -677,4 +795,4 @@ const AdminDynamicSubmissionsPage = ({ onLogout }) => {
   );
 };
 
-export default AdminDynamicSubmissionsPage;
+export default DynamicSubmissionsPage;

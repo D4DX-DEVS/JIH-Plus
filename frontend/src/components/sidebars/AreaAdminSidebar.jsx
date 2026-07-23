@@ -42,7 +42,9 @@ const AreaAdminSidebar = ({
   onMobileToggle
 }) => {
   const [isDesktopCollapsed, setIsDesktopCollapsed] = React.useState(false);
-  const [expandedGroup, setExpandedGroup] = React.useState('dynamic-reports');
+  const [expandedGroup, setExpandedGroup] = React.useState(
+    String(activeTab).startsWith('submissions') ? 'submissions' : 'dynamic-reports'
+  );
   const navigate = useNavigate();
 
   const handleReportType = (type) => {
@@ -55,10 +57,21 @@ const AreaAdminSidebar = ({
 
   const navItems = [
     { id: 'dashboard', label: 'ഡാഷ്ബോർഡ്', icon: LayoutDashboard },
-    { id: 'monthly', label: 'പ്രതിമാസ റിപ്പോർട്ടുകൾ', icon: Calendar },
     { id: 'units', label: 'യൂണിറ്റുകൾ', icon: ClipboardList },
     { id: 'stats', label: 'സ്ഥിതിവിവരക്കണക്കുകൾ', icon: BarChart3 },
     { id: 'membership', label: 'അംഗത്വം', icon: Users, onClick: onNavigateToMembership },
+    {
+      id: 'submissions',
+      type: 'group',
+      label: 'സബ്മിഷനുകൾ',
+      icon: ClipboardList,
+      children: [
+        { id: 'submissions-monthly', reportType: 'monthly', icon: Calendar, onClick: () => navigate('/area/dynamic-submissions/monthly') },
+        { id: 'submissions-quarterly', reportType: 'quarterly', icon: BarChart2, onClick: () => navigate('/area/dynamic-submissions/quarterly') },
+        { id: 'submissions-yearly', reportType: 'yearly', icon: CalendarDays, onClick: () => navigate('/area/dynamic-submissions/yearly') },
+        { id: 'submissions-special', reportType: 'special', icon: Star, onClick: () => navigate('/area/dynamic-submissions/special') },
+      ]
+    },
     {
       id: 'dynamic-reports',
       type: 'group',
