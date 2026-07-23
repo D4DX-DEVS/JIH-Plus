@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
+  MapPin,
   Target as TargetIcon
 } from 'lucide-react';
 import jihLogoWhite from '../../assets/LogoWhite.png';
@@ -57,6 +58,7 @@ const DistrictAdminSidebar = ({
 
   const navItems = [
     { id: 'dashboard', label: 'ഡാഷ്ബോർഡ്', icon: LayoutDashboard },
+    { id: 'locations', label: 'ഏരിയകളും യൂണിറ്റുകളും', icon: MapPin },
     { id: 'stats', label: 'സ്ഥിതിവിവരക്കണക്കുകൾ', icon: BarChart3 },
     { id: 'membership', label: 'അംഗത്വം', icon: Users, onClick: onNavigateToMembership },
     {

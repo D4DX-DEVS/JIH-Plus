@@ -783,14 +783,15 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
       />
 
       {/* Logout confirmation modal */}
-      {showLogoutModal && (
-        <ConfirmationModal
-          title="Logout"
-          message="Are you sure you want to logout?"
-          onConfirm={confirmLogout}
-          onCancel={() => setShowLogoutModal(false)}
-        />
-      )}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        type="logout"
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        onConfirm={confirmLogout}
+        onClose={() => setShowLogoutModal(false)}
+      />
     </div>
   );
 };

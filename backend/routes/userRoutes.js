@@ -164,6 +164,21 @@ router.get('/hierarchy/areas/:districtId', async (req, res) => {
   }
 });
 
+// Get areas for a districtId straight from the local DB (the external
+// /hierarchy/areas API is not always reachable). Returns _id + name so the
+// dashboard can drill into each area's units.
+router.get('/hierarchy/areas-db/:districtId', async (req, res) => {
+  try {
+    const areas = await AreaMaster.find({ districtId: req.params.districtId })
+      .select('_id name uniqueCode districtId')
+      .sort({ name: 1 })
+      .lean();
+    res.json({ success: true, data: areas });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message || 'Failed to load areas' });
+  }
+});
+
 // Get units for an areaId
 router.get('/hierarchy/units/:areaId', async (req, res) => {
   try {
