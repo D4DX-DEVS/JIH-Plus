@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { api } from '../../utils/ihthisabi/api'
 import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, User, Globe, MapPin, Building2, Phone, Mail, X, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -40,43 +40,48 @@ function MemberModal({ member, onClose, onSaved }) {
       .catch(() => toast.error('Failed to load countries'))
   }, [])
 
-  // Load areas when country changes
+  // Load areas when country changes. Must NOT reset abroadArea/abroadUnit on the
+  // initial mount — when editing, the member already has those set, and this
+  // effect fires on mount too since form.abroadCountry starts non-empty.
+  // Only reset on a genuine user-driven country change.
+  //
+  // A simple "first run" boolean ref doesn't survive React 18 Strict Mode: in
+  // dev, Strict Mode deliberately mounts, cleans up, and re-mounts every
+  // component once to surface missing-cleanup bugs, calling this effect twice
+  // in a row for the SAME dependency value. A boolean flag flips to "not first
+  // run" after call #1, so call #2 wrongly treats the unchanged value as a real
+  // change and wipes the fields again. Comparing against the actual previous
+  // value survives that, since the value is identical across both calls.
+  const prevCountryRef = useRef(form.abroadCountry)
   useEffect(() => {
-    setForm(f => ({ ...f, abroadArea: '', abroadUnit: '' }))
-    setAreas([]); setUnits([])
+    const changed = prevCountryRef.current !== form.abroadCountry
+    prevCountryRef.current = form.abroadCountry
+
+    if (changed) {
+      setForm(f => ({ ...f, abroadArea: '', abroadUnit: '' }))
+      setAreas([]); setUnits([])
+    }
     if (!form.abroadCountry) return
     api.get('/ihthisabi/admin/abroad-areas', { params: { country: form.abroadCountry } })
       .then(res => setAreas(res.data.data.areas))
       .catch(() => {})
   }, [form.abroadCountry])
 
-  // Load units when area changes
+  // Load units when area changes — same previous-value guard as above.
+  const prevAreaRef = useRef(form.abroadArea)
   useEffect(() => {
-    setForm(f => ({ ...f, abroadUnit: '' }))
-    setUnits([])
+    const changed = prevAreaRef.current !== form.abroadArea
+    prevAreaRef.current = form.abroadArea
+
+    if (changed) {
+      setForm(f => ({ ...f, abroadUnit: '' }))
+      setUnits([])
+    }
     if (!form.abroadArea) return
     api.get('/ihthisabi/admin/abroad-units', { params: { area: form.abroadArea } })
       .then(res => setUnits(res.data.data.units))
       .catch(() => {})
   }, [form.abroadArea])
-
-  // Pre-fill area/unit lists when editing
-  useEffect(() => {
-    if (!member) return
-    const cId = member.abroadCountry?._id || member.abroadCountry
-    const aId = member.abroadArea?._id || member.abroadArea
-    if (cId) {
-      api.get('/ihthisabi/admin/abroad-areas', { params: { country: cId } })
-        .then(res => setAreas(res.data.data.areas))
-        .catch(() => {})
-    }
-    if (aId) {
-      api.get('/ihthisabi/admin/abroad-units', { params: { area: aId } })
-        .then(res => setUnits(res.data.data.units))
-        .catch(() => {})
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

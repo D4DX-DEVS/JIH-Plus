@@ -11,6 +11,7 @@ const ReplyTemplate = require('../../models/ihthisabi/ReplyTemplate');
 const AbroadCountry = require('../../models/ihthisabi/AbroadCountry');
 const AbroadArea = require('../../models/ihthisabi/AbroadArea');
 const AbroadUnit = require('../../models/ihthisabi/AbroadUnit');
+const LocationMaster = require('../../models/ihthisabi/LocationMaster');
 const { protect, authorize } = require('../../middlewares/ihthisabi/auth');
 const upload = require('../../middlewares/ihthisabi/upload');
 const { parseExcelFile, parseUnitAdminExcelFile } = require('../../utils/excelParser');
@@ -461,16 +462,27 @@ router.get('/dashboard/stats', async (req, res) => {
     const { quarter: prevQuarter, year: prevYear } = getPreviousAvailableQuarter(currentQuarter, currentYear);
 
     // Current quarter submissions count
-    const currentQuarterSubmissions = await Submission.countDocuments({
+    // Total = normal/abroad submissions (Submission collection) + alternative submissions (AlternativeSubmit collection)
+    const currentQuarterNormalSubmissions = await Submission.countDocuments({
       'submissionPeriod.year': currentYear,
       'submissionPeriod.quarter': currentQuarter
     });
+    const currentQuarterAlternativeSubmissions = await AlternativeSubmit.countDocuments({
+      'submissionPeriod.year': currentYear,
+      'submissionPeriod.quarter': currentQuarter
+    });
+    const currentQuarterSubmissions = currentQuarterNormalSubmissions + currentQuarterAlternativeSubmissions;
 
-    // Previous quarter submissions count
-    const previousQuarterSubmissions = await Submission.countDocuments({
+    // Previous quarter submissions count (same combined logic)
+    const previousQuarterNormalSubmissions = await Submission.countDocuments({
       'submissionPeriod.year': prevYear,
       'submissionPeriod.quarter': prevQuarter
     });
+    const previousQuarterAlternativeSubmissions = await AlternativeSubmit.countDocuments({
+      'submissionPeriod.year': prevYear,
+      'submissionPeriod.quarter': prevQuarter
+    });
+    const previousQuarterSubmissions = previousQuarterNormalSubmissions + previousQuarterAlternativeSubmissions;
 
     // Quarter-over-quarter % change
     const quarterChangePercent = previousQuarterSubmissions > 0
@@ -501,8 +513,34 @@ router.get('/dashboard/stats', async (req, res) => {
         }
       }
     ]);
-    const currentQuarterMale = currentQuarterGenderAgg.find(g => g._id === 'Male')?.count || 0;
-    const currentQuarterFemale = currentQuarterGenderAgg.find(g => g._id === 'Female')?.count || 0;
+    // Same gender breakdown for alternative submissions, so Male + Female reconciles with the combined total above
+    const currentQuarterAltGenderAgg = await AlternativeSubmit.aggregate([
+      {
+        $match: {
+          'submissionPeriod.year': currentYear,
+          'submissionPeriod.quarter': currentQuarter
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'userDoc'
+        }
+      },
+      { $unwind: { path: '$userDoc', preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: { $ifNull: ['$userDoc.gender', 'Unknown'] },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    const currentQuarterMale = (currentQuarterGenderAgg.find(g => g._id === 'Male')?.count || 0)
+      + (currentQuarterAltGenderAgg.find(g => g._id === 'Male')?.count || 0);
+    const currentQuarterFemale = (currentQuarterGenderAgg.find(g => g._id === 'Female')?.count || 0)
+      + (currentQuarterAltGenderAgg.find(g => g._id === 'Female')?.count || 0);
 
     // Total rukn users (active) with gender breakdown
     const totalUsersGenderAgg = await User.aggregate([
@@ -547,6 +585,182 @@ router.get('/dashboard/stats', async (req, res) => {
       message: 'Server error',
       error: error.message
     });
+  }
+});
+
+// Shared helper: current + previous available submission period (mirrors the
+// logic in /dashboard/stats) — used by the district-stats route below.
+const getDashboardPeriods = (now = new Date()) => {
+  const { quarter: currentQuarter, year: currentYear } = getAvailableSubmissionQuarter(now);
+  let prevQuarter = currentQuarter - 1;
+  let prevYear = currentYear;
+  if (prevQuarter === 0) { prevQuarter = 4; prevYear -= 1; }
+  if (isQuarterHidden(prevQuarter)) {
+    prevQuarter -= 1;
+    if (prevQuarter === 0) { prevQuarter = 4; prevYear -= 1; }
+  }
+  return { currentQuarter, currentYear, prevQuarter, prevYear };
+};
+
+// @desc    District-wise submission stats: current vs previous period, combining
+//          normal/abroad (Submission) + alternative (AlternativeSubmit) submissions
+// @route   GET /api/admin/dashboard/district-stats
+// @access  Private (Admin only)
+router.get('/dashboard/district-stats', async (req, res) => {
+  try {
+    const { currentQuarter, currentYear, prevQuarter, prevYear } = getDashboardPeriods();
+
+    const aggByDistrict = (Model, year, quarter) => Model.aggregate([
+      { $match: { 'submissionPeriod.year': year, 'submissionPeriod.quarter': quarter } },
+      { $group: { _id: '$district', count: { $sum: 1 } } }
+    ]);
+
+    const [curSub, curAlt, prevSub, prevAlt] = await Promise.all([
+      aggByDistrict(Submission, currentYear, currentQuarter),
+      aggByDistrict(AlternativeSubmit, currentYear, currentQuarter),
+      aggByDistrict(Submission, prevYear, prevQuarter),
+      aggByDistrict(AlternativeSubmit, prevYear, prevQuarter)
+    ]);
+
+    // Some historical rows have a raw Mongo ObjectId string stored in `district`
+    // (a data-entry bug elsewhere, not something to display as a district).
+    const isLikelyObjectId = (value) => /^[0-9a-f]{24}$/i.test(String(value || '').trim());
+    // Different casings of the same district ("ERNAKULAM" / "Ernakulam") are the
+    // same place — group on a normalized key so they don't show as separate bars.
+    const normalizeDistrictKey = (value) => String(value || '').trim().toUpperCase();
+    const titleCase = (value) => String(value || '').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+
+    const mergeByDistrict = (...lists) => {
+      const map = new Map(); // normalized key -> { count, label }
+      lists.forEach(list => {
+        list.forEach(({ _id, count }) => {
+          const raw = String(_id || '').trim();
+          if (!raw || isLikelyObjectId(raw)) return;
+          const key = normalizeDistrictKey(raw);
+          const existing = map.get(key);
+          if (existing) {
+            existing.count += count;
+          } else {
+            map.set(key, { count, label: titleCase(raw) });
+          }
+        });
+      });
+      return map;
+    };
+
+    const currentMap = mergeByDistrict(curSub, curAlt);
+    const prevMap = mergeByDistrict(prevSub, prevAlt);
+
+    const allKeys = Array.from(new Set([...currentMap.keys(), ...prevMap.keys()]));
+
+    const districts = allKeys
+      .map(key => {
+        const current = currentMap.get(key)?.count || 0;
+        const previous = prevMap.get(key)?.count || 0;
+        const label = currentMap.get(key)?.label || prevMap.get(key)?.label || key;
+        const changePercent = previous > 0
+          ? Math.round(((current - previous) / previous) * 100)
+          : (current > 0 ? 100 : 0);
+        return { district: label, current, previous, changePercent };
+      })
+      // Most active districts first — makes a sensible default when the UI only
+      // shows the top district's chart out of the box.
+      .sort((a, b) => b.current - a.current || a.district.localeCompare(b.district));
+
+    res.json({
+      success: true,
+      data: { districts, currentQuarter, currentYear, prevQuarter, prevYear }
+    });
+  } catch (error) {
+    console.error('District stats error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Submitted vs pending units for the current period, optionally scoped
+//          to a district and/or area. "All units" = union of units derived from
+//          active rukn Users and admin-added LocationMaster rows (same source
+//          used for the location dropdowns elsewhere in the app).
+// @route   GET /api/admin/dashboard/units-status?district=&area=
+// @access  Private (Admin only)
+router.get('/dashboard/units-status', async (req, res) => {
+  try {
+    const { district, area } = req.query;
+    const { currentQuarter, currentYear } = getDashboardPeriods();
+
+    const userMatch = { role: 'rukn', isAbroad: { $ne: true }, unit: { $nin: [null, ''] } };
+    if (district) userMatch.district = district;
+    if (area) userMatch.area = area;
+
+    const userUnits = await User.aggregate([
+      { $match: userMatch },
+      { $group: { _id: { district: '$district', area: '$area', unit: '$unit' } } }
+    ]);
+
+    const masterMatch = { type: 'unit', isActive: true };
+    if (district) masterMatch.district = district;
+    if (area) masterMatch.area = area;
+    const masterUnits = await LocationMaster.find(masterMatch).select('name district area').lean();
+
+    const unitMap = new Map();
+    userUnits.forEach(({ _id }) => {
+      if (!_id.district || !_id.area || !_id.unit) return;
+      const key = `${_id.district}|${_id.area}|${_id.unit}`;
+      unitMap.set(key, { district: _id.district, area: _id.area, unit: _id.unit });
+    });
+    masterUnits.forEach(row => {
+      if (!row.district || !row.area || !row.name) return;
+      const key = `${row.district}|${row.area}|${row.name}`;
+      if (!unitMap.has(key)) unitMap.set(key, { district: row.district, area: row.area, unit: row.name });
+    });
+
+    const allUnits = Array.from(unitMap.values());
+
+    const periodMatch = { 'submissionPeriod.year': currentYear, 'submissionPeriod.quarter': currentQuarter };
+    if (district) periodMatch.district = district;
+    if (area) periodMatch.area = area;
+
+    const groupByUnit = (Model) => Model.aggregate([
+      { $match: periodMatch },
+      { $group: { _id: { district: '$district', area: '$area', unit: '$unit' } } }
+    ]);
+
+    const [subUnits, altUnits] = await Promise.all([
+      groupByUnit(Submission),
+      groupByUnit(AlternativeSubmit)
+    ]);
+
+    const submittedSet = new Set();
+    [...subUnits, ...altUnits].forEach(({ _id }) => {
+      submittedSet.add(`${_id.district}|${_id.area}|${_id.unit}`);
+    });
+
+    const submittedUnits = [];
+    const pendingUnits = [];
+    allUnits.forEach(u => {
+      const key = `${u.district}|${u.area}|${u.unit}`;
+      (submittedSet.has(key) ? submittedUnits : pendingUnits).push(u);
+    });
+
+    const byName = (a, b) => a.unit.localeCompare(b.unit);
+    submittedUnits.sort(byName);
+    pendingUnits.sort(byName);
+
+    res.json({
+      success: true,
+      data: {
+        currentQuarter,
+        currentYear,
+        totalUnits: allUnits.length,
+        submittedCount: submittedUnits.length,
+        pendingCount: pendingUnits.length,
+        submittedUnits,
+        pendingUnits
+      }
+    });
+  } catch (error) {
+    console.error('Units status error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 });
 
@@ -3056,6 +3270,131 @@ router.delete('/abroad-units/:id', async (req, res) => {
     res.json({ success: true, message: 'Unit deleted successfully' });
   } catch (error) {
     console.error('Delete abroad unit error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// ==================== ABROAD UNIT ADMINS ====================
+
+// @desc    List abroad unit admins only (isAbroad: true), optionally filtered by
+//          abroad country/area/unit id
+// @route   GET /api/ihthisabi/admin/abroad-unitadmins
+// @access  Private (Admin only)
+router.get('/abroad-unitadmins', async (req, res) => {
+  try {
+    const { country, area, unit } = req.query;
+    const filter = { isAbroad: true };
+    if (country) filter.abroadCountry = country;
+    if (area) filter.abroadArea = area;
+    if (unit) filter.abroadUnit = unit;
+
+    const unitAdmins = await UnitAdmin.find(filter)
+      .populate('abroadCountry', 'title')
+      .populate('abroadArea', 'title')
+      .populate('abroadUnit', 'title')
+      .sort({ name: 1 })
+      .lean();
+
+    res.json({ success: true, data: { unitAdmins } });
+  } catch (error) {
+    console.error('Get abroad unit admins error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Assign a unit admin (rukn) to an abroad unit
+// @route   POST /api/ihthisabi/admin/abroad-unitadmins
+// @access  Private (Admin only)
+router.post('/abroad-unitadmins', async (req, res) => {
+  try {
+    const { abroadUnitId, ruknId, name, contactNo, emailId, password } = req.body;
+
+    if (!abroadUnitId || !ruknId || !ruknId.trim() || !name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Abroad unit, Rukn ID and name are required' });
+    }
+
+    const abroadUnit = await AbroadUnit.findById(abroadUnitId).populate('areaId', 'title').populate('countryId', 'title');
+    if (!abroadUnit) {
+      return res.status(404).json({ success: false, message: 'Abroad unit not found' });
+    }
+
+    const existingRuknId = await UnitAdmin.findOne({ ruknId: ruknId.trim() });
+    if (existingRuknId) {
+      return res.status(409).json({ success: false, message: 'A unit admin with this Rukn ID already exists' });
+    }
+
+    const created = await UnitAdmin.create({
+      unit: abroadUnit.title,
+      district: abroadUnit.countryId?.title || '',
+      area: abroadUnit.areaId?.title || '',
+      ruknId: ruknId.trim(),
+      name: name.trim(),
+      contactNo: contactNo || '',
+      emailId: emailId || '',
+      password: password && password.trim() ? password.trim() : 'unitadmin123',
+      isActive: true,
+      isAbroad: true,
+      abroadCountry: abroadUnit.countryId?._id || abroadUnit.countryId,
+      abroadArea: abroadUnit.areaId?._id || abroadUnit.areaId,
+      abroadUnit: abroadUnit._id
+    });
+
+    const populated = await UnitAdmin.findById(created._id)
+      .populate('abroadCountry', 'title')
+      .populate('abroadArea', 'title')
+      .populate('abroadUnit', 'title');
+
+    res.status(201).json({ success: true, data: { unitAdmin: populated } });
+  } catch (error) {
+    console.error('Create abroad unit admin error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Update an abroad unit admin's details
+// @route   PUT /api/ihthisabi/admin/abroad-unitadmins/:id
+// @access  Private (Admin only)
+router.put('/abroad-unitadmins/:id', async (req, res) => {
+  try {
+    const { name, contactNo, emailId, password, isActive } = req.body;
+
+    const unitAdmin = await UnitAdmin.findOne({ _id: req.params.id, isAbroad: true });
+    if (!unitAdmin) {
+      return res.status(404).json({ success: false, message: 'Abroad unit admin not found' });
+    }
+
+    if (name && name.trim()) unitAdmin.name = name.trim();
+    if (contactNo !== undefined) unitAdmin.contactNo = contactNo;
+    if (emailId !== undefined) unitAdmin.emailId = emailId;
+    if (typeof isActive === 'boolean') unitAdmin.isActive = isActive;
+    if (password && password.trim()) unitAdmin.password = password.trim();
+
+    await unitAdmin.save();
+
+    const updated = await UnitAdmin.findById(unitAdmin._id)
+      .populate('abroadCountry', 'title')
+      .populate('abroadArea', 'title')
+      .populate('abroadUnit', 'title');
+
+    res.json({ success: true, data: { unitAdmin: updated } });
+  } catch (error) {
+    console.error('Update abroad unit admin error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Remove an abroad unit admin assignment
+// @route   DELETE /api/ihthisabi/admin/abroad-unitadmins/:id
+// @access  Private (Admin only)
+router.delete('/abroad-unitadmins/:id', async (req, res) => {
+  try {
+    const unitAdmin = await UnitAdmin.findOneAndDelete({ _id: req.params.id, isAbroad: true });
+    if (!unitAdmin) {
+      return res.status(404).json({ success: false, message: 'Abroad unit admin not found' });
+    }
+    res.json({ success: true, message: 'Abroad unit admin removed successfully' });
+  } catch (error) {
+    console.error('Delete abroad unit admin error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 });

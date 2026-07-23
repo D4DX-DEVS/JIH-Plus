@@ -69,6 +69,34 @@ const buildUnitScopedSubmissionQuery = (unitValue = '') => {
     : { unit: '__no_matching_unit__' };
 };
 
+// Resolve the correct member/submission scope for a unit admin. Abroad unit admins
+// are linked to their unit via the `abroadUnit` ObjectId ref (abroad Users store
+// unit:'-' as a placeholder and blank district/area, so the domestic string-based
+// queries above never match them) — so abroad scope is resolved via that ref
+// instead of a unit-name match.
+const getUnitAdminScope = async (unitAdmin) => {
+  if (unitAdmin.isAbroad) {
+    const memberQuery = { role: 'rukn', isAbroad: true, abroadUnit: unitAdmin.abroadUnit };
+    const memberIds = await User.find(memberQuery).distinct('_id');
+    return {
+      memberQuery,
+      submissionQuery: { userId: { $in: memberIds } },
+      memberIds
+    };
+  }
+
+  const unitName = unitAdmin.unit;
+  const abroadUserIds = await User.find({ unit: unitName, isAbroad: true }).distinct('_id');
+  return {
+    memberQuery: buildUnitScopedUserQuery(unitName),
+    submissionQuery: {
+      ...buildUnitScopedSubmissionQuery(unitName),
+      ...(abroadUserIds.length > 0 ? { userId: { $nin: abroadUserIds } } : {})
+    },
+    memberIds: null
+  };
+};
+
 // ==================== DEBUG/TEST ENDPOINTS ====================
 
 // @desc    Debug endpoint to test token validation
@@ -291,7 +319,8 @@ router.get('/me', protect, async (req, res) => {
           area: unitAdmin.area,
           contactNo: unitAdmin.contactNo,
           emailId: unitAdmin.emailId,
-          lastLogin: unitAdmin.lastLogin
+          lastLogin: unitAdmin.lastLogin,
+          isAbroad: !!unitAdmin.isAbroad
         }
       }
     });
@@ -329,7 +358,7 @@ router.get('/members', protect, async (req, res) => {
     const unitName = unitAdmin.unit;
     console.log('Unit Admin Unit:', unitName);
 
-    const memberQuery = buildUnitScopedUserQuery(unitName);
+    const { memberQuery } = await getUnitAdminScope(unitAdmin);
 
     // Fetch all users from User model with this unit name
     const members = await User.find(memberQuery)
@@ -396,8 +425,7 @@ router.get('/dashboard', protect, async (req, res) => {
     }
 
     // Get total members count
-    const memberQuery = buildUnitScopedUserQuery(unitAdmin.unit);
-    const submissionQuery = buildUnitScopedSubmissionQuery(unitAdmin.unit);
+    const { memberQuery, submissionQuery } = await getUnitAdminScope(unitAdmin);
 
     const totalMembers = await User.countDocuments(memberQuery);
 
@@ -553,10 +581,10 @@ router.get('/members/:id', protect, async (req, res) => {
     }
 
     // Get member details
+    const { memberQuery } = await getUnitAdminScope(unitAdmin);
     const member = await User.findOne({
       _id: req.params.id,
-      unit: unitAdmin.unit,
-      role: 'rukn'
+      ...memberQuery
     }).select('ruknId name gender unit district area contactNo emailId country lastLogin createdAt');
 
     if (!member) {
@@ -633,13 +661,11 @@ router.get('/submissions', protect, async (req, res) => {
     const search = req.query.search || '';
     const status = req.query.status || '';
 
-    // Exclude submissions from abroad members
-    const abroadUserIds = await User.find({ unit: unitAdmin.unit, isAbroad: true }).distinct('_id');
+    const { submissionQuery } = await getUnitAdminScope(unitAdmin);
 
     // Build search query
     let searchQuery = {
-      unit: unitAdmin.unit,
-      ...(abroadUserIds.length > 0 ? { userId: { $nin: abroadUserIds } } : {}),
+      ...submissionQuery,
       ...req.quarterFilter
     };
 
@@ -901,10 +927,12 @@ router.get('/submissions/:id', protect, async (req, res) => {
       });
     }
 
-    const submission = await Submission.findOne({
-      _id: req.params.id,
-      unit: unitAdmin.unit
-    })
+    const { memberIds } = await getUnitAdminScope(unitAdmin);
+    const submissionMatch = unitAdmin.isAbroad
+      ? { _id: req.params.id, userId: { $in: memberIds } }
+      : { _id: req.params.id, unit: unitAdmin.unit };
+
+    const submission = await Submission.findOne(submissionMatch)
       .populate('submittedBy', 'ruknId name unit isAbroad')
       .populate('userId', 'ruknId name unit isAbroad')
       .populate('adminReply.repliedBy', 'username name');
@@ -916,13 +944,16 @@ router.get('/submissions/:id', protect, async (req, res) => {
       });
     }
 
-    // Block access to submissions from abroad members
-    const submissionUser = submission.userId || submission.submittedBy;
-    if (submissionUser && submissionUser.isAbroad) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. This submission belongs to an abroad member.'
-      });
+    // Domestic admins must never see abroad members' submissions (abroad admins are
+    // already scoped to their own abroad unit via the memberIds match above)
+    if (!unitAdmin.isAbroad) {
+      const submissionUser = submission.userId || submission.submittedBy;
+      if (submissionUser && submissionUser.isAbroad) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. This submission belongs to an abroad member.'
+        });
+      }
     }
 
     res.json({
@@ -1779,8 +1810,9 @@ router.get('/alternative-submissions', protect, async (req, res) => {
     const AlternativeSubmit = require('../../models/ihthisabi/alternativeSubmit');
     const User = require('../../models/ihthisabi/User');
 
-    // Get all non-abroad users in this unit
-    const unitMembers = await User.find({ unit: unitAdmin.unit, $or: [{ isAbroad: false }, { isAbroad: { $exists: false } }] }).select('_id');
+    // Get all users in this unit (scoped correctly for abroad vs domestic admins)
+    const { memberQuery } = await getUnitAdminScope(unitAdmin);
+    const unitMembers = await User.find(memberQuery).select('_id');
     const memberIds = unitMembers.map(m => m._id);
 
     // Get alternative submissions from these members (excluding abroad)
