@@ -54,6 +54,25 @@ const unitAdminSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  // Abroad unit admin support: when true, `district`/`area`/`unit` above store the
+  // abroad country/area/unit title (for display + existing string-based queries),
+  // while these refs are the authoritative link into the abroad location hierarchy.
+  isAbroad: {
+    type: Boolean,
+    default: false
+  },
+  abroadCountry: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'AbroadCountry'
+  },
+  abroadArea: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'AbroadArea'
+  },
+  abroadUnit: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'AbroadUnit'
+  },
   lastLogin: {
     type: Date
   }

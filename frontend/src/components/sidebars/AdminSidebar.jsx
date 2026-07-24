@@ -4,7 +4,6 @@ import {
   LogOut,
   Eye,
   Bell,
-  FileText,
   Calendar,
   CalendarDays,
   Star,
@@ -56,16 +55,6 @@ const AdminSidebar = ({
       label: 'ഡാഷ്ബോർഡ്',
       icon: LayoutDashboard,
       onClick: () => navigate('/expansion-portal/dashboard')
-    },
-    {
-      id: 'yearly',
-      label: 'വാർഷിക റിപ്പോർട്ട്',
-      icon: FileText
-    },
-    {
-      id: 'monthly',
-      label: 'പ്രതിമാസ റിപ്പോർട്ട്',
-      icon: Calendar
     },
     {
       id: 'membership',
@@ -174,7 +163,7 @@ const AdminSidebar = ({
       return;
     }
 
-    if (['yearly', 'monthly', 'stats'].includes(tabId)) {
+    if (['stats'].includes(tabId)) {
       navigate('/admin-dashboard', { state: { activeTab: tabId } });
     }
   };

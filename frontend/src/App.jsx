@@ -26,7 +26,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import MembershipPage from './pages/MembershipPage';
 import HelpDeskPage from './pages/HelpDeskPage';
 import LocationMasterPage from './pages/LocationMasterPage';
-import AdminDynamicSubmissionsPage from './pages/AdminDynamicSubmissionsPage';
+import DynamicSubmissionsPage from './pages/DynamicSubmissionsPage';
 import TargetsPage from './pages/TargetsPage';
 
 // IHTHISABI imports
@@ -213,7 +213,27 @@ function App() {
           path="/admin/dynamic-submissions/:type"
           element={
             isAdminAuthenticated ? (
-              <AdminDynamicSubmissionsPage onLogout={handleAdminLogout} />
+              <DynamicSubmissionsPage scope="admin" onLogout={handleAdminLogout} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/district/dynamic-submissions/:type"
+          element={
+            isAuthenticated ? (
+              <DynamicSubmissionsPage scope="district" onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/area/dynamic-submissions/:type"
+          element={
+            isAuthenticated ? (
+              <DynamicSubmissionsPage scope="area" onLogout={handleLogout} />
             ) : (
               <Navigate to="/" replace />
             )

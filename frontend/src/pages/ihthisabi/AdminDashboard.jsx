@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { useError } from '../../contexts/ErrorContext'
@@ -29,7 +29,9 @@ import {
   Download,
   Globe,
   Archive,
-  Database
+  Database,
+  ChevronDown,
+  Search
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { downloadUnitReplyPDF } from '../../utils/unitReplyPdfGenerator'
@@ -79,7 +81,25 @@ const AdminDashboard = () => {
   const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [selectedUnitAdminId, setSelectedUnitAdminId] = useState(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
-  
+
+  // District-wise submission stats + chart district selection (Dashboard tab)
+  const [districtStats, setDistrictStats] = useState([])
+  const [districtStatsLoading, setDistrictStatsLoading] = useState(false)
+  const [selectedChartDistricts, setSelectedChartDistricts] = useState([])
+  const [chartDistrictsInitialized, setChartDistrictsInitialized] = useState(false)
+  const [chartDistrictDropdownOpen, setChartDistrictDropdownOpen] = useState(false)
+  const [chartDistrictSearch, setChartDistrictSearch] = useState('')
+  const chartDistrictDropdownRef = useRef(null)
+
+  // Submitted / Pending units (Dashboard tab)
+  const [unitsStatus, setUnitsStatus] = useState(null)
+  const [unitsStatusLoading, setUnitsStatusLoading] = useState(false)
+  const [unitsStatusDistrict, setUnitsStatusDistrict] = useState('')
+  const [unitsStatusArea, setUnitsStatusArea] = useState('')
+  const [unitsStatusDistricts, setUnitsStatusDistricts] = useState([])
+  const [unitsStatusAreas, setUnitsStatusAreas] = useState([])
+  const [unitsListTab, setUnitsListTab] = useState('pending')
+
   // Unit Reply Form State
   // Submission quarter = previous quarter (units submit for the prior quarter)
   const _currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3)
@@ -141,8 +161,38 @@ const AdminDashboard = () => {
       fetchSubmissions()
       fetchReplyDistricts()
       fetchReplyTemplate()
+      fetchDistrictStats()
+      fetchUnitsStatusDistrictOptions()
+      fetchUnitsStatus()
     }
   }, [user])
+
+  // Default to just the single most active district — the full list is too dense
+  // to be useful as a default view. Districts are pre-sorted by current count desc.
+  useEffect(() => {
+    if (!chartDistrictsInitialized && districtStats.length > 0) {
+      setSelectedChartDistricts([districtStats[0].district])
+      setChartDistrictsInitialized(true)
+    }
+  }, [districtStats, chartDistrictsInitialized])
+
+  // Close the district-picker dropdown when clicking outside of it
+  useEffect(() => {
+    if (!chartDistrictDropdownOpen) return
+    const handleClickOutside = (e) => {
+      if (chartDistrictDropdownRef.current && !chartDistrictDropdownRef.current.contains(e.target)) {
+        setChartDistrictDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [chartDistrictDropdownOpen])
+
+  const toggleChartDistrict = (district) => {
+    setSelectedChartDistricts((prev) =>
+      prev.includes(district) ? prev.filter((d) => d !== district) : [...prev, district]
+    )
+  }
 
   // Lazy-load unit admins data when that tab is active
   useEffect(() => {
@@ -237,6 +287,66 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error fetching districts:', error)
     }
+  }
+
+  const fetchDistrictStats = async () => {
+    try {
+      setDistrictStatsLoading(true)
+      const response = await api.get('/ihthisabi/admin/dashboard/district-stats')
+      setDistrictStats(response.data.data.districts || [])
+    } catch (error) {
+      console.error('Error fetching district stats:', error)
+    } finally {
+      setDistrictStatsLoading(false)
+    }
+  }
+
+  const fetchUnitsStatusDistrictOptions = async () => {
+    try {
+      const response = await api.get('/location/districts')
+      setUnitsStatusDistricts((response.data.data || []).map(d => d.name || d.id))
+    } catch (error) {
+      console.error('Error fetching district options:', error)
+    }
+  }
+
+  const fetchUnitsStatusAreaOptions = async (district) => {
+    try {
+      setUnitsStatusAreas([])
+      if (!district) return
+      const response = await api.get(`/location/areas/${encodeURIComponent(district)}`)
+      setUnitsStatusAreas((response.data.data || []).map(a => a.name || a.id))
+    } catch (error) {
+      console.error('Error fetching area options:', error)
+    }
+  }
+
+  const fetchUnitsStatus = async (district = '', area = '') => {
+    try {
+      setUnitsStatusLoading(true)
+      const params = {}
+      if (district) params.district = district
+      if (area) params.area = area
+      const response = await api.get('/ihthisabi/admin/dashboard/units-status', { params })
+      setUnitsStatus(response.data.data)
+    } catch (error) {
+      console.error('Error fetching units status:', error)
+      toast.error('Failed to load unit submission status')
+    } finally {
+      setUnitsStatusLoading(false)
+    }
+  }
+
+  const handleUnitsStatusDistrictChange = (district) => {
+    setUnitsStatusDistrict(district)
+    setUnitsStatusArea('')
+    fetchUnitsStatusAreaOptions(district)
+    fetchUnitsStatus(district, '')
+  }
+
+  const handleUnitsStatusAreaChange = (area) => {
+    setUnitsStatusArea(area)
+    fetchUnitsStatus(unitsStatusDistrict, area)
   }
 
   const handleUnitAdminExcelUpload = async (file) => {
@@ -1505,6 +1615,216 @@ const AdminDashboard = () => {
           })()}
           </>
         )}
+
+        {/* District-wise submissions & comparison with last period */}
+        {dashboardData && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700">District-wise Submissions</h3>
+                <p className="text-xs text-gray-400">
+                  {districtStats.length > 0 &&
+                    `Q${dashboardData.prevQuarter} ${dashboardData.prevYear} vs Q${dashboardData.currentQuarter} ${dashboardData.currentYear}, by district`}
+                </p>
+              </div>
+              <div className="relative" ref={chartDistrictDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setChartDistrictDropdownOpen((v) => !v)}
+                  className="form-select text-sm min-w-[220px] flex items-center justify-between gap-2 text-left"
+                >
+                  <span className="truncate">
+                    {selectedChartDistricts.length === 0
+                      ? 'Select districts...'
+                      : selectedChartDistricts.length === 1
+                        ? selectedChartDistricts[0]
+                        : `${selectedChartDistricts.length} districts selected`}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                </button>
+
+                {chartDistrictDropdownOpen && (
+                  <div className="absolute right-0 z-20 mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow-lg">
+                    <div className="p-2 border-b border-gray-100">
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={chartDistrictSearch}
+                          onChange={(e) => setChartDistrictSearch(e.target.value)}
+                          placeholder="Search districts..."
+                          className="form-input text-sm pl-8 w-full"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-100">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedChartDistricts(districtStats.map((d) => d.district))}
+                        className="text-xs text-blue-600 hover:text-blue-700"
+                      >
+                        Select all
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedChartDistricts([])}
+                        className="text-xs text-gray-500 hover:text-gray-700"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    <div className="max-h-56 overflow-y-auto py-1">
+                      {districtStats
+                        .filter((d) => d.district.toLowerCase().includes(chartDistrictSearch.toLowerCase()))
+                        .map((d) => (
+                          <label
+                            key={d.district}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-gray-50 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedChartDistricts.includes(d.district)}
+                              onChange={() => toggleChartDistrict(d.district)}
+                              className="rounded border-gray-300"
+                            />
+                            <span className="flex-1 truncate">{d.district}</span>
+                            <span className="text-xs text-gray-400">{d.current}</span>
+                          </label>
+                        ))}
+                      {districtStats.filter((d) => d.district.toLowerCase().includes(chartDistrictSearch.toLowerCase())).length === 0 && (
+                        <p className="text-xs text-gray-400 text-center py-3">No matching districts</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {districtStatsLoading ? (
+              <div className="text-center py-8 text-sm text-gray-500">Loading district stats...</div>
+            ) : districtStats.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">No district data available</p>
+            ) : (
+              (() => {
+                const chartData = districtStats.filter((d) => selectedChartDistricts.includes(d.district))
+                if (chartData.length === 0) {
+                  return <p className="text-sm text-gray-400 text-center py-6">Select at least one district to display the chart</p>
+                }
+                return (
+                  <ResponsiveContainer width="100%" height={Math.max(260, chartData.length * 44)}>
+                    <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
+                      <YAxis type="category" dataKey="district" width={130} tick={{ fontSize: 12 }} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="previous" name={`Q${dashboardData.prevQuarter} ${dashboardData.prevYear}`} fill="#94a3b8" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="current" name={`Q${dashboardData.currentQuarter} ${dashboardData.currentYear}`} fill="#002349" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )
+              })()
+            )}
+          </div>
+        )}
+
+        {/* Submitted / Pending units */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700">Unit Submission Status</h3>
+              <p className="text-xs text-gray-400">Units that have submitted this period, and units still pending</p>
+            </div>
+            <div className="flex gap-2">
+              <select
+                value={unitsStatusDistrict}
+                onChange={(e) => handleUnitsStatusDistrictChange(e.target.value)}
+                className="form-select text-sm"
+              >
+                <option value="">All Districts</option>
+                {unitsStatusDistricts.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+              <select
+                value={unitsStatusArea}
+                onChange={(e) => handleUnitsStatusAreaChange(e.target.value)}
+                className="form-select text-sm"
+                disabled={!unitsStatusDistrict}
+              >
+                <option value="">All Areas</option>
+                {unitsStatusAreas.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {unitsStatusLoading ? (
+            <div className="text-center py-8 text-sm text-gray-500">Loading unit status...</div>
+          ) : unitsStatus ? (
+            <>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                  <p className="text-2xl font-bold text-gray-900">{unitsStatus.totalUnits}</p>
+                  <p className="text-xs text-gray-500">Total Units</p>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">{unitsStatus.submittedCount}</p>
+                  <p className="text-xs text-gray-500">Submitted</p>
+                </div>
+                <div className="text-center p-3 bg-amber-50 rounded-lg">
+                  <p className="text-2xl font-bold text-amber-600">{unitsStatus.pendingCount}</p>
+                  <p className="text-xs text-gray-500">Pending</p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 mb-3 border-b border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setUnitsListTab('pending')}
+                  className={`px-3 py-2 text-sm font-medium ${unitsListTab === 'pending' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-gray-500'}`}
+                >
+                  Pending ({unitsStatus.pendingCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUnitsListTab('submitted')}
+                  className={`px-3 py-2 text-sm font-medium ${unitsListTab === 'submitted' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+                >
+                  Submitted ({unitsStatus.submittedCount})
+                </button>
+              </div>
+
+              <div className="max-h-64 overflow-y-auto">
+                {(unitsListTab === 'pending' ? unitsStatus.pendingUnits : unitsStatus.submittedUnits).length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-6">No units in this list</p>
+                ) : (
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-xs text-gray-500 uppercase">
+                        <th className="py-2 pr-4">Unit</th>
+                        <th className="py-2 pr-4">Area</th>
+                        <th className="py-2 pr-4">District</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {(unitsListTab === 'pending' ? unitsStatus.pendingUnits : unitsStatus.submittedUnits).map((u, idx) => (
+                        <tr key={`${u.district}-${u.area}-${u.unit}-${idx}`}>
+                          <td className="py-2 pr-4 font-medium text-gray-900">{u.unit}</td>
+                          <td className="py-2 pr-4 text-gray-600">{u.area}</td>
+                          <td className="py-2 pr-4 text-gray-600">{u.district}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-gray-400 text-center py-6">No data</p>
+          )}
+        </div>
 
         {/* Recent Submissions */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">

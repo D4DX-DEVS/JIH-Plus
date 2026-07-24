@@ -868,6 +868,22 @@ router.get('/admin/report-submissions', adminAuth, async (req, res) => {
 
     const submissions = await resolveSubmissionUsers(rawSubmissions);
 
+    // Optional full roster (all districts/areas/units with parent names) so the
+    // admin dashboard can list which locations have vs. have not submitted.
+    let roster;
+    if (req.query.includeRoster) {
+      const [districts, areas, units] = await Promise.all([
+        District.find().select('name').lean(),
+        AreaMaster.find().populate('districtId', 'name').select('name districtId').lean(),
+        UnitMaster.find().populate('districtId', 'name').populate('areaId', 'name').select('name districtId areaId').lean(),
+      ]);
+      roster = {
+        districts: districts.map(d => ({ name: d.name })),
+        areas: areas.map(a => ({ name: a.name, districtName: a.districtId?.name })),
+        units: units.map(u => ({ name: u.name, districtName: u.districtId?.name, areaName: u.areaId?.name })),
+      };
+    }
+
     res.json({
       success: true,
       count: submissions.length,
@@ -876,10 +892,86 @@ router.get('/admin/report-submissions', adminAuth, async (req, res) => {
       totalPages: Math.ceil(totalCount / limitNum),
       hasNextPage: pageNum < Math.ceil(totalCount / limitNum),
       hasPrevPage: pageNum > 1,
-      data: submissions
+      data: submissions,
+      ...(roster && { roster })
     });
   } catch (error) {
     console.error('Error fetching submissions:', error);
+    res.status(500).json({ success: false, message: 'Error fetching submissions', error: error.message });
+  }
+});
+
+// @desc    Get report submissions scoped to the requesting user's hierarchy
+// @route   GET /api/user/report-submissions
+// @access  Private (District / Area / Unit users)
+// The userId stored on a ReportSubmission is the District/Area/Unit master _id.
+// A district user sees its own + every area & unit under it; an area user sees
+// its own + every unit under it; a unit user sees only its own submissions.
+router.get('/user/report-submissions', userAuth, async (req, res) => {
+  try {
+    const role = req.user.role || req.user.type;
+    if (!VALID_REPORT_FOR.includes(role)) {
+      return res.status(403).json({ success: false, message: 'Invalid user level' });
+    }
+
+    const districtId = req.user.districtId || req.user.districtMasterId;
+    const areaId = req.user.areaId || req.user.areaMasterId;
+    const unitId = req.user.unitId || req.user.unitMasterId;
+    const selfId = req.user.id || req.user._id || req.user.userId;
+
+    // Build the set of location-master ids whose submissions this user may view,
+    // and the roster of unit/area names under this scope (used by the dashboard
+    // to list which units/areas have vs. have not submitted).
+    let scopeIds = [];
+    const roster = { units: [], areas: [] };
+    if (role === 'unit') {
+      scopeIds = [unitId || selfId].filter(Boolean);
+    } else if (role === 'area') {
+      const units = await UnitMaster.find({ areaId: areaId || selfId }).select('_id name').lean();
+      scopeIds = [areaId || selfId, ...units.map(u => u._id)].filter(Boolean);
+      roster.units = units.map(u => ({ name: u.name }));
+    } else if (role === 'district') {
+      const dId = districtId || selfId;
+      const [areas, units] = await Promise.all([
+        AreaMaster.find({ districtId: dId }).select('_id name').lean(),
+        UnitMaster.find({ districtId: dId }).populate('areaId', 'name').select('_id name areaId').lean(),
+      ]);
+      scopeIds = [dId, ...areas.map(a => a._id), ...units.map(u => u._id)].filter(Boolean);
+      roster.areas = areas.map(a => ({ name: a.name }));
+      roster.units = units.map(u => ({ name: u.name, areaName: u.areaId?.name }));
+    }
+
+    if (scopeIds.length === 0) {
+      return res.json({ success: true, count: 0, data: [], roster });
+    }
+
+    const { reportType, reportFor, status, limit = 1000 } = req.query;
+
+    // Restrict to reports of the requested type (and optionally reportFor).
+    let matchingReportIds = null;
+    const reportFilter = {};
+    if (reportType && VALID_TYPES.includes(reportType)) reportFilter.type = reportType;
+    if (reportFor && VALID_REPORT_FOR.includes(reportFor)) reportFilter.reportFor = reportFor;
+    if (Object.keys(reportFilter).length > 0) {
+      const matchingReports = await Report.find(reportFilter).select('_id').lean();
+      matchingReportIds = matchingReports.map(r => r._id);
+    }
+
+    const submissionQuery = { userId: { $in: scopeIds } };
+    if (matchingReportIds) submissionQuery.reportId = { $in: matchingReportIds };
+    if (status) submissionQuery.status = status;
+
+    const rawSubmissions = await ReportSubmission.find(submissionQuery)
+      .populate('reportId', 'type reportFor title description pages parts version month year')
+      .sort({ submittedAt: -1, createdAt: -1 })
+      .limit(parseInt(limit, 10))
+      .lean();
+
+    const submissions = await resolveSubmissionUsers(rawSubmissions);
+
+    res.json({ success: true, count: submissions.length, data: submissions, roster });
+  } catch (error) {
+    console.error('Error fetching scoped submissions:', error);
     res.status(500).json({ success: false, message: 'Error fetching submissions', error: error.message });
   }
 });

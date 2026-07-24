@@ -56,7 +56,6 @@ const UnitAdminSidebar = ({
 
   const navItems = [
     { id: 'dashboard', label: 'ഡാഷ്ബോർഡ്', icon: LayoutDashboard },
-    { id: 'monthly', label: 'പ്രതിമാസ റിപ്പോൾട്ടുകൾ', icon: ClipboardList },
     { id: 'stats', label: 'സ്ഥിതിവിവരക്കണക്കുകൾ', icon: BarChart3 },
     { id: 'membership', label: 'അംഗത്വം', icon: Users, onClick: onNavigateToMembership },
     {

@@ -152,7 +152,7 @@ const main = async () => {
     });
 
     if (!district) {
-      const { uniqueCode, sequentialNumber } = await generateDistrictCode(districtName, District);
+      const { uniqueCode, sequentialNumber } = await generateDistrictCode(districtName, District, [AreaMaster, UnitMaster]);
       const password = generateDistrictPassword();
       district = await District.create({
         name: districtName,
@@ -179,7 +179,7 @@ const main = async () => {
       });
 
       if (!area) {
-        const { uniqueCode, randomCode } = await generateAreaCode(areaName, districtSeqCode, AreaMaster);
+        const { uniqueCode, randomCode } = await generateAreaCode(areaName, districtSeqCode, AreaMaster, [District, UnitMaster]);
         const password = generateAreaPassword();
         area = await AreaMaster.create({
           name: areaName,
@@ -214,7 +214,8 @@ const main = async () => {
           unitName,
           districtSeqCode,
           area.randomCode,
-          UnitMaster
+          UnitMaster,
+          [District, AreaMaster]
         );
         const password = generateUnitPassword();
 

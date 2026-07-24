@@ -35,6 +35,7 @@ export default function DynamicFormRenderer({
   disabled = false,
   submitting = false,
   allowSubmitOnEveryPage = false,
+  onCancelEdit,
 }) {
   const pages = report.pages || [];
   const clampPage = (p) => Math.min(Math.max(p, 0), Math.max(pages.length - 1, 0));
@@ -207,7 +208,7 @@ export default function DynamicFormRenderer({
       {/* Navigation — Previous and Next/Submit are kept next to each other
           rather than pinned to opposite ends of the row. */}
       <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-100">
-        <div>
+        <div className="flex items-center gap-2">
           {!disabled && onSaveDraft && (
             <button
               type="button"
@@ -216,6 +217,16 @@ export default function DynamicFormRenderer({
               className="flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
             >
               <Save size={16} /> Save Draft
+            </button>
+          )}
+          {onCancelEdit && (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              disabled={submitting}
+              className="flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+            >
+              Cancel Edit
             </button>
           )}
         </div>

@@ -164,6 +164,21 @@ router.get('/hierarchy/areas/:districtId', async (req, res) => {
   }
 });
 
+// Get areas for a districtId straight from the local DB (the external
+// /hierarchy/areas API is not always reachable). Returns _id + name so the
+// dashboard can drill into each area's units.
+router.get('/hierarchy/areas-db/:districtId', async (req, res) => {
+  try {
+    const areas = await AreaMaster.find({ districtId: req.params.districtId })
+      .select('_id name uniqueCode districtId')
+      .sort({ name: 1 })
+      .lean();
+    res.json({ success: true, data: areas });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message || 'Failed to load areas' });
+  }
+});
+
 // Get units for an areaId
 router.get('/hierarchy/units/:areaId', async (req, res) => {
   try {
@@ -367,10 +382,7 @@ router.post('/login/unified', async (req, res) => {
       // Check District
       const district = await District.findOne({ uniqueCode: normalizedUsername, isActive: true })
         .populate('stateId', 'name');
-      if (district) {
-        if (district.password !== password) {
-          return res.status(401).json({ message: 'Invalid username or password' });
-        }
+      if (district && district.password === password) {
         const token = jwt.sign(
           {
             id: district._id,
@@ -402,10 +414,7 @@ router.post('/login/unified', async (req, res) => {
       // Check Area
       const area = await AreaMaster.findOne({ uniqueCode: normalizedUsername, isActive: true })
         .populate('districtId', 'name uniqueCode sequentialNumber');
-      if (area) {
-        if (area.password !== password) {
-          return res.status(401).json({ message: 'Invalid username or password' });
-        }
+      if (area && area.password === password) {
         const token = jwt.sign(
           {
             id: area._id,
@@ -443,10 +452,7 @@ router.post('/login/unified', async (req, res) => {
       const unit = await UnitMaster.findOne({ uniqueCode: normalizedUsername, isActive: true })
         .populate('districtId', 'name uniqueCode sequentialNumber')
         .populate('areaId', 'name uniqueCode randomCode');
-      if (unit) {
-        if (unit.password !== password) {
-          return res.status(401).json({ message: 'Invalid username or password' });
-        }
+      if (unit && unit.password === password) {
         const token = jwt.sign(
           {
             id: unit._id,

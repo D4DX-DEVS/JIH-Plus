@@ -6,6 +6,7 @@ import AreaSurveyDetailPage from './AreaSurveyDetailPage';
 import AreaSurveyEditPage from './AreaSurveyEditPage';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
+import SubmissionsAnalytics from '../components/dashboard/SubmissionsAnalytics';
 import RejectionModal from '../components/modals/RejectionModal';
 import StatisticsCard from '../components/charts/StatisticsCard';
 import SurveyBarChart from '../components/charts/SurveyBarChart';
@@ -710,6 +711,8 @@ const AreaDashboardPage = ({ onLogout }) => {
               {areaName && <p className="text-white/80 text-sm mt-1">{areaName}</p>}
             </div>
 
+            <SubmissionsAnalytics scope="area" />
+
             {dashboardLoading ? (
               <div className="flex items-center justify-center py-16">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#002349]"></div>
@@ -1403,7 +1406,7 @@ const AreaDashboardPage = ({ onLogout }) => {
             {/* Units List */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
               <div className="px-6 py-4 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <h2 className="text-lg font-bold text-[#002349]">യൂണിറ്റുകൾ</h2>
                     <p className="text-sm text-gray-600 mt-1 font-medium">
@@ -1422,7 +1425,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                         value={unitSearchTerm}
                         onChange={(e) => setUnitSearchTerm(e.target.value)}
                         placeholder="Search units..."
-                        className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                        className="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
                       />
                       <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     </div>
@@ -1436,9 +1439,6 @@ const AreaDashboardPage = ({ onLogout }) => {
                     )}
                   </div>
                 </div>
-                <p className="text-xs text-[#957C3D] font-medium">
-                  💡 Click on any unit row to view its monthly reports above
-                </p>
               </div>
 
               {isLoading ? (
@@ -1455,7 +1455,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                   {unitSearchTerm ? 'No units found matching your search' : 'No units found'}
                 </h3>
                 <p className="text-gray-600 font-medium">
-                  {unitSearchTerm 
+                  {unitSearchTerm
                     ? `No units match "${unitSearchTerm}". Try a different search term.`
                     : 'No units found for this area.'
                   }
@@ -1470,85 +1470,61 @@ const AreaDashboardPage = ({ onLogout }) => {
                 )}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Unit Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Monthly Reports
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Last Activity
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredUnits.map((unit) => {
-                      const unitId = unit.id || unit._id || unit.code;
-                      const unitNameNorm = normalize(unit.name || unit.title || unit.code);
-                      // Use allUnitSurveys which includes actual unit-level submissions
-                      const unitSurveys = allUnitSurveys.filter(s => {
-                        const sid = s.__unitId || s.unitId || s.component;
-                        const snameNorm = normalize(s.component);
-                        return sid === unitId || snameNorm === unitNameNorm;
-                      });
-                      const hasSurveyThisMonth = unitSurveys.some(s => {
-                        const d = new Date(s.submittedAt);
-                        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-                      });
-                      const lastSurvey = unitSurveys.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
-                      let notUpdatedText = '';
-                      if (!hasSurveyThisMonth) {
-                        if (!lastSurvey) {
-                          notUpdatedText = 'Not updated';
-                        } else {
-                          const last = new Date(lastSurvey.submittedAt);
-                          const curMonths = currentYear * 12 + currentMonth;
-                          const lastMonths = last.getFullYear() * 12 + last.getMonth();
-                          const diff = Math.max(0, curMonths - lastMonths);
-                          notUpdatedText = diff > 0 ? `Not updated (${diff} mo)` : 'Not updated';
-                        }
-                      }
-                      
-                      return (
-                        <tr 
-                          key={unit.id || unit._id || unit.code} 
-                          className="hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#957C3D]/5 cursor-pointer transition-all duration-300 border-l-4 border-transparent hover:border-[#002349] group hover:shadow-sm"
-                          onClick={() => handleUnitClick(unit)}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#002349]">
-                            <span 
+              <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredUnits.map((unit) => {
+                  const unitId = unit.id || unit._id || unit.code;
+                  const unitNameNorm = normalize(unit.name || unit.title || unit.code);
+                  // Use allUnitSurveys which includes actual unit-level submissions
+                  const unitSurveys = allUnitSurveys.filter(s => {
+                    const sid = s.__unitId || s.unitId || s.component;
+                    const snameNorm = normalize(s.component);
+                    return sid === unitId || snameNorm === unitNameNorm;
+                  });
+                  const hasSurveyThisMonth = unitSurveys.some(s => {
+                    const d = new Date(s.submittedAt);
+                    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+                  });
+                  const lastSurvey = unitSurveys.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
+
+                  return (
+                    <div
+                      key={unit.id || unit._id || unit.code}
+                      className="group flex flex-col justify-between rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm hover:shadow-lg hover:border-[#002349]/40 transition-all duration-300"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#002349]/10 flex items-center justify-center">
+                            <Building className="w-5 h-5 text-[#002349]" />
+                          </div>
+                          <div className="min-w-0">
+                            <h3
+                              className="text-sm font-bold text-[#002349] truncate"
                               dangerouslySetInnerHTML={{
-                                __html: highlightSearchTerm(
-                                  unit.name || unit.title || 'Unnamed Unit', 
-                                  unitSearchTerm
-                                )
+                                __html: highlightSearchTerm(unit.name || unit.title || 'Unnamed Unit', unitSearchTerm)
                               }}
                             />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            <div className="flex items-center space-x-2">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#002349] text-white shadow-sm">
-                                {unitSurveys.length} reports
-                              </span>
-                              {!hasSurveyThisMonth && (
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 shadow-sm" title={lastSurvey ? `Last: ${new Date(lastSurvey.submittedAt).toLocaleDateString()}` : 'No survey submitted yet'}>
-                                  {notUpdatedText}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
-                            {lastSurvey ? new Date(lastSurvey.submittedAt).toLocaleDateString() : 'No activity'}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {lastSurvey ? `Last activity: ${new Date(lastSurvey.submittedAt).toLocaleDateString()}` : 'No activity yet'}
+                            </p>
+                          </div>
+                        </div>
+                        {!hasSurveyThisMonth && (
+                          <span className="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700">
+                            Pending
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => navigate('/area/dynamic-submissions/monthly', { state: { unitFilter: unit.name || unit.title } })}
+                        className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#002349] text-white text-sm font-semibold hover:bg-[#1a3a5c] transition-colors"
+                      >
+                        <FileText className="w-4 h-4" />
+                        സബ്മിഷനുകൾ
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
             </div>
