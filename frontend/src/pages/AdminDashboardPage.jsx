@@ -1764,7 +1764,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                 {activeSubTab === 'summary' && (
                   <>
                     {/* Overview Statistics Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4">
                       <StatisticsCard
                         title="Total Districts"
                         value={stats.overall?.totalDistricts || 0}
@@ -1791,7 +1791,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                     {/* Population Overview */}
                     <div className="bg-white p-4 rounded-xl shadow-md border border-gray-200">
                       <h3 className="text-lg font-semibold text-[#002349] mb-3">Population Overview</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4">
                         <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
                           <div className="text-2xl font-bold text-[#002349]">
                             {stats.overall?.totalPopulation?.toLocaleString() || 0}

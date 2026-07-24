@@ -1412,21 +1412,21 @@ const AdminDashboard = () => {
           <>
             {/* Stats Grid */}
             {dashboardData && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-5 sm:mb-8">
             {/* Total Users */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Total Users</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900">
                     {dashboardData.totalRuknUsers || 0}
                   </p>
                 </div>
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <Users className="w-6 h-6 text-blue-600" />
+                <div className="p-2 sm:p-3 bg-blue-50 rounded-lg">
+                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                 </div>
               </div>
-              <div className="mt-4 flex items-center gap-3 text-sm">
+              <div className="mt-2 sm:mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm">
                 <span className="flex items-center gap-1 text-blue-600 font-medium">
                   <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
                   {dashboardData.maleUsers || 0} Male
@@ -1439,40 +1439,40 @@ const AdminDashboard = () => {
             </div>
 
             {/* Quarter Comparison */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-medium text-gray-600">Quarter Comparison</p>
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
+                <div className="p-2 sm:p-3 bg-green-50 rounded-lg">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                 </div>
               </div>
-              <div className="flex items-end gap-4">
+              <div className="flex items-end gap-2 sm:gap-4">
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Q{dashboardData.prevQuarter} {dashboardData.prevYear}</p>
-                  <p className="text-2xl font-bold text-gray-500">{dashboardData.previousQuarterSubmissions || 0}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-400 mb-1">Q{dashboardData.prevQuarter} {dashboardData.prevYear}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-500">{dashboardData.previousQuarterSubmissions || 0}</p>
                 </div>
-                <div className="text-gray-300 text-2xl mb-1">→</div>
+                <div className="text-gray-300 text-xl sm:text-2xl mb-1">→</div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">Q{dashboardData.currentQuarter} {dashboardData.currentYear}</p>
-                  <p className="text-2xl font-bold text-gray-900">{dashboardData.currentQuarterSubmissions || 0}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-400 mb-1">Q{dashboardData.currentQuarter} {dashboardData.currentYear}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{dashboardData.currentQuarterSubmissions || 0}</p>
                 </div>
               </div>
             </div>
 
             {/* Current Period Submissions */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">This Period</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900">
                     {dashboardData.currentQuarterSubmissions || 0}
                   </p>
                 </div>
-                <div className="p-3 bg-purple-50 rounded-lg">
-                  <FileText className="w-6 h-6 text-purple-600" />
+                <div className="p-2 sm:p-3 bg-purple-50 rounded-lg">
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
                 </div>
               </div>
-              <div className="mt-3 flex items-center gap-3 text-sm">
+              <div className="mt-2 sm:mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm">
                 <span className="flex items-center gap-1 text-blue-600 font-medium">
                   <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
                   {dashboardData.currentQuarterMale || 0} Male
@@ -1495,15 +1495,15 @@ const AdminDashboard = () => {
               const pct = dashboardData.quarterChangePercent ?? 0;
               const isUp = pct >= 0;
               return (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600 mb-1">vs Previous Quarter</p>
-                      <p className={`text-3xl font-bold ${isUp ? 'text-emerald-600' : 'text-red-500'}`}>
+                      <p className={`text-2xl sm:text-3xl font-bold ${isUp ? 'text-emerald-600' : 'text-red-500'}`}>
                         {isUp ? '+' : ''}{pct}%
                       </p>
                     </div>
-                    <div className={`p-3 rounded-lg ${isUp ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                    <div className={`p-2 sm:p-3 rounded-lg ${isUp ? 'bg-emerald-50' : 'bg-red-50'}`}>
                       <ArrowUpRight className={`w-6 h-6 ${isUp ? 'text-emerald-600' : 'text-red-500'} ${isUp ? '' : 'rotate-90'}`} />
                     </div>
                   </div>

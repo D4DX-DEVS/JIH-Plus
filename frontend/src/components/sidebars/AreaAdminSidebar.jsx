@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Calendar,
   CalendarDays,
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import jihLogoWhite from '../../assets/LogoWhite.png';
 import PoweredByD4DX from './PoweredByD4DX';
+import MobileBottomNav from './MobileBottomNav';
 import { SIDEBAR_THEME, DYNAMIC_REPORT_META, REPORT_TYPE_STYLES } from './sidebarTheme';
 
 /**
@@ -46,6 +47,7 @@ const AreaAdminSidebar = ({
     String(activeTab).startsWith('submissions') ? 'submissions' : 'dynamic-reports'
   );
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleReportType = (type) => {
     if (onReportTypeSelect) {
@@ -54,6 +56,28 @@ const AreaAdminSidebar = ({
       navigate('/user-reports', { state: { initialType: type } });
     }
   };
+
+  // Switch dashboard tab without toggling the (closed) mobile drawer.
+  const goTab = (id) => {
+    if (onNavigate) { onNavigate(id); return; }
+    try {
+      const ud = JSON.parse(localStorage.getItem('userData') || '{}');
+      if (ud.areaId) navigate(`/area-dashboard/${ud.areaId}`, { state: { initialTab: id } });
+    } catch { /* ignore */ }
+  };
+
+  const bottomNavItems = [
+    { key: 'dashboard', label: 'Home', icon: LayoutDashboard, active: activeTab === 'dashboard',
+      onClick: () => goTab('dashboard') },
+    { key: 'units', label: 'Units', icon: ClipboardList, active: activeTab === 'units',
+      onClick: () => goTab('units') },
+    { key: 'reports', label: 'Reports', icon: FileText, active: location.pathname.startsWith('/user-reports'),
+      onClick: () => navigate('/user-reports') },
+    { key: 'members', label: 'Members', icon: Users, active: location.pathname.startsWith('/membership'),
+      onClick: () => { if (onNavigateToMembership) onNavigateToMembership(); } },
+    { key: 'more', label: 'More', icon: Menu, active: false,
+      onClick: () => { if (onMobileToggle) onMobileToggle(); } },
+  ];
 
   const navItems = [
     { id: 'dashboard', label: 'ഡാഷ്ബോർഡ്', icon: LayoutDashboard },
@@ -260,6 +284,8 @@ const AreaAdminSidebar = ({
           {isDesktopCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
         </button>
       </aside>
+
+      <MobileBottomNav items={bottomNavItems} hidden={isMobileOpen} />
     </>
   );
 };

@@ -28,13 +28,13 @@ const SCOPE_ENDPOINT = {
 };
 
 const StatCard = ({ icon: Icon, label, value, tone }) => (
-  <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex items-center gap-3">
-    <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${tone}`}>
-      <Icon className="w-5 h-5" />
+  <div className="bg-white rounded-2xl border border-gray-200 p-2.5 sm:p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-3">
+    <div className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${tone}`}>
+      <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
     </div>
-    <div>
-      <p className="text-2xl font-bold text-[#002349] leading-none">{value}</p>
-      <p className="text-xs text-gray-500 mt-1 font-medium">{label}</p>
+    <div className="min-w-0">
+      <p className="text-lg sm:text-2xl font-bold text-[#002349] leading-none">{value}</p>
+      <p className="text-[10px] sm:text-xs text-gray-500 mt-1 font-medium leading-tight">{label}</p>
     </div>
   </div>
 );
@@ -307,13 +307,13 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
         </div>
 
         {(scope === 'district' || scope === 'admin') && (
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
             {scope === 'admin' && (
               <select
                 value={districtFilter}
                 onChange={e => { setDistrictFilter(e.target.value); setAreaFilter(''); }}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                className="flex-1 min-w-0 sm:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
               >
                 <option value="">എല്ലാ ജില്ലകളും</option>
                 {allDistricts.map(d => <option key={d} value={d}>{d}</option>)}
@@ -322,7 +322,7 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
             <select
               value={areaFilter}
               onChange={e => setAreaFilter(e.target.value)}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+              className="flex-1 min-w-0 sm:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
             >
               <option value="">എല്ലാ ഏരിയകളും</option>
               {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
@@ -334,7 +334,7 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
       {/* Stat cards (hidden for admin — the location overview above already
           shows totals and the roster panel below shows submitted/pending). */}
       {scope !== 'admin' && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3">
           <StatCard icon={ClipboardList} label={unitSubmissionsLabel} value={primaryTotal} tone="bg-[#002349]/10 text-[#002349]" />
           {scope === 'area' && unitBreakdown ? (
             <>

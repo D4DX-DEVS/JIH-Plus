@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import jihLogoWhite from '../../assets/LogoWhite.png';
 import PoweredByD4DX from './PoweredByD4DX';
+import MobileBottomNav from './MobileBottomNav';
 import { SIDEBAR_THEME, DYNAMIC_REPORT_META, REPORT_TYPE_STYLES } from './sidebarTheme';
 
 const AdminSidebar = ({
@@ -141,6 +142,21 @@ const AdminSidebar = ({
   const isMasterDataRoute = location.pathname.startsWith('/admin/master-data');
   const isDynamicSubmissionsRoute = location.pathname.startsWith('/admin/dynamic-submissions');
   const isDashboardRoute = location.pathname === '/expansion-portal/dashboard';
+  const isMembershipRoute = location.pathname.startsWith('/membership');
+
+  // Curated mobile bottom nav — the key admin destinations + More (opens sidebar).
+  const bottomNavItems = [
+    { key: 'dashboard', label: 'Home', icon: LayoutDashboard, active: isDashboardRoute,
+      onClick: () => navigate('/expansion-portal/dashboard') },
+    { key: 'membership', label: 'Members', icon: Users, active: isMembershipRoute,
+      onClick: () => navigate('/membership', { state: { roleHint: 'admin' } }) },
+    { key: 'reports', label: 'Reports', icon: Eye, active: isReportsRoute,
+      onClick: () => navigate('/view-reports') },
+    { key: 'data', label: 'Data', icon: MapPin, active: isMasterDataRoute,
+      onClick: () => navigate('/admin/master-data') },
+    { key: 'more', label: 'More', icon: Menu, active: false,
+      onClick: () => { if (toggleSidebar) toggleSidebar(); } },
+  ];
 
   const handleTabChangeSafe = (tabId) => {
     if (onTabChange) {
@@ -328,6 +344,8 @@ const AdminSidebar = ({
           {isDesktopCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
         </button>
       </aside>
+
+      <MobileBottomNav items={bottomNavItems} hidden={sidebarOpen} />
     </>
   );
 };

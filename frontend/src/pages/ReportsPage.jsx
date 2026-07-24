@@ -118,7 +118,7 @@ function ReportListView({ onLogout }) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex overflow-x-hidden">
-      <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={() => setShowLogoutModal(true)} adminData={adminData} />
+      <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => setShowLogoutModal(true)} adminData={adminData} />
 
       <div className="flex-1 min-w-0 flex flex-col overflow-x-hidden">
         <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center gap-3 sticky top-0 z-10 shadow-sm">
@@ -175,7 +175,37 @@ function ReportListView({ onLogout }) {
               <button onClick={() => navigate('/create-report')} className="mt-3 text-sm text-blue-600 hover:underline">Create your first report</button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Mobile view: compact cards with a single-line title + all actions */}
+            <div className="sm:hidden divide-y divide-gray-100">
+              {filtered.map(r => (
+                <div key={r._id} className="px-3 py-3">
+                  <p className="font-medium text-gray-800 truncate">{r.title}</p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium ${r.type === 'monthly' ? 'bg-blue-100 text-blue-700' : r.type === 'special' ? 'bg-purple-100 text-purple-700' : r.type === 'quarterly' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {TYPE_LABELS[r.type] || r.type}
+                    </span>
+                    <span className="text-xs text-gray-500 capitalize">{r.reportFor}</span>
+                    <span className={`text-[11px] ${r.isActive ? 'text-green-600' : 'text-gray-400'}`}>{r.isActive ? 'Active' : 'Inactive'}</span>
+                    <span className={`text-[11px] ${r.isPublished ? 'text-blue-600' : 'text-gray-400'}`}>{r.isPublished ? 'Published' : 'Draft'}</span>
+                    {r.legacy && <span className="text-[11px] text-orange-500">legacy</span>}
+                    {r.recurringMonthly && <span className="text-[11px] text-blue-500">template</span>}
+                  </div>
+                  <div className="flex items-center gap-1 mt-2">
+                    <button onClick={() => navigate(`/view-report/${r._id}`)} className="p-1.5 text-gray-500 hover:text-blue-600 border border-gray-200 rounded-lg" title="View"><Eye size={16} /></button>
+                    <button onClick={() => navigate(`/edit-report/${r._id}`)} className="p-1.5 text-gray-500 hover:text-green-600 border border-gray-200 rounded-lg" title="Edit"><Edit size={16} /></button>
+                    <button onClick={() => handleClone(r)} className="p-1.5 text-gray-500 hover:text-indigo-600 border border-gray-200 rounded-lg" title="Clone"><Copy size={16} /></button>
+                    <button onClick={() => togglePublish(r)} className="p-1.5 text-gray-500 hover:text-purple-600 border border-gray-200 rounded-lg" title={r.isPublished ? 'Unpublish' : 'Publish'}>
+                      {r.isPublished ? <EyeOff size={16} /> : <Globe size={16} />}
+                    </button>
+                    <button onClick={() => { setReportToDelete(r); setShowDeleteModal(true); }} className="p-1.5 text-gray-500 hover:text-red-500 border border-gray-200 rounded-lg" title="Delete"><Trash2 size={16} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop view: full table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
@@ -228,6 +258,7 @@ function ReportListView({ onLogout }) {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
 
@@ -696,7 +727,7 @@ function ReportBuilderView({ reportId, onLogout }) {
     <div className="h-screen bg-gray-100 flex overflow-hidden">
       <AdminSidebar
         isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
+        onClose={() => setIsSidebarOpen((prev) => !prev)}
         onLogout={() => onLogout && onLogout()}
         adminData={adminData}
       />
@@ -935,7 +966,7 @@ function ReportSingleView({ reportId, onLogout }) {
 
   return (
     <div className="h-screen bg-gray-50 flex overflow-hidden">
-      <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={() => onLogout && onLogout()} adminData={adminData} />
+      <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => onLogout && onLogout()} adminData={adminData} />
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center gap-3 shadow-sm flex-shrink-0">
           <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 lg:hidden"><Menu size={22} /></button>
