@@ -29,7 +29,61 @@ export default function RowColumnField({ field, value, onChange, disabled }) {
   const totalCell = 'border border-gray-300 bg-gray-50 px-2 py-1.5 text-sm text-center font-semibold text-gray-800';
 
   return (
-    <div className="overflow-x-auto">
+    <>
+    {/* Mobile view: each row becomes a stacked card with labelled inputs */}
+    <div className="sm:hidden space-y-2.5">
+      {rows.map((row, ri) => (
+        <div key={ri} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <div className="bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-700">{row}</div>
+          <div className="divide-y divide-gray-100">
+            {cols.map((col, ci) => (
+              <div key={ci} className="flex items-center justify-between gap-3 px-3 py-2">
+                <span className="text-xs text-gray-500 flex-1 min-w-0">{col}</span>
+                {isCellInput(field, ri, ci) ? (
+                  <input
+                    type={cellInputType(field, ci) === 'number' ? 'number' : 'text'}
+                    value={getCellValue(ri, ci)}
+                    onChange={e => setCellValue(ri, ci, e.target.value)}
+                    disabled={disabled}
+                    className="w-24 flex-shrink-0 px-2 py-1 text-sm text-center border border-gray-200 rounded-lg outline-none focus:bg-blue-50 focus:border-blue-300 disabled:bg-gray-50"
+                  />
+                ) : (
+                  <span className="text-sm text-gray-700 w-24 flex-shrink-0 text-center">{staticCellValue(field, ri, ci)}</span>
+                )}
+              </div>
+            ))}
+            {withSumCol && (
+              <div className="flex items-center justify-between gap-3 px-3 py-2 bg-gray-50">
+                <span className="text-xs font-semibold text-gray-600 flex-1">{field.sumColumnLabel || 'Total'}</span>
+                <span className="text-sm font-bold text-gray-800 w-24 flex-shrink-0 text-center">{rTotals[ri] == null ? '' : rTotals[ri]}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+      {withSumRow && (
+        <div className="rounded-xl border border-gray-300 bg-gray-100 overflow-hidden">
+          <div className="px-3 py-2 text-xs font-bold text-gray-700">{field.sumRowLabel || 'Total'}</div>
+          <div className="divide-y divide-gray-200">
+            {cols.map((col, ci) => (
+              <div key={ci} className="flex items-center justify-between gap-3 px-3 py-2">
+                <span className="text-xs text-gray-500 flex-1">{col}</span>
+                <span className="text-sm font-semibold text-gray-800 w-24 flex-shrink-0 text-center">{colTotals[ci] == null ? '' : colTotals[ci]}</span>
+              </div>
+            ))}
+            {withSumCol && (
+              <div className="flex items-center justify-between gap-3 px-3 py-2 bg-gray-200">
+                <span className="text-xs font-bold text-gray-700 flex-1">{field.sumColumnLabel || 'Total'}</span>
+                <span className="text-sm font-bold text-gray-900 w-24 flex-shrink-0 text-center">{grandTotal(field, value)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+
+    {/* Desktop view: full editable table */}
+    <div className="hidden sm:block overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
@@ -100,5 +154,6 @@ export default function RowColumnField({ field, value, onChange, disabled }) {
         </tbody>
       </table>
     </div>
+    </>
   );
 }

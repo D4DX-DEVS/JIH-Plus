@@ -1757,7 +1757,7 @@ export default function LocationMasterPage({ onLogout }) {
         onMobileToggle={() => setIsSidebarOpen((p) => !p)}
       />
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden">
         {/* Mobile header */}
         <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b shadow-sm">
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg text-gray-600 hover:bg-gray-100">
@@ -1767,33 +1767,33 @@ export default function LocationMasterPage({ onLogout }) {
           <div />
         </div>
 
-        <div className="p-6">
+        <div className="p-4 pb-24 lg:p-6 lg:pb-6">
           {/* Page header */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-[#002349]">ലൊക്കേഷൻ മാസ്റ്റർ ഡാറ്റ</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage States, Districts, Areas and Units</p>
+          <div className="mb-4 lg:mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#002349]">ലൊക്കേഷൻ മാസ്റ്റർ ഡാറ്റ</h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">Manage States, Districts, Areas and Units</p>
           </div>
 
           {/* Tab bar */}
-          <div className="flex gap-1 bg-white border rounded-xl p-1 mb-6 w-fit shadow-sm">
+          <div className="grid grid-cols-4 gap-1 bg-white border rounded-xl p-1 mb-4 lg:mb-6 shadow-sm lg:flex lg:w-fit">
             {TABS.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`flex flex-col lg:flex-row items-center justify-center gap-0.5 lg:gap-2 px-1 lg:px-4 py-1.5 lg:py-2 rounded-lg text-[11px] lg:text-sm font-medium transition-all min-w-0 ${
                   activeTab === id
                     ? 'bg-[#002349] text-white shadow'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                {label}
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate max-w-full">{label}</span>
               </button>
             ))}
           </div>
 
           {/* Content card */}
-          <div className="bg-white rounded-2xl shadow-sm border p-6">
+          <div className="bg-white rounded-2xl shadow-sm border p-3 sm:p-6">
             {activeTab === 'states'    && <StatesTab />}
             {activeTab === 'districts' && <DistrictsTab />}
             {activeTab === 'areas'     && <AreasTab />}

@@ -874,16 +874,17 @@ const TargetsPage = ({ onLogout }) => {
 
   const sidebarProps = {
     isMobileOpen: isSidebarOpen,
-    onMobileToggle: () => setIsSidebarOpen(false),
+    onMobileToggle: () => setIsSidebarOpen((prev) => !prev),
+    onNavigateToMembership: () => navigate('/membership'),
     onLogout: () => setShowLogoutModal(true)
   };
 
   const SidebarComponent = role === 'admin'
-    ? <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={() => setShowLogoutModal(true)} adminData={adminData} />
+    ? <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => setShowLogoutModal(true)} adminData={adminData} />
     : role === 'district'
       ? <DistrictAdminSidebar {...sidebarProps} districtName={userData.district || '—'} />
       : role === 'area'
-        ? <AreaAdminSidebar {...sidebarProps} areaName={userData.areaName || '—'} districtName={userData.district || ''} />
+        ? <AreaAdminSidebar {...sidebarProps} areaName={userData.area || userData.areaName || '—'} districtName={userData.district || ''} />
         : <UnitAdminSidebar {...sidebarProps} unitName={userData.unitName || '—'} areaName={userData.areaName || userData.area || ''} districtName={userData.district || ''} />;
 
   return (

@@ -16,7 +16,53 @@ export default function RowColumnReadonly({ field, value }) {
   const rTotals = withSumCol ? rowTotals(field, grid) : [];
 
   return (
-    <div className="overflow-x-auto mt-1">
+    <>
+    {/* Mobile view: each row becomes a stacked card (no horizontal scroll) */}
+    <div className="sm:hidden space-y-2.5 mt-1">
+      {rows.map((row, ri) => (
+        <div key={ri} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <div className="bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-700">{row}</div>
+          <div className="divide-y divide-gray-100">
+            {cols.map((col, ci) => (
+              <div key={ci} className="flex items-start justify-between gap-3 px-3 py-1.5">
+                <span className="text-xs text-gray-500">{col}</span>
+                <span className="text-sm font-medium text-gray-900 text-right">
+                  {String(displayCellValue(field, grid, ri, ci) ?? '')}
+                </span>
+              </div>
+            ))}
+            {withSumCol && (
+              <div className="flex items-start justify-between gap-3 px-3 py-1.5 bg-gray-50">
+                <span className="text-xs font-semibold text-gray-600">{field.sumColumnLabel || 'Total'}</span>
+                <span className="text-sm font-bold text-gray-800 text-right">{rTotals[ri] == null ? '' : rTotals[ri]}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+      {withSumRow && (
+        <div className="rounded-xl border border-gray-300 bg-gray-100 overflow-hidden">
+          <div className="px-3 py-2 text-xs font-bold text-gray-700">{field.sumRowLabel || 'Total'}</div>
+          <div className="divide-y divide-gray-200">
+            {cols.map((col, ci) => (
+              <div key={ci} className="flex items-start justify-between gap-3 px-3 py-1.5">
+                <span className="text-xs text-gray-500">{col}</span>
+                <span className="text-sm font-semibold text-gray-800 text-right">{colTotals[ci] == null ? '' : colTotals[ci]}</span>
+              </div>
+            ))}
+            {withSumCol && (
+              <div className="flex items-start justify-between gap-3 px-3 py-1.5 bg-gray-200">
+                <span className="text-xs font-bold text-gray-700">{field.sumColumnLabel || 'Total'}</span>
+                <span className="text-sm font-bold text-gray-900 text-right">{grandTotal(field, grid)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+
+    {/* Desktop view: full table */}
+    <div className="hidden sm:block overflow-x-auto mt-1">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
@@ -71,5 +117,6 @@ export default function RowColumnReadonly({ field, value }) {
         </tbody>
       </table>
     </div>
+    </>
   );
 }

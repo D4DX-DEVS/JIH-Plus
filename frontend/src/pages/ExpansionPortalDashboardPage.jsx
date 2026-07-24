@@ -28,14 +28,14 @@ const COLORS = {
 };
 
 const StatCard = ({ icon: Icon, label, value, color, sub }) => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start gap-4">
-    <div className="p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: `${color}1A` }}>
-      <Icon className="w-6 h-6" style={{ color }} />
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2.5 sm:p-5 flex flex-col sm:flex-row items-start gap-1.5 sm:gap-4">
+    <div className="p-1.5 sm:p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: `${color}1A` }}>
+      <Icon className="w-4 h-4 sm:w-6 sm:h-6" style={{ color }} />
     </div>
-    <div>
-      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-bold text-gray-800 mt-0.5">{value ?? '—'}</p>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+    <div className="min-w-0">
+      <p className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wide leading-tight">{label}</p>
+      <p className="text-lg sm:text-2xl font-bold text-gray-800 mt-0.5">{value ?? '—'}</p>
+      {sub && <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{sub}</p>}
     </div>
   </div>
 );
@@ -152,7 +152,7 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
         onLogout={handleLogoutClick}
         adminData={adminData}
         isMobileOpen={isSidebarOpen}
-        onMobileToggle={() => setIsSidebarOpen(false)}
+        onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
       />
 
       {/* Mobile overlay */}
@@ -183,7 +183,7 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
         </header>
 
         {/* Scrollable content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto px-4 md:px-6 pt-4 md:pt-6 pb-24 lg:pb-6">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#002349]" />
@@ -197,7 +197,7 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                   <MapPin className="w-4 h-4" /> ലൊക്കേഷൻ ഓവർവ്യൂ
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-2 sm:gap-3">
                   <StatCard icon={Building2} label="ജില്ലകൾ" value={data.locations.districts} color={COLORS.primary} />
                   <StatCard icon={Map} label="ഏരിയകൾ" value={data.locations.areas} color={COLORS.blue} />
                   <StatCard icon={Layers} label="യൂണിറ്റുകൾ" value={data.locations.units} color={COLORS.teal} />
@@ -215,7 +215,7 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                   <FileText className="w-4 h-4" /> ആക്ടീവ് റിപ്പോർട്ടുകൾ
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-2 sm:gap-3">
                   <StatCard icon={FileText} label="ആകെ ആക്ടീവ്" value={data.reports.total} color={COLORS.primary} />
                   <StatCard icon={Building2} label="ജില്ലക്ക്" value={data.reports.byLevel.district} color={COLORS.blue} />
                   <StatCard icon={Map} label="ഏരിയക്ക്" value={data.reports.byLevel.area} color={COLORS.teal} />

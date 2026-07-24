@@ -589,30 +589,30 @@ const DistrictDashboardPage = ({ onLogout }) => {
         <SubmissionsAnalytics scope="district" />
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-5 flex flex-col items-start gap-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+        <div className="grid grid-cols-4 gap-2 sm:gap-4">
+          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-50 flex items-center justify-center">
               <MapPin className="w-5 h-5 text-[#002349]" />
             </div>
             <p className="text-2xl font-bold text-[#002349]">{d.areas ?? '—'}</p>
             <p className="text-xs text-gray-500 font-medium">ആകെ ഏരിയകൾ</p>
           </div>
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-5 flex flex-col items-start gap-2">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-50 flex items-center justify-center">
               <Building className="w-5 h-5 text-[#957C3D]" />
             </div>
             <p className="text-2xl font-bold text-[#957C3D]">{d.units ?? '—'}</p>
             <p className="text-xs text-gray-500 font-medium">ആകെ യൂണിറ്റുകൾ</p>
           </div>
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-5 flex flex-col items-start gap-2">
-            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-50 flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-green-600" />
             </div>
             <p className="text-2xl font-bold text-green-600">{d.activeReports ?? '—'}</p>
             <p className="text-xs text-gray-500 font-medium">ആക്ടീവ് റിപ്പോർട്ടുകൾ</p>
           </div>
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-5 flex flex-col items-start gap-2">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-emerald-600" />
             </div>
             <p className="text-2xl font-bold text-emerald-600">{d.submitted ?? '—'}</p>
@@ -644,13 +644,13 @@ const DistrictDashboardPage = ({ onLogout }) => {
             <div className="bg-white rounded-2xl shadow border border-gray-100 p-6">
               <h3 className="text-sm font-bold text-[#002349] mb-4">സബ്മിഷൻ സ്റ്റാറ്റസ്</h3>
               {(d.activeReports > 0) ? (
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={240}>
                   <PieChart>
                     <Pie
                       data={submissionData}
                       cx="50%"
-                      cy="50%"
-                      outerRadius={80}
+                      cy="42%"
+                      outerRadius={62}
                       dataKey="value"
                     >
                       {submissionData.map((_, i) => (
@@ -658,7 +658,12 @@ const DistrictDashboardPage = ({ onLogout }) => {
                       ))}
                     </Pie>
                     <Tooltip />
-                    <Legend formatter={(value, entry) => `${value}: ${entry.payload.value}`} />
+                    <Legend
+                      verticalAlign="bottom"
+                      iconType="circle"
+                      wrapperStyle={{ fontSize: '12px', paddingTop: '10px', lineHeight: '1.6' }}
+                      formatter={(value, entry) => `${value}: ${entry.payload.value}`}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
@@ -1209,7 +1214,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
               <span>Menu</span>
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 pt-4 pb-24 lg:pb-4">
             {currentViewContent}
           </div>
         </div>

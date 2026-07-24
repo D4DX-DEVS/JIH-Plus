@@ -43,17 +43,11 @@ const Layout = () => {
     setShowLogoutModal(false)
   }
 
-  const isActive = (href) => {
-    const currentPath = location.pathname
-    if (currentPath === href) return true
-    if (href.startsWith('/') && currentPath.startsWith(href + '/')) {
-      return true
-    }
-    if (!href.startsWith('/')) {
-      return currentPath.endsWith(`/${href}`) || currentPath === `/${href}`
-    }
-    return false
-  }
+  // A nav item is active only if it is the *best* (longest) matching route for the
+  // current path. Plain prefix matching made the dashboard href (e.g. /ihthisabi/admin)
+  // stay active on every /ihthisabi/admin/* sub-route. bestMatchHref (computed below)
+  // resolves this by picking the single most-specific destination.
+  const isActive = (href) => href != null && href === bestMatchHref
 
   const isGroupActive = (children) =>
     children.some(child => isActive(child.href))
@@ -86,12 +80,12 @@ const Layout = () => {
 
   const isSuperAdmin = user?.isAdmin || user?.role === 'mainAdmin'
 
-  const buildNavigation = () => {
-    const dashboardHref =
-      user?.role === 'admin' ? '/ihthisabi/admin'
-      : user?.role === 'unitAdmin' ? '/ihthisabi/unitadmin'
-      : '/ihthisabi/dashboard'
+  const dashboardHref =
+    user?.role === 'admin' ? '/ihthisabi/admin'
+    : user?.role === 'unitAdmin' ? '/ihthisabi/unitadmin'
+    : '/ihthisabi/dashboard'
 
+  const buildNavigation = () => {
     if (user?.role === 'rukn') {
       return [
         { name: 'Dashboard', mobileName: 'Dashboard', href: dashboardHref, icon: Home },
@@ -155,8 +149,77 @@ const Layout = () => {
 
   const navigation = buildNavigation()
 
-  // Flat list for mobile bottom nav (top-level only, groups shown as single item)
-  const mobileNavItems = navigation.filter(item => item.href || item.type === 'group')
+  // Longest nav href that matches the current path (see isActive above).
+  const bestMatchHref = (() => {
+    const currentPath = location.pathname
+    const leaves = []
+    navigation.forEach(item => {
+      if (item.type === 'group') item.children.forEach(c => leaves.push(c.href))
+      else if (item.href) leaves.push(item.href)
+    })
+    let best = null
+    for (const href of leaves) {
+      if (currentPath === href || currentPath.startsWith(href + '/')) {
+        if (!best || href.length > best.length) best = href
+      }
+    }
+    return best
+  })()
+
+  // Curated mobile bottom nav — a minimal set of the most important destinations
+  // plus a "More" button that opens the full sidebar. `match` lets a tab stay
+  // highlighted across a section's related sub-routes.
+  const buildBottomNav = () => {
+    if (user?.role === 'rukn') {
+      return [
+        { name: 'Home', href: dashboardHref, icon: Home },
+        { name: 'Submit', href: '/ihthisabi/submit', icon: FileText },
+        { name: 'Profile', href: '/ihthisabi/profile', icon: User },
+        { name: 'Help', href: '/ihthisabi/help-desk', icon: LifeBuoy },
+      ]
+    }
+    if (user?.role === 'unitAdmin') {
+      return [
+        { name: 'Home', href: dashboardHref, icon: Home },
+        { name: 'Forms', href: '/ihthisabi/unitadmin/submissions', icon: BarChart3 },
+        { name: 'Members', href: '/ihthisabi/unitadmin/members', icon: Users },
+        { name: 'Profile', href: '/ihthisabi/profile', icon: User },
+        { name: 'More', icon: Menu, action: 'menu' },
+      ]
+    }
+    if (user?.role === 'admin') {
+      return [
+        { name: 'Home', href: '/ihthisabi/admin', icon: Home, match: ['/ihthisabi/admin'] },
+        { name: 'Reports', href: '/ihthisabi/admin/submissions', icon: BarChart3,
+          match: ['/ihthisabi/admin/submissions', '/ihthisabi/admin/consolidation', '/ihthisabi/admin/unit-reply'] },
+        { name: 'Forms', href: '/ihthisabi/admin/form-management', icon: ClipboardList },
+        { name: 'Users', href: '/ihthisabi/admin/members', icon: Users,
+          match: ['/ihthisabi/admin/members', '/ihthisabi/admin/unit-admins', '/ihthisabi/admin/user-management',
+                  '/ihthisabi/admin/archive', '/ihthisabi/admin/abroad-countries', '/ihthisabi/admin/abroad-members'] },
+        { name: 'More', icon: Menu, action: 'menu' },
+      ]
+    }
+    return [
+      { name: 'Home', href: dashboardHref, icon: Home },
+      { name: 'Profile', href: '/ihthisabi/profile', icon: User },
+    ]
+  }
+
+  const bottomNavItems = buildBottomNav()
+
+  const isBottomActive = (item) => {
+    if (item.action === 'menu') return sidebarOpen
+    if (item.match) return item.match.includes(bestMatchHref)
+    return isActive(item.href)
+  }
+
+  const handleBottomClick = (item) => {
+    if (item.action === 'menu') {
+      setSidebarOpen(true)
+    } else {
+      navigate(item.href)
+    }
+  }
 
   // Find current active label for mobile top bar
   const activeLabel = (() => {
@@ -338,48 +401,29 @@ const Layout = () => {
           <Outlet />
         </main>
 
-        {/* Mobile bottom nav — flat top-level items only */}
-        {mobileNavItems.length > 0 && (
+        {/* Mobile bottom nav — curated minimal destinations + More */}
+        {bottomNavItems.length > 0 && (
           <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur shadow-[0_-8px_24px_rgba(15,23,42,0.08)] ih-mobile-nav-safe">
             <nav
-              className="grid gap-1 px-2 py-2"
-              style={{ gridTemplateColumns: `repeat(${mobileNavItems.length}, minmax(0, 1fr))` }}
+              className="grid gap-1 px-2 py-1.5"
+              style={{ gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))` }}
             >
-              {mobileNavItems.map((item) => {
+              {bottomNavItems.map((item) => {
                 const Icon = item.icon
-                const active = item.type === 'group'
-                  ? isGroupActive(item.children)
-                  : isActive(item.href)
-                const handleClick = () => {
-                  if (item.type === 'group') {
-                    setSidebarOpen(true)
-                  } else {
-                    navigate(item.href)
-                  }
-                }
+                const active = isBottomActive(item)
                 return (
                   <button
                     key={item.name}
-                    onClick={handleClick}
-                    className={`relative flex min-w-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl px-1 py-2 text-[10px] font-semibold transition-all duration-300 ease-out ${
+                    onClick={() => handleBottomClick(item)}
+                    className={`relative flex min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-xl px-1 py-1.5 text-[10px] font-semibold transition-all duration-300 ease-out ${
                       active
-                        ? '-translate-y-0.5 scale-[1.02] border border-[#7B4FF2] bg-[#7B4FF2] text-white shadow-lg shadow-[#7B4FF2]/40'
+                        ? 'bg-[#7B4FF2] text-white shadow-md shadow-[#7B4FF2]/40'
                         : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                     aria-current={active ? 'page' : undefined}
                   >
-                    <span
-                      className={`absolute inset-x-5 top-0 h-0.5 rounded-full transition-opacity duration-300 ${
-                        active ? 'bg-white opacity-100' : 'opacity-0'
-                      }`}
-                    />
-                    <Icon className={`h-4 w-4 shrink-0 transition-transform duration-300 ${active ? 'scale-110' : ''}`} />
-                    <span className={`max-w-full truncate ${active ? 'text-white' : ''}`}>{item.mobileName || item.name}</span>
-                    <span
-                      className={`h-1 w-1 rounded-full bg-current transition-opacity duration-300 ${
-                        active ? 'opacity-100' : 'opacity-0'
-                      }`}
-                    />
+                    <Icon className={`h-5 w-5 shrink-0 transition-transform duration-300 ${active ? 'scale-110' : ''}`} />
+                    <span className={`max-w-full truncate ${active ? 'text-white' : ''}`}>{item.name}</span>
                   </button>
                 )
               })}
