@@ -384,107 +384,60 @@ const UserDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <div className="ih-page-shell">
         {/* Welcome Header with CTA */}
-        <div className="mb-6 sm:mb-8">
-          <div className="ih-page-header mb-6">
-            <div className="flex-1">
-              <h1 className="ih-page-title brand-font mb-2">
-                Welcome back, {user?.name || user?.username}
-              </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-gray-600">
-                <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-medium shadow-sm">
-                  {user?.unit}
-                </span>
-                <span className="hidden sm:inline text-gray-400">•</span>
-                <span className="text-sm text-gray-600">RUKN ID: <span className="font-semibold text-gray-900">{user?.ruknId || 'N/A'}</span></span>
-              </div>
-            </div>
-            <button
-              onClick={() => navigate('/ihthisabi/submit')}
-              className="inline-flex w-full sm:w-auto items-center justify-center px-5 py-3 sm:py-2 bg-[#161F2F] hover:bg-[#1a2538] text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Submit Form
-            </button>
+        <div className="ih-page-header">
+          <div className="min-w-0 flex-1">
+            <h1 className="ih-page-title brand-font truncate">
+              Welcome back, {user?.name || user?.username}
+            </h1>
+            <p className="ih-page-subtitle truncate">
+              {user?.unit && user.unit !== '-' ? `${user.unit} · ` : ''}
+              RUKN ID <span className="font-semibold text-gray-900">{user?.ruknId || 'N/A'}</span>
+            </p>
           </div>
+          <button
+            onClick={() => navigate('/ihthisabi/submit')}
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#161F2F] px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-md transition-all duration-200 hover:bg-[#1a2538] sm:px-5 sm:py-2 sm:text-sm"
+          >
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            Submit Form
+          </button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-          <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-4 sm:p-5 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-500 mb-1">Total Submissions</p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{submissions.length}</p>
-              </div>
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-blue-600" />
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4 mb-3 sm:mb-6">
+          {[
+            { label: 'Total Submissions', short: 'Total', value: submissions.length, Icon: FileText, tone: 'bg-blue-100 text-blue-600' },
+            { label: 'Approved', short: 'Approved', value: submissions.filter(s => s.status === 'approved').length, Icon: CheckCircle2, tone: 'bg-green-100 text-green-600' },
+            { label: 'In Review', short: 'In Review', value: submissions.filter(s => s.status === 'reviewed' || s.status === 'submitted').length, Icon: Clock3, tone: 'bg-amber-100 text-amber-600' },
+            { label: 'Annual Progress', short: 'Progress', value: `${Math.round((getQuarterCompletionStatus().length / (Q3_DISABLED ? 3 : 4)) * 100)}%`, Icon: TrendingUp, tone: 'bg-purple-100 text-purple-600' },
+          ].map(({ label, short, value, Icon, tone }) => (
+            <div key={label} className="ih-stat-card">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="ih-stat-label truncate">
+                    <span className="sm:hidden">{short}</span>
+                    <span className="hidden sm:inline">{label}</span>
+                  </p>
+                  <p className="ih-stat-value mt-1">{value}</p>
+                </div>
+                <div className={`ih-stat-icon ${tone}`}>
+                  <Icon className="h-4 w-4" />
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-4 sm:p-5 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-500 mb-1">Approved</p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  {submissions.filter(s => s.status === 'approved').length}
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle2 className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-4 sm:p-5 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-500 mb-1">In Review</p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  {submissions.filter(s => s.status === 'reviewed' || s.status === 'submitted').length}
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                  <Clock3 className="h-6 w-6 text-amber-600" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-4 sm:p-5 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-500 mb-1">Annual Progress</p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  {Math.round((getQuarterCompletionStatus().length / (Q3_DISABLED ? 3 : 4)) * 100)}%
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-purple-600" />
-                </div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Main Content Card */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-[#161F2F] border-b border-gray-200 px-5 sm:px-6 py-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 className="text-l sm:text-xl font-bold text-white brand-font mb-1">Quarterly Submissions Summary</h2>
-              </div>
-              <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                <span className="inline-flex items-center px-2 py-1 rounded-lg bg-white/10 text-white font-semibold border border-white/20 text-[11px] sm:text-xs">
-                  {getCurrentQuarterDisplay()}
-                </span>
-              </div>
+        <div className="ih-surface overflow-hidden">
+          <div className="border-b border-gray-200 bg-[#161F2F] px-3 py-2 sm:px-6 sm:py-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="brand-font truncate text-[13px] font-bold text-white sm:text-lg">
+                Quarterly Submissions Summary
+              </h2>
+              <span className="ih-chip shrink-0 border-white/20 bg-white/10 font-semibold text-white">
+                {getCurrentQuarterDisplay()}
+              </span>
             </div>
           </div>
           
@@ -556,20 +509,20 @@ const UserDashboard = () => {
               )
             })()}
 
-          <div className="p-5 sm:p-6">
+          <div className="p-3 sm:p-6">
             {/* Submissions List */}
             {submissions.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                  <FileText className="w-10 h-10 text-gray-400" />
+              <div className="py-6 text-center sm:py-10">
+                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100">
+                  <FileText className="w-6 h-6 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2 brand-font">No submissions yet</h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  Start your quarterly reporting journey by submitting your first report for {getCurrentQuarterDisplay()}.
+                <h3 className="brand-font mb-1 text-sm font-bold text-gray-900">No submissions yet</h3>
+                <p className="mx-auto mb-3 max-w-md text-xs text-gray-500">
+                  Start your quarterly reporting by submitting your first report for {getCurrentQuarterDisplay()}.
                 </p>
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-8 max-w-lg mx-auto shadow-sm">
-                  <h4 className="font-semibold text-blue-900 mb-3 text-lg">Quarterly Submission Schedule:</h4>
-                  <div className="text-sm text-blue-800 space-y-2">
+                <div className="mx-auto mb-4 max-w-lg rounded-xl border border-blue-200 bg-blue-50 p-3 text-left sm:p-5">
+                  <h4 className="mb-1.5 text-xs font-semibold text-blue-900 sm:text-sm">Quarterly Submission Schedule</h4>
+                  <div className="space-y-0.5 text-[11px] text-blue-800 sm:text-sm">
                     <div className="flex items-center justify-between py-1">
                       <span>• January – March</span>
                       <span className="text-blue-600 font-medium">(3 months)</span>

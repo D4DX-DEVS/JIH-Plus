@@ -348,260 +348,172 @@ const UserManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">User Management</h2>
-          <p className="text-gray-600">
+    <div className="space-y-2 sm:space-y-5">
+      {/* Header — title hidden on mobile, the app bar already names the page.
+          Actions collapse to icons so they stay on one row. */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="hidden min-w-0 sm:block">
+          <h2 className="ih-page-title">User Management</h2>
+          <p className="ih-page-subtitle">
             {showUnitAdminsOnly ? 'Manage unit admins' : 'Manage users uploaded from Excel files'}
-            {!showUnitAdminsOnly && meta.totalUsers > 0 && (
-              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {meta.totalUsers} total users
-              </span>
-            )}
-            {showUnitAdminsOnly && unitAdminPagination.total > 0 && (
-              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {unitAdminPagination.total} total unit admins
-              </span>
-            )}
           </p>
         </div>
-        
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Toggle Button */}
+
+        <div className="flex w-full items-center gap-1.5 sm:w-auto">
           <button
             onClick={() => {
               setShowUnitAdminsOnly(!showUnitAdminsOnly)
               resetFilters()
             }}
-            className={showUnitAdminsOnly ? 'btn-primary' : 'btn-ghost'}
+            className={`inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-full px-3 py-[7px] text-[11px] font-medium transition-colors sm:flex-none sm:px-4 sm:py-2 sm:text-sm ${
+              showUnitAdminsOnly ? 'bg-primary text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            }`}
+            style={showUnitAdminsOnly ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
           >
-            <Settings className="w-5 h-5 mr-2" />
-            {showUnitAdminsOnly ? 'Show Regular Users' : 'Show Unit Admins Only'}
+            <Settings className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{showUnitAdminsOnly ? 'Regular Users' : 'Unit Admins'}</span>
           </button>
-          
+
           {(meta.totalUsers > 0 || users.length > 0) && !showUnitAdminsOnly && (
             <button
               onClick={() => setShowDeleteAllModal(true)}
-              className="btn-primary bg-red-600 hover:bg-red-700"
+              title="Delete all users"
+              className="ih-icon-btn bg-red-50 text-red-500 hover:bg-red-100"
             >
-              <Trash2 className="w-5 h-5 mr-2" />
-              Delete All Users
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           )}
           {!showUnitAdminsOnly && (
             <button
               onClick={() => setShowUploadModal(true)}
-              className="btn-primary"
+              className="btn-primary shrink-0 gap-1 px-2 py-1.5 text-[11px] sm:px-4 sm:py-2 sm:text-sm"
             >
-              <Upload className="w-5 h-5 mr-2" />
-              Upload Excel
+              <Upload className="w-3.5 h-3.5" />
+              Upload
             </button>
           )}
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        {showUnitAdminsOnly ? (
-          <>
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="flex items-center">
-                <Settings className="w-8 h-8 text-blue-600" />
-                <div className="ml-3">
-                  <p className="text-sm text-gray-600">Total Unit Admins</p>
-                  <p className="text-2xl font-bold text-gray-900">{unitAdminPagination.total || 0}</p>
-                </div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        {(showUnitAdminsOnly
+          ? [
+              { label: 'Total Unit Admins', short: 'Total', value: unitAdminPagination.total || 0, Icon: Settings, tone: 'bg-blue-50 text-blue-600' },
+              { label: 'Active Unit Admins', short: 'Active', value: unitAdmins.filter(u => u.isActive).length, Icon: CheckCircle, tone: 'bg-green-50 text-green-600' },
+              { label: 'Inactive Unit Admins', short: 'Inactive', value: unitAdmins.filter(u => !u.isActive).length, Icon: AlertCircle, tone: 'bg-amber-50 text-amber-600' },
+            ]
+          : [
+              { label: 'Total Users', short: 'Users', value: meta.totalUsers || pagination.total || 0, Icon: Users, tone: 'bg-blue-50 text-blue-600' },
+              { label: 'Active Users', short: 'Active', value: meta.activeUsers || users.filter(u => u.isActive).length, Icon: CheckCircle, tone: 'bg-green-50 text-green-600' },
+              { label: 'Total Units', short: 'Units', value: meta.units?.length || 0, Icon: AlertCircle, tone: 'bg-amber-50 text-amber-600' },
+            ]
+        ).map(({ label, short, value, Icon, tone }) => (
+          <div key={label} className="ih-stat-card">
+            <div className="flex items-start justify-between gap-1.5">
+              <div className="min-w-0">
+                <p className="ih-stat-label truncate">
+                  <span className="sm:hidden">{short}</span>
+                  <span className="hidden sm:inline">{label}</span>
+                </p>
+                <p className="ih-stat-value mt-1">{value}</p>
+              </div>
+              <div className={`ih-stat-icon ${tone} hidden sm:flex`}>
+                <Icon className="w-4 h-4" />
               </div>
             </div>
-            
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="flex items-center">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-                <div className="ml-3">
-                  <p className="text-sm text-gray-600">Active Unit Admins</p>
-                  <p className="text-2xl font-bold text-gray-900">{unitAdmins.filter(u => u.isActive).length}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="flex items-center">
-                <AlertCircle className="w-8 h-8 text-amber-600" />
-                <div className="ml-3">
-                  <p className="text-sm text-gray-600">Inactive Unit Admins</p>
-                  <p className="text-2xl font-bold text-gray-900">{unitAdmins.filter(u => !u.isActive).length}</p>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="flex items-center">
-                <Users className="w-8 h-8 text-blue-600" />
-                <div className="ml-3">
-                  <p className="text-sm text-gray-600">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{meta.totalUsers || pagination.total || 0}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="flex items-center">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-                <div className="ml-3">
-                  <p className="text-sm text-gray-600">Active Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{meta.activeUsers || users.filter(u => u.isActive).length}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="flex items-center">
-                <AlertCircle className="w-8 h-8 text-amber-600" />
-                <div className="ml-3">
-                  <p className="text-sm text-gray-600">Total Units</p>
-                  <p className="text-2xl font-bold text-gray-900">{meta.units?.length || 0}</p>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+          </div>
+        ))}
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <h3 className="text-lg font-medium text-gray-900">Filters</h3>
-            {(searchTerm || districtFilter || areaFilter || unitFilter) && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                Active
-              </span>
-            )}
+      {/* Filters — placeholders carry the labels so no label rows are needed. */}
+      <div className="ih-surface p-2 sm:p-3">
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search name or RUKN ID..."
+              className="block w-full rounded-lg border border-gray-300 py-1.5 pl-8 pr-2 text-[11px] shadow-sm placeholder-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 sm:text-sm"
+            />
           </div>
           {(searchTerm || districtFilter || areaFilter || unitFilter) && (
             <button
               onClick={resetFilters}
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
+              className="shrink-0 rounded-lg border border-gray-200 px-2 py-1.5 text-[11px] text-gray-500 hover:text-gray-700"
             >
-              Reset Filters
+              Reset
             </button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Search Users
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by name or RUKN ID..."
-                className="form-input pl-10"
-              />
-            </div>
-          </div>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          <select
+            value={selectedDistrictId}
+            onChange={(e) => handleDistrictFilterChange(e.target.value)}
+            className="ih-filter-select pl-2"
+          >
+            <option value="">All Districts</option>
+            {districts.map((district) => (
+              <option key={getLocationOptionId(district)} value={getLocationOptionId(district)}>
+                {getLocationOptionLabel(district)}
+              </option>
+            ))}
+          </select>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Filter by District
-            </label>
-            <select
-              value={selectedDistrictId}
-              onChange={(e) => handleDistrictFilterChange(e.target.value)}
-              className="form-select"
-            >
-              <option value="">All Districts</option>
-              {districts.map((district) => {
-                const optionId = getLocationOptionId(district)
-                const optionLabel = getLocationOptionLabel(district)
+          <select
+            value={selectedAreaId}
+            onChange={(e) => handleAreaFilterChange(e.target.value)}
+            className="ih-filter-select pl-2 disabled:bg-gray-50 disabled:text-gray-400"
+            disabled={!selectedDistrictId || locationLoading.areas}
+          >
+            <option value="">All Areas</option>
+            {areas.map((area) => (
+              <option key={getLocationOptionId(area)} value={getLocationOptionId(area)}>
+                {getLocationOptionLabel(area)}
+              </option>
+            ))}
+          </select>
 
-                return (
-                  <option key={optionId} value={optionId}>{optionLabel}</option>
-                )
-              })}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Filter by Area
-            </label>
-            <select
-              value={selectedAreaId}
-              onChange={(e) => handleAreaFilterChange(e.target.value)}
-              className="form-select"
-              disabled={!selectedDistrictId || locationLoading.areas}
-            >
-              <option value="">All Areas</option>
-              {areas.map((area) => {
-                const optionId = getLocationOptionId(area)
-                const optionLabel = getLocationOptionLabel(area)
-
-                return (
-                  <option key={optionId} value={optionId}>{optionLabel}</option>
-                )
-              })}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Filter by Unit
-            </label>
-            <select
-              value={selectedUnitId}
-              onChange={(e) => handleUnitFilterChange(e.target.value)}
-              className="form-select"
-              disabled={!selectedAreaId || locationLoading.units}
-            >
-              <option value="">All Units</option>
-              {units.map((unit) => {
-                const optionId = getLocationOptionId(unit)
-                const optionLabel = getLocationOptionLabel(unit)
-
-                return (
-                  <option key={optionId} value={optionId}>{optionLabel}</option>
-                )
-              })}
-            </select>
-          </div>
-        </div>
-
-        <div className="mt-3 text-xs text-gray-500">
-          Select district to load its areas, then select area to load its units.
+          <select
+            value={selectedUnitId}
+            onChange={(e) => handleUnitFilterChange(e.target.value)}
+            className="ih-filter-select pl-2 disabled:bg-gray-50 disabled:text-gray-400"
+            disabled={!selectedAreaId || locationLoading.units}
+          >
+            <option value="">All Units</option>
+            {units.map((unit) => (
+              <option key={getLocationOptionId(unit)} value={getLocationOptionId(unit)}>
+                {getLocationOptionLabel(unit)}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-lg border overflow-hidden">
-        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900">Users List</h3>
-            <div className="text-sm text-gray-600">
-              {loading ? (
-                <span>Loading...</span>
-              ) : (
-                <span>
-                  Showing {showUnitAdminsOnly ? unitAdmins.length : users.length} of {showUnitAdminsOnly ? (unitAdminPagination.total || 0) : (pagination.total || meta.totalUsers || 0)} {showUnitAdminsOnly ? 'unit admins' : 'users'}
-                  {(searchTerm || districtFilter || areaFilter || unitFilter) && (
-                    <span className="ml-1 text-blue-600">(filtered)</span>
-                  )}
-                </span>
-              )}
-            </div>
+      <div className="ih-surface overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 px-3 py-1.5">
+          <h3 className="text-[11px] font-semibold text-gray-700 sm:text-sm">Users List</h3>
+          <div className="truncate text-[10px] text-gray-500 sm:text-xs">
+            {loading ? 'Loading...' : (
+              <>
+                {showUnitAdminsOnly ? unitAdmins.length : users.length} of {showUnitAdminsOnly ? (unitAdminPagination.total || 0) : (pagination.total || meta.totalUsers || 0)}
+                {(searchTerm || districtFilter || areaFilter || unitFilter) && (
+                  <span className="ml-1 text-blue-600">(filtered)</span>
+                )}
+              </>
+            )}
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+        {/* Seven columns cannot stay legible at phone widths, so mobile gets a
+            card list with just identity, location, status and actions. */}
+        <div className="hidden lg:block lg:overflow-x-auto">
+          <table className="ih-table-compact w-full min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -748,6 +660,80 @@ const UserManagement = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile list */}
+        <div className="ih-list lg:hidden">
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 py-8 text-xs text-gray-500">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              Loading {showUnitAdminsOnly ? 'unit admins' : 'users'}...
+            </div>
+          ) : (showUnitAdminsOnly ? unitAdmins : users).length === 0 ? (
+            <div className="py-8 text-center text-xs text-gray-500">
+              No {showUnitAdminsOnly ? 'unit admins' : 'users'} found
+            </div>
+          ) : (
+            (showUnitAdminsOnly ? unitAdmins : users).map((row) => (
+              <div
+                key={row._id}
+                onClick={() => {
+                  if (showUnitAdminsOnly) {
+                    setSelectedUnitAdminId(row._id)
+                    setShowProfileModal(true)
+                  } else {
+                    setSelectedUserId(row._id)
+                    setShowUserProfileModal(true)
+                  }
+                }}
+                className="ih-list-row cursor-pointer"
+              >
+                <div className="ih-avatar bg-primary/10 text-primary">
+                  {(row.name || 'U').charAt(0).toUpperCase()}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="ih-list-title">{row.name}</div>
+                  <div className="ih-list-meta">
+                    {row.ruknId}
+                    {!showUnitAdminsOnly && row.gender ? ` · ${row.gender}` : ''}
+                    {showUnitAdminsOnly && row.contactNo ? ` · ${row.contactNo}` : ''}
+                  </div>
+                  <div className="ih-list-meta">
+                    {[row.district, row.unit].filter(Boolean).join(' - ') || '—'}
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-1">
+                  <span className={`ih-chip ${
+                    row.isActive
+                      ? 'border-green-200 bg-green-100 text-green-800'
+                      : 'border-red-200 bg-red-100 text-red-800'
+                  }`}>
+                    {row.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                  {!showUnitAdminsOnly && (
+                    <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={(e) => openTransferModal(e, row)}
+                        title="Transfer user"
+                        className="ih-icon-btn text-blue-600 hover:bg-blue-50"
+                      >
+                        <ArrowRightLeft className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteUser(e, row._id, row.name)}
+                        title="Delete user"
+                        className="ih-icon-btn text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {showUnitAdminsOnly ? (

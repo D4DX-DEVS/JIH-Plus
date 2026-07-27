@@ -97,7 +97,7 @@ function CountriesTab() {
         </button>
       </div>
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Country Name</th>
@@ -227,7 +227,7 @@ function AreasTab() {
       </div>
       {selectedCountry ? (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Area Name</th>
@@ -514,8 +514,8 @@ function AbroadUnitAdminsTab() {
         <p className="text-sm text-gray-500">All unit admins assigned to abroad units</p>
         <input className="form-input max-w-xs" placeholder="Search name, Rukn ID, unit..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sm:overflow-x-auto">
+        <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Unit Admin</th>
@@ -665,7 +665,7 @@ function UnitsTab() {
       </div>
       {selectedArea ? (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Unit Name</th>

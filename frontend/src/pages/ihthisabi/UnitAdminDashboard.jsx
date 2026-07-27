@@ -412,56 +412,34 @@ const UnitAdminDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="ih-page-shell">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-8 w-8 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Members</p>
-                <p className="text-xl sm:text-2xl font-semibold text-gray-900">{stats.totalMembers}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <FileText className="h-8 w-8 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Submissions</p>
-                <p className="text-xl sm:text-2xl font-semibold text-gray-900">{stats.totalSubmissions}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <UserCheck className="h-8 w-8 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Recent Submissions</p>
-                <p className="text-xl sm:text-2xl font-semibold text-gray-900">{stats.recentSubmissions}</p>
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4 mb-3 sm:mb-6">
+          {[
+            { label: 'Total Members', short: 'Members', value: stats.totalMembers, Icon: Users, tone: 'bg-blue-50 text-blue-600' },
+            { label: 'Total Submissions', short: 'Submissions', value: stats.totalSubmissions, Icon: FileText, tone: 'bg-green-50 text-green-600' },
+            { label: 'Recent Submissions', short: 'Recent', value: stats.recentSubmissions, Icon: UserCheck, tone: 'bg-purple-50 text-purple-600' },
+            {
+              label: 'Completion Rate',
+              short: 'Completion',
+              value: `${stats.totalMembers > 0 ? Math.round((stats.totalSubmissions / stats.totalMembers) * 100) : 0}%`,
+              Icon: Clock,
+              tone: 'bg-orange-50 text-orange-600',
+            },
+          ].map(({ label, short, value, Icon, tone }) => (
+            <div key={label} className="ih-stat-card">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="ih-stat-label truncate">
+                    <span className="sm:hidden">{short}</span>
+                    <span className="hidden sm:inline">{label}</span>
+                  </p>
+                  <p className="ih-stat-value mt-1">{value}</p>
+                </div>
+                <div className={`ih-stat-icon ${tone}`}>
+                  <Icon className="h-4 w-4" />
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Clock className="h-8 w-8 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Completion Rate</p>
-                <p className="text-xl sm:text-2xl font-semibold text-gray-900">
-                  {stats.totalMembers > 0 ? Math.round((stats.totalSubmissions / stats.totalMembers) * 100) : 0}%
-                </p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Tabs */}

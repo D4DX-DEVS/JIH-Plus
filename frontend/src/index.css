@@ -1,5 +1,64 @@
 @import "tailwindcss";
 
+/* Brand palette. Tailwind v4 ignores tailwind.config.js unless it is loaded
+   explicitly, so the theme lives here — this is what makes bg-primary,
+   text-primary, border-primary/30, ring-primary/20 etc. resolve. */
+@theme {
+  --color-primary: #178582;
+  --color-primary-50: #f0fdfa;
+  --color-primary-100: #ccfbf1;
+  --color-primary-200: #99f6e4;
+  --color-primary-300: #5eead4;
+  --color-primary-400: #2dd4bf;
+  --color-primary-500: #178582;
+  --color-primary-600: #0d9488;
+  --color-primary-700: #0f766e;
+  --color-primary-800: #115e59;
+  --color-primary-900: #134e4a;
+
+  --color-secondary: #0a1828;
+  --color-secondary-50: #f8fafc;
+  --color-secondary-100: #f1f5f9;
+  --color-secondary-200: #e2e8f0;
+  --color-secondary-300: #cbd5e1;
+  --color-secondary-400: #94a3b8;
+  --color-secondary-500: #64748b;
+  --color-secondary-600: #475569;
+  --color-secondary-700: #334155;
+  --color-secondary-800: #1e293b;
+  --color-secondary-900: #0a1828;
+
+  --color-accent: #bfa181;
+  --color-accent-50: #fefdfb;
+  --color-accent-100: #fdf9f0;
+  --color-accent-200: #fbf1d9;
+  --color-accent-300: #f8e6b8;
+  --color-accent-400: #f4d691;
+  --color-accent-500: #bfa181;
+  --color-accent-600: #a68b6b;
+  --color-accent-700: #8b7357;
+  --color-accent-800: #705c46;
+  --color-accent-900: #5a4a39;
+
+  --color-success: #bfa181;
+  --color-success-50: #fefdfb;
+  --color-success-100: #fdf9f0;
+  --color-success-200: #fbf1d9;
+  --color-success-300: #f8e6b8;
+  --color-success-400: #f4d691;
+  --color-success-500: #bfa181;
+
+  /* Hairline that separates surfaces without drawing a box around them.
+     This is the default border colour for the whole app (see @layer base). */
+  --color-hairline: rgba(16, 24, 40, 0.07);
+  --color-canvas: #f6f7f9;
+
+  /* Layered, low-opacity shadows. Depth comes from these rather than outlines. */
+  --shadow-soft: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-lift: 0 2px 4px rgba(16, 24, 40, 0.03), 0 6px 16px rgba(16, 24, 40, 0.07);
+  --shadow-float: 0 4px 8px rgba(16, 24, 40, 0.04), 0 12px 32px rgba(16, 24, 40, 0.1);
+}
+
 /* Malayalam Fonts */
 @font-face {
   font-family: 'NotoSansMalayalam';
@@ -23,6 +82,22 @@ html, body {
   /* Hide scrollbar for Chrome, Safari and Opera */
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+}
+
+/* Mobile-first density: shrink the rem base so every Tailwind size (text, padding,
+   gaps, radii) scales down together on small screens instead of page-by-page. */
+@media (max-width: 639px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* No page-level horizontal scroll on phones. Listings that genuinely need to
+   scroll sideways must opt in with .ih-scroll-x on their own container. */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -57,13 +132,24 @@ input[type="number"] {
 }
 
 @layer base {
+  /* Default border colour for every element. Softening this single value turns
+     the app's ~750 `border-gray-200` outlines into hairlines, which is what
+     stops surfaces reading as stacked boxes. */
   * {
-    @apply border-gray-200;
+    border-color: var(--color-hairline);
   }
-  
+
   body {
-    @apply bg-gray-50 text-gray-900 font-sans;
+    @apply text-gray-900 font-sans;
+    background-color: var(--color-canvas);
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
+  }
+
+  h1, h2, h3 {
+    letter-spacing: -0.02em;
   }
   
   html {
@@ -111,11 +197,13 @@ input[type="number"] {
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-white;
+    @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-white;
     background-color: #178582;
+    box-shadow: 0 1px 2px rgba(23, 133, 130, 0.24), 0 4px 12px rgba(23, 133, 130, 0.18);
   }
   .btn-primary:hover {
     background-color: #0d9488;
+    box-shadow: 0 2px 4px rgba(23, 133, 130, 0.24), 0 8px 20px rgba(23, 133, 130, 0.24);
   }
   .btn-primary:focus {
     --tw-ring-color: #178582;
@@ -149,29 +237,28 @@ input[type="number"] {
     @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 hover:bg-gray-200 hover:text-gray-900 focus:ring-gray-500;
   }
 
-  /* Form styles */
-  .form-input {
-    @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm focus:outline-none focus:ring-1;
-    --tw-ring-color: #178582;
-  }
-  .form-input:focus {
-    border-color: #178582;
+  /* Form styles — filled surfaces, ring on focus instead of a resting outline. */
+  .form-input,
+  .form-select,
+  .form-textarea {
+    @apply block w-full rounded-xl border-0 px-3 py-2 text-sm placeholder-gray-400 focus:outline-none;
+    background-color: rgba(16, 24, 40, 0.04);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .form-select {
-    @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm focus:outline-none focus:ring-1 appearance-none bg-white pr-8;
-    --tw-ring-color: #178582;
-  }
-  .form-select:focus {
-    border-color: #178582;
+    @apply appearance-none pr-8;
   }
 
   .form-textarea {
-    @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm focus:outline-none focus:ring-1 resize-none;
-    --tw-ring-color: #178582;
+    @apply resize-none;
   }
+
+  .form-input:focus,
+  .form-select:focus,
   .form-textarea:focus {
-    border-color: #178582;
+    @apply bg-white;
+    box-shadow: 0 0 0 2px rgba(23, 133, 130, 0.35), var(--shadow-soft);
   }
 
   .form-checkbox {
@@ -267,23 +354,166 @@ input[type="number"] {
   }
 
   .ih-page-shell {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6;
+    @apply max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6;
   }
 
   .ih-page-header {
-    @apply mb-5 sm:mb-7 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between;
+    @apply mb-3 sm:mb-6 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between;
   }
 
   .ih-page-title {
-    @apply text-xl sm:text-3xl font-bold text-gray-900 leading-tight;
+    @apply text-base sm:text-2xl font-bold text-gray-900 leading-tight;
   }
 
   .ih-page-subtitle {
-    @apply mt-1 text-sm sm:text-base text-gray-600;
+    @apply mt-0.5 text-xs sm:text-sm text-gray-600;
   }
 
-  .ih-section-card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200;
+  /* Standard surface: floats on the canvas via shadow, not an outline. */
+  .ih-section-card,
+  .ih-surface {
+    @apply rounded-2xl bg-white;
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* ── Compact mobile primitives ──────────────────────────────────────────
+     Shared so density stays consistent across every role's pages. */
+
+  /* Opt-in sideways scroll. Only wide desktop tables should use this; on
+     phones the listing must reflow to cards instead. */
+  .ih-scroll-x {
+    @apply overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Any element that must never push the page wider than the viewport. */
+  .ih-clamp {
+    @apply min-w-0 max-w-full;
+  }
+
+  /* Stat tile — two lines of content, no wasted padding on mobile. */
+  .ih-stat-card {
+    @apply rounded-2xl bg-white p-3 sm:p-5;
+    box-shadow: var(--shadow-soft);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+  }
+
+  .ih-stat-card:hover {
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-1px);
+  }
+
+  .ih-stat-label {
+    @apply text-[11px] sm:text-xs font-medium text-gray-500 leading-tight;
+  }
+
+  .ih-stat-value {
+    @apply text-lg sm:text-2xl font-bold text-gray-900 leading-none tracking-tight;
+  }
+
+  .ih-stat-meta {
+    @apply text-[10px] sm:text-xs text-gray-400 leading-tight;
+  }
+
+  .ih-stat-icon {
+    @apply flex h-7 w-7 items-center justify-center rounded-xl shrink-0 sm:h-9 sm:w-9;
+  }
+
+  /* Listing row — the card a table collapses into on mobile. Rows are separated
+     by an inset hairline so the list reads as one flowing surface. */
+  .ih-list > * + * {
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .ih-list-row {
+    @apply relative flex items-center gap-2.5 px-3 py-2.5 sm:px-4 sm:py-3;
+    transition: background-color 0.2s ease;
+  }
+
+  .ih-list-row:hover {
+    background-color: rgba(16, 24, 40, 0.018);
+  }
+
+  .ih-list-title {
+    @apply text-[13px] sm:text-sm font-semibold text-gray-900 leading-tight truncate tracking-tight;
+  }
+
+  .ih-list-meta {
+    @apply text-[11px] sm:text-xs text-gray-400 leading-tight truncate;
+  }
+
+  .ih-avatar {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold sm:h-9 sm:w-9;
+  }
+
+  /* Status/label pill — soft tint, no outline, optional leading dot. */
+  .ih-chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-[3px] text-[10px] font-medium leading-tight whitespace-nowrap shrink-0;
+    border: 0;
+  }
+
+  .ih-chip-dot::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background-color: currentColor;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  /* Icon-only action button sized for touch without eating the row. */
+  .ih-icon-btn {
+    @apply inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full text-gray-400 transition-colors shrink-0;
+  }
+
+  /* Filter grid — two controls per row on phones instead of one. */
+  .ih-filter-grid {
+    @apply grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3;
+  }
+
+  /* Filled controls: no resting outline, the surface tint carries the shape.
+     A ring appears only on focus. */
+  .ih-filter-select,
+  .ih-field {
+    @apply block w-full appearance-none rounded-full border-0 py-[7px] pl-8 pr-7 text-[11px] sm:text-sm text-gray-700;
+    background-color: rgba(16, 24, 40, 0.04);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .ih-filter-select:focus,
+  .ih-field:focus {
+    @apply outline-none bg-white;
+    box-shadow: 0 0 0 2px rgba(23, 133, 130, 0.35), var(--shadow-soft);
+  }
+
+  .ih-filter-select:disabled {
+    @apply text-gray-400;
+    opacity: 0.6;
+  }
+
+  .ih-filter-icon {
+    @apply pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400;
+  }
+
+  /* Segmented view switcher — a pill track with a floating active pill. */
+  .ih-segment {
+    @apply flex items-center gap-0.5 rounded-full p-1;
+    background-color: rgba(16, 24, 40, 0.045);
+  }
+
+  .ih-segment-btn {
+    @apply inline-flex flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-[11px] font-medium text-gray-500 whitespace-nowrap sm:text-xs;
+    transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .ih-segment-btn:hover {
+    @apply text-gray-800;
+  }
+
+  .ih-segment-btn-active {
+    @apply bg-white text-gray-900;
+    box-shadow: var(--shadow-soft);
   }
 
   .ih-mobile-tabs {
@@ -305,7 +535,7 @@ input[type="number"] {
   }
 
   .ih-mobile-bottom-safe {
-    padding-bottom: calc(5.75rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
   }
 
   .ih-mobile-nav-safe {
@@ -381,5 +611,30 @@ input[type="number"] {
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+}
+/* Compact table — deliberately unlayered so it outranks the per-cell padding
+   utilities (px-6 py-3) already on existing markup. Tailwind's utilities layer
+   would otherwise win over anything in @layer components regardless of
+   specificity. On phones cells tighten and truncate instead of widening the
+   table past the viewport; from sm: up it behaves like a normal table. */
+.ih-table-compact th,
+.ih-table-compact td {
+  padding: 0.5rem;
+}
+
+@media (max-width: 639px) {
+  .ih-table-compact th,
+  .ih-table-compact td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 640px) {
+  .ih-table-compact th,
+  .ih-table-compact td {
+    padding: 0.75rem 1rem;
   }
 }
