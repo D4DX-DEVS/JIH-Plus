@@ -9,6 +9,8 @@ import AbroadCountryManagement from '../../components/ihthisabi/AbroadCountryMan
 import AbroadMemberManagement from '../../components/ihthisabi/AbroadMemberManagement'
 import AbroadSubmissions from './AbroadSubmissions'
 import UnitAdminProfileModal from '../../components/ihthisabi/UnitAdminProfileModal'
+import DistrictAdminProfileModal from '../../components/ihthisabi/DistrictAdminProfileModal'
+import Pagination from '../../components/ihthisabi/Pagination'
 import letterheadImage from '../../assets/LH.png'
 import { 
   Users, 
@@ -40,7 +42,20 @@ import { renderTemplate, getDefaultBlocks } from '../../utils/ihthisabi/replyTem
 import ReplyTemplateBuilder from '../../components/ihthisabi/ReplyTemplateBuilder'
 import ArchiveManagement from '../../components/ihthisabi/ArchiveManagement'
 import MasterDataManagement from '../../components/ihthisabi/MasterDataManagement'
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, RadialBarChart, RadialBar } from 'recharts'
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, RadialBarChart, RadialBar, CartesianGrid } from 'recharts'
+
+// Shared chart styling: no heavy axis rules, muted ticks, soft floating tooltip.
+const AXIS = { tick: { fontSize: 10, fill: '#98A2B3' }, axisLine: false, tickLine: false }
+const GRID = { stroke: 'rgba(16,24,40,0.06)', vertical: false }
+const TOOLTIP = {
+  contentStyle: {
+    borderRadius: 12,
+    border: 'none',
+    boxShadow: '0 4px 8px rgba(16,24,40,.04), 0 12px 32px rgba(16,24,40,.10)',
+    fontSize: 11,
+  },
+  cursor: { fill: 'rgba(16,24,40,0.04)' },
+}
 // Dynamic Forms temporarily hidden
 
 const AdminDashboard = () => {
@@ -56,6 +71,7 @@ const AdminDashboard = () => {
   const getTabFromPath = (pathname) => {
     if (pathname.endsWith('/members')) return 'users'
     if (pathname.endsWith('/unit-admins')) return 'unitadmins'
+    if (pathname.endsWith('/district-admins')) return 'districtadmins'
     if (pathname.endsWith('/unit-reply')) return 'unitreply'
     if (pathname.endsWith('/user-management')) return 'user-management'
     if (pathname.endsWith('/archive')) return 'archive'
@@ -81,6 +97,16 @@ const AdminDashboard = () => {
   const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [selectedUnitAdminId, setSelectedUnitAdminId] = useState(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
+
+  // District Admins tab state
+  const [districtAdmins, setDistrictAdmins] = useState([])
+  const [districtAdminLoading, setDistrictAdminLoading] = useState(false)
+  const [districtAdminSearchTerm, setDistrictAdminSearchTerm] = useState('')
+  const [selectedDistrictAdminDistrict, setSelectedDistrictAdminDistrict] = useState('')
+  const [districtAdminDistricts, setDistrictAdminDistricts] = useState([])
+  const [districtAdminPagination, setDistrictAdminPagination] = useState({ current: 1, pages: 1, total: 0 })
+  const [selectedDistrictAdminId, setSelectedDistrictAdminId] = useState(null)
+  const [showDistrictAdminModal, setShowDistrictAdminModal] = useState(false)
 
   // District-wise submission stats + chart district selection (Dashboard tab)
   const [districtStats, setDistrictStats] = useState([])
@@ -202,6 +228,14 @@ const AdminDashboard = () => {
     }
   }, [activeTab, user])
 
+  // Lazy-load district admins data when that tab is active
+  useEffect(() => {
+    if (activeTab === 'districtadmins' && user && (user.role === 'admin' || user.role === 'mainAdmin')) {
+      if (districtAdmins.length === 0) fetchDistrictAdmins()
+      if (districtAdminDistricts.length === 0) fetchDistrictAdminDistricts()
+    }
+  }, [activeTab, user])
+
   // Add retry functionality for failed requests
   const retryFailedRequests = () => {
     if (user && user.role === 'admin') {
@@ -266,8 +300,8 @@ const AdminDashboard = () => {
       if (search) params.search = search
       if (district) params.district = district
       params.page = page
-      params.limit = 100 // Show 100 records per page
-      
+      params.limit = 10
+
       const response = await api.get('/ihthisabi/admin/unitadmins', { params })
       console.log('Unit admins response:', response.data.data)
       setUnitAdmins(response.data.data.unitAdmins || [])
@@ -278,6 +312,55 @@ const AdminDashboard = () => {
     } finally {
       setUnitAdminLoading(false)
     }
+  }
+
+  const fetchDistrictAdmins = async (search = '', district = '', page = 1) => {
+    try {
+      setDistrictAdminLoading(true)
+      const params = {}
+      if (search) params.search = search
+      if (district) params.district = district
+      params.page = page
+      params.limit = 10
+
+      const response = await api.get('/ihthisabi/admin/district-admins', { params })
+      setDistrictAdmins(response.data.data.districtAdmins || [])
+      setDistrictAdminPagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
+    } catch (error) {
+      console.error('Error fetching district admins:', error)
+      toast.error('Failed to fetch district admins')
+    } finally {
+      setDistrictAdminLoading(false)
+    }
+  }
+
+  const fetchDistrictAdminDistricts = async () => {
+    try {
+      const response = await api.get('/ihthisabi/admin/district-admins/districts')
+      setDistrictAdminDistricts(response.data.data.districts || [])
+    } catch (error) {
+      console.error('Error fetching district admin districts:', error)
+    }
+  }
+
+  const handleDistrictAdminSearch = (value) => {
+    setDistrictAdminSearchTerm(value)
+    fetchDistrictAdmins(value, selectedDistrictAdminDistrict)
+  }
+
+  const handleDistrictAdminDistrictFilter = (district) => {
+    setSelectedDistrictAdminDistrict(district)
+    fetchDistrictAdmins(districtAdminSearchTerm, district, 1)
+  }
+
+  const handleDistrictAdminPageChange = (newPage) => {
+    fetchDistrictAdmins(districtAdminSearchTerm, selectedDistrictAdminDistrict, newPage)
+  }
+
+  const clearDistrictAdminFilters = () => {
+    setDistrictAdminSearchTerm('')
+    setSelectedDistrictAdminDistrict('')
+    fetchDistrictAdmins('', '')
   }
 
   const fetchDistricts = async () => {
@@ -767,25 +850,24 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="ih-page-shell">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="ih-page-header">
-            <div>
-              <h1 className="ih-page-title">Admin Dashboard</h1>
-              <p className="ih-page-subtitle">
-                Welcome back, <span className="font-medium text-gray-900">{user?.name || user?.email}</span>
-              </p>
-            </div>
-            {hasError && (
-              <button
-                onClick={retryFailedRequests}
-                className="mt-4 sm:mt-0 btn-primary"
-              >
-                <Activity className="w-4 h-4 mr-2" />
-                Retry
-              </button>
-            )}
+        {/* Header — hidden on mobile: the app bar names the page, and sub-tabs
+            (Members, Master Data, …) render their own heading below this one. */}
+        <div className="ih-page-header hidden sm:flex">
+          <div className="min-w-0">
+            <h1 className="ih-page-title">Admin Dashboard</h1>
+            <p className="ih-page-subtitle truncate">
+              Welcome back, <span className="font-medium text-gray-900">{user?.name || user?.email}</span>
+            </p>
           </div>
+          {hasError && (
+            <button
+              onClick={retryFailedRequests}
+              className="btn-primary shrink-0 gap-1.5 px-2.5 py-1.5 text-[11px] sm:px-4 sm:py-2 sm:text-sm"
+            >
+              <Activity className="w-3.5 h-3.5" />
+              Retry
+            </button>
+          )}
         </div>
 
         {/* Content based on active tab */}
@@ -803,7 +885,7 @@ const AdminDashboard = () => {
           <UserManagement />
         ) : activeTab === 'unitreply' ? (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="ih-surface p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Send Reply to Unit Admin</h3>
                 <button
@@ -1047,7 +1129,7 @@ const AdminDashboard = () => {
             
 
             {/* Unit Admin Excel Upload */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="ih-surface p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload Unit Admin Excel</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Upload an Excel file containing unit admin data. Expected format: Unit, District/City, Area (optional), Rukn ID, Rukn Name, Contact No, Email Id
@@ -1148,7 +1230,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Unit Admin WhatsApp Broadcast */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="ih-surface p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Send WhatsApp Message</h3>
@@ -1208,7 +1290,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Unit Admins List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="ih-surface">
               <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1284,8 +1366,8 @@ const AdminDashboard = () => {
                     <p className="text-gray-600">Loading unit admins...</p>
                   </div>
                 ) : unitAdmins.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
+                  <div className="overflow-x-hidden sm:overflow-x-auto">
+                    <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1376,35 +1458,139 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
-                {/* Pagination Controls */}
-                {pagination.pages > 1 && (
-                  <div className="px-3 sm:px-6 py-4 border-t border-gray-200 bg-gray-50">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-                      <div className="text-sm text-gray-700 text-center sm:text-left">
-                        Showing page {pagination.current} of {pagination.pages}
-                      </div>
-                      <div className="flex items-center justify-center space-x-2">
-                        <button
-                          onClick={() => handlePageChange(pagination.current - 1)}
-                          disabled={pagination.current <= 1}
-                          className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-                        <span className="px-3 py-1 text-sm bg-primary/10 text-primary rounded-md font-medium">
-                          {pagination.current}
-                        </span>
-                        <button
-                          onClick={() => handlePageChange(pagination.current + 1)}
-                          disabled={pagination.current >= pagination.pages}
-                          className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
-                      </div>
+                <Pagination pagination={pagination} onPageChange={handlePageChange} loading={unitAdminLoading} itemLabel="unit admins" />
+              </div>
+            </div>
+          </div>
+        ) : activeTab === 'districtadmins' ? (
+          <div className="space-y-6">
+            {/* District Admins List */}
+            <div className="ih-surface">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">District Admins</h3>
+                    <div className="text-sm text-gray-600">
+                      <span>Total Count: <span className="font-semibold text-blue-600">{districtAdminPagination.total || districtAdmins.length}</span></span>
+                      {districtAdminPagination.pages > 1 && (
+                        <span className="ml-4">Page: <span className="font-semibold text-green-600">{districtAdminPagination.current}</span> of <span className="font-semibold text-green-600">{districtAdminPagination.pages}</span></span>
+                      )}
                     </div>
                   </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                    <div className="relative w-full sm:w-auto">
+                      <input
+                        type="text"
+                        placeholder="Search district admins..."
+                        value={districtAdminSearchTerm}
+                        onChange={(e) => handleDistrictAdminSearch(e.target.value)}
+                        className="form-input pl-10"
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-gray-400" />
+                      </div>
+                    </div>
+
+                    <select
+                      value={selectedDistrictAdminDistrict}
+                      onChange={(e) => handleDistrictAdminDistrictFilter(e.target.value)}
+                      className="form-select w-full sm:w-auto"
+                    >
+                      <option value="">All Districts</option>
+                      {districtAdminDistricts.map((district) => (
+                        <option key={district} value={district}>{district}</option>
+                      ))}
+                    </select>
+
+                    {(districtAdminSearchTerm || selectedDistrictAdminDistrict) && (
+                      <button onClick={clearDistrictAdminFilters} className="btn-ghost w-full sm:w-auto">
+                        <XCircle className="h-4 w-4" />
+                        <span>Clear</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => { setSelectedDistrictAdminId(null); setShowDistrictAdminModal(true) }}
+                      className="btn-primary w-full sm:w-auto"
+                    >
+                      Add District Admin
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                {districtAdminLoading ? (
+                  <div className="text-center py-8">
+                    <div className="spinner w-8 h-8 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading district admins...</p>
+                  </div>
+                ) : districtAdmins.length > 0 ? (
+                  <div className="overflow-x-hidden sm:overflow-x-auto">
+                    <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District Admin</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {districtAdmins.map((admin) => (
+                          <tr
+                            key={admin._id}
+                            onClick={() => { setSelectedDistrictAdminId(admin._id); setShowDistrictAdminModal(true) }}
+                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                          >
+                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-10 w-10">
+                                  <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                                    <span className="text-sm font-medium text-primary-600">
+                                      {admin.name?.charAt(0)?.toUpperCase()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900">{admin.name}</div>
+                                  <div className="text-sm text-gray-500">ID: {admin.ruknId}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{admin.district}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <div>
+                                <div className="flex items-center">
+                                  <Phone className="h-4 w-4 mr-1" />
+                                  {admin.contactNo || '-'}
+                                </div>
+                                <div className="flex items-center mt-1">
+                                  <Mail className="h-4 w-4 mr-1" />
+                                  {admin.emailId || '-'}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                admin.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {admin.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No district admins found</p>
+                    <p className="text-sm text-gray-400 mt-1">Run the district admin migration script, or add one manually</p>
+                  </div>
                 )}
+
+                <Pagination pagination={districtAdminPagination} onPageChange={handleDistrictAdminPageChange} loading={districtAdminLoading} itemLabel="district admins" />
               </div>
             </div>
           </div>
@@ -1412,82 +1598,65 @@ const AdminDashboard = () => {
           <>
             {/* Stats Grid */}
             {dashboardData && (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-5 sm:mb-8">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-3 sm:mb-6">
             {/* Total Users */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">Total Users</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-                    {dashboardData.totalRuknUsers || 0}
-                  </p>
+            <div className="ih-stat-card">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="ih-stat-label">Total Users</p>
+                  <p className="ih-stat-value mt-1">{dashboardData.totalRuknUsers || 0}</p>
                 </div>
-                <div className="p-2 sm:p-3 bg-blue-50 rounded-lg">
-                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                <div className="ih-stat-icon bg-blue-50">
+                  <Users className="w-4 h-4 text-blue-600" />
                 </div>
               </div>
-              <div className="mt-2 sm:mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm">
-                <span className="flex items-center gap-1 text-blue-600 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-                  {dashboardData.maleUsers || 0} Male
-                </span>
-                <span className="flex items-center gap-1 text-pink-600 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-pink-500 inline-block"></span>
-                  {dashboardData.femaleUsers || 0} Female
-                </span>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] sm:text-xs">
+                <span className="font-medium text-blue-600">{dashboardData.maleUsers || 0} M</span>
+                <span className="font-medium text-pink-600">{dashboardData.femaleUsers || 0} F</span>
               </div>
             </div>
 
             {/* Quarter Comparison */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-medium text-gray-600">Quarter Comparison</p>
-                <div className="p-2 sm:p-3 bg-green-50 rounded-lg">
-                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+            <div className="ih-stat-card">
+              <div className="flex items-start justify-between gap-2">
+                <p className="ih-stat-label">Quarter Comparison</p>
+                <div className="ih-stat-icon bg-green-50">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
                 </div>
               </div>
-              <div className="flex items-end gap-2 sm:gap-4">
-                <div>
-                  <p className="text-[10px] sm:text-xs text-gray-400 mb-1">Q{dashboardData.prevQuarter} {dashboardData.prevYear}</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-500">{dashboardData.previousQuarterSubmissions || 0}</p>
-                </div>
-                <div className="text-gray-300 text-xl sm:text-2xl mb-1">→</div>
-                <div>
-                  <p className="text-[10px] sm:text-xs text-gray-400 mb-1">Q{dashboardData.currentQuarter} {dashboardData.currentYear}</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{dashboardData.currentQuarterSubmissions || 0}</p>
-                </div>
+              <div className="mt-1 flex items-baseline gap-1.5">
+                <span className="text-base font-bold leading-none text-gray-400 sm:text-xl">
+                  {dashboardData.previousQuarterSubmissions || 0}
+                </span>
+                <span className="text-gray-300">→</span>
+                <span className="ih-stat-value">{dashboardData.currentQuarterSubmissions || 0}</span>
               </div>
+              <p className="ih-stat-meta mt-1">
+                Q{dashboardData.prevQuarter} {dashboardData.prevYear} → Q{dashboardData.currentQuarter} {dashboardData.currentYear}
+              </p>
             </div>
 
             {/* Current Period Submissions */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">This Period</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-                    {dashboardData.currentQuarterSubmissions || 0}
-                  </p>
+            <div className="ih-stat-card">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="ih-stat-label">This Period</p>
+                  <p className="ih-stat-value mt-1">{dashboardData.currentQuarterSubmissions || 0}</p>
                 </div>
-                <div className="p-2 sm:p-3 bg-purple-50 rounded-lg">
-                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+                <div className="ih-stat-icon bg-purple-50">
+                  <FileText className="w-4 h-4 text-purple-600" />
                 </div>
               </div>
-              <div className="mt-2 sm:mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm">
-                <span className="flex items-center gap-1 text-blue-600 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-                  {dashboardData.currentQuarterMale || 0} Male
-                </span>
-                <span className="flex items-center gap-1 text-pink-600 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-pink-500 inline-block"></span>
-                  {dashboardData.currentQuarterFemale || 0} Female
-                </span>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] sm:text-xs">
+                <span className="font-medium text-blue-600">{dashboardData.currentQuarterMale || 0} M</span>
+                <span className="font-medium text-pink-600">{dashboardData.currentQuarterFemale || 0} F</span>
+                <button
+                  onClick={() => navigate('submissions')}
+                  className="font-medium text-blue-600 transition-colors hover:text-blue-700"
+                >
+                  View all →
+                </button>
               </div>
-              <button
-                onClick={() => navigate('submissions')}
-                className="mt-3 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
-              >
-                View All Submissions →
-              </button>
             </div>
 
             {/* Quarter Change */}
@@ -1495,20 +1664,20 @@ const AdminDashboard = () => {
               const pct = dashboardData.quarterChangePercent ?? 0;
               const isUp = pct >= 0;
               return (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">vs Previous Quarter</p>
-                      <p className={`text-2xl sm:text-3xl font-bold ${isUp ? 'text-emerald-600' : 'text-red-500'}`}>
+                <div className="ih-stat-card">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="ih-stat-label">vs Previous Quarter</p>
+                      <p className={`ih-stat-value mt-1 ${isUp ? 'text-emerald-600' : 'text-red-500'}`}>
                         {isUp ? '+' : ''}{pct}%
                       </p>
                     </div>
-                    <div className={`p-2 sm:p-3 rounded-lg ${isUp ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                      <ArrowUpRight className={`w-6 h-6 ${isUp ? 'text-emerald-600' : 'text-red-500'} ${isUp ? '' : 'rotate-90'}`} />
+                    <div className={`ih-stat-icon ${isUp ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                      <ArrowUpRight className={`w-4 h-4 ${isUp ? 'text-emerald-600' : 'rotate-90 text-red-500'}`} />
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center text-sm text-gray-500">
-                    <Activity className="w-4 h-4 mr-1" />
+                  <div className="ih-stat-meta mt-1.5 flex items-center gap-1">
+                    <Activity className="w-3 h-3 shrink-0" />
                     Q{dashboardData.prevQuarter} → Q{dashboardData.currentQuarter}
                   </div>
                 </div>
@@ -1520,13 +1689,13 @@ const AdminDashboard = () => {
         {/* Charts */}
         {dashboardData && (
           <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-6">
             {/* Current quarter gender submissions chart */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">
+            <div className="ih-section-card p-2.5 sm:p-5">
+              <h3 className="mb-2 text-[11px] font-semibold text-gray-700 sm:text-sm">
                 Q{dashboardData.currentQuarter} {dashboardData.currentYear} — Submissions by Gender
               </h3>
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer width="100%" height={170}>
                 <BarChart
                   data={[
                     { name: 'Male', value: dashboardData.currentQuarterMale || 0, fill: '#3b82f6' },
@@ -1534,9 +1703,10 @@ const AdminDashboard = () => {
                   ]}
                   margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
                 >
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                  <Tooltip />
+                  <CartesianGrid {...GRID} />
+                  <XAxis dataKey="name" {...AXIS} />
+                  <YAxis {...AXIS} allowDecimals={false} width={32} />
+                  <Tooltip {...TOOLTIP} />
                   <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                     {[{ fill: '#3b82f6' }, { fill: '#ec4899' }].map((entry, index) => (
                       <Cell key={index} fill={entry.fill} />
@@ -1547,26 +1717,27 @@ const AdminDashboard = () => {
             </div>
 
             {/* Members Status pie */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">Members Status</h3>
+            <div className="ih-section-card p-2.5 sm:p-5">
+              <h3 className="mb-2 text-[11px] font-semibold text-gray-700 sm:text-sm">Members Status</h3>
               {(() => {
                 const totalUsers = dashboardData.totalRuknUsers || 0;
                 const submitted = dashboardData.currentQuarterSubmissions || 0;
                 const notSubmitted = Math.max(0, totalUsers - submitted);
+                // Counts live in the legend rather than in slice labels — outside
+                // labels overflow the chart box on narrow screens.
                 const pieData = [
-                  { name: 'Submitted', value: submitted },
-                  { name: 'Pending', value: notSubmitted },
+                  { name: `Submitted (${submitted})`, value: submitted },
+                  { name: `Pending (${notSubmitted})`, value: notSubmitted },
                 ];
                 return (
-                  <ResponsiveContainer width="100%" height={220}>
+                  <ResponsiveContainer width="100%" height={170}>
                     <PieChart>
-                      <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value"
-                        label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
+                      <Pie data={pieData} cx="50%" cy="50%" outerRadius={55} dataKey="value" labelLine={false}>
                         <Cell fill="#10b981" />
                         <Cell fill="#e5e7eb" />
                       </Pie>
-                      <Tooltip />
-                      <Legend />
+                      <Tooltip {...TOOLTIP} cursor={false} />
+                      <Legend iconSize={8} iconType="circle" wrapperStyle={{ fontSize: 11 }} />
                     </PieChart>
                   </ResponsiveContainer>
                 );
@@ -1584,7 +1755,7 @@ const AdminDashboard = () => {
               { name: `Q${dashboardData.currentQuarter} ${dashboardData.currentYear}`, value: Math.round((curr / maxVal) * 100), fill: '#002349', rawCount: curr },
             ];
             return (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+              <div className="ih-surface p-6 mb-8">
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">Quarter vs Quarter Submissions</h3>
                 <p className="text-xs text-gray-400 mb-4">Relative comparison of submissions between quarters</p>
                 <ResponsiveContainer width="100%" height={200}>
@@ -1618,7 +1789,7 @@ const AdminDashboard = () => {
 
         {/* District-wise submissions & comparison with last period */}
         {dashboardData && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="ih-surface p-6 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
               <div>
                 <h3 className="text-sm font-semibold text-gray-700">District-wise Submissions</h3>
@@ -1714,9 +1885,10 @@ const AdminDashboard = () => {
                 return (
                   <ResponsiveContainer width="100%" height={Math.max(260, chartData.length * 44)}>
                     <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
-                      <YAxis type="category" dataKey="district" width={130} tick={{ fontSize: 12 }} />
-                      <Tooltip />
+                      <CartesianGrid {...GRID} />
+                      <XAxis type="number" allowDecimals={false} {...AXIS} />
+                      <YAxis type="category" dataKey="district" width={110} {...AXIS} />
+                      <Tooltip {...TOOLTIP} />
                       <Legend />
                       <Bar dataKey="previous" name={`Q${dashboardData.prevQuarter} ${dashboardData.prevYear}`} fill="#94a3b8" radius={[0, 4, 4, 0]} />
                       <Bar dataKey="current" name={`Q${dashboardData.currentQuarter} ${dashboardData.currentYear}`} fill="#002349" radius={[0, 4, 4, 0]} />
@@ -1729,7 +1901,7 @@ const AdminDashboard = () => {
         )}
 
         {/* Submitted / Pending units */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="ih-surface p-6 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div>
               <h3 className="text-sm font-semibold text-gray-700">Unit Submission Status</h3>
@@ -1925,7 +2097,7 @@ const AdminDashboard = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex items-center mb-4">
               <XCircle className="h-6 w-6 text-red-600 mr-3" />
@@ -1960,6 +2132,18 @@ const AdminDashboard = () => {
           setShowProfileModal(false)
           setSelectedUnitAdminId(null)
         }}
+      />
+
+      {/* District Admin Profile Modal */}
+      <DistrictAdminProfileModal
+        districtAdminId={selectedDistrictAdminId}
+        isOpen={showDistrictAdminModal}
+        onClose={() => {
+          setShowDistrictAdminModal(false)
+          setSelectedDistrictAdminId(null)
+        }}
+        onSaved={() => fetchDistrictAdmins(districtAdminSearchTerm, selectedDistrictAdminDistrict, districtAdminPagination.current)}
+        onDeleted={() => fetchDistrictAdmins(districtAdminSearchTerm, selectedDistrictAdminDistrict, 1)}
       />
     </div>
   )

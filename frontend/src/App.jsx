@@ -44,6 +44,7 @@ import SubmissionDetails from './pages/ihthisabi/SubmissionDetails';
 import ProfilePage from './pages/ihthisabi/ProfilePage';
 import NotFound from './pages/ihthisabi/NotFound';
 import UnitAdminDashboard from './pages/ihthisabi/UnitAdminDashboard';
+import DistrictAdminDashboard from './pages/ihthisabi/DistrictAdminDashboard';
 import AlternativeSubmissionForm from './pages/ihthisabi/AlternativeSubmissionForm';
 import FormManagement from './pages/ihthisabi/FormManagement';
 import IhthisabiHelpDeskPage from './pages/ihthisabi/HelpDeskPage';
@@ -526,8 +527,9 @@ const IhthisabiRoutes = () => {
         element={
           isAuthenticated ? (
             <Navigate to={
-              user?.role === 'admin' ? '/ihthisabi/admin' : 
-              user?.role === 'unitAdmin' ? '/ihthisabi/unitadmin' : 
+              user?.role === 'admin' ? '/ihthisabi/admin' :
+              user?.role === 'unitAdmin' ? '/ihthisabi/unitadmin' :
+              user?.role === 'districtAdmin' ? '/ihthisabi/districtadmin' :
               '/ihthisabi/dashboard'
             } replace />
           ) : (
@@ -567,29 +569,29 @@ const IhthisabiRoutes = () => {
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/submissions/:id" 
+        <Route
+          path="/submissions/:id"
           element={
-            <ProtectedRoute allowedRoles={['rukn', 'admin', 'unitAdmin']}>
+            <ProtectedRoute allowedRoles={['rukn', 'admin', 'unitAdmin', 'districtAdmin']}>
               <SubmissionDetails />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/alternative-submission" 
+        <Route
+          path="/alternative-submission"
           element={
             <ProtectedRoute allowedRoles={['rukn', 'unitAdmin']}>
               <AlternativeSubmissionForm />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/alternative-submissions/:id" 
+        <Route
+          path="/alternative-submissions/:id"
           element={
-            <ProtectedRoute allowedRoles={['rukn', 'admin', 'unitAdmin']}>
+            <ProtectedRoute allowedRoles={['rukn', 'admin', 'unitAdmin', 'districtAdmin']}>
               <AlternativeSubmissionForm />
             </ProtectedRoute>
-          } 
+          }
         />
         
         {/* Admin Routes */}
@@ -721,15 +723,47 @@ const IhthisabiRoutes = () => {
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/unitadmin/submission-details/:id" 
+        <Route
+          path="/unitadmin/submission-details/:id"
           element={
             <ProtectedRoute allowedRoles={['unitAdmin']}>
               <SubmissionDetails userRole="unitAdmin" />
             </ProtectedRoute>
-          } 
+          }
         />
-        
+        <Route
+          path="/districtadmin"
+          element={
+            <ProtectedRoute allowedRoles={['districtAdmin']}>
+              <DistrictAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/districtadmin/submissions"
+          element={
+            <ProtectedRoute allowedRoles={['districtAdmin']}>
+              <DistrictAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/districtadmin/members"
+          element={
+            <ProtectedRoute allowedRoles={['districtAdmin']}>
+              <DistrictAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/district-admins"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Common Routes */}
         <Route 
           path="/profile" 
@@ -739,30 +773,31 @@ const IhthisabiRoutes = () => {
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/help-desk" 
+        <Route
+          path="/help-desk"
           element={
-            <ProtectedRoute allowedRoles={['rukn', 'unitAdmin', 'admin']}>
+            <ProtectedRoute allowedRoles={['rukn', 'unitAdmin', 'admin', 'districtAdmin']}>
               <IhthisabiHelpDeskPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        
+
         {/* Default redirect */}
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
-            <Navigate 
+            <Navigate
               to={
                 isAuthenticated ? (
-                  user?.role === 'admin' ? '/ihthisabi/admin' : 
-                  user?.role === 'unitAdmin' ? '/ihthisabi/unitadmin' : 
+                  user?.role === 'admin' ? '/ihthisabi/admin' :
+                  user?.role === 'unitAdmin' ? '/ihthisabi/unitadmin' :
+                  user?.role === 'districtAdmin' ? '/ihthisabi/districtadmin' :
                   '/ihthisabi/dashboard'
                 ) : '/ihthisabi/login'
-              } 
-              replace 
+              }
+              replace
             />
-          } 
+          }
         />
       </Route>
       

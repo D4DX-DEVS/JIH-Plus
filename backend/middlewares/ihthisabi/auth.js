@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../../models/ihthisabi/User');
 const UnitAdmin = require('../../models/ihthisabi/UnitAdmin');
+const DistrictAdmin = require('../../models/ihthisabi/DistrictAdmin');
 
 
 // Generate JWT token
@@ -85,6 +86,37 @@ const protect = async (req, res, next) => {
           isActive: unitAdmin.isActive
         };
         console.log('Unit admin token validated successfully:', req.user);
+        return next();
+      }
+
+      // Check if this is a district admin token
+      if (decoded.role === 'districtAdmin' && decoded.userId) {
+        console.log('Processing district admin token for userId:', decoded.userId);
+        const districtAdmin = await DistrictAdmin.findById(decoded.userId).select('-password');
+
+        if (!districtAdmin) {
+          return res.status(401).json({
+            success: false,
+            message: 'No district admin found with this token'
+          });
+        }
+
+        if (!districtAdmin.isActive) {
+          return res.status(401).json({
+            success: false,
+            message: 'District admin account is deactivated'
+          });
+        }
+
+        req.user = {
+          userId: districtAdmin._id,
+          role: 'districtAdmin',
+          district: districtAdmin.district,
+          ruknId: districtAdmin.ruknId,
+          name: districtAdmin.name,
+          isActive: districtAdmin.isActive
+        };
+        console.log('District admin token validated successfully:', req.user);
         return next();
       }
 

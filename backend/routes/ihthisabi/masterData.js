@@ -34,10 +34,12 @@ async function bulkUpdateLocation(filter, update) {
 
 // ── READ (aggregated from User documents) ────────────────────────────────────
 
-// GET /api/ihthisabi/admin/master-data/districts
-// Returns distinct districts (User-derived + LocationMaster added) with member count
+// GET /api/ihthisabi/admin/master-data/districts?page=&limit=
+// Returns distinct districts (User-derived + LocationMaster added) with member count.
+// When `page` is absent, returns the full list (used internally by dropdown consumers).
 router.get('/districts', async (req, res) => {
   try {
+    const { page, limit } = req.query;
     const [userRows, masterRows] = await Promise.all([
       User.aggregate([
         { $match: { role: 'rukn', district: { $nin: [null, ''] } } },
@@ -52,8 +54,18 @@ router.get('/districts', async (req, res) => {
       if (!map.has(r.name)) map.set(r.name, { name: r.name, count: 0 });
     });
 
-    const data = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-    res.json({ success: true, data });
+    const allRows = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+
+    if (!page) {
+      return res.json({ success: true, data: allRows });
+    }
+
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
+    const total = allRows.length;
+    const data = allRows.slice((pageNum - 1) * limitNum, pageNum * limitNum);
+
+    res.json({ success: true, data, total, page: pageNum, totalPages: Math.ceil(total / limitNum) || 1 });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -94,7 +106,7 @@ router.get('/areas', async (req, res) => {
     }
 
     const pageNum = Math.max(1, parseInt(page) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
     const total = allRows.length;
     const data = allRows.slice((pageNum - 1) * limitNum, pageNum * limitNum);
 
@@ -141,7 +153,7 @@ router.get('/units', async (req, res) => {
     }
 
     const pageNum = Math.max(1, parseInt(page) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
     const total = allRows.length;
     const data = allRows.slice((pageNum - 1) * limitNum, pageNum * limitNum);
 

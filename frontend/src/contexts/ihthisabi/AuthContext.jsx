@@ -265,6 +265,12 @@ export const AuthProvider = ({ children }) => {
           unit: credentials.unit,
           ruknId: credentials.ruknId
         })
+      } else if (credentials.role === 'districtAdmin') {
+        // District admin login via districtadmin route
+        response = await api.post('/districtadmin/login', {
+          district: credentials.district,
+          ruknId: credentials.ruknId
+        })
       } else {
         // Default fallback to unified login
         response = await api.post('/auth/unified-login', {

@@ -18,8 +18,10 @@ const ProfilePage = () => {
     try {
       setLoading(true)
       // Use different endpoints based on user role
-      const endpoint = authUser?.role === 'unitAdmin' 
-        ? '/unitadmin/me' 
+      const endpoint = authUser?.role === 'unitAdmin'
+        ? '/unitadmin/me'
+        : authUser?.role === 'districtAdmin'
+        ? '/districtadmin/me'
         : authUser?.role === 'admin'
         ? '/auth/me'
         : '/auth/me'
@@ -123,35 +125,35 @@ const ProfilePage = () => {
   const isAdmin = user?.role === 'admin' || user?.isAdmin
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-4 sm:py-6">
+    <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-6">
       {/* Profile Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
-        <div className="bg-primary/5 px-4 sm:px-6 py-4">
-          <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-3">
+      <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-3 sm:mb-4">
+        <div className="bg-primary/5 px-3 sm:px-6 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-2 sm:gap-3">
             <div className="text-center sm:text-left">
-              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
+              <h1 className="text-base sm:text-2xl font-semibold text-gray-900">
                 {user?.name || user?.username || 'User'}
               </h1>
             </div>
-            <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-center sm:justify-end">
+              <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${
                 user?.isActive !== false
-                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  ? 'bg-green-50 text-green-700 border border-green-200'
                   : 'bg-red-50 text-red-700 border border-red-200'
               }`}>
                 {user?.isActive !== false ? (
                   <>
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                    <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />
                     Active
                   </>
                 ) : (
                   <>
-                    <XCircle className="w-3.5 h-3.5 mr-1" />
+                    <XCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />
                     Inactive
                   </>
                 )}
               </span>
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 capitalize">
+              <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-primary/10 text-primary border border-primary/20 capitalize">
                 {user?.role || 'Member'}
               </span>
             </div>
@@ -160,19 +162,19 @@ const ProfilePage = () => {
       </div>
 
       {/* Profile Details Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-100">Profile Information</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
+        <h2 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-gray-100">Profile Information</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-4">
           {/* RUKN ID / Admin ID */}
           {(user?.ruknId || user?.id) && (
-            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-3">
+            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <User className="w-5 h-5 text-primary" />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
-                  <label className="text-sm font-semibold text-gray-600">{isAdmin ? 'Admin ID' : 'RUKN ID'}</label>
+                  <label className="text-xs sm:text-sm font-semibold text-gray-600">{isAdmin ? 'Admin ID' : 'RUKN ID'}</label>
                 </div>
                 <button
                   onClick={() => handleCopy(user?.ruknId || user?.id, isAdmin ? 'Admin ID' : 'RUKN ID')}
@@ -186,59 +188,59 @@ const ProfilePage = () => {
                   )}
                 </button>
               </div>
-              <p className="text-lg font-semibold text-gray-900 font-mono">{user?.ruknId || user?.id}</p>
+              <p className="text-sm sm:text-lg font-semibold text-gray-900 font-mono">{user?.ruknId || user?.id}</p>
             </div>
           )}
 
           {/* Username (for admin users) */}
           {user?.username && !user?.ruknId && (
-            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <User className="w-5 h-5 text-primary" />
+            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-2 sm:mb-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
-                <label className="text-sm font-semibold text-gray-600">Username</label>
+                <label className="text-xs sm:text-sm font-semibold text-gray-600">Username</label>
               </div>
-              <p className="text-lg font-semibold text-gray-900">{user.username}</p>
+              <p className="text-sm sm:text-lg font-semibold text-gray-900">{user.username}</p>
             </div>
           )}
 
           {/* Unit */}
           {user?.unit && (
-            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <MapPin className="w-5 h-5 text-primary" />
+            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-2 sm:mb-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
-                <label className="text-sm font-semibold text-gray-600">Unit</label>
+                <label className="text-xs sm:text-sm font-semibold text-gray-600">Unit</label>
               </div>
-              <p className="text-lg font-semibold text-gray-900">{user.unit}</p>
+              <p className="text-sm sm:text-lg font-semibold text-gray-900">{user.unit}</p>
             </div>
           )}
 
           {/* District */}
           {user?.district && (
-            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <MapPin className="w-5 h-5 text-primary" />
+            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-2 sm:mb-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
-                <label className="text-sm font-semibold text-gray-600">District</label>
+                <label className="text-xs sm:text-sm font-semibold text-gray-600">District</label>
               </div>
-              <p className="text-lg font-semibold text-gray-900">{user.district}</p>
+              <p className="text-sm sm:text-lg font-semibold text-gray-900">{user.district}</p>
             </div>
           )}
 
           {/* Area - Always show for unit admins */}
           {(user?.area || user?.role === 'unitAdmin') && (
-            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <MapPin className="w-5 h-5 text-primary" />
+            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-2 sm:mb-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
-                <label className="text-sm font-semibold text-gray-600">Area</label>
+                <label className="text-xs sm:text-sm font-semibold text-gray-600">Area</label>
               </div>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-sm sm:text-lg font-semibold text-gray-900">
                 {user?.area || 'Not specified'}
               </p>
             </div>
@@ -246,13 +248,13 @@ const ProfilePage = () => {
 
           {/* Contact Number */}
           {user?.contactNo && (
-            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-3">
+            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <Phone className="w-5 h-5 text-primary" />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
-                  <label className="text-sm font-semibold text-gray-600">Contact Number</label>
+                  <label className="text-xs sm:text-sm font-semibold text-gray-600">Contact Number</label>
                 </div>
                 <button
                   onClick={() => handleCopy(user?.contactNo, 'Contact Number')}
@@ -266,19 +268,19 @@ const ProfilePage = () => {
                   )}
                 </button>
               </div>
-              <p className="text-lg font-semibold text-gray-900">{user.contactNo}</p>
+              <p className="text-sm sm:text-lg font-semibold text-gray-900">{user.contactNo}</p>
             </div>
           )}
 
           {/* Email */}
           {(user?.email || user?.emailId) && (
-            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-3">
+            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <Mail className="w-5 h-5 text-primary" />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
-                  <label className="text-sm font-semibold text-gray-600">Email</label>
+                  <label className="text-xs sm:text-sm font-semibold text-gray-600">Email</label>
                 </div>
                 <button
                   onClick={() => handleCopy(user?.email || user?.emailId, 'Email')}
@@ -292,32 +294,32 @@ const ProfilePage = () => {
                   )}
                 </button>
               </div>
-              <p className="text-lg font-semibold text-gray-900 break-all">{user?.email || user?.emailId}</p>
+              <p className="text-sm sm:text-lg font-semibold text-gray-900 break-all">{user?.email || user?.emailId}</p>
             </div>
           )}
 
           {/* Country */}
           {user?.country && (
-            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <MapPin className="w-5 h-5 text-primary" />
+            <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-2 sm:mb-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
-                <label className="text-sm font-semibold text-gray-600">Country</label>
+                <label className="text-xs sm:text-sm font-semibold text-gray-600">Country</label>
               </div>
-              <p className="text-lg font-semibold text-gray-900">{user.country}</p>
+              <p className="text-sm sm:text-lg font-semibold text-gray-900">{user.country}</p>
             </div>
           )}
 
           {/* Last Login */}
-          <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <Calendar className="w-5 h-5 text-primary" />
+          <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
+            <div className="flex items-center gap-3 mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <label className="text-sm font-semibold text-gray-600">Last Login</label>
+              <label className="text-xs sm:text-sm font-semibold text-gray-600">Last Login</label>
             </div>
-            <p className="text-lg font-semibold text-gray-900 mb-1">
+            <p className="text-sm sm:text-lg font-semibold text-gray-900 mb-1">
               {formatDate(user?.lastLogin)}
             </p>
             {user?.lastLogin && (
@@ -334,12 +336,12 @@ const ProfilePage = () => {
           </div>
 
           {/* Account Status */}
-          <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <Shield className="w-5 h-5 text-primary" />
+          <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
+            <div className="flex items-center gap-3 mb-2 sm:mb-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <label className="text-sm font-semibold text-gray-600">Account Status</label>
+              <label className="text-xs sm:text-sm font-semibold text-gray-600">Account Status</label>
             </div>
             <div className="flex items-center gap-2.5">
               <div className={`w-3.5 h-3.5 rounded-full ${user?.isActive !== false ? 'bg-green-500' : 'bg-red-500'} shadow-sm`}></div>

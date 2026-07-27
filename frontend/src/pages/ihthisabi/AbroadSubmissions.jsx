@@ -68,7 +68,7 @@ const MemberDetailDrawer = ({ memberId, submissions, onClose, onViewSubmission }
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      <div className="flex-1 bg-black/40" onClick={onClose} />
+      <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="w-full max-w-xl bg-white shadow-2xl flex flex-col h-full">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-bold text-gray-900">Member Details</h3>
@@ -509,7 +509,7 @@ const SubmissionDrawer = ({ submissionId, onClose, onRefresh }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex">
-      <div className="flex-1 bg-black/40" onClick={onClose} />
+      <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="w-full max-w-2xl bg-white shadow-2xl flex flex-col h-full">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 flex-shrink-0">
@@ -677,7 +677,9 @@ const AbroadSubmissions = () => {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const params = { limit: 1000 }
+      // No page/limit sent: both endpoints return the full matching set when `page`
+      // is absent, which this grouped country/area/unit tree view needs at once.
+      const params = {}
       if (selectedCountry !== 'all') params.country = selectedCountry
       if (selectedArea !== 'all') params.area = selectedArea
       if (selectedUnit !== 'all') params.unit = selectedUnit

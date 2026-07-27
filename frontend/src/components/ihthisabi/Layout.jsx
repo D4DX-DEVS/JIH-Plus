@@ -83,6 +83,7 @@ const Layout = () => {
   const dashboardHref =
     user?.role === 'admin' ? '/ihthisabi/admin'
     : user?.role === 'unitAdmin' ? '/ihthisabi/unitadmin'
+    : user?.role === 'districtAdmin' ? '/ihthisabi/districtadmin'
     : '/ihthisabi/dashboard'
 
   const buildNavigation = () => {
@@ -100,6 +101,16 @@ const Layout = () => {
         { name: 'Dashboard', mobileName: 'Dashboard', href: dashboardHref, icon: Home },
         { name: 'Unit Submissions', mobileName: 'Forms', href: '/ihthisabi/unitadmin/submissions', icon: BarChart3 },
         { name: 'Unit Members', mobileName: 'Members', href: '/ihthisabi/unitadmin/members', icon: Users },
+        { name: 'Profile', mobileName: 'Profile', href: '/ihthisabi/profile', icon: User },
+        { name: 'Help Desk', mobileName: 'Help', href: '/ihthisabi/help-desk', icon: LifeBuoy },
+      ]
+    }
+
+    if (user?.role === 'districtAdmin') {
+      return [
+        { name: 'Dashboard', mobileName: 'Dashboard', href: dashboardHref, icon: Home },
+        { name: 'District Submissions', mobileName: 'Forms', href: '/ihthisabi/districtadmin/submissions', icon: BarChart3 },
+        { name: 'District Members', mobileName: 'Members', href: '/ihthisabi/districtadmin/members', icon: Users },
         { name: 'Profile', mobileName: 'Profile', href: '/ihthisabi/profile', icon: User },
         { name: 'Help Desk', mobileName: 'Help', href: '/ihthisabi/help-desk', icon: LifeBuoy },
       ]
@@ -128,6 +139,7 @@ const Layout = () => {
           children: [
             { name: 'All Members', href: '/ihthisabi/admin/members', icon: Users },
             { name: 'Unit Admins', href: '/ihthisabi/admin/unit-admins', icon: Settings },
+            { name: 'District Admins', href: '/ihthisabi/admin/district-admins', icon: Settings },
             ...(isSuperAdmin ? [
               { name: 'User Management', href: '/ihthisabi/admin/user-management', icon: Settings },
               { name: 'Archive', href: '/ihthisabi/admin/archive', icon: Archive },
@@ -187,6 +199,15 @@ const Layout = () => {
         { name: 'More', icon: Menu, action: 'menu' },
       ]
     }
+    if (user?.role === 'districtAdmin') {
+      return [
+        { name: 'Home', href: dashboardHref, icon: Home },
+        { name: 'Forms', href: '/ihthisabi/districtadmin/submissions', icon: BarChart3 },
+        { name: 'Members', href: '/ihthisabi/districtadmin/members', icon: Users },
+        { name: 'Profile', href: '/ihthisabi/profile', icon: User },
+        { name: 'More', icon: Menu, action: 'menu' },
+      ]
+    }
     if (user?.role === 'admin') {
       return [
         { name: 'Home', href: '/ihthisabi/admin', icon: Home, match: ['/ihthisabi/admin'] },
@@ -236,9 +257,11 @@ const Layout = () => {
 
   const roleLabel = user?.role === 'unitAdmin'
     ? 'Unit Admin'
-    : user?.role === 'admin'
-      ? 'Admin'
-      : 'Member'
+    : user?.role === 'districtAdmin'
+      ? 'District Admin'
+      : user?.role === 'admin'
+        ? 'Admin'
+        : 'Member'
 
   const renderNavItem = (item) => {
     if (item.type === 'group') {
@@ -367,31 +390,31 @@ const Layout = () => {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
-        <div className="lg:hidden sticky top-0 z-20 border-b border-gray-200 bg-white/95 backdrop-blur">
-          <div className="flex items-center justify-between gap-3 px-4 py-3">
-            <div className="min-w-0 flex items-center gap-3">
+        <div className="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur-xl backdrop-saturate-150 shadow-[0_1px_0_rgba(16,24,40,0.06)]">
+          <div className="flex items-center justify-between gap-2 px-3 py-1.5">
+            <div className="min-w-0 flex items-center gap-2">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-gray-600 transition-colors hover:bg-gray-100"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-900/5 active:bg-gray-900/10"
                 aria-label="Open navigation"
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-4 h-4" />
               </button>
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-gray-900">
+                <p className="truncate text-[13px] font-semibold leading-tight text-gray-900">
                   {activeLabel}
                 </p>
-                <p className="truncate text-xs text-gray-500">
+                <p className="truncate text-[10px] leading-tight text-gray-500">
                   {user?.unit || user?.username || roleLabel}
                 </p>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-500 transition-colors hover:bg-red-100"
               aria-label="Logout"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -403,9 +426,9 @@ const Layout = () => {
 
         {/* Mobile bottom nav — curated minimal destinations + More */}
         {bottomNavItems.length > 0 && (
-          <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur shadow-[0_-8px_24px_rgba(15,23,42,0.08)] ih-mobile-nav-safe">
+          <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 bg-white/80 backdrop-blur-xl backdrop-saturate-150 shadow-[0_-1px_0_rgba(16,24,40,0.06),0_-8px_32px_rgba(16,24,40,0.06)] ih-mobile-nav-safe">
             <nav
-              className="grid gap-1 px-2 py-1.5"
+              className="grid gap-0.5 px-1.5 py-1"
               style={{ gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))` }}
             >
               {bottomNavItems.map((item) => {
@@ -415,15 +438,19 @@ const Layout = () => {
                   <button
                     key={item.name}
                     onClick={() => handleBottomClick(item)}
-                    className={`relative flex min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-xl px-1 py-1.5 text-[10px] font-semibold transition-all duration-300 ease-out ${
-                      active
-                        ? 'bg-[#7B4FF2] text-white shadow-md shadow-[#7B4FF2]/40'
-                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                    className={`relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1.5 text-[9px] font-semibold leading-none transition-colors duration-300 ease-out ${
+                      active ? 'text-[#7B4FF2]' : 'text-gray-400 hover:text-gray-700'
                     }`}
                     aria-current={active ? 'page' : undefined}
                   >
-                    <Icon className={`h-5 w-5 shrink-0 transition-transform duration-300 ${active ? 'scale-110' : ''}`} />
-                    <span className={`max-w-full truncate ${active ? 'text-white' : ''}`}>{item.name}</span>
+                    <span
+                      className={`flex h-7 w-full max-w-[46px] items-center justify-center rounded-full transition-all duration-300 ease-out ${
+                        active ? 'bg-[#7B4FF2]/12' : 'bg-transparent'
+                      }`}
+                    >
+                      <Icon className={`h-[17px] w-[17px] shrink-0 transition-transform duration-300 ${active ? 'scale-110' : ''}`} />
+                    </span>
+                    <span className="max-w-full truncate">{item.name}</span>
                   </button>
                 )
               })}

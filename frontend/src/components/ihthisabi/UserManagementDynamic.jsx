@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { api } from '../../utils/ihthisabi/api'
 import { useLocation as useHierarchyLocation } from '../../hooks/useLocation'
 import ConfirmationModal from './ConfirmationModal'
+import Pagination from './Pagination'
 import {
   Users,
   Search,
@@ -11,8 +12,6 @@ import {
   UserPlus,
   Settings,
   X,
-  ChevronLeft,
-  ChevronRight,
   ShieldCheck,
   AlertCircle,
   CheckCircle
@@ -604,7 +603,7 @@ const UserManagementDynamic = () => {
   const fetchUsers = useCallback(async (page = 1) => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ page, limit: '20' })
+      const params = new URLSearchParams({ page, limit: '10' })
       if (searchTerm) params.append('search', searchTerm)
       appendLocFilter(params)
       const res = await api.get(`/ihthisabi/admin/users?${params}`)
@@ -621,7 +620,7 @@ const UserManagementDynamic = () => {
   const fetchUAs = useCallback(async (page = 1) => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ page, limit: '20' })
+      const params = new URLSearchParams({ page, limit: '10' })
       if (searchTerm) params.append('search', searchTerm)
       appendLocFilter(params)
       const res = await api.get(`/ihthisabi/admin/unitadmins?${params}`)
@@ -791,8 +790,8 @@ const UserManagementDynamic = () => {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
+        <div className="overflow-x-hidden sm:overflow-x-auto">
+          <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
             <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3 text-left">Rukn ID</th>
@@ -871,20 +870,7 @@ const UserManagementDynamic = () => {
           </table>
         </div>
 
-        {/* Pagination */}
-        {curPag.pages > 1 && (
-          <div className="px-5 py-3 border-t flex items-center justify-between text-sm text-gray-600">
-            <span>Page {curPag.current} of {curPag.pages} ({curPag.total} total)</span>
-            <div className="flex gap-2">
-              <button onClick={() => curFetch(curPag.current - 1)} disabled={curPag.current === 1} className="p-1 disabled:opacity-40 hover:bg-gray-100 rounded">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button onClick={() => curFetch(curPag.current + 1)} disabled={curPag.current === curPag.pages} className="p-1 disabled:opacity-40 hover:bg-gray-100 rounded">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination pagination={curPag} onPageChange={curFetch} itemLabel={view === 'members' ? 'members' : 'unit admins'} />
       </div>
 
       {/* Modals */}

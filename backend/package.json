@@ -18,7 +18,9 @@
     "ihtisabi:migrate:areas:dry": "node scripts/migrateUnitAdminAreas.js --dry-run",
     "migrate:gulf-to-aged": "node migrations/updateGulfToAged.js",
     "migrate:locations": "node scripts/migrateLocationFromJson.js",
-    "migrate:locations:dry": "node scripts/migrateLocationFromJson.js --dry-run"
+    "migrate:locations:dry": "node scripts/migrateLocationFromJson.js --dry-run",
+    "ihtisabi:migrate:districtadmins": "node scripts/migrateDistrictAdminsFromJson.js",
+    "ihtisabi:migrate:districtadmins:dry": "node scripts/migrateDistrictAdminsFromJson.js --dry-run"
   },
   "keywords": [
     "jih",

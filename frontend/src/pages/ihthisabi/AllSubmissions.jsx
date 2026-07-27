@@ -21,11 +21,15 @@ import {
   Star,
   AlertCircle,
   Globe,
-  UserX
+  UserX,
+  BarChart3,
+  SlidersHorizontal,
+  ChevronDown
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
 import AbroadSubmissions from './AbroadSubmissions'
+import Pagination from '../../components/ihthisabi/Pagination'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
@@ -35,7 +39,6 @@ const AllSubmissions = () => {
   const { showError } = useError()
   const [submissions, setSubmissions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [districtFilter, setDistrictFilter] = useState('all')
   const [areaFilter, setAreaFilter] = useState('all')
@@ -44,8 +47,9 @@ const AllSubmissions = () => {
   const [quarterFilter, setQuarterFilter] = useState('all')
   const [yearFilter, setYearFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [allPagesLoaded, setAllPagesLoaded] = useState(false)
+  // Filters stay collapsed on mobile so the list is visible without scrolling past
+  // a screenful of dropdowns. Always expanded from sm: up.
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const itemsPerPage = 10
 
   // Drawer state for professional inline details view
@@ -61,9 +65,7 @@ const AllSubmissions = () => {
   const [showAbroadSubmissions, setShowAbroadSubmissions] = useState(false)
   const [alternativeSubmissions, setAlternativeSubmissions] = useState([])
   const [alternativeSubmissionsLoading, setAlternativeSubmissionsLoading] = useState(false)
-  const [alternativeCurrentPage, setAlternativeCurrentPage] = useState(1)
-  const [alternativeTotalPages, setAlternativeTotalPages] = useState(1)
-  const [alternativeTotalSubmissions, setAlternativeTotalSubmissions] = useState(0)
+  const [alternativePagination, setAlternativePagination] = useState({ current: 1, pages: 1, total: 0 })
   const alternativeItemsPerPage = 10
 
   // Non-submitted view state
@@ -78,8 +80,7 @@ const AllSubmissions = () => {
   const [nonSubmittedFetched, setNonSubmittedFetched] = useState(false)
   const [nonSubmittedPeriodDisplay, setNonSubmittedPeriodDisplay] = useState('')
   const [nonSubmittedTotalRukns, setNonSubmittedTotalRukns] = useState(0)
-  const [nsCurrentPage, setNsCurrentPage] = useState(1)
-  const nsItemsPerPage = 20
+  const [nonSubmittedPagination, setNonSubmittedPagination] = useState({ current: 1, pages: 1, total: 0 })
 
   // Available years for non-submitted selector
   const nsYearOptions = React.useMemo(() => {
@@ -87,14 +88,6 @@ const AllSubmissions = () => {
     return Array.from({ length: 5 }, (_, i) => currentYear - i)
   }, [])
 
-  useEffect(() => {
-    // Only fetch data if user is authenticated and is admin
-    if (user && user.role === 'admin') {
-      fetchSubmissions()
-    }
-  }, [user])
-
-  // Extract unique values for filters with cascading dependencies
   // Always use district/area/unit fields coming from API (authoritative)
   const getNormalizedLocation = (submission) => ({
     district: submission.district || '',
@@ -108,148 +101,114 @@ const AllSubmissions = () => {
     return composed || 'N/A'
   }
 
-  const uniqueDistricts = React.useMemo(() => {
-    const values = new Set()
-    submissions.forEach(s => {
-      const { district } = getNormalizedLocation(s)
-      if (district) values.add(district)
-    })
-    return Array.from(values).sort()
-  }, [submissions])
+  // Filter dropdown options come from the master-data endpoints (cascading by
+  // district/area) rather than from the loaded page of submissions, since the
+  // submissions list is now server-paginated and only holds the current page.
+  const [uniqueDistricts, setUniqueDistricts] = useState([])
+  const [uniqueAreas, setUniqueAreas] = useState([])
+  const [uniqueUnits, setUniqueUnits] = useState([])
+  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 })
 
-  const uniqueAreas = React.useMemo(() => {
-    const values = new Set()
-    submissions.forEach(s => {
-      const { district, area } = getNormalizedLocation(s)
-      if ((districtFilter === 'all' || district === districtFilter) && area) {
-        values.add(area)
-      }
-    })
-    return Array.from(values).sort()
-  }, [submissions, districtFilter])
+  useEffect(() => {
+    api.get('/ihthisabi/admin/master-data/districts')
+      .then(res => setUniqueDistricts((res.data.data || []).map(d => d.name).sort()))
+      .catch(() => {})
+  }, [])
 
-  const uniqueUnits = React.useMemo(() => {
-    const values = new Set()
-    submissions.forEach(s => {
-      const { district, area, unit } = getNormalizedLocation(s)
-      const districtOk = districtFilter === 'all' || district === districtFilter
-      const areaOk = areaFilter === 'all' || area === areaFilter
-      if (districtOk && areaOk && unit) {
-        values.add(unit)
-      }
-    })
-    return Array.from(values).sort()
-  }, [submissions, districtFilter, areaFilter])
+  useEffect(() => {
+    if (districtFilter === 'all') {
+      setUniqueAreas([])
+      setAreaFilter('all')
+      return
+    }
+    api.get('/ihthisabi/admin/master-data/areas', { params: { district: districtFilter } })
+      .then(res => setUniqueAreas((res.data.data || []).map(a => a.name).sort()))
+      .catch(() => {})
+  }, [districtFilter])
+
+  useEffect(() => {
+    if (districtFilter === 'all' || areaFilter === 'all') {
+      setUniqueUnits([])
+      setUnitFilter('all')
+      return
+    }
+    api.get('/ihthisabi/admin/master-data/units', { params: { district: districtFilter, area: areaFilter } })
+      .then(res => setUniqueUnits((res.data.data || []).map(u => u.name).sort()))
+      .catch(() => {})
+  }, [districtFilter, areaFilter])
+
+  // Debounce free-text search so typing doesn't fire a request per keystroke
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearchTerm(searchTerm), 400)
+    return () => clearTimeout(t)
+  }, [searchTerm])
+
+  useEffect(() => {
+    // Only fetch data if user is authenticated and is admin
+    if (user && user.role === 'admin') {
+      fetchSubmissions()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, currentPage, districtFilter, areaFilter, unitFilter, statusFilter, quarterFilter, yearFilter, debouncedSearchTerm])
+
+  // Reset to page 1 whenever a filter/search actually changes (not on page navigation)
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [districtFilter, areaFilter, unitFilter, statusFilter, quarterFilter, yearFilter, debouncedSearchTerm])
 
   const fetchSubmissions = async () => {
     try {
       setLoading(true)
-      setSubmissions([])
-      setAllPagesLoaded(false)
-      
-      // First, get page 1 to know total pages
-      const firstPageResponse = await api.get('/ihthisabi/admin/submissions', {
-        params: {
-          page: 1,
-          limit: 150
-        }
-      })
 
-      const firstPageData = firstPageResponse.data.data
-      const pagination = firstPageData.pagination || {}
-      const totalPages = pagination.pages || 1
+      const params = { page: currentPage, limit: itemsPerPage }
+      if (districtFilter !== 'all') params.district = districtFilter
+      if (areaFilter !== 'all') params.area = areaFilter
+      if (unitFilter !== 'all') params.unit = unitFilter
+      if (statusFilter !== 'all') params.status = statusFilter
+      if (quarterFilter !== 'all') params.quarter = quarterFilter
+      if (yearFilter !== 'all') params.year = yearFilter
+      if (debouncedSearchTerm) params.search = debouncedSearchTerm
 
-      // If only one page, we're done
-      if (totalPages === 1) {
-        setSubmissions(firstPageData.submissions || [])
-        setTotalPages(Math.ceil((firstPageData.submissions || []).length / itemsPerPage))
-        setAllPagesLoaded(true)
-        setLoading(false)
-        return
-      }
-
-      // Load all remaining pages in parallel
-      const pagePromises = []
-      for (let page = 2; page <= totalPages; page++) {
-        pagePromises.push(
-          api.get('/ihthisabi/admin/submissions', {
-            params: {
-              page: page,
-              limit: 150
-            }
-          })
-        )
-      }
-
-      // Execute all page requests in parallel
-      const responses = await Promise.all(pagePromises)
-      
-      // Combine all submissions
-      let allSubs = [...(firstPageData.submissions || [])]
-      responses.forEach(response => {
-        allSubs = [...allSubs, ...(response.data.data.submissions || [])]
-      })
-
-      setSubmissions(allSubs)
-      setTotalPages(Math.ceil(allSubs.length / itemsPerPage))
-      setAllPagesLoaded(true)
-      console.log(`Loaded all ${totalPages} pages, total submissions: ${allSubs.length}`)
-      
-      // Debug: Check for Hamsa A V submissions
-      const hamsaSubmissions = allSubs.filter(s => 
-        s.ruknName && s.ruknName.toLowerCase().includes('hamsa a v')
-      )
-      if (hamsaSubmissions.length > 0) {
-        console.log('Hamsa A V submissions found:', hamsaSubmissions.map(s => ({
-          id: s.id,
-          name: s.ruknName,
-          period: s.periodDisplay,
-          location: buildLocationDisplay(s),
-          district: s.district,
-          area: s.area,
-          unit: s.unit
-        })))
-      }
+      const response = await api.get('/ihthisabi/admin/submissions', { params })
+      const data = response.data.data
+      setSubmissions(data.submissions || [])
+      setPagination(data.pagination || { current: 1, pages: 1, total: 0 })
     } catch (error) {
       console.error('Failed to fetch submissions:', error)
       toast.error('Failed to load submissions')
     } finally {
       setLoading(false)
-      setLoadingMore(false)
     }
   }
 
-  // Cascading area/unit options for the non-submitted filter (derived from existing submissions data)
-  const nsUniqueAreas = React.useMemo(() => {
-    const values = new Set()
-    submissions.forEach(s => {
-      const { district, area } = getNormalizedLocation(s)
-      if ((nsDistrict === 'all' || district === nsDistrict) && area) values.add(area)
-    })
-    return Array.from(values).sort()
-  }, [submissions, nsDistrict])
+  // Cascading area/unit options for the non-submitted filter, from the master-data endpoints
+  const [nsUniqueAreas, setNsUniqueAreas] = useState([])
+  const [nsUniqueUnits, setNsUniqueUnits] = useState([])
 
-  const nsUniqueUnits = React.useMemo(() => {
-    const values = new Set()
-    submissions.forEach(s => {
-      const { district, area, unit } = getNormalizedLocation(s)
-      const dOk = nsDistrict === 'all' || district === nsDistrict
-      const aOk = nsArea === 'all' || area === nsArea
-      if (dOk && aOk && unit) values.add(unit)
-    })
-    return Array.from(values).sort()
-  }, [submissions, nsDistrict, nsArea])
+  useEffect(() => {
+    if (nsDistrict === 'all') { setNsUniqueAreas([]); return }
+    api.get('/ihthisabi/admin/master-data/areas', { params: { district: nsDistrict } })
+      .then(res => setNsUniqueAreas((res.data.data || []).map(a => a.name).sort()))
+      .catch(() => {})
+  }, [nsDistrict])
 
-  const fetchNonSubmitted = async () => {
+  useEffect(() => {
+    if (nsDistrict === 'all' || nsArea === 'all') { setNsUniqueUnits([]); return }
+    api.get('/ihthisabi/admin/master-data/units', { params: { district: nsDistrict, area: nsArea } })
+      .then(res => setNsUniqueUnits((res.data.data || []).map(u => u.name).sort()))
+      .catch(() => {})
+  }, [nsDistrict, nsArea])
+
+  const fetchNonSubmitted = async (page = 1) => {
     if (!nsQuarter || !nsYear) {
       toast.error('Please select both quarter and year')
       return
     }
     try {
       setNonSubmittedLoading(true)
-      setNonSubmittedFetched(false)
-      setNsCurrentPage(1)
-      const params = { quarter: nsQuarter, year: nsYear }
+      if (page === 1) setNonSubmittedFetched(false)
+      const params = { quarter: nsQuarter, year: nsYear, page, limit: 10 }
       if (nsDistrict !== 'all') params.district = nsDistrict
       if (nsArea !== 'all') params.area = nsArea
       if (nsUnit !== 'all') params.unit = nsUnit
@@ -258,6 +217,7 @@ const AllSubmissions = () => {
         setNonSubmittedList(response.data.data.nonSubmitted || [])
         setNonSubmittedPeriodDisplay(response.data.data.periodDisplay || '')
         setNonSubmittedTotalRukns(response.data.data.totalRukns || 0)
+        setNonSubmittedPagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
         setNonSubmittedFetched(true)
       }
     } catch (error) {
@@ -268,8 +228,24 @@ const AllSubmissions = () => {
     }
   }
 
-  const handleNonSubmittedExportCSV = () => {
-    if (!nonSubmittedList || nonSubmittedList.length === 0) {
+  // Export needs the FULL non-submitted set, not just the visible page, so it
+  // fetches once with a high limit rather than looping the display's 10/page requests.
+  const fetchAllNonSubmittedForExport = async () => {
+    const params = { quarter: nsQuarter, year: nsYear, page: 1, limit: 2000 }
+    if (nsDistrict !== 'all') params.district = nsDistrict
+    if (nsArea !== 'all') params.area = nsArea
+    if (nsUnit !== 'all') params.unit = nsUnit
+    const response = await api.get('/ihthisabi/admin/non-submitted', { params })
+    return response.data?.data?.nonSubmitted || []
+  }
+
+  const handleNonSubmittedExportCSV = async () => {
+    const rows = await fetchAllNonSubmittedForExport().catch(() => {
+      toast.error('Failed to export')
+      return null
+    })
+    if (!rows) return
+    if (rows.length === 0) {
       toast.error('No records to export')
       return
     }
@@ -280,7 +256,7 @@ const AllSubmissions = () => {
     }
     const headers = ['#', 'Member Name', 'Rukn ID', 'District', 'Area', 'Unit']
     const lines = [headers.join(',')]
-    nonSubmittedList.forEach((member, idx) => {
+    rows.forEach((member, idx) => {
       lines.push([
         escapeCsv(idx + 1),
         escapeCsv(member.name),
@@ -303,8 +279,13 @@ const AllSubmissions = () => {
     toast.success('CSV exported')
   }
 
-  const handleNonSubmittedExportPDF = () => {
-    if (!nonSubmittedList || nonSubmittedList.length === 0) {
+  const handleNonSubmittedExportPDF = async () => {
+    const nonSubmittedList = await fetchAllNonSubmittedForExport().catch(() => {
+      toast.error('Failed to export')
+      return null
+    })
+    if (!nonSubmittedList) return
+    if (nonSubmittedList.length === 0) {
       toast.error('No records to export')
       return
     }
@@ -376,40 +357,21 @@ const AllSubmissions = () => {
     })
   }
 
-  const submissionYears = [...new Set(
-    submissions.map(s => s.submissionPeriod?.year).filter(Boolean)
-  )].sort((a, b) => b - a)
+  // Static range rather than derived from the (now paginated) submissions list,
+  // matching the same approach already used for the non-submitted year selector.
+  const submissionYears = React.useMemo(() => {
+    const currentYear = new Date().getFullYear()
+    return Array.from({ length: 5 }, (_, i) => currentYear - i)
+  }, [])
 
-  const filteredSubmissions = submissions.filter(submission => {
-    const { district, area, unit } = getNormalizedLocation(submission)
-    const name = (submission.ruknName || '').toLowerCase()
-    const term = (searchTerm || '').toLowerCase()
+  // submissions is already the current page of server-filtered results
+  const paginatedSubmissions = submissions
 
-    const matchesName = !term || name.includes(term)
-    const matchesDistrict = districtFilter === 'all' || district === districtFilter
-    const matchesArea = areaFilter === 'all' || area === areaFilter
-    const matchesUnit = unitFilter === 'all' || unit === unitFilter
-    const matchesStatus = statusFilter === 'all' || submission.status === statusFilter
-    const matchesQuarter = quarterFilter === 'all' || String(submission.submissionPeriod?.quarter) === quarterFilter
-    const matchesYear = yearFilter === 'all' || String(submission.submissionPeriod?.year) === yearFilter
-    
-    return matchesName && matchesDistrict && matchesArea && matchesUnit && matchesStatus && matchesQuarter && matchesYear
-  })
-
-  const paginatedSubmissions = filteredSubmissions.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
-
-  // Reset to page 1 only when filters/search actually change (not on page navigation)
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [districtFilter, areaFilter, unitFilter, statusFilter, searchTerm, quarterFilter, yearFilter])
-
-  // Update total pages when submissions change (but don't reset current page)
-  useEffect(() => {
-    setTotalPages(Math.ceil(filteredSubmissions.length / itemsPerPage))
-  }, [filteredSubmissions.length])
+  // Drives the badge on the mobile "Filters" toggle so narrowed results are never
+  // silently hidden behind a collapsed panel.
+  const activeFilterCount = [
+    statusFilter, districtFilter, areaFilter, unitFilter, quarterFilter, yearFilter,
+  ].filter(v => v !== 'all').length
 
   const handleViewSubmission = (submissionId) => {
     // Open inline drawer with details instead of navigating
@@ -500,7 +462,7 @@ const AllSubmissions = () => {
     }
   }
 
-  const fetchAlternativeSubmissions = async (page = alternativeCurrentPage) => {
+  const fetchAlternativeSubmissions = async (page = alternativePagination.current) => {
     try {
       setAlternativeSubmissionsLoading(true)
       const response = await api.get('/alternative-submissions/all', {
@@ -511,10 +473,7 @@ const AllSubmissions = () => {
       })
       if (response.data?.success) {
         setAlternativeSubmissions(response.data.data.alternativeSubmissions || [])
-        const pagination = response.data.data.pagination || {}
-        setAlternativeTotalPages(pagination.totalPages || 1)
-        setAlternativeTotalSubmissions(pagination.totalSubmissions || 0)
-        setAlternativeCurrentPage(pagination.currentPage || 1)
+        setAlternativePagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
       }
     } catch (error) {
       console.error('Failed to fetch alternative submissions:', error)
@@ -524,9 +483,38 @@ const AllSubmissions = () => {
     }
   }
 
-  const handleExport = () => {
-    // Use the already filtered dataset (includes status filter but we exclude status from CSV)
-    const rows = filteredSubmissions
+  const handleExport = async () => {
+    // Submissions are now server-paginated (10/page), so exporting the current filters
+    // means fetching every matching page at export time rather than just the visible page.
+    const params = { limit: 200 }
+    if (districtFilter !== 'all') params.district = districtFilter
+    if (areaFilter !== 'all') params.area = areaFilter
+    if (unitFilter !== 'all') params.unit = unitFilter
+    if (statusFilter !== 'all') params.status = statusFilter
+    if (quarterFilter !== 'all') params.quarter = quarterFilter
+    if (yearFilter !== 'all') params.year = yearFilter
+    if (debouncedSearchTerm) params.search = debouncedSearchTerm
+
+    let rows = []
+    try {
+      const firstPage = await api.get('/ihthisabi/admin/submissions', { params: { ...params, page: 1 } })
+      const firstData = firstPage.data.data
+      rows = firstData.submissions || []
+      const totalPages = firstData.pagination?.pages || 1
+      if (totalPages > 1) {
+        const rest = await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, i) =>
+            api.get('/ihthisabi/admin/submissions', { params: { ...params, page: i + 2 } })
+          )
+        )
+        rest.forEach(res => { rows = rows.concat(res.data.data.submissions || []) })
+      }
+    } catch (error) {
+      console.error('Failed to fetch submissions for export:', error)
+      toast.error('Failed to export submissions')
+      return
+    }
+
     if (!rows || rows.length === 0) {
       toast.error('No records to export for the current filters')
       return
@@ -604,371 +592,291 @@ const AllSubmissions = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="ih-page-shell">
-        {/* Header */}
-        <div className="mb-4">
-          <div className="ih-page-header">
-            <div>
-              <h1 className="ih-page-title">All Submissions</h1>
-            </div>
-            <div className="flex w-full sm:w-auto items-center gap-2 flex-wrap">
-              {/* Alternative Submissions – hidden when abroad view is active */}
-              {!showAbroadSubmissions && !showNonSubmitted && (
-                <button
-                  onClick={() => {
-                    setShowAlternativeSubmissions(prev => !prev)
-                    setShowAbroadSubmissions(false)
-                    setShowNonSubmitted(false)
-                    if (!showAlternativeSubmissions && alternativeSubmissions.length === 0) {
-                      setAlternativeCurrentPage(1)
-                      fetchAlternativeSubmissions(1)
-                    }
-                  }}
-                  className={`text-sm px-4 py-2 rounded-lg transition-colors w-full sm:w-auto ${
-                    showAlternativeSubmissions
-                      ? 'bg-orange-600 text-white hover:bg-orange-700'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <FileText className="w-4 h-4 mr-2 inline" />
-                  {showAlternativeSubmissions ? 'Regular Submissions' : 'Alternative Submissions'}
-                </button>
-              )}
+        {/* Header — desktop only. On mobile the app bar already names the page and
+            Export moves into the search row, so no row is spent on a title. */}
+        <div className="mb-2 hidden items-center justify-between gap-2 sm:flex">
+          <h1 className="ih-page-title">All Submissions</h1>
+          {!showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted && (
+            <button onClick={handleExport} className="btn-primary shrink-0 gap-1.5">
+              <Download className="w-4 h-4" />
+              Export
+            </button>
+          )}
+        </div>
 
-              {/* Abroad Submissions – hidden when alternative view is active */}
-              {!showAlternativeSubmissions && (
-                <button
-                  onClick={() => {
-                    setShowAbroadSubmissions(prev => !prev)
-                    setShowAlternativeSubmissions(false)
-                    setShowNonSubmitted(false)
-                  }}
-                  className={`text-sm px-4 py-2 rounded-lg transition-colors w-full sm:w-auto ${
-                    showAbroadSubmissions
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Globe className="w-4 h-4 mr-2 inline" />
-                  {showAbroadSubmissions ? 'Regular Submissions' : 'Abroad Submissions'}
-                </button>
-              )}
-
-              {/* Non-Submitted – hidden when alternative or abroad view is active */}
-              {!showAlternativeSubmissions && !showAbroadSubmissions && (
-                <button
-                  onClick={() => {
-                    setShowNonSubmitted(prev => !prev)
-                  }}
-                  className={`text-sm px-4 py-2 rounded-lg transition-colors w-full sm:w-auto ${
-                    showNonSubmitted
-                      ? 'bg-red-600 text-white hover:bg-red-700'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <UserX className="w-4 h-4 mr-2 inline" />
-                  {showNonSubmitted ? 'All Submissions' : 'Non-Submitted'}
-                </button>
-              )}
-
-              {/* Export only available in regular mode (not non-submitted) */}
-              {!showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted && (
-                <button
-                  onClick={handleExport}
-                  className="btn-primary text-sm w-full sm:w-auto"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </button>
-              )}
-            </div>
-          </div>
+        {/* View switcher — one compact row instead of four stacked full-width buttons */}
+        <div className="ih-segment mb-2">
+          <button
+            onClick={() => {
+              setShowAlternativeSubmissions(false)
+              setShowAbroadSubmissions(false)
+              setShowNonSubmitted(false)
+            }}
+            className={`ih-segment-btn ${
+              !showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted
+                ? 'ih-segment-btn-active' : ''
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Regular</span>
+          </button>
+          <button
+            onClick={() => {
+              setShowAlternativeSubmissions(true)
+              setShowAbroadSubmissions(false)
+              setShowNonSubmitted(false)
+              if (alternativeSubmissions.length === 0) fetchAlternativeSubmissions(1)
+            }}
+            className={`ih-segment-btn ${showAlternativeSubmissions ? 'ih-segment-btn-active text-orange-700' : ''}`}
+          >
+            <FileText className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Alt</span>
+          </button>
+          <button
+            onClick={() => {
+              setShowAbroadSubmissions(true)
+              setShowAlternativeSubmissions(false)
+              setShowNonSubmitted(false)
+            }}
+            className={`ih-segment-btn ${showAbroadSubmissions ? 'ih-segment-btn-active text-blue-700' : ''}`}
+          >
+            <Globe className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Abroad</span>
+          </button>
+          <button
+            onClick={() => {
+              setShowNonSubmitted(true)
+              setShowAlternativeSubmissions(false)
+              setShowAbroadSubmissions(false)
+            }}
+            className={`ih-segment-btn ${showNonSubmitted ? 'ih-segment-btn-active text-red-700' : ''}`}
+          >
+            <UserX className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Pending</span>
+          </button>
         </div>
 
         {/* Filters — only shown in regular submissions mode (not non-submitted) */}
         {!showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-3">
-          <div className="flex flex-col gap-3">
-            {/* First Row: Search and Status */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Search by Name */}
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search by member name..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="form-input pl-10"
-                  />
-                </div>
-              </div>
-              
-              {/* Status Filter */}
-              <div className="sm:w-48">
-                <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="submitted">Submitted</option>
-                    <option value="reviewed">Reviewed</option>
-                    <option value="approved">Approved</option>
-                  </select>
-                </div>
-              </div>
+        <div className="ih-surface mb-2 p-2 sm:p-3">
+          {/* Search + filter toggle share one row */}
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="ih-filter-icon" />
+              <input
+                type="text"
+                placeholder="Search member..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="ih-field pr-3"
+              />
+            </div>
+            <button
+              onClick={() => setFiltersOpen(o => !o)}
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-[7px] text-[11px] font-medium transition-colors sm:hidden ${
+                activeFilterCount > 0
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-gray-500'
+              }`}
+              style={activeFilterCount > 0 ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
+              aria-expanded={filtersOpen}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              {activeFilterCount > 0 && <span>{activeFilterCount}</span>}
+              <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${filtersOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <button
+              onClick={handleExport}
+              title="Export"
+              className="btn-primary shrink-0 px-2.5 py-[7px] sm:hidden"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Filter controls — collapsed on mobile until toggled, always shown from sm: */}
+          <div className={`${filtersOpen ? 'grid' : 'hidden'} mt-2 grid-cols-2 gap-2 sm:mt-2 sm:!grid sm:grid-cols-3 lg:grid-cols-6`}>
+            <div className="relative">
+              <Filter className="ih-filter-icon" />
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Status</option>
+                <option value="submitted">Submitted</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="approved">Approved</option>
+              </select>
             </div>
 
-            {/* Second Row: Location Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* District Filter */}
-              <div className="flex-1 sm:flex-initial sm:w-48">
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={districtFilter}
-                    onChange={(e) => {
-                      const next = e.target.value
-                      setDistrictFilter(next)
-                      // reset dependent filters
-                      setAreaFilter('all')
-                      setUnitFilter('all')
-                    }}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Districts</option>
-                    {uniqueDistricts.map(district => (
-                      <option key={district} value={district}>{district}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Area Filter */}
-              <div className="flex-1 sm:flex-initial sm:w-48">
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={areaFilter}
-                    onChange={(e) => {
-                      const next = e.target.value
-                      setAreaFilter(next)
-                      // reset unit when area changes
-                      setUnitFilter('all')
-                    }}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Areas</option>
-                    {uniqueAreas.map(area => (
-                      <option key={area} value={area}>{area}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Unit Filter */}
-              <div className="flex-1 sm:flex-initial sm:w-48">
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={unitFilter}
-                    onChange={(e) => setUnitFilter(e.target.value)}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Units</option>
-                    {uniqueUnits.map(unit => (
-                      <option key={unit} value={unit}>{unit}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+            <div className="relative">
+              <MapPin className="ih-filter-icon" />
+              <select
+                value={districtFilter}
+                onChange={(e) => { setDistrictFilter(e.target.value); setAreaFilter('all'); setUnitFilter('all') }}
+                className="ih-filter-select"
+              >
+                <option value="all">All Districts</option>
+                {uniqueDistricts.map(district => (
+                  <option key={district} value={district}>{district}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Third Row: Quarter + Year Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Year Filter */}
-              <div className="flex-1 sm:flex-initial sm:w-48">
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={yearFilter}
-                    onChange={(e) => setYearFilter(e.target.value)}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Years</option>
-                    {submissionYears.map(y => (
-                      <option key={y} value={String(y)}>{y}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Quarter Filter */}
-              <div className="flex-1 sm:flex-initial sm:w-48">
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={quarterFilter}
-                    onChange={(e) => setQuarterFilter(e.target.value)}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Quarters</option>
-                    <option value="1">Q1 (Jan–Mar)</option>
-                    <option value="2">Q2 (Apr–Jun)</option>
-                    <option value="3">Q3 (Jul–Sep)</option>
-                    <option value="4">Q4 (Oct–Dec)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Clear period filters */}
-              {(quarterFilter !== 'all' || yearFilter !== 'all') && (
-                <div className="flex items-center">
-                  <button
-                    onClick={() => { setQuarterFilter('all'); setYearFilter('all') }}
-                    className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 px-3 py-2 border border-gray-200 rounded-lg"
-                  >
-                    <CloseIcon className="w-3.5 h-3.5" />
-                    Clear Period
-                  </button>
-                </div>
-              )}
+            <div className="relative">
+              <MapPin className="ih-filter-icon" />
+              <select
+                value={areaFilter}
+                onChange={(e) => { setAreaFilter(e.target.value); setUnitFilter('all') }}
+                className="ih-filter-select"
+              >
+                <option value="all">All Areas</option>
+                {uniqueAreas.map(area => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
+              </select>
             </div>
+
+            <div className="relative">
+              <MapPin className="ih-filter-icon" />
+              <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Units</option>
+                {uniqueUnits.map(unit => (
+                  <option key={unit} value={unit}>{unit}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <Calendar className="ih-filter-icon" />
+              <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Years</option>
+                {submissionYears.map(y => (
+                  <option key={y} value={String(y)}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <Calendar className="ih-filter-icon" />
+              <select value={quarterFilter} onChange={(e) => setQuarterFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Quarters</option>
+                <option value="1">Q1 (Jan–Mar)</option>
+                <option value="2">Q2 (Apr–Jun)</option>
+                <option value="3">Q3 (Jul–Sep)</option>
+                <option value="4">Q4 (Oct–Dec)</option>
+              </select>
+            </div>
+
+            {activeFilterCount > 0 && (
+              <button
+                onClick={() => {
+                  setStatusFilter('all'); setDistrictFilter('all'); setAreaFilter('all')
+                  setUnitFilter('all'); setQuarterFilter('all'); setYearFilter('all')
+                }}
+                className="col-span-2 inline-flex items-center justify-center gap-1 rounded-full px-2 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:text-gray-800 sm:col-span-1"
+                style={{ backgroundColor: 'rgba(16,24,40,0.04)' }}
+              >
+                <CloseIcon className="w-3 h-3" />
+                Clear all
+              </button>
+            )}
           </div>
         </div>
         )}
 
         {/* Non-Submitted Filter Panel */}
         {showNonSubmitted && !showAlternativeSubmissions && !showAbroadSubmissions && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-3">
-            <div className="flex flex-col gap-3">
-              <div className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <UserX className="w-4 h-4 text-red-500" />
-                Filter members who have not submitted
+          <div className="ih-surface p-2 sm:p-3 mb-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+              <div className="relative">
+                <Calendar className="ih-filter-icon" />
+                <select value={nsYear} onChange={e => setNsYear(e.target.value)} className="ih-filter-select">
+                  <option value="">Year *</option>
+                  {nsYearOptions.map(y => (
+                    <option key={y} value={String(y)}>{y}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Row 1: Year + Quarter */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1 sm:flex-initial sm:w-48">
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <select
-                      value={nsYear}
-                      onChange={e => setNsYear(e.target.value)}
-                      className="form-select pl-10"
-                    >
-                      <option value="">Select Year *</option>
-                      {nsYearOptions.map(y => (
-                        <option key={y} value={String(y)}>{y}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex-1 sm:flex-initial sm:w-48">
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <select
-                      value={nsQuarter}
-                      onChange={e => setNsQuarter(e.target.value)}
-                      className="form-select pl-10"
-                    >
-                      <option value="">Select Quarter *</option>
-                      <option value="1">Q1 (Jan–Mar)</option>
-                      <option value="2">Q2 (Apr–Jun)</option>
-                      {!Q3_DISABLED && <option value="3">Q3 (Jul–Sep)</option>}
-                      <option value="4">Q4 (Oct–Dec)</option>
-                    </select>
-                  </div>
-                </div>
+              <div className="relative">
+                <Calendar className="ih-filter-icon" />
+                <select value={nsQuarter} onChange={e => setNsQuarter(e.target.value)} className="ih-filter-select">
+                  <option value="">Quarter *</option>
+                  <option value="1">Q1 (Jan–Mar)</option>
+                  <option value="2">Q2 (Apr–Jun)</option>
+                  {!Q3_DISABLED && <option value="3">Q3 (Jul–Sep)</option>}
+                  <option value="4">Q4 (Oct–Dec)</option>
+                </select>
               </div>
 
-              {/* Row 2: District + Area + Unit */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1 sm:flex-initial sm:w-48">
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <select
-                      value={nsDistrict}
-                      onChange={e => { setNsDistrict(e.target.value); setNsArea('all'); setNsUnit('all') }}
-                      className="form-select pl-10"
-                    >
-                      <option value="all">All Districts</option>
-                      {uniqueDistricts.map(d => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              <div className="relative">
+                <MapPin className="ih-filter-icon" />
+                <select
+                  value={nsDistrict}
+                  onChange={e => { setNsDistrict(e.target.value); setNsArea('all'); setNsUnit('all') }}
+                  className="ih-filter-select"
+                >
+                  <option value="all">All Districts</option>
+                  {uniqueDistricts.map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
 
-                <div className="flex-1 sm:flex-initial sm:w-48">
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <select
-                      value={nsArea}
-                      onChange={e => { setNsArea(e.target.value); setNsUnit('all') }}
-                      className="form-select pl-10"
-                    >
-                      <option value="all">All Areas</option>
-                      {nsUniqueAreas.map(a => (
-                        <option key={a} value={a}>{a}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              <div className="relative">
+                <MapPin className="ih-filter-icon" />
+                <select
+                  value={nsArea}
+                  onChange={e => { setNsArea(e.target.value); setNsUnit('all') }}
+                  className="ih-filter-select"
+                >
+                  <option value="all">All Areas</option>
+                  {nsUniqueAreas.map(a => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+              </div>
 
-                <div className="flex-1 sm:flex-initial sm:w-48">
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <select
-                      value={nsUnit}
-                      onChange={e => setNsUnit(e.target.value)}
-                      className="form-select pl-10"
-                    >
-                      <option value="all">All Units</option>
-                      {nsUniqueUnits.map(u => (
-                        <option key={u} value={u}>{u}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              <div className="relative">
+                <MapPin className="ih-filter-icon" />
+                <select value={nsUnit} onChange={e => setNsUnit(e.target.value)} className="ih-filter-select">
+                  <option value="all">All Units</option>
+                  {nsUniqueUnits.map(u => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={fetchNonSubmitted}
-                    disabled={!nsQuarter || !nsYear || nonSubmittedLoading}
-                    className="btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {nonSubmittedLoading ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Search className="w-4 h-4" />
-                    )}
-                    Search
-                  </button>
-
-                  {nonSubmittedFetched && nonSubmittedList.length > 0 && (
-                    <>
-                      <button
-                        onClick={handleNonSubmittedExportCSV}
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 flex items-center gap-1"
-                      >
-                        <Download className="w-4 h-4" />
-                        CSV
-                      </button>
-                      <button
-                        onClick={handleNonSubmittedExportPDF}
-                        className="text-sm px-3 py-2 rounded-lg border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 flex items-center gap-1"
-                      >
-                        <Download className="w-4 h-4" />
-                        PDF
-                      </button>
-                    </>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => fetchNonSubmitted(1)}
+                  disabled={!nsQuarter || !nsYear || nonSubmittedLoading}
+                  className="btn-primary flex-1 gap-1 px-2 py-1.5 text-[11px] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+                >
+                  {nonSubmittedLoading ? (
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <Search className="w-3.5 h-3.5" />
                   )}
-                </div>
+                  Search
+                </button>
+
+                {nonSubmittedFetched && nonSubmittedList.length > 0 && (
+                  <>
+                    <button
+                      onClick={handleNonSubmittedExportCSV}
+                      title="Export CSV"
+                      className="ih-icon-btn border border-gray-300 bg-white hover:bg-gray-50 hover:text-gray-700"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={handleNonSubmittedExportPDF}
+                      title="Export PDF"
+                      className="ih-icon-btn border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -976,43 +884,39 @@ const AllSubmissions = () => {
 
         {/* Non-Submitted Results */}
         {showNonSubmitted && !showAlternativeSubmissions && !showAbroadSubmissions && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-3">
+          <div className="ih-surface overflow-hidden mb-3">
             {nonSubmittedLoading ? (
-              <div className="text-center py-12">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-gray-600">Searching non-submitted members...</p>
+              <div className="px-4 py-8 text-center sm:py-12">
+                <div className="mx-auto mb-2 h-7 w-7 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <p className="text-xs text-gray-500">Searching non-submitted members...</p>
               </div>
             ) : !nonSubmittedFetched ? (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <UserX className="w-8 h-8 text-gray-400" />
+              <div className="px-4 py-8 text-center sm:py-12">
+                <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-gray-100">
+                  <UserX className="w-5 h-5 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Select filters and search</h3>
-                <p className="text-gray-500 text-sm">Choose a quarter and year, then click Search to see who hasn't submitted.</p>
+                <h3 className="mb-1 text-sm font-medium text-gray-900">Select filters and search</h3>
+                <p className="text-xs text-gray-500">Choose a quarter and year, then tap Search.</p>
               </div>
             ) : nonSubmittedList.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 className="w-8 h-8 text-green-600" />
+              <div className="px-4 py-8 text-center sm:py-12">
+                <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-green-100">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">All members submitted!</h3>
-                <p className="text-gray-500 text-sm">
+                <h3 className="mb-1 text-sm font-medium text-gray-900">All members submitted</h3>
+                <p className="text-xs text-gray-500">
                   Everyone in the selected filters has submitted for {nonSubmittedPeriodDisplay}.
                 </p>
               </div>
             ) : (
               <>
                 {/* Summary bar */}
-                <div className="px-4 py-3 bg-red-50 border-b border-red-100 flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2 text-sm text-red-800">
-                    <UserX className="w-4 h-4" />
-                    <span className="font-semibold">{nonSubmittedList.length}</span> members have not submitted for{' '}
+                <div className="flex items-center gap-1.5 border-b border-red-100 bg-red-50 px-3 py-1.5 text-[11px] leading-tight text-red-800 sm:text-xs">
+                  <UserX className="w-3.5 h-3.5 shrink-0" />
+                  <span>
+                    <span className="font-semibold">{nonSubmittedPagination.total}</span> of {nonSubmittedTotalRukns} pending for{' '}
                     <span className="font-semibold">{nonSubmittedPeriodDisplay}</span>
-                    <span className="text-red-600 text-xs ml-1">(out of {nonSubmittedTotalRukns} total)</span>
-                  </div>
-                  <div className="text-xs text-red-600">
-                    Showing {Math.min((nsCurrentPage - 1) * nsItemsPerPage + 1, nonSubmittedList.length)}–{Math.min(nsCurrentPage * nsItemsPerPage, nonSubmittedList.length)} of {nonSubmittedList.length}
-                  </div>
+                  </span>
                 </div>
 
                 {/* Desktop Table */}
@@ -1029,89 +933,57 @@ const AllSubmissions = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {nonSubmittedList
-                        .slice((nsCurrentPage - 1) * nsItemsPerPage, nsCurrentPage * nsItemsPerPage)
-                        .map((member, index) => {
-                          const serial = (nsCurrentPage - 1) * nsItemsPerPage + index + 1
-                          return (
-                            <tr key={String(member.id)} className="hover:bg-gray-50">
-                              <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-500 font-medium">{serial}</td>
-                              <td className="px-4 py-2.5 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                                    <span className="text-xs font-medium text-red-600">
-                                      {(member.name || 'U').charAt(0).toUpperCase()}
-                                    </span>
-                                  </div>
-                                  <span className="text-sm font-medium text-gray-900">{member.name}</span>
+                      {nonSubmittedList.map((member, index) => {
+                        const serial = (nonSubmittedPagination.current - 1) * 10 + index + 1
+                        return (
+                          <tr key={String(member.id)} className="hover:bg-gray-50">
+                            <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-500 font-medium">{serial}</td>
+                            <td className="px-4 py-2.5 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                  <span className="text-xs font-medium text-red-600">
+                                    {(member.name || 'U').charAt(0).toUpperCase()}
+                                  </span>
                                 </div>
-                              </td>
-                              <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.ruknId || '—'}</td>
-                              <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.district || '—'}</td>
-                              <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.area || '—'}</td>
-                              <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.unit || '—'}</td>
-                            </tr>
-                          )
-                        })}
+                                <span className="text-sm font-medium text-gray-900">{member.name}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.ruknId || '—'}</td>
+                            <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.district || '—'}</td>
+                            <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.area || '—'}</td>
+                            <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.unit || '—'}</td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
 
                 {/* Mobile Cards */}
-                <div className="lg:hidden p-4 space-y-3">
-                  {nonSubmittedList
-                    .slice((nsCurrentPage - 1) * nsItemsPerPage, nsCurrentPage * nsItemsPerPage)
-                    .map((member, index) => {
-                      const serial = (nsCurrentPage - 1) * nsItemsPerPage + index + 1
-                      return (
-                        <div key={String(member.id)} className="border border-gray-200 rounded-lg p-3">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-xs font-medium text-red-600">{serial}</span>
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                              {member.ruknId && <div className="text-xs text-gray-500">ID: {member.ruknId}</div>}
-                            </div>
-                          </div>
-                          <div className="flex items-center text-xs text-gray-600">
-                            <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
-                            <span>{[member.district, member.area, member.unit].filter(Boolean).join(' - ') || 'N/A'}</span>
+                <div className="lg:hidden ih-list">
+                  {nonSubmittedList.map((member, index) => {
+                    const serial = (nonSubmittedPagination.current - 1) * 10 + index + 1
+                    return (
+                      <div key={String(member.id)} className="ih-list-row">
+                        <div className="ih-avatar bg-red-100 text-red-600">{serial}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="ih-list-title">{member.name}</div>
+                          <div className="ih-list-meta flex items-center gap-1">
+                            <MapPin className="w-3 h-3 shrink-0" />
+                            <span className="truncate">
+                              {[member.district, member.area, member.unit].filter(Boolean).join(' - ') || 'N/A'}
+                            </span>
                           </div>
                         </div>
-                      )
-                    })}
+                        {member.ruknId && (
+                          <span className="ih-list-meta shrink-0">{member.ruknId}</span>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
 
-                {/* Pagination */}
-                {Math.ceil(nonSubmittedList.length / nsItemsPerPage) > 1 && (
-                  <div className="px-6 py-2 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-700">
-                        {nonSubmittedList.length} members total
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => setNsCurrentPage(prev => Math.max(prev - 1, 1))}
-                          disabled={nsCurrentPage === 1}
-                          className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-                        <span className="px-3 py-1 text-sm bg-primary/10 text-primary rounded-md font-medium">
-                          {nsCurrentPage} of {Math.ceil(nonSubmittedList.length / nsItemsPerPage)}
-                        </span>
-                        <button
-                          onClick={() => setNsCurrentPage(prev => Math.min(prev + 1, Math.ceil(nonSubmittedList.length / nsItemsPerPage)))}
-                          disabled={nsCurrentPage === Math.ceil(nonSubmittedList.length / nsItemsPerPage)}
-                          className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <Pagination pagination={nonSubmittedPagination} onPageChange={fetchNonSubmitted} loading={nonSubmittedLoading} itemLabel="members" />
               </>
             )}
           </div>
@@ -1121,7 +993,7 @@ const AllSubmissions = () => {
         {showAbroadSubmissions ? (
           <AbroadSubmissions />
         ) : showAlternativeSubmissions ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="ih-surface overflow-hidden">
             {alternativeSubmissionsLoading ? (
               <div className="text-center py-12">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -1153,7 +1025,7 @@ const AllSubmissions = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {alternativeSubmissions.map((submission, index) => {
-                        const serialNumber = (alternativeCurrentPage - 1) * alternativeItemsPerPage + index + 1
+                        const serialNumber = (alternativePagination.current - 1) * alternativeItemsPerPage + index + 1
                         return (
                         <tr 
                           key={submission._id || submission.id} 
@@ -1229,100 +1101,44 @@ const AllSubmissions = () => {
                     </tbody>
                   </table>
                 </div>
-                <div className="lg:hidden p-4 space-y-4">
-                  {alternativeSubmissions.map((submission, index) => {
-                    const serialNumber = (alternativeCurrentPage - 1) * alternativeItemsPerPage + index + 1
-                    return (
-                    <div 
-                      key={submission._id || submission.id} 
-                      className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                <div className="lg:hidden ih-list">
+                  {alternativeSubmissions.map((submission) => (
+                    <div
+                      key={submission._id || submission.id}
+                      className="ih-list-row cursor-pointer"
                       onClick={() => navigate(`/ihthisabi/alternative-submissions/${submission._id || submission.id}`)}
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                            <span className="text-xs font-medium text-orange-600">
-                              {(submission.ruknName || submission.userId?.name || 'U').charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {submission.ruknName || submission.userId?.name || 'Unknown User'}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              RUKN ID: {submission.userId?.ruknId || 'N/A'}
-                            </div>
-                          </div>
-                        </div>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          submission.adminReply?.message 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-orange-100 text-orange-800'
-                        }`}>
-                          {submission.adminReply?.message ? 'Replied' : 'Submitted'}
-                        </span>
+                      <div className="ih-avatar bg-orange-100 text-orange-600">
+                        {(submission.ruknName || submission.userId?.name || 'U').charAt(0).toUpperCase()}
                       </div>
-                      <div className="space-y-2 text-xs text-gray-600">
-                        <div className="flex items-center">
-                          <MapPin className="w-3.5 h-3.5 mr-1" />
-                          {submission.district} - {submission.area} - {submission.unit}
+
+                      <div className="min-w-0 flex-1">
+                        <div className="ih-list-title">
+                          {submission.ruknName || submission.userId?.name || 'Unknown User'}
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span>Type: <span className="font-medium">{submission.type}</span></span>
-                          <span>Period: <span className="font-medium">{submission.periodDisplay || 'N/A'}</span></span>
+                        <div className="ih-list-meta flex items-center gap-1">
+                          <MapPin className="w-3 h-3 shrink-0" />
+                          <span className="truncate">
+                            {[submission.district, submission.area, submission.unit].filter(Boolean).join(' - ') || 'N/A'}
+                          </span>
                         </div>
-                        <div>
-                          <span className="font-medium">Reason:</span> {submission.reason?.substring(0, 80)}{submission.reason?.length > 80 ? '...' : ''}
-                        </div>
-                        <div className="flex items-center text-gray-500">
-                          <Calendar className="w-3.5 h-3.5 mr-1" />
-                              {formatDate(submission.submittedAt || submission.createdAt)}
+                        <div className="ih-list-meta">
+                          {submission.type} · {submission.periodDisplay || 'N/A'} · {formatDate(submission.submittedAt || submission.createdAt)}
                         </div>
                       </div>
+
+                      <span className={`ih-chip ${
+                        submission.adminReply?.message
+                          ? 'border-blue-200 bg-blue-100 text-blue-800'
+                          : 'border-orange-200 bg-orange-100 text-orange-800'
+                      }`}>
+                        {submission.adminReply?.message ? 'Replied' : 'Submitted'}
+                      </span>
                     </div>
-                    )
-                  })}
+                  ))}
                 </div>
 
-                {/* Pagination for Alternative Submissions */}
-                {alternativeTotalSubmissions > 0 && (
-                  <div className="px-6 py-2 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-700">
-                        Showing {((alternativeCurrentPage - 1) * alternativeItemsPerPage) + 1} to {Math.min(alternativeCurrentPage * alternativeItemsPerPage, alternativeTotalSubmissions)} of {alternativeTotalSubmissions} results
-                      </div>
-                      {alternativeTotalPages > 1 && (
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => {
-                              const newPage = Math.max(alternativeCurrentPage - 1, 1)
-                              setAlternativeCurrentPage(newPage)
-                              fetchAlternativeSubmissions(newPage)
-                            }}
-                            disabled={alternativeCurrentPage === 1}
-                            className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Previous
-                          </button>
-                          <span className="px-3 py-1 text-sm bg-orange-100 text-orange-700 rounded-md font-medium">
-                            {alternativeCurrentPage} of {alternativeTotalPages}
-                          </span>
-                          <button
-                            onClick={() => {
-                              const newPage = Math.min(alternativeCurrentPage + 1, alternativeTotalPages)
-                              setAlternativeCurrentPage(newPage)
-                              fetchAlternativeSubmissions(newPage)
-                            }}
-                            disabled={alternativeCurrentPage === alternativeTotalPages}
-                            className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Next
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <Pagination pagination={alternativePagination} onPageChange={fetchAlternativeSubmissions} loading={alternativeSubmissionsLoading} itemLabel="results" />
               </>
             )}
           </div>
@@ -1330,15 +1146,15 @@ const AllSubmissions = () => {
         !showNonSubmitted ? (
         <>
         {/* Submissions Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="ih-surface overflow-hidden">
           {paginatedSubmissions.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-8 h-8 text-gray-400" />
+            <div className="px-4 py-8 text-center sm:py-12">
+              <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-gray-100">
+                <FileText className="w-5 h-5 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No submissions found</h3>
-              <p className="text-gray-600">
-                {searchTerm || statusFilter !== 'all' || districtFilter !== 'all' || areaFilter !== 'all' || unitFilter !== 'all'
+              <h3 className="mb-1 text-sm font-medium text-gray-900">No submissions found</h3>
+              <p className="text-xs text-gray-500">
+                {searchTerm || activeFilterCount > 0
                   ? 'Try adjusting your search or filter criteria.'
                   : 'Submissions will appear here once members start reporting.'
                 }
@@ -1415,35 +1231,23 @@ const AllSubmissions = () => {
                           </td>
                        
                           <td className="px-4 py-2.5 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${getStatusColor(submission.status)} truncate`}>
-                              {getStatusIcon(submission.status)}
-                              <span className="ml-1 capitalize">{submission.status}</span>
+                            <span className={`ih-chip ih-chip-dot ${getStatusColor(submission.status)}`}>
+                              <span className="capitalize">{submission.status}</span>
                             </span>
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap">
-                            <span 
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                                hasReply 
-                                  ? 'bg-blue-100 text-blue-800 border border-blue-200' 
-                                  : 'bg-orange-100 text-orange-800 border border-orange-200'
+                            <button
+                              className={`inline-flex items-center gap-1 text-[11px] font-medium transition-opacity hover:opacity-70 ${
+                                hasReply ? 'text-blue-500' : 'text-amber-600'
                               }`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleViewSubmission(submission.id);
                               }}
                             >
-                              {hasReply ? (
-                                <>
-                                  <MessageSquare className="w-3 h-3 mr-1" />
-                                  Replied
-                                </>
-                              ) : (
-                                <>
-                                  <Send className="w-3 h-3 mr-1" />
-                                  Reply
-                                </>
-                              )}
-                            </span>
+                              {hasReply ? <MessageSquare className="w-3 h-3" /> : <Send className="w-3 h-3" />}
+                              {hasReply ? 'Replied' : 'Reply'}
+                            </button>
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">
                             <div className="flex items-center">
@@ -1458,129 +1262,59 @@ const AllSubmissions = () => {
                 </table>
               </div>
 
-              {/* Mobile Cards */}
-              <div className="lg:hidden">
-                <div className="p-4 space-y-4">
-                  {paginatedSubmissions.map((submission, index) => {
-                    const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;
-                    const hasReply = submission.adminReply?.message;
-                    return (
-                      <div 
-                        key={submission.id} 
-                        className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => handleViewSubmission(submission.id)}
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center">
-                            <div className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                              <span className="text-xs font-medium text-gray-600">
-                                {serialNumber}
-                              </span>
-                            </div>
-                            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mr-3">
-                              <span className="text-xs font-medium text-white">
-                                {(submission.ruknName || 'U').charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {submission.ruknName || 'Unknown User'}
-                              </div>
-                              <div className="text-xs text-gray-600 flex items-center">
-                                <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                                <span className="truncate max-w-[220px]" title={buildLocationDisplay(submission)}>
-                                  {buildLocationDisplay(submission)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[11px] font-medium border ${getStatusColor(submission.status)}`}>
-                              {getStatusIcon(submission.status)}
-                              <span className="ml-1 capitalize">{submission.status}</span>
-                            </span>
-                            <span 
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                                hasReply 
-                                  ? 'bg-blue-100 text-blue-800 border border-blue-200' 
-                                  : 'bg-orange-100 text-orange-800 border border-orange-200'
-                              }`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewSubmission(submission.id);
-                              }}
-                            >
-                              {hasReply ? (
-                                <>
-                                  <MessageSquare className="w-3 h-3 mr-1" />
-                                  Replied
-                                </>
-                              ) : (
-                                <>
-                                  <Send className="w-3 h-3 mr-1" />
-                                  Reply
-                                </>
-                              )}
-                            </span>
-                          </div>
+              {/* Mobile Cards — two lines per row. Every child is min-w-0 or shrink-0
+                  so the status/reply chips can never be pushed off the card edge. */}
+              <div className="lg:hidden ih-list">
+                {paginatedSubmissions.map((submission, index) => {
+                  const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;
+                  const hasReply = submission.adminReply?.message;
+                  return (
+                    <div
+                      key={submission.id}
+                      className="ih-list-row cursor-pointer"
+                      onClick={() => handleViewSubmission(submission.id)}
+                    >
+                      <span className="w-3.5 shrink-0 text-[10px] font-medium text-gray-300">{serialNumber}</span>
+                      <div className="ih-avatar bg-gradient-to-br from-primary to-primary-700 text-white shadow-sm">
+                        {(submission.ruknName || 'U').charAt(0).toUpperCase()}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="ih-list-title">{submission.ruknName || 'Unknown User'}</div>
+                        <div className="ih-list-meta flex items-center gap-1">
+                          <MapPin className="w-3 h-3 shrink-0 opacity-60" />
+                          <span className="truncate" title={buildLocationDisplay(submission)}>
+                            {buildLocationDisplay(submission)}
+                          </span>
                         </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 mb-2 text-xs">
-                        <div>
-                          <span className="text-gray-500">Period:</span>
-                          <div className="font-medium">{submission.periodDisplay || 'N/A'}</div>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Status:</span>
-                          <div className="font-medium capitalize">{submission.status || 'submitted'}</div>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Submitted:</span>
-                          <div className="font-medium">{formatDate(submission.submittedAt || submission.createdAt)}</div>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Location:</span>
-                          <div className="font-medium">{buildLocationDisplay(submission)}</div>
+                        <div className="ih-list-meta">
+                          {submission.periodDisplay || 'N/A'} · {formatDate(submission.submittedAt || submission.createdAt)}
                         </div>
                       </div>
+
+                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        <span className={`ih-chip ih-chip-dot ${getStatusColor(submission.status)}`}>
+                          <span className="capitalize">{submission.status}</span>
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewSubmission(submission.id);
+                          }}
+                          className={`inline-flex items-center gap-1 text-[10px] font-medium leading-none transition-opacity hover:opacity-70 ${
+                            hasReply ? 'text-blue-500' : 'text-amber-600'
+                          }`}
+                        >
+                          {hasReply ? <MessageSquare className="w-2.5 h-2.5" /> : <Send className="w-2.5 h-2.5" />}
+                          {hasReply ? 'Replied' : 'Reply'}
+                        </button>
+                      </div>
                     </div>
-                    );
-                  })}
-                </div>
+                  );
+                })}
               </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="px-6 py-2 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-700">
-                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredSubmissions.length)} of {filteredSubmissions.length} results
-                      {loadingMore && (
-                        <span className="ml-2 text-primary text-xs">(Loading more...)</span>
-                      )}
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </button>
-                      <span className="px-3 py-1 text-sm bg-primary/10 text-primary rounded-md font-medium">
-                        {currentPage} of {totalPages}
-                      </span>
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <Pagination pagination={pagination} onPageChange={setCurrentPage} loading={loading} itemLabel="results" />
             </>
           )}
         </div>
@@ -1592,7 +1326,7 @@ const AllSubmissions = () => {
       {drawerOpen && !showAlternativeSubmissions && !showAbroadSubmissions && (
         <div className="fixed inset-0 z-40">
           {/* overlay */}
-          <div className="absolute inset-0 bg-black/30" onClick={closeDrawer}></div>
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeDrawer}></div>
           {/* panel */}
           <div className="absolute inset-y-0 right-0 w-full sm:w-[560px] bg-white shadow-xl border-l border-gray-200 flex flex-col">
             {/* Header */}
