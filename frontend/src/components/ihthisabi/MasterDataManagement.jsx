@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Scissors, GitMerge, ArrowRightLeft, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { api } from '../../utils/ihthisabi/api';
+import Pagination from './Pagination';
 
 const BASE = '/ihthisabi/admin/master-data';
 
@@ -41,6 +42,7 @@ const TABS = [
 
 function DistrictsTab() {
   const [districts, setDistricts] = useState([]);
+  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -59,16 +61,22 @@ function DistrictsTab() {
   const [addWorking, setAddWorking] = useState(false);
   const [addError, setAddError] = useState('');
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (page = 1) => {
     setLoading(true); setError('');
     try {
-      const res = await api.get(`${BASE}/districts`);
+      const res = await api.get(`${BASE}/districts`, { params: { page, limit: 10 } });
       setDistricts(res.data.data);
+      setPagination({
+        current: res.data.page || 1,
+        pages: res.data.totalPages || 1,
+        total: res.data.total ?? res.data.data.length,
+        limit: 10
+      });
     } catch { setError('Failed to load districts'); }
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(1); }, [load]);
 
   const handleSplitOpen = async (d) => {
     setTxError(''); setSplitSideA(d.name); setSplitSideB(''); setSplitSelected([]);
@@ -155,6 +163,7 @@ function DistrictsTab() {
           </tbody>
         </table>
       )}
+      <Pagination pagination={pagination} onPageChange={load} loading={loading} itemLabel="districts" />
 
       {/* Split Modal */}
       {splitItem && (
@@ -267,7 +276,7 @@ function AreasTab() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const LIMIT = 20;
+  const LIMIT = 10;
 
   const [splitItem, setSplitItem] = useState(null);
   const [splitUnits, setSplitUnits] = useState([]);
@@ -599,7 +608,7 @@ function UnitsTab() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const LIMIT = 20;
+  const LIMIT = 10;
 
   const [splitItem, setSplitItem] = useState(null);
   const [splitSideA, setSplitSideA] = useState('');

@@ -39,6 +39,8 @@ const LoginPage = () => {
           redirectPath = '/ihthisabi/admin'
         } else if (user?.role === 'unitAdmin') {
           redirectPath = '/ihthisabi/unitadmin'
+        } else if (user?.role === 'districtAdmin') {
+          redirectPath = '/ihthisabi/districtadmin'
         } else if (user?.role === 'rukn') {
           redirectPath = '/ihthisabi/dashboard'
         }
@@ -101,6 +103,8 @@ const LoginPage = () => {
             redirectPath = '/ihthisabi/admin'
           } else if (result.user.role === 'unitAdmin') {
             redirectPath = '/ihthisabi/unitadmin'
+          } else if (result.user.role === 'districtAdmin') {
+            redirectPath = '/ihthisabi/districtadmin'
           } else if (result.user.role === 'rukn') {
             redirectPath = '/ihthisabi/dashboard'
           }

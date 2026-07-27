@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../../models/ihthisabi/User');
 const UnitAdmin = require('../../models/ihthisabi/UnitAdmin');
+const DistrictAdmin = require('../../models/ihthisabi/DistrictAdmin');
 const { generateToken, protect } = require('../../middlewares/ihthisabi/auth');
 const { validate, schemas } = require('../../middlewares/ihthisabi/validation');
 const ihthisabiConnection = require('../../config/ihthisabiConnection');
@@ -37,7 +38,56 @@ router.post('/unified-login', async (req, res) => {
       });
     }
 
-    // First, check if it's a Unit Admin
+    // Check District Admin first — it's the higher-privilege role, and some
+    // district admins are also unit admins for their home unit (promoted rukns),
+    // so this must win the lookup precedence over the Unit Admin check below.
+    const DistrictAdmin = require('../../models/ihthisabi/DistrictAdmin');
+    const districtAdmin = await DistrictAdmin.findOne({ ruknId: ruknId });
+
+    if (districtAdmin) {
+      if (!districtAdmin.isActive) {
+        return res.status(401).json({
+          success: false,
+          message: 'Your account is deactivated. Please contact main admin.'
+        });
+      }
+
+      districtAdmin.lastLogin = new Date();
+      await districtAdmin.save();
+
+      const token = jwt.sign(
+        {
+          userId: districtAdmin._id,
+          role: 'districtAdmin',
+          district: districtAdmin.district,
+          ruknId: districtAdmin.ruknId,
+          name: districtAdmin.name
+        },
+        process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+        { expiresIn: process.env.JWT_EXPIRE || '30d' }
+      );
+
+      console.log('District Admin login successful:', districtAdmin.name, districtAdmin.ruknId);
+
+      return res.json({
+        success: true,
+        message: 'District Admin login successful',
+        data: {
+          user: {
+            id: districtAdmin._id,
+            role: 'districtAdmin',
+            ruknId: districtAdmin.ruknId,
+            name: districtAdmin.name,
+            district: districtAdmin.district,
+            contactNo: districtAdmin.contactNo,
+            emailId: districtAdmin.emailId
+          },
+          token
+        }
+      });
+    }
+
+    // Not a District Admin — check if it's a Unit Admin
     const UnitAdmin = require('../../models/ihthisabi/UnitAdmin');
     const unitAdmin = await UnitAdmin.findOne({ ruknId: ruknId });
 
@@ -56,7 +106,7 @@ router.post('/unified-login', async (req, res) => {
 
       // Generate token with unit admin role
       const token = jwt.sign(
-        { 
+        {
           userId: unitAdmin._id,
           role: 'unitAdmin',
           unit: unitAdmin.unit,
@@ -88,7 +138,7 @@ router.post('/unified-login', async (req, res) => {
       });
     }
 
-    // If not a Unit Admin, check if it's a regular Member
+    // If not a Unit Admin or District Admin, check if it's a regular Member
     const user = await User.findOne({
       ruknId: ruknId,
       role: 'rukn'
@@ -297,6 +347,34 @@ router.get('/me', protect, async (req, res) => {
             contactNo: unitAdmin.contactNo,
             emailId: unitAdmin.emailId,
             lastLogin: unitAdmin.lastLogin
+          }
+        }
+      });
+    }
+
+    // Check if it's a districtAdmin
+    if (req.user.role === 'districtAdmin' && req.user.userId) {
+      const districtAdmin = await DistrictAdmin.findById(req.user.userId);
+
+      if (!districtAdmin) {
+        return res.status(404).json({
+          success: false,
+          message: 'District admin not found'
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          user: {
+            id: districtAdmin._id,
+            role: 'districtAdmin',
+            ruknId: districtAdmin.ruknId,
+            name: districtAdmin.name,
+            district: districtAdmin.district,
+            contactNo: districtAdmin.contactNo,
+            emailId: districtAdmin.emailId,
+            lastLogin: districtAdmin.lastLogin
           }
         }
       });

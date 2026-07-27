@@ -6,6 +6,7 @@ const User = require('../../models/ihthisabi/User');
 const { protect, authorize } = require('../../middlewares/ihthisabi/auth');
 const { migrateStaticToDynamic } = require('../../utils/staticToDynamicMigration');
 const { validate, schemas, validateQuery } = require('../../middlewares/ihthisabi/validation');
+const { buildPaginationMeta } = require('../../utils/pagination');
 const { 
   getAvailableSubmissionQuarter, 
   validateSubmissionQuarter,
@@ -293,10 +294,10 @@ router.post('/', protect, authorize('rukn'), validateSubmissionMiddleware, async
 // @access  Private (Rukn only)
 router.get('/my-submissions', protect, authorize('rukn'), validateQuery(schemas.adminFilter), async (req, res) => {
   try {
-    const { page = 1, limit = 10, year, month } = req.query;
+    const { page = 1, limit = 10, year, month, quarter } = req.query;
 
     // Build query - EXCLUDE Q3 submissions
-    const query = { 
+    const query = {
       userId: req.user._id,
       ...req.quarterFilter // Filter out archived quarters
     };
@@ -307,6 +308,10 @@ router.get('/my-submissions', protect, authorize('rukn'), validateQuery(schemas.
 
     if (month) {
       query['submissionPeriod.month'] = month;
+    }
+
+    if (quarter) {
+      query['submissionPeriod.quarter'] = parseInt(quarter, 10);
     }
 
     // Calculate pagination
@@ -326,13 +331,7 @@ router.get('/my-submissions', protect, authorize('rukn'), validateQuery(schemas.
       success: true,
       data: {
         submissions,
-        pagination: {
-          currentPage: page,
-          totalPages: Math.ceil(total / limit),
-          totalSubmissions: total,
-          hasNext: page < Math.ceil(total / limit),
-          hasPrev: page > 1
-        }
+        pagination: buildPaginationMeta(total, parseInt(page, 10), parseInt(limit, 10))
       }
     });
   } catch (error) {

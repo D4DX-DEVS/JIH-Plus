@@ -83,6 +83,7 @@ const Layout = () => {
   const dashboardHref =
     user?.role === 'admin' ? '/ihthisabi/admin'
     : user?.role === 'unitAdmin' ? '/ihthisabi/unitadmin'
+    : user?.role === 'districtAdmin' ? '/ihthisabi/districtadmin'
     : '/ihthisabi/dashboard'
 
   const buildNavigation = () => {
@@ -100,6 +101,16 @@ const Layout = () => {
         { name: 'Dashboard', mobileName: 'Dashboard', href: dashboardHref, icon: Home },
         { name: 'Unit Submissions', mobileName: 'Forms', href: '/ihthisabi/unitadmin/submissions', icon: BarChart3 },
         { name: 'Unit Members', mobileName: 'Members', href: '/ihthisabi/unitadmin/members', icon: Users },
+        { name: 'Profile', mobileName: 'Profile', href: '/ihthisabi/profile', icon: User },
+        { name: 'Help Desk', mobileName: 'Help', href: '/ihthisabi/help-desk', icon: LifeBuoy },
+      ]
+    }
+
+    if (user?.role === 'districtAdmin') {
+      return [
+        { name: 'Dashboard', mobileName: 'Dashboard', href: dashboardHref, icon: Home },
+        { name: 'District Submissions', mobileName: 'Forms', href: '/ihthisabi/districtadmin/submissions', icon: BarChart3 },
+        { name: 'District Members', mobileName: 'Members', href: '/ihthisabi/districtadmin/members', icon: Users },
         { name: 'Profile', mobileName: 'Profile', href: '/ihthisabi/profile', icon: User },
         { name: 'Help Desk', mobileName: 'Help', href: '/ihthisabi/help-desk', icon: LifeBuoy },
       ]
@@ -128,6 +139,7 @@ const Layout = () => {
           children: [
             { name: 'All Members', href: '/ihthisabi/admin/members', icon: Users },
             { name: 'Unit Admins', href: '/ihthisabi/admin/unit-admins', icon: Settings },
+            { name: 'District Admins', href: '/ihthisabi/admin/district-admins', icon: Settings },
             ...(isSuperAdmin ? [
               { name: 'User Management', href: '/ihthisabi/admin/user-management', icon: Settings },
               { name: 'Archive', href: '/ihthisabi/admin/archive', icon: Archive },
@@ -187,6 +199,15 @@ const Layout = () => {
         { name: 'More', icon: Menu, action: 'menu' },
       ]
     }
+    if (user?.role === 'districtAdmin') {
+      return [
+        { name: 'Home', href: dashboardHref, icon: Home },
+        { name: 'Forms', href: '/ihthisabi/districtadmin/submissions', icon: BarChart3 },
+        { name: 'Members', href: '/ihthisabi/districtadmin/members', icon: Users },
+        { name: 'Profile', href: '/ihthisabi/profile', icon: User },
+        { name: 'More', icon: Menu, action: 'menu' },
+      ]
+    }
     if (user?.role === 'admin') {
       return [
         { name: 'Home', href: '/ihthisabi/admin', icon: Home, match: ['/ihthisabi/admin'] },
@@ -236,9 +257,11 @@ const Layout = () => {
 
   const roleLabel = user?.role === 'unitAdmin'
     ? 'Unit Admin'
-    : user?.role === 'admin'
-      ? 'Admin'
-      : 'Member'
+    : user?.role === 'districtAdmin'
+      ? 'District Admin'
+      : user?.role === 'admin'
+        ? 'Admin'
+        : 'Member'
 
   const renderNavItem = (item) => {
     if (item.type === 'group') {

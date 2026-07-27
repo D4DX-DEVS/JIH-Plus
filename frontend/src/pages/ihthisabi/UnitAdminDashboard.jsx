@@ -22,6 +22,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
+import Pagination from '../../components/ihthisabi/Pagination'
 
 const UnitAdminDashboard = () => {
   const { user } = useAuth()
@@ -35,12 +36,13 @@ const UnitAdminDashboard = () => {
     recentSubmissions: 0
   })
   const [members, setMembers] = useState([])
+  const [membersPagination, setMembersPagination] = useState({ current: 1, pages: 1, total: 0 })
+  const [membersLoading, setMembersLoading] = useState(false)
   const [submissions, setSubmissions] = useState([])
+  const [submissionsPagination, setSubmissionsPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedMember, setSelectedMember] = useState(null)
-  const [memberPage, setMemberPage] = useState(1)
-  const [submissionsPage, setSubmissionsPage] = useState(1)
   const [memberDetails, setMemberDetails] = useState(null)
   const [memberDetailsLoading, setMemberDetailsLoading] = useState(false)
   const [selectedSubmission, setSelectedSubmission] = useState(null)
@@ -48,12 +50,15 @@ const UnitAdminDashboard = () => {
   const [submissionDetails, setSubmissionDetails] = useState(null)
   const [submissionDetailsLoading, setSubmissionDetailsLoading] = useState(false)
   const [mySubmissions, setMySubmissions] = useState([])
+  const [mySubmissionsPagination, setMySubmissionsPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [mySubmissionsLoading, setMySubmissionsLoading] = useState(false)
   const [unitReplies, setUnitReplies] = useState([])
+  const [unitRepliesPagination, setUnitRepliesPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [unitRepliesLoading, setUnitRepliesLoading] = useState(false)
   const [selectedReply, setSelectedReply] = useState(null)
   const [showReplyModal, setShowReplyModal] = useState(false)
   const [alternativeSubmissions, setAlternativeSubmissions] = useState([])
+  const [alternativeSubmissionsPagination, setAlternativeSubmissionsPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [alternativeSubmissionsLoading, setAlternativeSubmissionsLoading] = useState(false)
   const [selectedAlternativeSubmission, setSelectedAlternativeSubmission] = useState(null)
   const [showAlternativeSubmissionModal, setShowAlternativeSubmissionModal] = useState(false)
@@ -67,9 +72,10 @@ const UnitAdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData()
-    fetchMySubmissions()
-    fetchUnitReplies()
-    fetchAlternativeSubmissions()
+    fetchMembers(1)
+    fetchUnitReplies(1)
+    fetchAlternativeSubmissions(1)
+    // fetchMySubmissions(1) is triggered by the filter-effect below, which also runs on mount
   }, [])
 
   useEffect(() => {
@@ -84,37 +90,48 @@ const UnitAdminDashboard = () => {
     }
   }, [location.pathname])
 
-  // Fetch submissions when submissions tab becomes active
+  // Fetch (from page 1) when the submissions tab becomes active or its filters change
   useEffect(() => {
-    if (activeTab === 'submissions' && submissions.length === 0) {
-      fetchSubmissions()
+    if (activeTab === 'submissions') {
+      fetchSubmissions(1)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab])
+  }, [activeTab, submissionsQuarterFilter, submissionsYearFilter])
 
-  // Reset pagination when submission filters change
+  // Refetch my-submissions (from page 1) when its filters change
   useEffect(() => {
-    setSubmissionsPage(1)
-  }, [submissionsQuarterFilter, submissionsYearFilter])
+    fetchMySubmissions(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mySubmissionsQuarterFilter, mySubmissionsYearFilter])
 
-  const fetchSubmissions = async () => {
+  const fetchMembers = async (page = 1) => {
+    try {
+      setMembersLoading(true)
+      const response = await api.get('/unitadmin/members', { params: { page, limit: 10 } })
+      if (response.data?.success) {
+        setMembers(response.data.data.members || [])
+        setMembersPagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
+      }
+    } catch (error) {
+      console.error('Error fetching members:', error)
+    } finally {
+      setMembersLoading(false)
+    }
+  }
+
+  const fetchSubmissions = async (page = submissionsPagination.current) => {
     try {
       setSubmissionsLoading(true)
-      const token = localStorage.getItem('token')
-      if (!token) {
-        console.error('No token found')
-        return
-      }
-      
-      // Set authorization header
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      
-      const response = await api.get('/unitadmin/submissions')
+      const params = { page, limit: 10 }
+      if (submissionsQuarterFilter !== 'all') params.quarter = submissionsQuarterFilter
+      if (submissionsYearFilter !== 'all') params.year = submissionsYearFilter
+
+      const response = await api.get('/unitadmin/submissions', { params })
 
       if (response.data?.success) {
         const submissionsData = response.data.data
-        console.log('Submissions data:', submissionsData)
         setSubmissions(submissionsData.submissions || [])
+        setSubmissionsPagination(submissionsData.pagination || { current: 1, pages: 1, total: 0 })
       } else {
         console.error('Failed to fetch submissions:', response.status)
       }
@@ -137,16 +154,11 @@ const UnitAdminDashboard = () => {
       
       // Set authorization header for all requests
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      
-      // Fetch dashboard stats and members in parallel (submissions will be fetched separately with pagination)
-      const [dashboardResponse, membersResponse] = await Promise.all([
-        api.get('/unitadmin/dashboard'),
-        api.get('/unitadmin/members')
-      ])
+
+      const dashboardResponse = await api.get('/unitadmin/dashboard')
 
       if (dashboardResponse.data?.success) {
         const dashboardData = dashboardResponse.data
-        console.log('Dashboard data:', dashboardData)
         const dashboardStats = dashboardData.data?.stats
         if (dashboardStats) {
           setStats({
@@ -159,22 +171,6 @@ const UnitAdminDashboard = () => {
       } else {
         console.error('Failed to fetch dashboard stats:', dashboardResponse.status)
       }
-
-      if (membersResponse.data?.success) {
-        const membersData = membersResponse.data
-        console.log('Members data:', membersData)
-        console.log('Members with submission counts:', membersData.data?.members?.map(m => ({
-          name: m.name,
-          ruknId: m.ruknId,
-          submissionCount: m.submissionCount
-        })))
-        setMembers(membersData.data?.members || [])
-      } else {
-        console.error('Failed to fetch members:', membersResponse.status)
-      }
-
-      // Fetch all submissions (frontend will handle pagination)
-      await fetchSubmissions()
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {
@@ -285,12 +281,16 @@ const UnitAdminDashboard = () => {
     setDynamicFormSchema(null)
   }
 
-  const fetchMySubmissions = async () => {
+  const fetchMySubmissions = async (page = mySubmissionsPagination.current) => {
     try {
       setMySubmissionsLoading(true)
-      const response = await api.get('/unitadmin/my-submissions')
+      const params = { page, limit: 10 }
+      if (mySubmissionsQuarterFilter !== 'all') params.quarter = mySubmissionsQuarterFilter
+      if (mySubmissionsYearFilter !== 'all') params.year = mySubmissionsYearFilter
+      const response = await api.get('/unitadmin/my-submissions', { params })
       if (response.data?.success) {
         setMySubmissions(response.data.data.submissions || [])
+        setMySubmissionsPagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
       }
     } catch (error) {
       console.error('Failed to fetch my submissions:', error)
@@ -303,12 +303,13 @@ const UnitAdminDashboard = () => {
     navigate('/ihthisabi/unitadmin/submit-form')
   }
 
-  const fetchUnitReplies = async () => {
+  const fetchUnitReplies = async (page = 1) => {
     try {
       setUnitRepliesLoading(true)
-      const response = await api.get('/unitadmin/replies')
+      const response = await api.get('/unitadmin/replies', { params: { page, limit: 10 } })
       if (response.data?.success) {
         setUnitReplies(response.data.data.replies || [])
+        setUnitRepliesPagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
       }
     } catch (error) {
       console.error('Failed to fetch unit replies:', error)
@@ -327,12 +328,13 @@ const UnitAdminDashboard = () => {
     setSelectedReply(null)
   }
 
-  const fetchAlternativeSubmissions = async () => {
+  const fetchAlternativeSubmissions = async (page = 1) => {
     try {
       setAlternativeSubmissionsLoading(true)
-      const response = await api.get('/unitadmin/alternative-submissions')
+      const response = await api.get('/unitadmin/alternative-submissions', { params: { page, limit: 10 } })
       if (response.data?.success) {
         setAlternativeSubmissions(response.data.data.alternativeSubmissions || [])
+        setAlternativeSubmissionsPagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
       }
     } catch (error) {
       console.error('Failed to fetch alternative submissions:', error)
@@ -382,45 +384,18 @@ const UnitAdminDashboard = () => {
     }
   }
 
-  // Quarter/year filtering derived values
-  const submissionYears = useMemo(
-    () => [...new Set(submissions.map(s => getSubmissionPeriod(s).year).filter(Boolean))].sort((a, b) => b - a),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [submissions]
-  )
-
-  const filteredUnitSubmissions = useMemo(
-    () => submissions.filter(s => {
-      const { quarter, year } = getSubmissionPeriod(s)
-      const matchQ = submissionsQuarterFilter === 'all' || quarter === submissionsQuarterFilter
-      const matchY = submissionsYearFilter === 'all' || year === submissionsYearFilter
-      return matchQ && matchY
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [submissions, submissionsQuarterFilter, submissionsYearFilter]
-  )
-
-  const mySubmissionYears = useMemo(
-    () => [...new Set(mySubmissions.map(s => getSubmissionPeriod(s).year).filter(Boolean))].sort((a, b) => b - a),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mySubmissions]
-  )
-
-  const filteredMySubmissions = useMemo(
-    () => mySubmissions.filter(s => {
-      const { quarter, year } = getSubmissionPeriod(s)
-      const matchQ = mySubmissionsQuarterFilter === 'all' || quarter === mySubmissionsQuarterFilter
-      const matchY = mySubmissionsYearFilter === 'all' || year === mySubmissionsYearFilter
-      return matchQ && matchY
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mySubmissions, mySubmissionsQuarterFilter, mySubmissionsYearFilter]
-  )
-
-  const memberPageCount = Math.max(1, Math.ceil(members.length / 10))
-  const paginatedMembers = members.slice((memberPage - 1) * 10, memberPage * 10)
-  const submissionsPageCount = Math.max(1, Math.ceil(filteredUnitSubmissions.length / 10))
-  const paginatedUnitSubmissions = filteredUnitSubmissions.slice((submissionsPage - 1) * 10, submissionsPage * 10)
+  // Static year range — submissions/mySubmissions now hold only the current server
+  // page, filtered by quarter/year on the backend, so these are used as-is below.
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear()
+    return Array.from({ length: 5 }, (_, i) => currentYear - i)
+  }, [])
+  const submissionYears = yearOptions
+  const mySubmissionYears = yearOptions
+  const filteredUnitSubmissions = submissions
+  const filteredMySubmissions = mySubmissions
+  const paginatedMembers = members
+  const paginatedUnitSubmissions = submissions
 
   if (loading) {
     return (
@@ -512,7 +487,7 @@ const UnitAdminDashboard = () => {
                     : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
                 }`}
               >
-                <span className="hidden sm:inline">My Submissions ({mySubmissions.length})</span>
+                <span className="hidden sm:inline">My Submissions ({mySubmissionsPagination.total})</span>
                 <span className="sm:hidden">My Forms</span>
               </button>
               <button
@@ -523,7 +498,7 @@ const UnitAdminDashboard = () => {
                     : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
                 }`}
               >
-                <span className="hidden sm:inline">Members ({members.length})</span>
+                <span className="hidden sm:inline">Members ({membersPagination.total})</span>
                 <span className="sm:hidden">Members</span>
               </button>
               <button
@@ -534,7 +509,7 @@ const UnitAdminDashboard = () => {
                     : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
                 }`}
               >
-                <span className="hidden sm:inline">Unit Submissions ({submissions.length})</span>
+                <span className="hidden sm:inline">Unit Submissions ({submissionsPagination.total})</span>
                 <span className="sm:hidden">Unit Forms</span>
               </button>
               <button
@@ -559,7 +534,7 @@ const UnitAdminDashboard = () => {
                 }`}
               >
                 <span className="hidden sm:inline">
-                  Unit Replies ({unitReplies.length})
+                  Unit Replies ({unitRepliesPagination.total})
                 </span>
                 <span className="sm:hidden">U. Replies</span>
               </button>
@@ -572,7 +547,7 @@ const UnitAdminDashboard = () => {
                 }`}
               >
                 <span className="hidden sm:inline">
-                  Alternate Submissions ({alternativeSubmissions.length})
+                  Alternate Submissions ({alternativeSubmissionsPagination.total})
                 </span>
                 <span className="sm:hidden">Alt. Forms</span>
               </button>
@@ -635,7 +610,7 @@ const UnitAdminDashboard = () => {
                     My Submissions
                     {(mySubmissionsQuarterFilter !== 'all' || mySubmissionsYearFilter !== 'all') && (
                       <span className="ml-2 text-sm font-normal text-blue-600">
-                        ({filteredMySubmissions.length} of {mySubmissions.length})
+                        ({mySubmissionsPagination.total} matching)
                       </span>
                     )}
                   </h3>
@@ -727,7 +702,7 @@ const UnitAdminDashboard = () => {
                       </div>
                     ))}
                   </div>
-                ) : mySubmissions.length > 0 ? (
+                ) : (mySubmissionsQuarterFilter !== 'all' || mySubmissionsYearFilter !== 'all') ? (
                   <div className="text-center py-8">
                     <Calendar className="mx-auto w-10 h-10 text-gray-300 mb-3" />
                     <p className="text-gray-500 text-sm">No submissions match the selected period.</p>
@@ -754,6 +729,7 @@ const UnitAdminDashboard = () => {
                     </div>
                   </div>
                 )}
+                <Pagination pagination={mySubmissionsPagination} onPageChange={fetchMySubmissions} loading={mySubmissionsLoading} itemLabel="submissions" />
               </div>
             )}
 
@@ -764,23 +740,7 @@ const UnitAdminDashboard = () => {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">Unit Members</h3>
-                      <p className="text-sm text-gray-500">{members.length} members</p>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs">
-                      <button
-                        onClick={() => setMemberPage((prev) => Math.max(prev - 1, 1))}
-                        className="px-3 py-2 rounded-full border border-gray-200 text-gray-600 disabled:opacity-50"
-                        disabled={memberPage <= 1}
-                      >
-                        Previous
-                      </button>
-                      <button
-                        onClick={() => setMemberPage((prev) => Math.min(prev + 1, memberPageCount))}
-                        className="px-3 py-2 rounded-full border border-gray-200 text-gray-600 disabled:opacity-50"
-                        disabled={memberPage >= memberPageCount}
-                      >
-                        Next
-                      </button>
+                      <p className="text-sm text-gray-500">{membersPagination.total} members</p>
                     </div>
                   </div>
 
@@ -932,20 +892,7 @@ const UnitAdminDashboard = () => {
                       </tbody>
                     </table>
                   </div>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500">
-                    <span>Page {memberPage} of {memberPageCount}</span>
-                    <div className="flex flex-wrap gap-2">
-                      {Array.from({ length: memberPageCount }, (_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setMemberPage(idx + 1)}
-                          className={`w-8 h-8 rounded-full border ${memberPage === idx + 1 ? 'border-[#161F2F] bg-[#161F2F] text-white' : 'border-gray-200 text-gray-600'}`}
-                        >
-                          {idx + 1}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <Pagination pagination={membersPagination} onPageChange={fetchMembers} loading={membersLoading} itemLabel="members" />
                 </div>
 
               </div>
@@ -1084,29 +1031,9 @@ const UnitAdminDashboard = () => {
                         </tbody>
                       </table>
                     </div>
-                    <div className="mt-3 flex flex-col gap-3 text-xs text-gray-600 sm:flex-row sm:items-center sm:justify-between">
-                      <span>
-                        Page {submissionsPage} of {submissionsPageCount} ({filteredUnitSubmissions.length} total)
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSubmissionsPage(p => Math.max(1, p - 1))}
-                          className="px-3 py-1.5 rounded-full border border-gray-200 text-gray-700 disabled:opacity-50 hover:bg-gray-50"
-                          disabled={submissionsPage <= 1 || submissionsLoading}
-                        >
-                          Previous
-                        </button>
-                        <button
-                          onClick={() => setSubmissionsPage(p => Math.min(submissionsPageCount, p + 1))}
-                          className="px-3 py-1.5 rounded-full border border-gray-200 text-gray-700 disabled:opacity-50 hover:bg-gray-50"
-                          disabled={submissionsPage >= submissionsPageCount || submissionsLoading}
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
+                    <Pagination pagination={submissionsPagination} onPageChange={fetchSubmissions} loading={submissionsLoading} itemLabel="submissions" />
                   </>
-                ) : submissions.length > 0 ? (
+                ) : (submissionsQuarterFilter !== 'all' || submissionsYearFilter !== 'all') ? (
                   <div className="text-center py-8">
                     <Calendar className="mx-auto w-10 h-10 text-gray-300 mb-3" />
                     <p className="text-gray-500 text-sm">No submissions match the selected period.</p>
@@ -1219,6 +1146,7 @@ const UnitAdminDashboard = () => {
                     </p>
                   </div>
                 )}
+                <Pagination pagination={unitRepliesPagination} onPageChange={fetchUnitReplies} loading={unitRepliesLoading} itemLabel="replies" />
               </div>
             )}
 
@@ -1434,6 +1362,7 @@ const UnitAdminDashboard = () => {
                     </p>
                   </div>
                 )}
+                <Pagination pagination={alternativeSubmissionsPagination} onPageChange={fetchAlternativeSubmissions} loading={alternativeSubmissionsLoading} itemLabel="submissions" />
               </div>
             )}
           </div>
@@ -1444,7 +1373,7 @@ const UnitAdminDashboard = () => {
       {showSubmissionModal && (
         <div className="fixed inset-0 z-40">
           {/* overlay */}
-          <div className="absolute inset-0 bg-black/30" onClick={closeSubmissionModal}></div>
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeSubmissionModal}></div>
           {/* panel */}
           <div className="absolute inset-y-0 right-0 w-full sm:w-[560px] bg-white shadow-xl border-l border-gray-200 flex flex-col">
             {/* Header */}
@@ -1791,7 +1720,7 @@ const UnitAdminDashboard = () => {
 
       {/* Unit Reply Modal */}
       {showReplyModal && selectedReply && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-3 lg:p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-3 lg:p-4">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto">
             <div className="p-3 sm:p-5">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3 sm:mb-4 border-b border-gray-200 pb-2 sm:pb-3 gap-3">

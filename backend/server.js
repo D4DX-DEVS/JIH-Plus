@@ -35,6 +35,7 @@ const ihthisabiAlternativeSubmissionsRoutes = require('./routes/ihthisabi/altern
 const ihthisabiAdminRoutes = require('./routes/ihthisabi/admin');
 const ihthisabiLocationRoutes = require('./routes/ihthisabi/location');
 const ihthisabiUnitAdminRoutes = require('./routes/ihthisabi/unitAdmin');
+const ihthisabiDistrictAdminRoutes = require('./routes/ihthisabi/districtAdmin');
 const ihthisabiDynamicReportRoutes = require('./routes/ihthisabi/dynamicReports');
 const ihthisabiApplicationFormRoutes = require('./routes/ihthisabi/applicationForm');
 const ihthisabiMasterDataRoutes = require('./routes/ihthisabi/masterData');
@@ -108,6 +109,7 @@ app.use('/api/ihthisabi/application-forms', ihthisabiApplicationFormRoutes);
 app.use('/api/ihthisabi/admin/master-data', ihthisabiMasterDataRoutes);
 app.use('/api/location', ihthisabiLocationRoutes);
 app.use('/api/unitadmin', ihthisabiUnitAdminRoutes);
+app.use('/api/districtadmin', ihthisabiDistrictAdminRoutes);
 app.use('/api/admin', ihthisabiAdminRoutes);
 
 // PORT fix for DigitalOcean

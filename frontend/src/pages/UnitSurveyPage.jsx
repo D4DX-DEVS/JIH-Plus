@@ -787,7 +787,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
             )}
 
             {success && (
-              <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999]" style={{zIndex: 9999}}>
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[9999]" style={{zIndex: 9999}}>
                 {/* Debug: Log success modal rendering */}
                 {console.log('=== SUCCESS MODAL RENDERING ===', success)}
                 <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md mx-4 border-4 border-green-500 animate-scale-in">
@@ -807,7 +807,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
 
             {/* Loading Overlay */}
             {isLoading && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-white rounded-2xl p-6 flex items-center space-x-3 shadow-2xl border border-gray-200">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#002349]"></div>
                   <span className="text-gray-700 font-semibold">

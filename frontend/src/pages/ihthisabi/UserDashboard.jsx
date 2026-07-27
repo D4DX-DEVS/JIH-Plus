@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { api } from '../../utils/ihthisabi/api'
 import ConfirmationModal from '../../components/ihthisabi/ConfirmationModal'
+import Pagination from '../../components/ihthisabi/Pagination'
 import { 
   FileText, 
   Calendar, 
   CheckCircle2, 
   TrendingUp,
-  ArrowRight,
   Plus,
   Eye,
   CheckCircle,
@@ -26,6 +26,7 @@ const UserDashboard = () => {
   const navigate = useNavigate()
   const [stats, setStats] = useState(null)
   const [submissions, setSubmissions] = useState([])
+  const [submissionsPagination, setSubmissionsPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [loading, setLoading] = useState(true)
   const [alternativeSubmissions, setAlternativeSubmissions] = useState([])
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, submissionId: null, submissionName: null })
@@ -64,11 +65,11 @@ const UserDashboard = () => {
     }
   }
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = async (page = 1) => {
     try {
-      const response = await api.get('/submissions/my-submissions')
+      const response = await api.get('/submissions/my-submissions', { params: { page, limit: 10 } })
       setSubmissions(response.data.data.submissions || [])
-      console.log(response.data.data.submissions)
+      setSubmissionsPagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
     } catch (error) {
       console.error('Failed to fetch submissions:', error)
       setSubmissions([])
@@ -602,7 +603,7 @@ const UserDashboard = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {submissions.slice(0, 8).map((submission) => (
+                {submissions.map((submission) => (
                   <div 
                     key={submission._id} 
                     className="flex flex-col items-start justify-between gap-4 p-4 sm:p-5 bg-gray-50 rounded-xl hover:bg-white hover:shadow-md border border-gray-200 transition-all duration-200 sm:flex-row sm:items-center"
@@ -653,20 +654,9 @@ const UserDashboard = () => {
                     </div>
                   </div>
                 ))}
-                
-                {submissions.length > 8 && (
-                  <div className="text-center pt-4">
-                    <button
-                      onClick={() => navigate('/ihthisabi/dashboard')}
-                      className="text-primary hover:text-primary-600 text-sm font-medium flex items-center mx-auto"
-                    >
-                      View All Submissions
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </button>
-                  </div>
-                )}
               </div>
             )}
+            <Pagination pagination={submissionsPagination} onPageChange={fetchSubmissions} loading={loading} itemLabel="submissions" />
           </div>
         </div>
       </div>

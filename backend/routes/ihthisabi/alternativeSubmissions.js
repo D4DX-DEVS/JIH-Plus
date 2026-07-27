@@ -3,10 +3,11 @@ const AlternativeSubmit = require('../../models/ihthisabi/alternativeSubmit');
 const Submission = require('../../models/ihthisabi/Submission');
 const { protect, authorize } = require('../../middlewares/ihthisabi/auth');
 const { validate, schemas, validateQuery } = require('../../middlewares/ihthisabi/validation');
-const { 
-  getAvailableSubmissionQuarter, 
-  validateSubmissionQuarter 
+const {
+  getAvailableSubmissionQuarter,
+  validateSubmissionQuarter
 } = require('../../utils/quarterHelper');
+const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
 
 const router = express.Router();
 
@@ -157,7 +158,8 @@ router.post('/', protect, authorize('rukn', 'unitAdmin'), validate(schemas.alter
 // @access  Private (Rukn and UnitAdmin)
 router.get('/my-submissions', protect, authorize('rukn', 'unitAdmin'), validateQuery(schemas.adminFilter), async (req, res) => {
   try {
-    const { page = 1, limit = 10, year, month } = req.query;
+    const { year, month } = req.query;
+    const { page: pageNum, limit: limitNum, skip } = parsePagination(req.query);
 
     // Get userId - unitAdmin uses req.user.userId, rukn uses req.user._id
     const userId = req.user.userId || req.user._id;
@@ -173,13 +175,6 @@ router.get('/my-submissions', protect, authorize('rukn', 'unitAdmin'), validateQ
       query['submissionPeriod.month'] = parseInt(month);
     }
 
-    // Parse pagination parameters
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
-
-    // Calculate pagination
-    const skip = (pageNum - 1) * limitNum;
-
     // Get alternative submissions
     const alternativeSubmissions = await AlternativeSubmit.find(query)
       .sort({ createdAt: -1 })
@@ -194,13 +189,7 @@ router.get('/my-submissions', protect, authorize('rukn', 'unitAdmin'), validateQ
       success: true,
       data: {
         alternativeSubmissions,
-        pagination: {
-          currentPage: pageNum,
-          totalPages: Math.ceil(total / limitNum),
-          totalSubmissions: total,
-          hasNext: pageNum < Math.ceil(total / limitNum),
-          hasPrev: pageNum > 1
-        }
+        pagination: buildPaginationMeta(total, pageNum, limitNum)
       }
     });
   } catch (error) {
@@ -217,7 +206,8 @@ router.get('/my-submissions', protect, authorize('rukn', 'unitAdmin'), validateQ
 // @access  Private (Admin only)
 router.get('/all', protect, authorize('admin'), validateQuery(schemas.adminFilter), async (req, res) => {
   try {
-    const { page = 1, limit = 10, year, month, district, area, unit } = req.query;
+    const { year, month, district, area, unit } = req.query;
+    const { page: pageNum, limit: limitNum, skip } = parsePagination(req.query);
 
     // Build query
     const query = {};
@@ -242,13 +232,6 @@ router.get('/all', protect, authorize('admin'), validateQuery(schemas.adminFilte
       query.unit = unit;
     }
 
-    // Parse pagination parameters
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
-
-    // Calculate pagination
-    const skip = (pageNum - 1) * limitNum;
-
     // Get alternative submissions
     const alternativeSubmissions = await AlternativeSubmit.find(query)
       .populate('userId', 'ruknId name district area unit')
@@ -264,13 +247,7 @@ router.get('/all', protect, authorize('admin'), validateQuery(schemas.adminFilte
       success: true,
       data: {
         alternativeSubmissions,
-        pagination: {
-          currentPage: pageNum,
-          totalPages: Math.ceil(total / limitNum),
-          totalSubmissions: total,
-          hasNext: pageNum < Math.ceil(total / limitNum),
-          hasPrev: pageNum > 1
-        }
+        pagination: buildPaginationMeta(total, pageNum, limitNum)
       }
     });
   } catch (error) {

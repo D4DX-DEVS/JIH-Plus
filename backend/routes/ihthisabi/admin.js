@@ -5,6 +5,7 @@ const ApplicationForm = require('../../models/ihthisabi/ApplicationForm');
 const User = require('../../models/ihthisabi/User');
 const ArchivedQuarter = require('../../models/ihthisabi/ArchivedQuarter');
 const UnitAdmin = require('../../models/ihthisabi/UnitAdmin');
+const DistrictAdmin = require('../../models/ihthisabi/DistrictAdmin');
 const UnitAdminReply = require('../../models/ihthisabi/UnitAdminReply');
 const UnitAdminMessage = require('../../models/ihthisabi/UnitAdminMessage');
 const ReplyTemplate = require('../../models/ihthisabi/ReplyTemplate');
@@ -17,10 +18,13 @@ const upload = require('../../middlewares/ihthisabi/upload');
 const { parseExcelFile, parseUnitAdminExcelFile } = require('../../utils/excelParser');
 const { sendWhatsAppMessage, formatReplyMessage, formatStructuredReplyMessage } = require('../../utils/whatsapp');
 const { enqueueBroadcast, getBroadcastJob } = require('../../utils/whatsappBroadcastQueue');
+const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
 const fs = require('fs');
 const path = require('path');
 
 const router = express.Router();
+
+const escapeRegexSubmissions = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // All admin routes require admin role
 router.use(protect);
@@ -40,9 +44,8 @@ router.get('/test', (req, res) => {
 // @access  Private (Admin only)
 router.get('/submissions', async (req, res) => {
   try {
-    const { page = 1, limit = 15, userId } = req.query;
-    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
-    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 15, 1), 500);
+    const { userId, district, area, unit, status, quarter, year, search } = req.query;
+    const { page: pageNum, limit: limitNum } = parsePagination(req.query);
 
     // Exclude abroad users so their submissions appear only in the abroad view
     const abroadUsers = await User.find({ isAbroad: true }).select('_id').lean();
@@ -66,115 +69,129 @@ router.get('/submissions', async (req, res) => {
         match.userId = { $nin: abroadUserIds };
       }
     }
+    if (quarter) match['submissionPeriod.quarter'] = parseInt(quarter, 10);
+    if (year) match['submissionPeriod.year'] = parseInt(year, 10);
+    if (status) match.status = status;
+
+    // District/area/unit/search filter on the RESOLVED location (current rukn location
+    // via the lookups below), matching the semantics the frontend used to apply client-side.
+    const resolvedMatch = {};
+    if (district) resolvedMatch.district = district;
+    if (area) resolvedMatch.area = area;
+    if (unit) resolvedMatch.unit = unit;
+    if (search) resolvedMatch.ruknName = { $regex: escapeRegexSubmissions(search), $options: 'i' };
 
     const pipeline = [
       { $match: match }, // Q3 submissions are visible in admin list view
+      // Minimal lookup for current rukn location (no deep population)
+      {
+        $lookup: {
+          from: 'users',
+          let: { uid: '$userId' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$uid'] } } },
+            { $project: { district: 1, area: 1, unit: 1, name: 1, username: 1 } }
+          ],
+          as: 'user'
+        }
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      // Fallback lookup for unit admin submissions (userId references unitadmins collection)
+      {
+        $lookup: {
+          from: 'unitadmins',
+          let: { uid: '$userId' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$uid'] } } },
+            { $project: { district: 1, area: 1, unit: 1, name: 1, ruknId: 1 } }
+          ],
+          as: 'unitAdminUser'
+        }
+      },
+      { $unwind: { path: '$unitAdminUser', preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          district: { $ifNull: ['$user.district', { $ifNull: ['$unitAdminUser.district', '$district'] }] },
+          area: { $ifNull: ['$user.area', { $ifNull: ['$unitAdminUser.area', '$area'] }] },
+          unit: { $ifNull: ['$user.unit', { $ifNull: ['$unitAdminUser.unit', '$unit'] }] },
+          location: {
+            $let: {
+              vars: {
+                d: { $ifNull: ['$user.district', { $ifNull: ['$unitAdminUser.district', '$district'] }] },
+                a: { $ifNull: ['$user.area', { $ifNull: ['$unitAdminUser.area', '$area'] }] },
+                u: { $ifNull: ['$user.unit', { $ifNull: ['$unitAdminUser.unit', '$unit'] }] }
+              },
+              in: {
+                $trim: {
+                  input: {
+                    $replaceAll: {
+                      input: {
+                        $trim: {
+                          input: {
+                            $concat: [
+                              { $ifNull: ['$$d', ''] },
+                              ' - ',
+                              { $ifNull: ['$$a', ''] },
+                              ' - ',
+                              { $ifNull: ['$$u', ''] }
+                            ]
+                          }
+                        }
+                      },
+                      find: ' -  - ',
+                      replacement: ''
+                    }
+                  }
+                }
+              }
+            }
+          },
+          ruknName: {
+            $ifNull: [
+              '$ruknName',
+              { $ifNull: ['$user.name', { $ifNull: ['$unitAdminUser.name', '$user.username'] }] }
+            ]
+          },
+          periodDisplay: {
+            $cond: [
+              { $ifNull: ['$submissionPeriod.year', false] },
+              {
+                $concat: [
+                  'Q',
+                  {
+                    $toString: {
+                      $cond: [
+                        { $ifNull: ['$submissionPeriod.quarter', false] },
+                        '$submissionPeriod.quarter',
+                        {
+                          $ceil: {
+                            $divide: [
+                              { $ifNull: ['$submissionPeriod.month', 1] },
+                              3
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  ' ',
+                  { $toString: '$submissionPeriod.year' }
+                ]
+              },
+              'N/A'
+            ]
+          }
+        }
+      },
+      // Filter on resolved (post-lookup) district/area/unit/name, matching the
+      // semantics the frontend used to apply client-side over the full dataset.
+      ...(Object.keys(resolvedMatch).length > 0 ? [{ $match: resolvedMatch }] : []),
       { $sort: { createdAt: -1 } },
       {
         $facet: {
           data: [
             { $skip: (pageNum - 1) * limitNum },
             { $limit: limitNum },
-            // Minimal lookup for current rukn location (no deep population)
-            {
-              $lookup: {
-                from: 'users',
-                let: { uid: '$userId' },
-                pipeline: [
-                  { $match: { $expr: { $eq: ['$_id', '$$uid'] } } },
-                  { $project: { district: 1, area: 1, unit: 1, name: 1, username: 1 } }
-                ],
-                as: 'user'
-              }
-            },
-            { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
-            // Fallback lookup for unit admin submissions (userId references unitadmins collection)
-            {
-              $lookup: {
-                from: 'unitadmins',
-                let: { uid: '$userId' },
-                pipeline: [
-                  { $match: { $expr: { $eq: ['$_id', '$$uid'] } } },
-                  { $project: { district: 1, area: 1, unit: 1, name: 1, ruknId: 1 } }
-                ],
-                as: 'unitAdminUser'
-              }
-            },
-            { $unwind: { path: '$unitAdminUser', preserveNullAndEmptyArrays: true } },
-            {
-              $addFields: {
-                district: { $ifNull: ['$user.district', { $ifNull: ['$unitAdminUser.district', '$district'] }] },
-                area: { $ifNull: ['$user.area', { $ifNull: ['$unitAdminUser.area', '$area'] }] },
-                unit: { $ifNull: ['$user.unit', { $ifNull: ['$unitAdminUser.unit', '$unit'] }] },
-                location: {
-                  $let: {
-                    vars: {
-                      d: { $ifNull: ['$user.district', { $ifNull: ['$unitAdminUser.district', '$district'] }] },
-                      a: { $ifNull: ['$user.area', { $ifNull: ['$unitAdminUser.area', '$area'] }] },
-                      u: { $ifNull: ['$user.unit', { $ifNull: ['$unitAdminUser.unit', '$unit'] }] }
-                    },
-                    in: {
-                      $trim: {
-                        input: {
-                          $replaceAll: {
-                            input: {
-                              $trim: {
-                                input: {
-                                  $concat: [
-                                    { $ifNull: ['$$d', ''] },
-                                    ' - ',
-                                    { $ifNull: ['$$a', ''] },
-                                    ' - ',
-                                    { $ifNull: ['$$u', ''] }
-                                  ]
-                                }
-                              }
-                            },
-                            find: ' -  - ',
-                            replacement: ''
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                ruknName: {
-                  $ifNull: [
-                    '$ruknName',
-                    { $ifNull: ['$user.name', { $ifNull: ['$unitAdminUser.name', '$user.username'] }] }
-                  ]
-                },
-                periodDisplay: {
-                  $cond: [
-                    { $ifNull: ['$submissionPeriod.year', false] },
-                    {
-                      $concat: [
-                        'Q',
-                        {
-                          $toString: {
-                            $cond: [
-                              { $ifNull: ['$submissionPeriod.quarter', false] },
-                              '$submissionPeriod.quarter',
-                              {
-                                $ceil: {
-                                  $divide: [
-                                    { $ifNull: ['$submissionPeriod.month', 1] },
-                                    3
-                                  ]
-                                }
-                              }
-                            ]
-                          }
-                        },
-                        ' ',
-                        { $toString: '$submissionPeriod.year' }
-                      ]
-                    },
-                    'N/A'
-                  ]
-                }
-              }
-            },
             {
               $project: {
                 _id: 0,
@@ -204,12 +221,7 @@ router.get('/submissions', async (req, res) => {
       success: true,
       data: {
         submissions,
-        pagination: {
-          current: pageNum,
-          pages: Math.ceil(total / limitNum),
-          total,
-          limit: limitNum
-        }
+        pagination: buildPaginationMeta(total, pageNum, limitNum)
       }
     });
   } catch (error) {
@@ -1595,7 +1607,7 @@ router.post('/upload-excel', upload.single('excelFile'), async (req, res) => {
 // @access  Private (Admin only)
 router.get('/users', async (req, res) => {
   try {
-    const { page = 1, limit = 50, unit, district, area, search } = req.query;
+    const { page = 1, limit = 10, unit, district, area, search } = req.query;
     const query = { role: 'rukn' };
 
     // Add filters
@@ -1627,11 +1639,7 @@ router.get('/users', async (req, res) => {
       success: true,
       data: {
         users,
-        pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(total / limit),
-          total
-        }
+        pagination: buildPaginationMeta(total, parseInt(page), parseInt(limit))
       }
     });
   } catch (error) {
@@ -1974,7 +1982,7 @@ router.post('/upload-unitadmin-excel', upload.single('excelFile'), async (req, r
 router.get('/unitadmins', async (req, res) => {
   try {
     console.log('GET /api/admin/unitadmins - User:', req.user);
-    const { page = 1, limit = 100, unit, search, district, area } = req.query;
+    const { page = 1, limit = 10, unit, search, district, area } = req.query;
     const query = {};
 
     // Add filters
@@ -2007,11 +2015,7 @@ router.get('/unitadmins', async (req, res) => {
       success: true,
       data: {
         unitAdmins,
-        pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(total / limit),
-          total
-        }
+        pagination: buildPaginationMeta(total, parseInt(page), parseInt(limit))
       }
     });
   } catch (error) {
@@ -2993,6 +2997,15 @@ router.post('/migrate-q4-to-q3', async (req, res) => {
 // @access  Private (Admin only)
 router.get('/abroad-countries', async (req, res) => {
   try {
+    // Paginated when `page` is sent (list view); full list otherwise (dropdown consumers)
+    if (req.query.page) {
+      const { page, limit, skip } = parsePagination(req.query);
+      const [countries, total] = await Promise.all([
+        AbroadCountry.find().sort({ title: 1 }).skip(skip).limit(limit),
+        AbroadCountry.countDocuments()
+      ]);
+      return res.json({ success: true, data: { countries, pagination: buildPaginationMeta(total, page, limit) } });
+    }
     const countries = await AbroadCountry.find().sort({ title: 1 });
     res.json({ success: true, data: { countries } });
   } catch (error) {
@@ -3085,6 +3098,16 @@ router.get('/abroad-areas', async (req, res) => {
     const { country } = req.query;
     const filter = {};
     if (country) filter.countryId = country;
+
+    if (req.query.page) {
+      const { page, limit, skip } = parsePagination(req.query);
+      const [areas, total] = await Promise.all([
+        AbroadArea.find(filter).populate('countryId', 'title').sort({ title: 1 }).skip(skip).limit(limit).lean(),
+        AbroadArea.countDocuments(filter)
+      ]);
+      return res.json({ success: true, data: { areas, pagination: buildPaginationMeta(total, page, limit) } });
+    }
+
     const areas = await AbroadArea.find(filter)
       .populate('countryId', 'title')
       .sort({ title: 1 })
@@ -3185,6 +3208,16 @@ router.get('/abroad-units', async (req, res) => {
     const filter = {};
     if (area) filter.areaId = area;
     if (country) filter.countryId = country;
+
+    if (req.query.page) {
+      const { page, limit, skip } = parsePagination(req.query);
+      const [units, total] = await Promise.all([
+        AbroadUnit.find(filter).populate('areaId', 'title').populate('countryId', 'title').sort({ title: 1 }).skip(skip).limit(limit).lean(),
+        AbroadUnit.countDocuments(filter)
+      ]);
+      return res.json({ success: true, data: { units, pagination: buildPaginationMeta(total, page, limit) } });
+    }
+
     const units = await AbroadUnit.find(filter)
       .populate('areaId', 'title')
       .populate('countryId', 'title')
@@ -3282,11 +3315,28 @@ router.delete('/abroad-units/:id', async (req, res) => {
 // @access  Private (Admin only)
 router.get('/abroad-unitadmins', async (req, res) => {
   try {
-    const { country, area, unit } = req.query;
+    const { country, area, unit, search } = req.query;
     const filter = { isAbroad: true };
     if (country) filter.abroadCountry = country;
     if (area) filter.abroadArea = area;
     if (unit) filter.abroadUnit = unit;
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { ruknId: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (req.query.page) {
+      const { page, limit, skip } = parsePagination(req.query);
+      const [unitAdmins, total] = await Promise.all([
+        UnitAdmin.find(filter)
+          .populate('abroadCountry', 'title').populate('abroadArea', 'title').populate('abroadUnit', 'title')
+          .sort({ name: 1 }).skip(skip).limit(limit).lean(),
+        UnitAdmin.countDocuments(filter)
+      ]);
+      return res.json({ success: true, data: { unitAdmins, pagination: buildPaginationMeta(total, page, limit) } });
+    }
 
     const unitAdmins = await UnitAdmin.find(filter)
       .populate('abroadCountry', 'title')
@@ -3450,9 +3500,15 @@ router.put('/users/:id', async (req, res) => {
 // @access  Private (Admin only)
 router.get('/abroad-submissions', async (req, res) => {
   try {
-    const { country, area, unit, page = 1, limit = 20, status, quarter, year } = req.query;
-    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
-    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 200);
+    const { country, area, unit, status, quarter, year } = req.query;
+    // Paginated when `page` is sent (list view); full list otherwise (the grouped
+    // country/area/unit tree view needs every matching submission at once, so it
+    // bypasses parsePagination's MAX_LIMIT clamp rather than being capped like a
+    // normal page request).
+    const isPaginated = Boolean(req.query.page);
+    const { page: pageNum, limit: limitNum } = isPaginated
+      ? parsePagination(req.query)
+      : { page: 1, limit: 2000 };
 
     // Build user filter
     const userFilter = { isAbroad: true };
@@ -3474,7 +3530,7 @@ router.get('/abroad-submissions', async (req, res) => {
         data: {
           submissions: [],
           countries: [],
-          pagination: { current: pageNum, pages: 0, total: 0 }
+          pagination: buildPaginationMeta(0, pageNum, limitNum)
         }
       });
     }
@@ -3536,11 +3592,7 @@ router.get('/abroad-submissions', async (req, res) => {
       data: {
         submissions: enriched,
         countries: Object.values(countrySummary).sort((a, b) => a.title.localeCompare(b.title)),
-        pagination: {
-          current: pageNum,
-          pages: Math.ceil(total / limitNum),
-          total
-        }
+        pagination: buildPaginationMeta(total, pageNum, limitNum)
       }
     });
   } catch (error) {
@@ -3559,6 +3611,18 @@ router.get('/abroad-members', async (req, res) => {
     if (country) filter.abroadCountry = country;
     if (area) filter.abroadArea = area;
     if (unit) filter.abroadUnit = unit;
+
+    if (req.query.page) {
+      const { page, limit, skip } = parsePagination(req.query);
+      const [members, total] = await Promise.all([
+        User.find(filter)
+          .select('-password')
+          .populate('abroadCountry', 'title').populate('abroadArea', 'title').populate('abroadUnit', 'title')
+          .sort({ name: 1 }).skip(skip).limit(limit).lean(),
+        User.countDocuments(filter)
+      ]);
+      return res.json({ success: true, data: { members, pagination: buildPaginationMeta(total, page, limit) } });
+    }
 
     const members = await User.find(filter)
       .select('-password')
@@ -3920,6 +3984,161 @@ router.delete('/unitadmins/:id', requireSuperAdmin, async (req, res) => {
   }
 });
 
+// ==================== DISTRICT ADMIN MANAGEMENT ====================
+
+// @desc    Get all district admins
+// @route   GET /api/ihthisabi/admin/district-admins
+// @access  Private (Admin only)
+router.get('/district-admins', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, district, search } = req.query;
+    const query = {};
+
+    if (district) {
+      query.district = { $regex: district, $options: 'i' };
+    }
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { ruknId: { $regex: search, $options: 'i' } },
+        { emailId: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const districtAdmins = await DistrictAdmin.find(query)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await DistrictAdmin.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: {
+        districtAdmins,
+        pagination: buildPaginationMeta(total, parseInt(page), parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Get district admins error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Get all districts that have a district admin assigned
+// @route   GET /api/ihthisabi/admin/district-admins/districts
+// @access  Private (Admin only)
+router.get('/district-admins/districts', async (req, res) => {
+  try {
+    const districts = await DistrictAdmin.distinct('district');
+    res.json({ success: true, data: { districts: districts.sort() } });
+  } catch (error) {
+    console.error('Get district admin districts error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Get single district admin by ID
+// @route   GET /api/ihthisabi/admin/district-admins/:id
+// @access  Private (Admin only)
+router.get('/district-admins/:id', async (req, res) => {
+  try {
+    const districtAdmin = await DistrictAdmin.findById(req.params.id).select('-password');
+    if (!districtAdmin) {
+      return res.status(404).json({ success: false, message: 'District admin not found' });
+    }
+    res.json({ success: true, data: { districtAdmin } });
+  } catch (error) {
+    console.error('Get district admin error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Create district admin manually (super admin only)
+// @route   POST /api/ihthisabi/admin/district-admins
+// @access  Private (Super Admin only)
+router.post('/district-admins', requireSuperAdmin, async (req, res) => {
+  try {
+    const { ruknId, name, district, contactNo, emailId, password } = req.body;
+
+    if (!ruknId || !name || !district) {
+      return res.status(400).json({ success: false, message: 'ruknId, name, and district are required' });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    const existing = await DistrictAdmin.findOne({ ruknId: ruknId.trim() });
+    if (existing) return res.status(409).json({ success: false, message: 'A district admin with this Rukn ID already exists' });
+
+    const districtAdmin = await DistrictAdmin.create({
+      ruknId: ruknId.trim(),
+      name: name.trim(),
+      district: district.trim(),
+      contactNo: contactNo?.trim() || '',
+      emailId: emailId?.trim() || '',
+      password,
+      isActive: true
+    });
+
+    const created = await DistrictAdmin.findById(districtAdmin._id).select('-password');
+    res.status(201).json({ success: true, message: 'District admin created successfully', data: { districtAdmin: created } });
+  } catch (error) {
+    console.error('Create district admin error:', error);
+    if (error.code === 11000) return res.status(409).json({ success: false, message: 'Rukn ID is already in use' });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Full update for a district admin
+// @route   PUT /api/ihthisabi/admin/district-admins/:id/profile
+// @access  Private (Super Admin only)
+router.put('/district-admins/:id/profile', requireSuperAdmin, async (req, res) => {
+  try {
+    const { ruknId, name, district, contactNo, emailId, isActive, password } = req.body;
+
+    const districtAdmin = await DistrictAdmin.findById(req.params.id);
+    if (!districtAdmin) return res.status(404).json({ success: false, message: 'District admin not found' });
+
+    if (ruknId && ruknId.trim() !== districtAdmin.ruknId) {
+      const duplicate = await DistrictAdmin.findOne({ ruknId: ruknId.trim(), _id: { $ne: districtAdmin._id } });
+      if (duplicate) return res.status(409).json({ success: false, message: 'Rukn ID is already in use' });
+      districtAdmin.ruknId = ruknId.trim();
+    }
+
+    if (name !== undefined) districtAdmin.name = name.trim();
+    if (district !== undefined) districtAdmin.district = district.trim();
+    if (contactNo !== undefined) districtAdmin.contactNo = contactNo.trim();
+    if (emailId !== undefined) districtAdmin.emailId = emailId.trim();
+    if (typeof isActive === 'boolean') districtAdmin.isActive = isActive;
+    if (password && password.length >= 6) districtAdmin.password = password;
+
+    await districtAdmin.save();
+    const updated = await DistrictAdmin.findById(districtAdmin._id).select('-password');
+    res.json({ success: true, message: 'District admin updated successfully', data: { districtAdmin: updated } });
+  } catch (error) {
+    console.error('Update district admin profile error:', error);
+    if (error.code === 11000) return res.status(409).json({ success: false, message: 'Rukn ID is already in use' });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Delete a single district admin
+// @route   DELETE /api/ihthisabi/admin/district-admins/:id
+// @access  Private (Super Admin only)
+router.delete('/district-admins/:id', requireSuperAdmin, async (req, res) => {
+  try {
+    const districtAdmin = await DistrictAdmin.findByIdAndDelete(req.params.id);
+    if (!districtAdmin) return res.status(404).json({ success: false, message: 'District admin not found' });
+
+    res.json({ success: true, message: 'District admin deleted successfully' });
+  } catch (error) {
+    console.error('Delete district admin error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
 // ── Reply Template (singleton) ─────────────────────────────────────────────
 
 // GET /ihthisabi/admin/reply-template
@@ -4111,11 +4330,17 @@ router.get('/form-fields', async (req, res) => {
 // @access  Private (Super Admin only)
 router.get('/archive-quarters', requireSuperAdmin, async (req, res) => {
   try {
-    const archivedQuarters = await ArchivedQuarter.find({})
-      .sort({ year: -1, quarter: -1 })
-      .lean();
+    const { page, limit, skip } = parsePagination(req.query);
+    const [archivedQuarters, total] = await Promise.all([
+      ArchivedQuarter.find({}).sort({ year: -1, quarter: -1 }).skip(skip).limit(limit).lean(),
+      ArchivedQuarter.countDocuments({})
+    ]);
 
-    res.json({ success: true, data: archivedQuarters });
+    res.json({
+      success: true,
+      data: archivedQuarters,
+      pagination: buildPaginationMeta(total, page, limit)
+    });
   } catch (error) {
     console.error('List archived quarters error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
@@ -4206,6 +4431,7 @@ router.get('/non-submitted', async (req, res) => {
       .lean();
 
     if (allRukns.length === 0) {
+      const { page: emptyPage, limit: emptyLimit } = parsePagination(req.query);
       return res.json({
         success: true,
         data: {
@@ -4213,7 +4439,8 @@ router.get('/non-submitted', async (req, res) => {
           total: 0,
           totalRukns: 0,
           period: { quarter: quarterNum, year: yearNum },
-          periodDisplay: `Q${quarterNum} ${yearNum}`
+          periodDisplay: `Q${quarterNum} ${yearNum}`,
+          pagination: buildPaginationMeta(0, emptyPage, emptyLimit)
         }
       });
     }
@@ -4251,14 +4478,21 @@ router.get('/non-submitted', async (req, res) => {
         unit: u.unit || ''
       }));
 
+    // The non-submitted set is a set-difference of two full collections, so it must be
+    // computed in full before it can be paginated — slice the computed result below.
+    const { page, limit, skip } = parsePagination(req.query);
+    const total = nonSubmitted.length;
+    const pagedNonSubmitted = nonSubmitted.slice(skip, skip + limit);
+
     res.json({
       success: true,
       data: {
-        nonSubmitted,
-        total: nonSubmitted.length,
+        nonSubmitted: pagedNonSubmitted,
+        total,
         totalRukns: allRukns.length,
         period: { quarter: quarterNum, year: yearNum },
-        periodDisplay: `Q${quarterNum} ${yearNum}`
+        periodDisplay: `Q${quarterNum} ${yearNum}`,
+        pagination: buildPaginationMeta(total, page, limit)
       }
     });
   } catch (error) {

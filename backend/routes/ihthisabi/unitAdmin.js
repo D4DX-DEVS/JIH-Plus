@@ -15,6 +15,7 @@ const {
   getHiddenQuarterFilter,
   getArchivedQuarterFilter
 } = require('../../utils/quarterHelper');
+const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
 
 
 const router = express.Router();
@@ -356,42 +357,53 @@ router.get('/members', protect, async (req, res) => {
 
     // Match unit names defensively because uploaded unit admin rows are not always normalized
     const unitName = unitAdmin.unit;
-    console.log('Unit Admin Unit:', unitName);
 
     const { memberQuery } = await getUnitAdminScope(unitAdmin);
+    const { page, limit, skip } = parsePagination(req.query);
 
-    // Fetch all users from User model with this unit name
-    const members = await User.find(memberQuery)
-      .select('ruknId name gender unit district area contactNo emailId country lastLogin createdAt role')
-      .sort({ createdAt: -1 });
+    // Single aggregation: page the members and compute each one's submission
+    // count via $lookup, instead of an N+1 .find() + Promise.all() over every member.
+    const [result] = await User.aggregate([
+      { $match: memberQuery },
+      { $sort: { createdAt: -1 } },
+      {
+        $facet: {
+          data: [
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $lookup: {
+                from: 'submissions',
+                let: { uid: '$_id' },
+                pipeline: [
+                  { $match: { $expr: { $or: [{ $eq: ['$submittedBy', '$$uid'] }, { $eq: ['$userId', '$$uid'] }] } } },
+                  { $count: 'count' }
+                ],
+                as: 'submissionCountArr'
+              }
+            },
+            {
+              $project: {
+                ruknId: 1, name: 1, gender: 1, unit: 1, district: 1, area: 1,
+                contactNo: 1, emailId: 1, country: 1, lastLogin: 1, createdAt: 1, role: 1,
+                submissionCount: { $ifNull: [{ $arrayElemAt: ['$submissionCountArr.count', 0] }, 0] }
+              }
+            }
+          ],
+          totalCount: [{ $count: 'count' }]
+        }
+      }
+    ]);
 
-    console.log(`Found ${members.length} users in unit: ${unitName}`);
-
-    // Get submission counts for each member
-    const membersWithSubmissionCounts = await Promise.all(
-      members.map(async (member) => {
-        const submissionCount = await Submission.countDocuments({
-          $or: [
-            { submittedBy: member._id },
-            { userId: member._id }
-          ]
-        });
-        
-        console.log(`Member ${member.name} (${member._id}): ${submissionCount} submissions`);
-        
-        return {
-          ...member.toObject(),
-          submissionCount
-        };
-      })
-    );
+    const total = result.totalCount[0]?.count || 0;
 
     res.json({
       success: true,
       data: {
-        members: membersWithSubmissionCounts,
-        totalCount: members.length,
-        unit: unitName
+        members: result.data,
+        totalCount: total,
+        unit: unitName,
+        pagination: buildPaginationMeta(total, page, limit)
       }
     });
   } catch (error) {
@@ -660,6 +672,7 @@ router.get('/submissions', protect, async (req, res) => {
 
     const search = req.query.search || '';
     const status = req.query.status || '';
+    const { quarter, year } = req.query;
 
     const { submissionQuery } = await getUnitAdminScope(unitAdmin);
 
@@ -672,8 +685,14 @@ router.get('/submissions', protect, async (req, res) => {
     if (status) {
       searchQuery.status = status;
     }
+    if (quarter) {
+      searchQuery['submissionPeriod.quarter'] = parseInt(quarter, 10);
+    }
+    if (year) {
+      searchQuery['submissionPeriod.year'] = parseInt(year, 10);
+    }
 
-    // Fetch all submissions (no pagination - frontend will handle pagination)
+    // Fetch matching submissions (paginated below)
     let submissions = await Submission.find(searchQuery)
       .select('_id submittedBy userId ruknName ruknId submissionPeriod periodDisplay createdAt status adminReply')
       .populate({
@@ -891,10 +910,15 @@ router.get('/submissions', protect, async (req, res) => {
       };
     });
 
+    const { page, limit, skip } = parsePagination(req.query);
+    const total = trimmedSubmissions.length;
+    const pagedSubmissions = trimmedSubmissions.slice(skip, skip + limit);
+
     res.json({
       success: true,
       data: {
-        submissions: trimmedSubmissions
+        submissions: pagedSubmissions,
+        pagination: buildPaginationMeta(total, page, limit)
       }
     });
   } catch (error) {
@@ -1440,10 +1464,10 @@ router.get('/my-submissions', protect, async (req, res) => {
       });
     }
 
-    const { page = 1, limit = 10, year, month } = req.query;
+    const { page = 1, limit = 10, year, month, quarter } = req.query;
 
     // Build query for unit admin's own submissions
-    const query = { 
+    const query = {
       userId: req.user.userId,
       ...req.quarterFilter
     };
@@ -1454,6 +1478,10 @@ router.get('/my-submissions', protect, async (req, res) => {
 
     if (month) {
       query['submissionPeriod.month'] = month;
+    }
+
+    if (quarter) {
+      query['submissionPeriod.quarter'] = parseInt(quarter, 10);
     }
 
     // Calculate pagination
@@ -1480,13 +1508,7 @@ router.get('/my-submissions', protect, async (req, res) => {
       success: true,
       data: {
         submissions,
-        pagination: {
-          currentPage: page,
-          totalPages: Math.ceil(total / limit),
-          totalSubmissions: total,
-          hasNext: page < Math.ceil(total / limit),
-          hasPrev: page > 1
-        }
+        pagination: buildPaginationMeta(total, parseInt(page, 10), parseInt(limit, 10))
       }
     });
   } catch (error) {
@@ -1748,13 +1770,17 @@ router.get('/replies', protect, async (req, res) => {
       });
     }
 
-    // Get all replies for this unit
-    const replies = await UnitAdminReply.find({ 
-      unit: unitAdmin.unit,
-      ...req.quarterFilter
-    })
-      .populate('repliedBy', 'username name')
-      .sort({ repliedAt: -1 });
+    const { page, limit, skip } = parsePagination(req.query);
+    const replyQuery = { unit: unitAdmin.unit, ...req.quarterFilter };
+
+    const [replies, total] = await Promise.all([
+      UnitAdminReply.find(replyQuery)
+        .populate('repliedBy', 'username name')
+        .sort({ repliedAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      UnitAdminReply.countDocuments(replyQuery)
+    ]);
 
     res.json({
       success: true,
@@ -1773,7 +1799,8 @@ router.get('/replies', protect, async (req, res) => {
           whatsappSentAt: reply.whatsappSentAt,
           createdAt: reply.createdAt
         })),
-        totalCount: replies.length
+        totalCount: total,
+        pagination: buildPaginationMeta(total, page, limit)
       }
     });
   } catch (error) {
@@ -1815,22 +1842,28 @@ router.get('/alternative-submissions', protect, async (req, res) => {
     const unitMembers = await User.find(memberQuery).select('_id');
     const memberIds = unitMembers.map(m => m._id);
 
+    const { page, limit, skip } = parsePagination(req.query);
+    const altQuery = { userId: { $in: memberIds }, ...req.quarterFilter };
+
     // Get alternative submissions from these members (excluding abroad)
-    const alternativeSubmissions = await AlternativeSubmit.find({
-      userId: { $in: memberIds },
-      ...req.quarterFilter
-    })
-      .populate('userId', 'ruknId name district area unit')
-      .populate('adminReply.repliedBy', 'username name')
-      .sort({ createdAt: -1 })
-      .select('type district area unit ruknName reason submissionPeriod periodDisplay adminReply createdAt updatedAt');
+    const [alternativeSubmissions, total] = await Promise.all([
+      AlternativeSubmit.find(altQuery)
+        .populate('userId', 'ruknId name district area unit')
+        .populate('adminReply.repliedBy', 'username name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .select('type district area unit ruknName reason submissionPeriod periodDisplay adminReply createdAt updatedAt'),
+      AlternativeSubmit.countDocuments(altQuery)
+    ]);
 
     res.json({
       success: true,
       data: {
         alternativeSubmissions,
         unit: unitAdmin.unit,
-        totalCount: alternativeSubmissions.length
+        totalCount: total,
+        pagination: buildPaginationMeta(total, page, limit)
       }
     });
   } catch (error) {

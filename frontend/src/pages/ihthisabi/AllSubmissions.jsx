@@ -26,6 +26,7 @@ import {
 import toast from 'react-hot-toast'
 import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
 import AbroadSubmissions from './AbroadSubmissions'
+import Pagination from '../../components/ihthisabi/Pagination'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
@@ -35,7 +36,6 @@ const AllSubmissions = () => {
   const { showError } = useError()
   const [submissions, setSubmissions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [districtFilter, setDistrictFilter] = useState('all')
   const [areaFilter, setAreaFilter] = useState('all')
@@ -44,8 +44,6 @@ const AllSubmissions = () => {
   const [quarterFilter, setQuarterFilter] = useState('all')
   const [yearFilter, setYearFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [allPagesLoaded, setAllPagesLoaded] = useState(false)
   const itemsPerPage = 10
 
   // Drawer state for professional inline details view
@@ -61,9 +59,7 @@ const AllSubmissions = () => {
   const [showAbroadSubmissions, setShowAbroadSubmissions] = useState(false)
   const [alternativeSubmissions, setAlternativeSubmissions] = useState([])
   const [alternativeSubmissionsLoading, setAlternativeSubmissionsLoading] = useState(false)
-  const [alternativeCurrentPage, setAlternativeCurrentPage] = useState(1)
-  const [alternativeTotalPages, setAlternativeTotalPages] = useState(1)
-  const [alternativeTotalSubmissions, setAlternativeTotalSubmissions] = useState(0)
+  const [alternativePagination, setAlternativePagination] = useState({ current: 1, pages: 1, total: 0 })
   const alternativeItemsPerPage = 10
 
   // Non-submitted view state
@@ -78,8 +74,7 @@ const AllSubmissions = () => {
   const [nonSubmittedFetched, setNonSubmittedFetched] = useState(false)
   const [nonSubmittedPeriodDisplay, setNonSubmittedPeriodDisplay] = useState('')
   const [nonSubmittedTotalRukns, setNonSubmittedTotalRukns] = useState(0)
-  const [nsCurrentPage, setNsCurrentPage] = useState(1)
-  const nsItemsPerPage = 20
+  const [nonSubmittedPagination, setNonSubmittedPagination] = useState({ current: 1, pages: 1, total: 0 })
 
   // Available years for non-submitted selector
   const nsYearOptions = React.useMemo(() => {
@@ -87,14 +82,6 @@ const AllSubmissions = () => {
     return Array.from({ length: 5 }, (_, i) => currentYear - i)
   }, [])
 
-  useEffect(() => {
-    // Only fetch data if user is authenticated and is admin
-    if (user && user.role === 'admin') {
-      fetchSubmissions()
-    }
-  }, [user])
-
-  // Extract unique values for filters with cascading dependencies
   // Always use district/area/unit fields coming from API (authoritative)
   const getNormalizedLocation = (submission) => ({
     district: submission.district || '',
@@ -108,148 +95,114 @@ const AllSubmissions = () => {
     return composed || 'N/A'
   }
 
-  const uniqueDistricts = React.useMemo(() => {
-    const values = new Set()
-    submissions.forEach(s => {
-      const { district } = getNormalizedLocation(s)
-      if (district) values.add(district)
-    })
-    return Array.from(values).sort()
-  }, [submissions])
+  // Filter dropdown options come from the master-data endpoints (cascading by
+  // district/area) rather than from the loaded page of submissions, since the
+  // submissions list is now server-paginated and only holds the current page.
+  const [uniqueDistricts, setUniqueDistricts] = useState([])
+  const [uniqueAreas, setUniqueAreas] = useState([])
+  const [uniqueUnits, setUniqueUnits] = useState([])
+  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 })
 
-  const uniqueAreas = React.useMemo(() => {
-    const values = new Set()
-    submissions.forEach(s => {
-      const { district, area } = getNormalizedLocation(s)
-      if ((districtFilter === 'all' || district === districtFilter) && area) {
-        values.add(area)
-      }
-    })
-    return Array.from(values).sort()
-  }, [submissions, districtFilter])
+  useEffect(() => {
+    api.get('/ihthisabi/admin/master-data/districts')
+      .then(res => setUniqueDistricts((res.data.data || []).map(d => d.name).sort()))
+      .catch(() => {})
+  }, [])
 
-  const uniqueUnits = React.useMemo(() => {
-    const values = new Set()
-    submissions.forEach(s => {
-      const { district, area, unit } = getNormalizedLocation(s)
-      const districtOk = districtFilter === 'all' || district === districtFilter
-      const areaOk = areaFilter === 'all' || area === areaFilter
-      if (districtOk && areaOk && unit) {
-        values.add(unit)
-      }
-    })
-    return Array.from(values).sort()
-  }, [submissions, districtFilter, areaFilter])
+  useEffect(() => {
+    if (districtFilter === 'all') {
+      setUniqueAreas([])
+      setAreaFilter('all')
+      return
+    }
+    api.get('/ihthisabi/admin/master-data/areas', { params: { district: districtFilter } })
+      .then(res => setUniqueAreas((res.data.data || []).map(a => a.name).sort()))
+      .catch(() => {})
+  }, [districtFilter])
+
+  useEffect(() => {
+    if (districtFilter === 'all' || areaFilter === 'all') {
+      setUniqueUnits([])
+      setUnitFilter('all')
+      return
+    }
+    api.get('/ihthisabi/admin/master-data/units', { params: { district: districtFilter, area: areaFilter } })
+      .then(res => setUniqueUnits((res.data.data || []).map(u => u.name).sort()))
+      .catch(() => {})
+  }, [districtFilter, areaFilter])
+
+  // Debounce free-text search so typing doesn't fire a request per keystroke
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearchTerm(searchTerm), 400)
+    return () => clearTimeout(t)
+  }, [searchTerm])
+
+  useEffect(() => {
+    // Only fetch data if user is authenticated and is admin
+    if (user && user.role === 'admin') {
+      fetchSubmissions()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, currentPage, districtFilter, areaFilter, unitFilter, statusFilter, quarterFilter, yearFilter, debouncedSearchTerm])
+
+  // Reset to page 1 whenever a filter/search actually changes (not on page navigation)
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [districtFilter, areaFilter, unitFilter, statusFilter, quarterFilter, yearFilter, debouncedSearchTerm])
 
   const fetchSubmissions = async () => {
     try {
       setLoading(true)
-      setSubmissions([])
-      setAllPagesLoaded(false)
-      
-      // First, get page 1 to know total pages
-      const firstPageResponse = await api.get('/ihthisabi/admin/submissions', {
-        params: {
-          page: 1,
-          limit: 150
-        }
-      })
 
-      const firstPageData = firstPageResponse.data.data
-      const pagination = firstPageData.pagination || {}
-      const totalPages = pagination.pages || 1
+      const params = { page: currentPage, limit: itemsPerPage }
+      if (districtFilter !== 'all') params.district = districtFilter
+      if (areaFilter !== 'all') params.area = areaFilter
+      if (unitFilter !== 'all') params.unit = unitFilter
+      if (statusFilter !== 'all') params.status = statusFilter
+      if (quarterFilter !== 'all') params.quarter = quarterFilter
+      if (yearFilter !== 'all') params.year = yearFilter
+      if (debouncedSearchTerm) params.search = debouncedSearchTerm
 
-      // If only one page, we're done
-      if (totalPages === 1) {
-        setSubmissions(firstPageData.submissions || [])
-        setTotalPages(Math.ceil((firstPageData.submissions || []).length / itemsPerPage))
-        setAllPagesLoaded(true)
-        setLoading(false)
-        return
-      }
-
-      // Load all remaining pages in parallel
-      const pagePromises = []
-      for (let page = 2; page <= totalPages; page++) {
-        pagePromises.push(
-          api.get('/ihthisabi/admin/submissions', {
-            params: {
-              page: page,
-              limit: 150
-            }
-          })
-        )
-      }
-
-      // Execute all page requests in parallel
-      const responses = await Promise.all(pagePromises)
-      
-      // Combine all submissions
-      let allSubs = [...(firstPageData.submissions || [])]
-      responses.forEach(response => {
-        allSubs = [...allSubs, ...(response.data.data.submissions || [])]
-      })
-
-      setSubmissions(allSubs)
-      setTotalPages(Math.ceil(allSubs.length / itemsPerPage))
-      setAllPagesLoaded(true)
-      console.log(`Loaded all ${totalPages} pages, total submissions: ${allSubs.length}`)
-      
-      // Debug: Check for Hamsa A V submissions
-      const hamsaSubmissions = allSubs.filter(s => 
-        s.ruknName && s.ruknName.toLowerCase().includes('hamsa a v')
-      )
-      if (hamsaSubmissions.length > 0) {
-        console.log('Hamsa A V submissions found:', hamsaSubmissions.map(s => ({
-          id: s.id,
-          name: s.ruknName,
-          period: s.periodDisplay,
-          location: buildLocationDisplay(s),
-          district: s.district,
-          area: s.area,
-          unit: s.unit
-        })))
-      }
+      const response = await api.get('/ihthisabi/admin/submissions', { params })
+      const data = response.data.data
+      setSubmissions(data.submissions || [])
+      setPagination(data.pagination || { current: 1, pages: 1, total: 0 })
     } catch (error) {
       console.error('Failed to fetch submissions:', error)
       toast.error('Failed to load submissions')
     } finally {
       setLoading(false)
-      setLoadingMore(false)
     }
   }
 
-  // Cascading area/unit options for the non-submitted filter (derived from existing submissions data)
-  const nsUniqueAreas = React.useMemo(() => {
-    const values = new Set()
-    submissions.forEach(s => {
-      const { district, area } = getNormalizedLocation(s)
-      if ((nsDistrict === 'all' || district === nsDistrict) && area) values.add(area)
-    })
-    return Array.from(values).sort()
-  }, [submissions, nsDistrict])
+  // Cascading area/unit options for the non-submitted filter, from the master-data endpoints
+  const [nsUniqueAreas, setNsUniqueAreas] = useState([])
+  const [nsUniqueUnits, setNsUniqueUnits] = useState([])
 
-  const nsUniqueUnits = React.useMemo(() => {
-    const values = new Set()
-    submissions.forEach(s => {
-      const { district, area, unit } = getNormalizedLocation(s)
-      const dOk = nsDistrict === 'all' || district === nsDistrict
-      const aOk = nsArea === 'all' || area === nsArea
-      if (dOk && aOk && unit) values.add(unit)
-    })
-    return Array.from(values).sort()
-  }, [submissions, nsDistrict, nsArea])
+  useEffect(() => {
+    if (nsDistrict === 'all') { setNsUniqueAreas([]); return }
+    api.get('/ihthisabi/admin/master-data/areas', { params: { district: nsDistrict } })
+      .then(res => setNsUniqueAreas((res.data.data || []).map(a => a.name).sort()))
+      .catch(() => {})
+  }, [nsDistrict])
 
-  const fetchNonSubmitted = async () => {
+  useEffect(() => {
+    if (nsDistrict === 'all' || nsArea === 'all') { setNsUniqueUnits([]); return }
+    api.get('/ihthisabi/admin/master-data/units', { params: { district: nsDistrict, area: nsArea } })
+      .then(res => setNsUniqueUnits((res.data.data || []).map(u => u.name).sort()))
+      .catch(() => {})
+  }, [nsDistrict, nsArea])
+
+  const fetchNonSubmitted = async (page = 1) => {
     if (!nsQuarter || !nsYear) {
       toast.error('Please select both quarter and year')
       return
     }
     try {
       setNonSubmittedLoading(true)
-      setNonSubmittedFetched(false)
-      setNsCurrentPage(1)
-      const params = { quarter: nsQuarter, year: nsYear }
+      if (page === 1) setNonSubmittedFetched(false)
+      const params = { quarter: nsQuarter, year: nsYear, page, limit: 10 }
       if (nsDistrict !== 'all') params.district = nsDistrict
       if (nsArea !== 'all') params.area = nsArea
       if (nsUnit !== 'all') params.unit = nsUnit
@@ -258,6 +211,7 @@ const AllSubmissions = () => {
         setNonSubmittedList(response.data.data.nonSubmitted || [])
         setNonSubmittedPeriodDisplay(response.data.data.periodDisplay || '')
         setNonSubmittedTotalRukns(response.data.data.totalRukns || 0)
+        setNonSubmittedPagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
         setNonSubmittedFetched(true)
       }
     } catch (error) {
@@ -268,8 +222,24 @@ const AllSubmissions = () => {
     }
   }
 
-  const handleNonSubmittedExportCSV = () => {
-    if (!nonSubmittedList || nonSubmittedList.length === 0) {
+  // Export needs the FULL non-submitted set, not just the visible page, so it
+  // fetches once with a high limit rather than looping the display's 10/page requests.
+  const fetchAllNonSubmittedForExport = async () => {
+    const params = { quarter: nsQuarter, year: nsYear, page: 1, limit: 2000 }
+    if (nsDistrict !== 'all') params.district = nsDistrict
+    if (nsArea !== 'all') params.area = nsArea
+    if (nsUnit !== 'all') params.unit = nsUnit
+    const response = await api.get('/ihthisabi/admin/non-submitted', { params })
+    return response.data?.data?.nonSubmitted || []
+  }
+
+  const handleNonSubmittedExportCSV = async () => {
+    const rows = await fetchAllNonSubmittedForExport().catch(() => {
+      toast.error('Failed to export')
+      return null
+    })
+    if (!rows) return
+    if (rows.length === 0) {
       toast.error('No records to export')
       return
     }
@@ -280,7 +250,7 @@ const AllSubmissions = () => {
     }
     const headers = ['#', 'Member Name', 'Rukn ID', 'District', 'Area', 'Unit']
     const lines = [headers.join(',')]
-    nonSubmittedList.forEach((member, idx) => {
+    rows.forEach((member, idx) => {
       lines.push([
         escapeCsv(idx + 1),
         escapeCsv(member.name),
@@ -303,8 +273,13 @@ const AllSubmissions = () => {
     toast.success('CSV exported')
   }
 
-  const handleNonSubmittedExportPDF = () => {
-    if (!nonSubmittedList || nonSubmittedList.length === 0) {
+  const handleNonSubmittedExportPDF = async () => {
+    const nonSubmittedList = await fetchAllNonSubmittedForExport().catch(() => {
+      toast.error('Failed to export')
+      return null
+    })
+    if (!nonSubmittedList) return
+    if (nonSubmittedList.length === 0) {
       toast.error('No records to export')
       return
     }
@@ -376,40 +351,15 @@ const AllSubmissions = () => {
     })
   }
 
-  const submissionYears = [...new Set(
-    submissions.map(s => s.submissionPeriod?.year).filter(Boolean)
-  )].sort((a, b) => b - a)
+  // Static range rather than derived from the (now paginated) submissions list,
+  // matching the same approach already used for the non-submitted year selector.
+  const submissionYears = React.useMemo(() => {
+    const currentYear = new Date().getFullYear()
+    return Array.from({ length: 5 }, (_, i) => currentYear - i)
+  }, [])
 
-  const filteredSubmissions = submissions.filter(submission => {
-    const { district, area, unit } = getNormalizedLocation(submission)
-    const name = (submission.ruknName || '').toLowerCase()
-    const term = (searchTerm || '').toLowerCase()
-
-    const matchesName = !term || name.includes(term)
-    const matchesDistrict = districtFilter === 'all' || district === districtFilter
-    const matchesArea = areaFilter === 'all' || area === areaFilter
-    const matchesUnit = unitFilter === 'all' || unit === unitFilter
-    const matchesStatus = statusFilter === 'all' || submission.status === statusFilter
-    const matchesQuarter = quarterFilter === 'all' || String(submission.submissionPeriod?.quarter) === quarterFilter
-    const matchesYear = yearFilter === 'all' || String(submission.submissionPeriod?.year) === yearFilter
-    
-    return matchesName && matchesDistrict && matchesArea && matchesUnit && matchesStatus && matchesQuarter && matchesYear
-  })
-
-  const paginatedSubmissions = filteredSubmissions.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
-
-  // Reset to page 1 only when filters/search actually change (not on page navigation)
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [districtFilter, areaFilter, unitFilter, statusFilter, searchTerm, quarterFilter, yearFilter])
-
-  // Update total pages when submissions change (but don't reset current page)
-  useEffect(() => {
-    setTotalPages(Math.ceil(filteredSubmissions.length / itemsPerPage))
-  }, [filteredSubmissions.length])
+  // submissions is already the current page of server-filtered results
+  const paginatedSubmissions = submissions
 
   const handleViewSubmission = (submissionId) => {
     // Open inline drawer with details instead of navigating
@@ -500,7 +450,7 @@ const AllSubmissions = () => {
     }
   }
 
-  const fetchAlternativeSubmissions = async (page = alternativeCurrentPage) => {
+  const fetchAlternativeSubmissions = async (page = alternativePagination.current) => {
     try {
       setAlternativeSubmissionsLoading(true)
       const response = await api.get('/alternative-submissions/all', {
@@ -511,10 +461,7 @@ const AllSubmissions = () => {
       })
       if (response.data?.success) {
         setAlternativeSubmissions(response.data.data.alternativeSubmissions || [])
-        const pagination = response.data.data.pagination || {}
-        setAlternativeTotalPages(pagination.totalPages || 1)
-        setAlternativeTotalSubmissions(pagination.totalSubmissions || 0)
-        setAlternativeCurrentPage(pagination.currentPage || 1)
+        setAlternativePagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
       }
     } catch (error) {
       console.error('Failed to fetch alternative submissions:', error)
@@ -524,9 +471,38 @@ const AllSubmissions = () => {
     }
   }
 
-  const handleExport = () => {
-    // Use the already filtered dataset (includes status filter but we exclude status from CSV)
-    const rows = filteredSubmissions
+  const handleExport = async () => {
+    // Submissions are now server-paginated (10/page), so exporting the current filters
+    // means fetching every matching page at export time rather than just the visible page.
+    const params = { limit: 200 }
+    if (districtFilter !== 'all') params.district = districtFilter
+    if (areaFilter !== 'all') params.area = areaFilter
+    if (unitFilter !== 'all') params.unit = unitFilter
+    if (statusFilter !== 'all') params.status = statusFilter
+    if (quarterFilter !== 'all') params.quarter = quarterFilter
+    if (yearFilter !== 'all') params.year = yearFilter
+    if (debouncedSearchTerm) params.search = debouncedSearchTerm
+
+    let rows = []
+    try {
+      const firstPage = await api.get('/ihthisabi/admin/submissions', { params: { ...params, page: 1 } })
+      const firstData = firstPage.data.data
+      rows = firstData.submissions || []
+      const totalPages = firstData.pagination?.pages || 1
+      if (totalPages > 1) {
+        const rest = await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, i) =>
+            api.get('/ihthisabi/admin/submissions', { params: { ...params, page: i + 2 } })
+          )
+        )
+        rest.forEach(res => { rows = rows.concat(res.data.data.submissions || []) })
+      }
+    } catch (error) {
+      console.error('Failed to fetch submissions for export:', error)
+      toast.error('Failed to export submissions')
+      return
+    }
+
     if (!rows || rows.length === 0) {
       toast.error('No records to export for the current filters')
       return
@@ -619,7 +595,6 @@ const AllSubmissions = () => {
                     setShowAbroadSubmissions(false)
                     setShowNonSubmitted(false)
                     if (!showAlternativeSubmissions && alternativeSubmissions.length === 0) {
-                      setAlternativeCurrentPage(1)
                       fetchAlternativeSubmissions(1)
                     }
                   }}
@@ -938,7 +913,7 @@ const AllSubmissions = () => {
 
                 <div className="flex items-center gap-2 flex-wrap">
                   <button
-                    onClick={fetchNonSubmitted}
+                    onClick={() => fetchNonSubmitted(1)}
                     disabled={!nsQuarter || !nsYear || nonSubmittedLoading}
                     className="btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
@@ -1006,12 +981,9 @@ const AllSubmissions = () => {
                 <div className="px-4 py-3 bg-red-50 border-b border-red-100 flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2 text-sm text-red-800">
                     <UserX className="w-4 h-4" />
-                    <span className="font-semibold">{nonSubmittedList.length}</span> members have not submitted for{' '}
+                    <span className="font-semibold">{nonSubmittedPagination.total}</span> members have not submitted for{' '}
                     <span className="font-semibold">{nonSubmittedPeriodDisplay}</span>
                     <span className="text-red-600 text-xs ml-1">(out of {nonSubmittedTotalRukns} total)</span>
-                  </div>
-                  <div className="text-xs text-red-600">
-                    Showing {Math.min((nsCurrentPage - 1) * nsItemsPerPage + 1, nonSubmittedList.length)}–{Math.min(nsCurrentPage * nsItemsPerPage, nonSubmittedList.length)} of {nonSubmittedList.length}
                   </div>
                 </div>
 
@@ -1029,89 +1001,57 @@ const AllSubmissions = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {nonSubmittedList
-                        .slice((nsCurrentPage - 1) * nsItemsPerPage, nsCurrentPage * nsItemsPerPage)
-                        .map((member, index) => {
-                          const serial = (nsCurrentPage - 1) * nsItemsPerPage + index + 1
-                          return (
-                            <tr key={String(member.id)} className="hover:bg-gray-50">
-                              <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-500 font-medium">{serial}</td>
-                              <td className="px-4 py-2.5 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                                    <span className="text-xs font-medium text-red-600">
-                                      {(member.name || 'U').charAt(0).toUpperCase()}
-                                    </span>
-                                  </div>
-                                  <span className="text-sm font-medium text-gray-900">{member.name}</span>
+                      {nonSubmittedList.map((member, index) => {
+                        const serial = (nonSubmittedPagination.current - 1) * 10 + index + 1
+                        return (
+                          <tr key={String(member.id)} className="hover:bg-gray-50">
+                            <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-500 font-medium">{serial}</td>
+                            <td className="px-4 py-2.5 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                  <span className="text-xs font-medium text-red-600">
+                                    {(member.name || 'U').charAt(0).toUpperCase()}
+                                  </span>
                                 </div>
-                              </td>
-                              <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.ruknId || '—'}</td>
-                              <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.district || '—'}</td>
-                              <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.area || '—'}</td>
-                              <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.unit || '—'}</td>
-                            </tr>
-                          )
-                        })}
+                                <span className="text-sm font-medium text-gray-900">{member.name}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.ruknId || '—'}</td>
+                            <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.district || '—'}</td>
+                            <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.area || '—'}</td>
+                            <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">{member.unit || '—'}</td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
 
                 {/* Mobile Cards */}
                 <div className="lg:hidden p-4 space-y-3">
-                  {nonSubmittedList
-                    .slice((nsCurrentPage - 1) * nsItemsPerPage, nsCurrentPage * nsItemsPerPage)
-                    .map((member, index) => {
-                      const serial = (nsCurrentPage - 1) * nsItemsPerPage + index + 1
-                      return (
-                        <div key={String(member.id)} className="border border-gray-200 rounded-lg p-3">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-xs font-medium text-red-600">{serial}</span>
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                              {member.ruknId && <div className="text-xs text-gray-500">ID: {member.ruknId}</div>}
-                            </div>
+                  {nonSubmittedList.map((member, index) => {
+                    const serial = (nonSubmittedPagination.current - 1) * 10 + index + 1
+                    return (
+                      <div key={String(member.id)} className="border border-gray-200 rounded-lg p-3">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-medium text-red-600">{serial}</span>
                           </div>
-                          <div className="flex items-center text-xs text-gray-600">
-                            <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
-                            <span>{[member.district, member.area, member.unit].filter(Boolean).join(' - ') || 'N/A'}</span>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                            {member.ruknId && <div className="text-xs text-gray-500">ID: {member.ruknId}</div>}
                           </div>
                         </div>
-                      )
-                    })}
+                        <div className="flex items-center text-xs text-gray-600">
+                          <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                          <span>{[member.district, member.area, member.unit].filter(Boolean).join(' - ') || 'N/A'}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
 
-                {/* Pagination */}
-                {Math.ceil(nonSubmittedList.length / nsItemsPerPage) > 1 && (
-                  <div className="px-6 py-2 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-700">
-                        {nonSubmittedList.length} members total
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => setNsCurrentPage(prev => Math.max(prev - 1, 1))}
-                          disabled={nsCurrentPage === 1}
-                          className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-                        <span className="px-3 py-1 text-sm bg-primary/10 text-primary rounded-md font-medium">
-                          {nsCurrentPage} of {Math.ceil(nonSubmittedList.length / nsItemsPerPage)}
-                        </span>
-                        <button
-                          onClick={() => setNsCurrentPage(prev => Math.min(prev + 1, Math.ceil(nonSubmittedList.length / nsItemsPerPage)))}
-                          disabled={nsCurrentPage === Math.ceil(nonSubmittedList.length / nsItemsPerPage)}
-                          className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <Pagination pagination={nonSubmittedPagination} onPageChange={fetchNonSubmitted} loading={nonSubmittedLoading} itemLabel="members" />
               </>
             )}
           </div>
@@ -1153,7 +1093,7 @@ const AllSubmissions = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {alternativeSubmissions.map((submission, index) => {
-                        const serialNumber = (alternativeCurrentPage - 1) * alternativeItemsPerPage + index + 1
+                        const serialNumber = (alternativePagination.current - 1) * alternativeItemsPerPage + index + 1
                         return (
                         <tr 
                           key={submission._id || submission.id} 
@@ -1230,11 +1170,10 @@ const AllSubmissions = () => {
                   </table>
                 </div>
                 <div className="lg:hidden p-4 space-y-4">
-                  {alternativeSubmissions.map((submission, index) => {
-                    const serialNumber = (alternativeCurrentPage - 1) * alternativeItemsPerPage + index + 1
+                  {alternativeSubmissions.map((submission) => {
                     return (
-                    <div 
-                      key={submission._id || submission.id} 
+                    <div
+                      key={submission._id || submission.id}
                       className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                       onClick={() => navigate(`/ihthisabi/alternative-submissions/${submission._id || submission.id}`)}
                     >
@@ -1284,45 +1223,7 @@ const AllSubmissions = () => {
                   })}
                 </div>
 
-                {/* Pagination for Alternative Submissions */}
-                {alternativeTotalSubmissions > 0 && (
-                  <div className="px-6 py-2 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-700">
-                        Showing {((alternativeCurrentPage - 1) * alternativeItemsPerPage) + 1} to {Math.min(alternativeCurrentPage * alternativeItemsPerPage, alternativeTotalSubmissions)} of {alternativeTotalSubmissions} results
-                      </div>
-                      {alternativeTotalPages > 1 && (
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => {
-                              const newPage = Math.max(alternativeCurrentPage - 1, 1)
-                              setAlternativeCurrentPage(newPage)
-                              fetchAlternativeSubmissions(newPage)
-                            }}
-                            disabled={alternativeCurrentPage === 1}
-                            className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Previous
-                          </button>
-                          <span className="px-3 py-1 text-sm bg-orange-100 text-orange-700 rounded-md font-medium">
-                            {alternativeCurrentPage} of {alternativeTotalPages}
-                          </span>
-                          <button
-                            onClick={() => {
-                              const newPage = Math.min(alternativeCurrentPage + 1, alternativeTotalPages)
-                              setAlternativeCurrentPage(newPage)
-                              fetchAlternativeSubmissions(newPage)
-                            }}
-                            disabled={alternativeCurrentPage === alternativeTotalPages}
-                            className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Next
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <Pagination pagination={alternativePagination} onPageChange={fetchAlternativeSubmissions} loading={alternativeSubmissionsLoading} itemLabel="results" />
               </>
             )}
           </div>
@@ -1549,38 +1450,7 @@ const AllSubmissions = () => {
                 </div>
               </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="px-6 py-2 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-700">
-                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredSubmissions.length)} of {filteredSubmissions.length} results
-                      {loadingMore && (
-                        <span className="ml-2 text-primary text-xs">(Loading more...)</span>
-                      )}
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </button>
-                      <span className="px-3 py-1 text-sm bg-primary/10 text-primary rounded-md font-medium">
-                        {currentPage} of {totalPages}
-                      </span>
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <Pagination pagination={pagination} onPageChange={setCurrentPage} loading={loading} itemLabel="results" />
             </>
           )}
         </div>
@@ -1592,7 +1462,7 @@ const AllSubmissions = () => {
       {drawerOpen && !showAlternativeSubmissions && !showAbroadSubmissions && (
         <div className="fixed inset-0 z-40">
           {/* overlay */}
-          <div className="absolute inset-0 bg-black/30" onClick={closeDrawer}></div>
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeDrawer}></div>
           {/* panel */}
           <div className="absolute inset-y-0 right-0 w-full sm:w-[560px] bg-white shadow-xl border-l border-gray-200 flex flex-col">
             {/* Header */}

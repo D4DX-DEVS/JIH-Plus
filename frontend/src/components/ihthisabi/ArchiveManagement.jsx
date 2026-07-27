@@ -3,6 +3,7 @@ import { api } from '../../utils/ihthisabi/api'
 import { Archive, Trash2, Plus, Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
 import ConfirmationModal from './ConfirmationModal'
+import Pagination from './Pagination'
 
 const QUARTER_NAMES = {
   1: 'Q1 (Jan–Mar)',
@@ -16,17 +17,19 @@ const YEAR_OPTIONS = Array.from({ length: 6 }, (_, i) => currentYear - i)
 
 const ArchiveManagement = () => {
   const [archivedList, setArchivedList] = useState([])
+  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({ quarter: '', year: currentYear })
   const [saving, setSaving] = useState(false)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, label: '' })
 
-  const fetchArchivedQuarters = async () => {
+  const fetchArchivedQuarters = async (page = 1) => {
     setLoading(true)
     try {
-      const res = await api.get('/ihthisabi/admin/archive-quarters')
+      const res = await api.get('/ihthisabi/admin/archive-quarters', { params: { page, limit: 10 } })
       setArchivedList(res.data.data || [])
+      setPagination(res.data.pagination || { current: 1, pages: 1, total: 0 })
     } catch (err) {
       toast.error('Failed to load archived quarters')
     } finally {
@@ -34,7 +37,7 @@ const ArchiveManagement = () => {
     }
   }
 
-  useEffect(() => { fetchArchivedQuarters() }, [])
+  useEffect(() => { fetchArchivedQuarters(1) }, [])
 
   const handleArchive = async () => {
     const quarterNum = parseInt(formData.quarter, 10)
@@ -51,7 +54,7 @@ const ArchiveManagement = () => {
       toast.success(`Q${quarterNum} ${formData.year} archived`)
       setShowForm(false)
       setFormData({ quarter: '', year: currentYear })
-      fetchArchivedQuarters()
+      fetchArchivedQuarters(1)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to archive quarter')
     } finally {
@@ -72,7 +75,7 @@ const ArchiveManagement = () => {
       await api.delete(`/ihthisabi/admin/archive-quarters/${deleteModal.id}`)
       toast.success(`${deleteModal.label} unarchived`)
       setDeleteModal({ isOpen: false, id: null, label: '' })
-      fetchArchivedQuarters()
+      fetchArchivedQuarters(pagination.current)
     } catch (err) {
       toast.error('Failed to unarchive quarter')
     }
@@ -231,6 +234,7 @@ const ArchiveManagement = () => {
             )}
           </tbody>
         </table>
+        <Pagination pagination={pagination} onPageChange={fetchArchivedQuarters} loading={loading} itemLabel="archived quarters" />
       </div>
 
       {/* Confirmation Modal */}

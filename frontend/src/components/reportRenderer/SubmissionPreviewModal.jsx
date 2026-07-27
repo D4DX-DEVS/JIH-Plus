@@ -93,7 +93,7 @@ export default function SubmissionPreviewModal({ open, loading, data, onClose, o
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative bg-white rounded-2xl shadow-xl max-w-3xl w-full mx-auto border border-gray-200 max-h-[90vh] flex flex-col">
           <div className="flex items-start justify-between gap-3 p-5 border-b border-gray-100">

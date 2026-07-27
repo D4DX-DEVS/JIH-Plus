@@ -4,6 +4,7 @@ import { useLocation as useHierarchyLocation } from '../../hooks/useLocation'
 import UnitAdminProfileModal from './UnitAdminProfileModal'
 import UserProfileModal from './UserProfileModal'
 import ConfirmationModal from './ConfirmationModal'
+import Pagination from './Pagination'
 import { 
   Upload, 
   Users, 
@@ -104,9 +105,9 @@ const UserManagement = () => {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '20'
+        limit: '10'
       })
-      
+
       if (searchTerm) params.append('search', searchTerm)
       appendLocationFilter(params)
 
@@ -301,9 +302,9 @@ const UserManagement = () => {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '20'
+        limit: '10'
       })
-      
+
       if (searchTerm) params.append('search', searchTerm)
       appendLocationFilter(params)
 
@@ -750,61 +751,9 @@ const UserManagement = () => {
         </div>
 
         {showUnitAdminsOnly ? (
-          unitAdminPagination.pages > 1 && (
-            <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  Showing page {unitAdminPagination.current} of {unitAdminPagination.pages}
-                  {' '}
-                  ({unitAdminPagination.total} total unit admins)
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => fetchUnitAdmins(unitAdminPagination.current - 1)}
-                    disabled={unitAdminPagination.current === 1}
-                    className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => fetchUnitAdmins(unitAdminPagination.current + 1)}
-                    disabled={unitAdminPagination.current === unitAdminPagination.pages}
-                    className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </div>
-          )
+          <Pagination pagination={unitAdminPagination} onPageChange={fetchUnitAdmins} loading={loading} itemLabel="unit admins" />
         ) : (
-          pagination.pages > 1 && (
-            <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  Showing page {pagination.current} of {pagination.pages}
-                  {' '}
-                  ({pagination.total} total users)
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => fetchUsers(pagination.current - 1)}
-                    disabled={pagination.current === 1}
-                    className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => fetchUsers(pagination.current + 1)}
-                    disabled={pagination.current === pagination.pages}
-                    className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </div>
-          )
+          <Pagination pagination={pagination} onPageChange={fetchUsers} loading={loading} itemLabel="users" />
         )}
       </div>
 

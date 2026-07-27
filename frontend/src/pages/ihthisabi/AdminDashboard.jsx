@@ -9,6 +9,8 @@ import AbroadCountryManagement from '../../components/ihthisabi/AbroadCountryMan
 import AbroadMemberManagement from '../../components/ihthisabi/AbroadMemberManagement'
 import AbroadSubmissions from './AbroadSubmissions'
 import UnitAdminProfileModal from '../../components/ihthisabi/UnitAdminProfileModal'
+import DistrictAdminProfileModal from '../../components/ihthisabi/DistrictAdminProfileModal'
+import Pagination from '../../components/ihthisabi/Pagination'
 import letterheadImage from '../../assets/LH.png'
 import { 
   Users, 
@@ -56,6 +58,7 @@ const AdminDashboard = () => {
   const getTabFromPath = (pathname) => {
     if (pathname.endsWith('/members')) return 'users'
     if (pathname.endsWith('/unit-admins')) return 'unitadmins'
+    if (pathname.endsWith('/district-admins')) return 'districtadmins'
     if (pathname.endsWith('/unit-reply')) return 'unitreply'
     if (pathname.endsWith('/user-management')) return 'user-management'
     if (pathname.endsWith('/archive')) return 'archive'
@@ -81,6 +84,16 @@ const AdminDashboard = () => {
   const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [selectedUnitAdminId, setSelectedUnitAdminId] = useState(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
+
+  // District Admins tab state
+  const [districtAdmins, setDistrictAdmins] = useState([])
+  const [districtAdminLoading, setDistrictAdminLoading] = useState(false)
+  const [districtAdminSearchTerm, setDistrictAdminSearchTerm] = useState('')
+  const [selectedDistrictAdminDistrict, setSelectedDistrictAdminDistrict] = useState('')
+  const [districtAdminDistricts, setDistrictAdminDistricts] = useState([])
+  const [districtAdminPagination, setDistrictAdminPagination] = useState({ current: 1, pages: 1, total: 0 })
+  const [selectedDistrictAdminId, setSelectedDistrictAdminId] = useState(null)
+  const [showDistrictAdminModal, setShowDistrictAdminModal] = useState(false)
 
   // District-wise submission stats + chart district selection (Dashboard tab)
   const [districtStats, setDistrictStats] = useState([])
@@ -202,6 +215,14 @@ const AdminDashboard = () => {
     }
   }, [activeTab, user])
 
+  // Lazy-load district admins data when that tab is active
+  useEffect(() => {
+    if (activeTab === 'districtadmins' && user && (user.role === 'admin' || user.role === 'mainAdmin')) {
+      if (districtAdmins.length === 0) fetchDistrictAdmins()
+      if (districtAdminDistricts.length === 0) fetchDistrictAdminDistricts()
+    }
+  }, [activeTab, user])
+
   // Add retry functionality for failed requests
   const retryFailedRequests = () => {
     if (user && user.role === 'admin') {
@@ -266,8 +287,8 @@ const AdminDashboard = () => {
       if (search) params.search = search
       if (district) params.district = district
       params.page = page
-      params.limit = 100 // Show 100 records per page
-      
+      params.limit = 10
+
       const response = await api.get('/ihthisabi/admin/unitadmins', { params })
       console.log('Unit admins response:', response.data.data)
       setUnitAdmins(response.data.data.unitAdmins || [])
@@ -278,6 +299,55 @@ const AdminDashboard = () => {
     } finally {
       setUnitAdminLoading(false)
     }
+  }
+
+  const fetchDistrictAdmins = async (search = '', district = '', page = 1) => {
+    try {
+      setDistrictAdminLoading(true)
+      const params = {}
+      if (search) params.search = search
+      if (district) params.district = district
+      params.page = page
+      params.limit = 10
+
+      const response = await api.get('/ihthisabi/admin/district-admins', { params })
+      setDistrictAdmins(response.data.data.districtAdmins || [])
+      setDistrictAdminPagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
+    } catch (error) {
+      console.error('Error fetching district admins:', error)
+      toast.error('Failed to fetch district admins')
+    } finally {
+      setDistrictAdminLoading(false)
+    }
+  }
+
+  const fetchDistrictAdminDistricts = async () => {
+    try {
+      const response = await api.get('/ihthisabi/admin/district-admins/districts')
+      setDistrictAdminDistricts(response.data.data.districts || [])
+    } catch (error) {
+      console.error('Error fetching district admin districts:', error)
+    }
+  }
+
+  const handleDistrictAdminSearch = (value) => {
+    setDistrictAdminSearchTerm(value)
+    fetchDistrictAdmins(value, selectedDistrictAdminDistrict)
+  }
+
+  const handleDistrictAdminDistrictFilter = (district) => {
+    setSelectedDistrictAdminDistrict(district)
+    fetchDistrictAdmins(districtAdminSearchTerm, district, 1)
+  }
+
+  const handleDistrictAdminPageChange = (newPage) => {
+    fetchDistrictAdmins(districtAdminSearchTerm, selectedDistrictAdminDistrict, newPage)
+  }
+
+  const clearDistrictAdminFilters = () => {
+    setDistrictAdminSearchTerm('')
+    setSelectedDistrictAdminDistrict('')
+    fetchDistrictAdmins('', '')
   }
 
   const fetchDistricts = async () => {
@@ -1376,35 +1446,139 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
-                {/* Pagination Controls */}
-                {pagination.pages > 1 && (
-                  <div className="px-3 sm:px-6 py-4 border-t border-gray-200 bg-gray-50">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-                      <div className="text-sm text-gray-700 text-center sm:text-left">
-                        Showing page {pagination.current} of {pagination.pages}
-                      </div>
-                      <div className="flex items-center justify-center space-x-2">
-                        <button
-                          onClick={() => handlePageChange(pagination.current - 1)}
-                          disabled={pagination.current <= 1}
-                          className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Previous
-                        </button>
-                        <span className="px-3 py-1 text-sm bg-primary/10 text-primary rounded-md font-medium">
-                          {pagination.current}
-                        </span>
-                        <button
-                          onClick={() => handlePageChange(pagination.current + 1)}
-                          disabled={pagination.current >= pagination.pages}
-                          className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Next
-                        </button>
-                      </div>
+                <Pagination pagination={pagination} onPageChange={handlePageChange} loading={unitAdminLoading} itemLabel="unit admins" />
+              </div>
+            </div>
+          </div>
+        ) : activeTab === 'districtadmins' ? (
+          <div className="space-y-6">
+            {/* District Admins List */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">District Admins</h3>
+                    <div className="text-sm text-gray-600">
+                      <span>Total Count: <span className="font-semibold text-blue-600">{districtAdminPagination.total || districtAdmins.length}</span></span>
+                      {districtAdminPagination.pages > 1 && (
+                        <span className="ml-4">Page: <span className="font-semibold text-green-600">{districtAdminPagination.current}</span> of <span className="font-semibold text-green-600">{districtAdminPagination.pages}</span></span>
+                      )}
                     </div>
                   </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                    <div className="relative w-full sm:w-auto">
+                      <input
+                        type="text"
+                        placeholder="Search district admins..."
+                        value={districtAdminSearchTerm}
+                        onChange={(e) => handleDistrictAdminSearch(e.target.value)}
+                        className="form-input pl-10"
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-gray-400" />
+                      </div>
+                    </div>
+
+                    <select
+                      value={selectedDistrictAdminDistrict}
+                      onChange={(e) => handleDistrictAdminDistrictFilter(e.target.value)}
+                      className="form-select w-full sm:w-auto"
+                    >
+                      <option value="">All Districts</option>
+                      {districtAdminDistricts.map((district) => (
+                        <option key={district} value={district}>{district}</option>
+                      ))}
+                    </select>
+
+                    {(districtAdminSearchTerm || selectedDistrictAdminDistrict) && (
+                      <button onClick={clearDistrictAdminFilters} className="btn-ghost w-full sm:w-auto">
+                        <XCircle className="h-4 w-4" />
+                        <span>Clear</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => { setSelectedDistrictAdminId(null); setShowDistrictAdminModal(true) }}
+                      className="btn-primary w-full sm:w-auto"
+                    >
+                      Add District Admin
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                {districtAdminLoading ? (
+                  <div className="text-center py-8">
+                    <div className="spinner w-8 h-8 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading district admins...</p>
+                  </div>
+                ) : districtAdmins.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District Admin</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {districtAdmins.map((admin) => (
+                          <tr
+                            key={admin._id}
+                            onClick={() => { setSelectedDistrictAdminId(admin._id); setShowDistrictAdminModal(true) }}
+                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                          >
+                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-10 w-10">
+                                  <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                                    <span className="text-sm font-medium text-primary-600">
+                                      {admin.name?.charAt(0)?.toUpperCase()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900">{admin.name}</div>
+                                  <div className="text-sm text-gray-500">ID: {admin.ruknId}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{admin.district}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <div>
+                                <div className="flex items-center">
+                                  <Phone className="h-4 w-4 mr-1" />
+                                  {admin.contactNo || '-'}
+                                </div>
+                                <div className="flex items-center mt-1">
+                                  <Mail className="h-4 w-4 mr-1" />
+                                  {admin.emailId || '-'}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                admin.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {admin.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No district admins found</p>
+                    <p className="text-sm text-gray-400 mt-1">Run the district admin migration script, or add one manually</p>
+                  </div>
                 )}
+
+                <Pagination pagination={districtAdminPagination} onPageChange={handleDistrictAdminPageChange} loading={districtAdminLoading} itemLabel="district admins" />
               </div>
             </div>
           </div>
@@ -1925,7 +2099,7 @@ const AdminDashboard = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex items-center mb-4">
               <XCircle className="h-6 w-6 text-red-600 mr-3" />
@@ -1960,6 +2134,18 @@ const AdminDashboard = () => {
           setShowProfileModal(false)
           setSelectedUnitAdminId(null)
         }}
+      />
+
+      {/* District Admin Profile Modal */}
+      <DistrictAdminProfileModal
+        districtAdminId={selectedDistrictAdminId}
+        isOpen={showDistrictAdminModal}
+        onClose={() => {
+          setShowDistrictAdminModal(false)
+          setSelectedDistrictAdminId(null)
+        }}
+        onSaved={() => fetchDistrictAdmins(districtAdminSearchTerm, selectedDistrictAdminDistrict, districtAdminPagination.current)}
+        onDeleted={() => fetchDistrictAdmins(districtAdminSearchTerm, selectedDistrictAdminDistrict, 1)}
       />
     </div>
   )

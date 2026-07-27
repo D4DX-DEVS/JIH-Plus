@@ -1105,7 +1105,7 @@ const KarkunForm = ({ initialData = null, isReadOnly = false, onBack = null }) =
         </button>
 
         {showSuccess && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl animate-in fade-in zoom-in duration-300">
               <div className="text-center">
                 <div className="mb-4 bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto">

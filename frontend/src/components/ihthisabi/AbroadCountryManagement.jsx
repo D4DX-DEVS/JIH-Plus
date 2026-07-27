@@ -3,6 +3,7 @@ import { api } from '../../utils/ihthisabi/api'
 import { Plus, Pencil, Trash2, Check, X, Globe, MapPin, Building2, Users } from 'lucide-react'
 import toast from 'react-hot-toast'
 import ConfirmationModal from './ConfirmationModal'
+import Pagination from './Pagination'
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -39,6 +40,7 @@ function InlineInput({ value, onChange, onConfirm, onCancel, placeholder }) {
 
 function CountriesTab() {
   const [countries, setCountries] = useState([])
+  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [loading, setLoading] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [editValue, setEditValue] = useState('')
@@ -47,16 +49,17 @@ function CountriesTab() {
   const [addLoading, setAddLoading] = useState(false)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, title: '' })
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (page = 1) => {
     setLoading(true)
     try {
-      const res = await api.get('/ihthisabi/admin/abroad-countries')
+      const res = await api.get('/ihthisabi/admin/abroad-countries', { params: { page, limit: 10 } })
       setCountries(res.data.data.countries)
+      setPagination(res.data.data.pagination || { current: 1, pages: 1, total: res.data.data.countries.length })
     } catch { toast.error('Failed to load countries') }
     finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load(1) }, [load])
 
   const handleAdd = async () => {
     if (!newTitle.trim()) { toast.error('Country title is required'); return }
@@ -64,7 +67,7 @@ function CountriesTab() {
     try {
       await api.post('/ihthisabi/admin/abroad-countries', { title: newTitle.trim() })
       toast.success('Country added')
-      setNewTitle(''); setShowAddRow(false); load()
+      setNewTitle(''); setShowAddRow(false); load(1)
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to add country') }
     finally { setAddLoading(false) }
   }
@@ -73,7 +76,7 @@ function CountriesTab() {
     if (!editValue.trim()) { toast.error('Country title is required'); return }
     try {
       await api.put(`/ihthisabi/admin/abroad-countries/${id}`, { title: editValue.trim() })
-      toast.success('Country updated'); setEditingId(null); load()
+      toast.success('Country updated'); setEditingId(null); load(pagination.current)
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to update country') }
   }
 
@@ -81,7 +84,7 @@ function CountriesTab() {
     try {
       await api.delete(`/ihthisabi/admin/abroad-countries/${deleteModal.id}`)
       toast.success('Country deleted')
-      setDeleteModal({ isOpen: false, id: null, title: '' }); load()
+      setDeleteModal({ isOpen: false, id: null, title: '' }); load(1)
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to delete country') }
   }
 
@@ -141,11 +144,7 @@ function CountriesTab() {
             ))}
           </tbody>
         </table>
-        {countries.length > 0 && (
-          <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-500">
-            {countries.length} {countries.length === 1 ? 'country' : 'countries'} total
-          </div>
-        )}
+        <Pagination pagination={pagination} onPageChange={load} loading={loading} itemLabel="countries" />
       </div>
       <ConfirmationModal
         isOpen={deleteModal.isOpen}
@@ -165,6 +164,7 @@ function AreasTab() {
   const [countries, setCountries] = useState([])
   const [selectedCountry, setSelectedCountry] = useState('')
   const [areas, setAreas] = useState([])
+  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [loading, setLoading] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [editValue, setEditValue] = useState('')
@@ -176,24 +176,25 @@ function AreasTab() {
     api.get('/ihthisabi/admin/abroad-countries').then(res => setCountries(res.data.data.countries)).catch(() => toast.error('Failed to load countries'))
   }, [])
 
-  const loadAreas = useCallback(async (countryId) => {
+  const loadAreas = useCallback(async (countryId, page = 1) => {
     if (!countryId) { setAreas([]); return }
     setLoading(true)
     try {
-      const res = await api.get('/ihthisabi/admin/abroad-areas', { params: { country: countryId } })
+      const res = await api.get('/ihthisabi/admin/abroad-areas', { params: { country: countryId, page, limit: 10 } })
       setAreas(res.data.data.areas)
+      setPagination(res.data.data.pagination || { current: 1, pages: 1, total: res.data.data.areas.length })
     } catch { toast.error('Failed to load areas') }
     finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { loadAreas(selectedCountry) }, [selectedCountry, loadAreas])
+  useEffect(() => { loadAreas(selectedCountry, 1) }, [selectedCountry, loadAreas])
 
   const handleAdd = async () => {
     if (!newTitle.trim()) { toast.error('Area title is required'); return }
     if (!selectedCountry) { toast.error('Select a country first'); return }
     try {
       await api.post('/ihthisabi/admin/abroad-areas', { title: newTitle.trim(), countryId: selectedCountry })
-      toast.success('Area added'); setNewTitle(''); setShowAddRow(false); loadAreas(selectedCountry)
+      toast.success('Area added'); setNewTitle(''); setShowAddRow(false); loadAreas(selectedCountry, 1)
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to add area') }
   }
 
@@ -201,7 +202,7 @@ function AreasTab() {
     if (!editValue.trim()) { toast.error('Area title is required'); return }
     try {
       await api.put(`/ihthisabi/admin/abroad-areas/${id}`, { title: editValue.trim() })
-      toast.success('Area updated'); setEditingId(null); loadAreas(selectedCountry)
+      toast.success('Area updated'); setEditingId(null); loadAreas(selectedCountry, pagination.current)
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to update area') }
   }
 
@@ -209,7 +210,7 @@ function AreasTab() {
     try {
       await api.delete(`/ihthisabi/admin/abroad-areas/${deleteModal.id}`)
       toast.success('Area deleted')
-      setDeleteModal({ isOpen: false, id: null, title: '' }); loadAreas(selectedCountry)
+      setDeleteModal({ isOpen: false, id: null, title: '' }); loadAreas(selectedCountry, 1)
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to delete area') }
   }
 
@@ -267,7 +268,7 @@ function AreasTab() {
               ))}
             </tbody>
           </table>
-          {areas.length > 0 && <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-500">{areas.length} {areas.length === 1 ? 'area' : 'areas'} in this country</div>}
+          <Pagination pagination={pagination} onPageChange={(page) => loadAreas(selectedCountry, page)} loading={loading} itemLabel="areas" />
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-dashed border-gray-300 py-16 text-center">
@@ -467,37 +468,43 @@ function AssignAdminModal({ unit, onClose, onChanged }) {
 
 function AbroadUnitAdminsTab() {
   const [unitAdmins, setUnitAdmins] = useState([])
+  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (page = 1, searchValue = search) => {
     setLoading(true)
     try {
-      const res = await api.get('/ihthisabi/admin/abroad-unitadmins')
+      const res = await api.get('/ihthisabi/admin/abroad-unitadmins', {
+        params: { page, limit: 10, search: searchValue || undefined }
+      })
       setUnitAdmins(res.data.data.unitAdmins)
+      setPagination(res.data.data.pagination || { current: 1, pages: 1, total: res.data.data.unitAdmins.length })
     } catch { toast.error('Failed to load abroad unit admins') }
     finally { setLoading(false) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useEffect(() => { load() }, [load])
+  // Debounce search so typing doesn't fire a request per keystroke (also covers initial load)
+  useEffect(() => {
+    const t = setTimeout(() => load(1, search), search ? 400 : 0)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
-  const filtered = unitAdmins.filter(a => {
-    if (!search.trim()) return true
-    const q = search.toLowerCase()
-    return a.name?.toLowerCase().includes(q) || a.ruknId?.toLowerCase().includes(q) || a.abroadUnit?.title?.toLowerCase().includes(q)
-  })
+  const filtered = unitAdmins
 
   const handleToggleActive = async (a) => {
     try {
       await api.put(`/ihthisabi/admin/abroad-unitadmins/${a._id}`, { isActive: !a.isActive })
-      load()
+      load(pagination.current)
     } catch { toast.error('Failed to update status') }
   }
 
   const handleRemove = async (id) => {
     try {
       await api.delete(`/ihthisabi/admin/abroad-unitadmins/${id}`)
-      toast.success('Removed'); load()
+      toast.success('Removed'); load(1)
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to remove') }
   }
 
@@ -550,7 +557,7 @@ function AbroadUnitAdminsTab() {
             ))}
           </tbody>
         </table>
-        {filtered.length > 0 && <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-500">{filtered.length} abroad unit admin{filtered.length === 1 ? '' : 's'}</div>}
+        <Pagination pagination={pagination} onPageChange={(page) => load(page)} loading={loading} itemLabel="abroad unit admins" />
       </div>
     </div>
   )
@@ -564,6 +571,7 @@ function UnitsTab() {
   const [areas, setAreas] = useState([])
   const [selectedArea, setSelectedArea] = useState('')
   const [units, setUnits] = useState([])
+  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [loading, setLoading] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [editValue, setEditValue] = useState('')
@@ -583,17 +591,18 @@ function UnitsTab() {
     api.get('/ihthisabi/admin/abroad-areas', { params: { country: selectedCountry } }).then(res => setAreas(res.data.data.areas)).catch(() => toast.error('Failed to load areas'))
   }, [selectedCountry])
 
-  const loadUnits = useCallback(async (areaId) => {
+  const loadUnits = useCallback(async (areaId, page = 1) => {
     if (!areaId) { setUnits([]); return }
     setLoading(true)
     try {
-      const res = await api.get('/ihthisabi/admin/abroad-units', { params: { area: areaId } })
+      const res = await api.get('/ihthisabi/admin/abroad-units', { params: { area: areaId, page, limit: 10 } })
       setUnits(res.data.data.units)
+      setPagination(res.data.data.pagination || { current: 1, pages: 1, total: res.data.data.units.length })
     } catch { toast.error('Failed to load units') }
     finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { loadUnits(selectedArea) }, [selectedArea, loadUnits])
+  useEffect(() => { loadUnits(selectedArea, 1) }, [selectedArea, loadUnits])
 
   const loadAdminsForArea = useCallback(async (areaId) => {
     if (!areaId) { setAdminsByUnit({}); return }
@@ -617,7 +626,7 @@ function UnitsTab() {
     if (!selectedArea || !selectedCountry) { toast.error('Select country and area first'); return }
     try {
       await api.post('/ihthisabi/admin/abroad-units', { title: newTitle.trim(), areaId: selectedArea, countryId: selectedCountry })
-      toast.success('Unit added'); setNewTitle(''); setShowAddRow(false); loadUnits(selectedArea)
+      toast.success('Unit added'); setNewTitle(''); setShowAddRow(false); loadUnits(selectedArea, 1)
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to add unit') }
   }
 
@@ -625,7 +634,7 @@ function UnitsTab() {
     if (!editValue.trim()) { toast.error('Unit title is required'); return }
     try {
       await api.put(`/ihthisabi/admin/abroad-units/${id}`, { title: editValue.trim() })
-      toast.success('Unit updated'); setEditingId(null); loadUnits(selectedArea)
+      toast.success('Unit updated'); setEditingId(null); loadUnits(selectedArea, pagination.current)
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to update unit') }
   }
 
@@ -633,7 +642,7 @@ function UnitsTab() {
     try {
       await api.delete(`/ihthisabi/admin/abroad-units/${deleteModal.id}`)
       toast.success('Unit deleted')
-      setDeleteModal({ isOpen: false, id: null, title: '' }); loadUnits(selectedArea)
+      setDeleteModal({ isOpen: false, id: null, title: '' }); loadUnits(selectedArea, 1)
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to delete unit') }
   }
 
@@ -712,7 +721,7 @@ function UnitsTab() {
               })}
             </tbody>
           </table>
-          {units.length > 0 && <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-500">{units.length} {units.length === 1 ? 'unit' : 'units'} in this area</div>}
+          <Pagination pagination={pagination} onPageChange={(page) => loadUnits(selectedArea, page)} loading={loading} itemLabel="units" />
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-dashed border-gray-300 py-16 text-center">
