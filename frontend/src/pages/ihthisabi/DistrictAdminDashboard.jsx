@@ -379,16 +379,16 @@ const DistrictAdminDashboard = () => {
       `}</style>
 
       {/* Header */}
-      <div className="mb-5">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">District Admin Dashboard</h1>
-        <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
-          <MapPin className="w-4 h-4 text-[#7B4FF2]" />
-          {district || 'Loading district…'}
+      <div className="mb-2 sm:mb-4">
+        <h1 className="ih-page-title">District Admin Dashboard</h1>
+        <p className="ih-page-subtitle flex items-center gap-1">
+          <MapPin className="w-3 h-3 shrink-0 text-[#7B4FF2]" />
+          <span className="truncate">{district || 'Loading district…'}</span>
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6 print:hidden">
+      <div className="ih-segment mb-3 print:hidden">
         {TABS.map((tab) => {
           const Icon = tab.icon
           const active = activeTab === tab.key
@@ -396,12 +396,10 @@ const DistrictAdminDashboard = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                active ? 'bg-[#7B4FF2] text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-              }`}
+              className={`ih-segment-btn ${active ? 'bg-[#7B4FF2] text-white shadow-sm' : ''}`}
             >
-              <Icon className="w-4 h-4" />
-              {tab.label}
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{tab.label}</span>
             </button>
           )
         })}
@@ -415,27 +413,31 @@ const DistrictAdminDashboard = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-4 gap-1.5 sm:gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               {[
                 { label: 'Total Members', shortLabel: 'Members', value: stats.totalMembers, icon: Users },
                 { label: 'Total Submissions', shortLabel: 'Submissions', value: stats.totalSubmissions, icon: FileText },
                 { label: 'Completion Rate', shortLabel: 'Completion', value: `${stats.completionRate}%`, icon: BarChart3 },
                 { label: 'Submitted', shortLabel: 'Submitted', value: stats.submittedCount, icon: FileText }
               ].map((card) => (
-                <div key={card.label} className="min-w-0 bg-white rounded-lg sm:rounded-xl border border-gray-100 shadow-sm p-1.5 sm:p-4">
-                  <div className="flex items-center gap-0.5 sm:gap-2 text-gray-500 mb-0.5 sm:mb-2">
-                    <card.icon className="w-2.5 h-2.5 sm:w-4 sm:h-4 shrink-0" />
-                    <span className="text-[7px] sm:text-xs font-semibold uppercase tracking-wide leading-tight">
-                      <span className="sm:hidden">{card.shortLabel}</span>
-                      <span className="hidden sm:inline">{card.label}</span>
-                    </span>
+                <div key={card.label} className="ih-stat-card min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="ih-stat-label truncate">
+                        <span className="sm:hidden">{card.shortLabel}</span>
+                        <span className="hidden sm:inline">{card.label}</span>
+                      </p>
+                      <p className="ih-stat-value mt-1">{card.value}</p>
+                    </div>
+                    <div className="ih-stat-icon bg-[#7B4FF2]/10">
+                      <card.icon className="w-4 h-4 text-[#7B4FF2]" />
+                    </div>
                   </div>
-                  <p className="text-xs sm:text-2xl font-bold text-gray-900">{card.value}</p>
                 </div>
               ))}
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-5">
+            <div className="ih-surface p-3 sm:p-5">
               <h2 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">Area Breakdown</h2>
               <table className="w-full table-fixed text-[11px] sm:text-sm">
                 <thead>
@@ -461,7 +463,7 @@ const DistrictAdminDashboard = () => {
               </table>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-5">
+            <div className="ih-surface p-4 sm:p-5">
               <h2 className="text-base font-semibold text-gray-900 mb-4">Recent Submissions</h2>
               <div className="space-y-2">
                 {recentSubmissions.length === 0 ? (
@@ -522,9 +524,9 @@ const DistrictAdminDashboard = () => {
             </button>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+          <div className="ih-surface overflow-hidden">
+            <div className="overflow-x-hidden sm:overflow-x-auto">
+              <table className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="text-left px-3 sm:px-4 py-3"><SortButton field="name" label="Name" activeSort={membersSort} onSort={toggleMembersSort} /></th>
@@ -639,9 +641,9 @@ const DistrictAdminDashboard = () => {
             </button>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+          <div className="ih-surface overflow-hidden">
+            <div className="overflow-x-hidden sm:overflow-x-auto">
+              <table className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="text-left px-3 sm:px-4 py-3"><SortButton field="ruknName" label="Name" activeSort={submissionsSort} onSort={toggleSubmissionsSort} /></th>
@@ -717,7 +719,7 @@ const DistrictAdminDashboard = () => {
 
       {/* District Replies Tab */}
       {activeTab === 'replies' && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-5">
+        <div className="ih-surface p-4 sm:p-5">
           {repliesLoading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-6 h-6 text-[#7B4FF2] animate-spin mr-2" /> Loading replies…
@@ -747,14 +749,14 @@ const DistrictAdminDashboard = () => {
 
       {/* Alternative Submissions Tab */}
       {activeTab === 'alternative' && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="ih-surface overflow-hidden">
           {altLoading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-6 h-6 text-[#7B4FF2] animate-spin mr-2" /> Loading alternative submissions…
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+            <div className="overflow-x-hidden sm:overflow-x-auto">
+              <table className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="text-left px-3 sm:px-4 py-3">Name</th>

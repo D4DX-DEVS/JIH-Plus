@@ -374,7 +374,7 @@ const FormManagement = () => {
           </div>
 
           {/* Form Settings */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+          <div className="ih-surface p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Form Settings</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="sm:col-span-2">
@@ -417,7 +417,7 @@ const FormManagement = () => {
             </div>
 
             {editingForm.questions?.map((question, qIndex) => (
-              <div key={question.questionId || qIndex} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div key={question.questionId || qIndex} className="ih-surface overflow-hidden">
                 {/* Question Header */}
                 <div className="flex items-center px-4 py-3 bg-gray-50 border-b border-gray-200 cursor-pointer"
                   onClick={() => setExpandedQuestion(expandedQuestion === qIndex ? null : qIndex)}>
@@ -609,27 +609,30 @@ const FormManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className="ih-page-shell max-w-5xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Form Management</h1>
-            <p className="text-sm text-gray-500 mt-1">Create and manage quarterly submission forms</p>
+        {/* Title is hidden on mobile — the sticky app bar already names the page. */}
+        <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
+          <div className="hidden min-w-0 sm:block">
+            <h1 className="ih-page-title">Form Management</h1>
+            <p className="ih-page-subtitle">Create and manage quarterly submission forms</p>
           </div>
           <button onClick={handleCreateNew}
-            className="flex items-center px-4 py-2.5 bg-black text-white rounded-lg hover:bg-primary/90 transition-colors shadow-sm">
-            <Plus className="w-4 h-4 mr-2" /> Create New Form
+            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-black px-2.5 py-1.5 text-[11px] font-medium text-white shadow-sm transition-colors hover:bg-gray-800 sm:px-4 sm:py-2.5 sm:text-sm">
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="sm:hidden">New</span>
+            <span className="hidden sm:inline">Create New Form</span>
           </button>
         </div>
 
         {nextQuarterInfo && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-            <p className="text-sm text-blue-700">
-              <strong>Current submission quarter:</strong> Q{nextQuarterInfo.currentSubmissionQuarter?.quarter} {nextQuarterInfo.currentSubmissionQuarter?.year}
-              {' | '}
-              <strong>Next quarter to assign:</strong> Q{nextQuarterInfo.nextQuarter?.quarter} {nextQuarterInfo.nextQuarter?.year}
-              {nextQuarterInfo.formExists && ' (form already exists)'}
+          <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-2">
+            <p className="text-[11px] leading-snug text-blue-700 sm:text-sm">
+              <strong>Current:</strong> Q{nextQuarterInfo.currentSubmissionQuarter?.quarter} {nextQuarterInfo.currentSubmissionQuarter?.year}
+              {' · '}
+              <strong>Next to assign:</strong> Q{nextQuarterInfo.nextQuarter?.quarter} {nextQuarterInfo.nextQuarter?.year}
+              {nextQuarterInfo.formExists && ' (exists)'}
             </p>
           </div>
         )}
@@ -640,60 +643,56 @@ const FormManagement = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : forms.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No forms created yet</h3>
-            <p className="text-gray-500 mb-6">Create your first dynamic form to get started</p>
+          <div className="ih-surface px-4 py-8 text-center sm:py-12">
+            <FileText className="w-9 h-9 text-gray-300 mx-auto mb-2" />
+            <h3 className="text-sm font-medium text-gray-900 mb-1">No forms created yet</h3>
+            <p className="text-xs text-gray-500 mb-4">Create your first dynamic form to get started</p>
             <button onClick={handleCreateNew}
               className="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-primary/90 transition-colors">
               <Plus className="w-4 h-4 mr-2" /> Create Form
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="ih-section-card ih-list overflow-hidden">
             {forms.map(form => (
-              <div key={form._id} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="text-lg font-semibold text-gray-900">{form.title}</h3>
-                      <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
-                        form.status === 'published'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {form.status === 'published' ? 'Published' : 'Draft'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      {QUARTER_NAMES[form.quarter]} {form.year} &middot; {form.questions?.length || 0} questions
-                      {form.clonedFrom && ' &middot; Cloned'}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Created: {new Date(form.createdAt).toLocaleDateString()}
-                      {form.updatedAt !== form.createdAt && ` &middot; Updated: ${new Date(form.updatedAt).toLocaleDateString()}`}
-                    </p>
+              <div key={form._id} className="flex items-center gap-2 px-3 py-2.5 transition-colors hover:bg-gray-50 sm:px-4 sm:py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="truncate text-[13px] font-semibold text-gray-900 sm:text-sm">{form.title}</h3>
+                    <span className={`ih-chip ${
+                      form.status === 'published'
+                        ? 'border-green-200 bg-green-100 text-green-700'
+                        : 'border-yellow-200 bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {form.status === 'published' ? 'Published' : 'Draft'}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    <button onClick={() => handleEdit(form._id)} title="Edit"
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                      <Edit2 className="w-4 h-4" />
+                  <p className="ih-list-meta mt-0.5">
+                    {QUARTER_NAMES[form.quarter]} {form.year} · {form.questions?.length || 0} questions
+                    {form.clonedFrom && ' · Cloned'}
+                    {' · '}
+                    {new Date(form.updatedAt || form.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <button onClick={() => handleEdit(form._id)} title="Edit"
+                    className="ih-icon-btn hover:bg-blue-50 hover:text-blue-600">
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={() => handleClone(form)} title="Clone to another quarter"
+                    className="ih-icon-btn hover:bg-purple-50 hover:text-purple-600">
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                  {form.status === 'draft' && (
+                    <button onClick={() => handlePublish(form._id)} title="Publish"
+                      className="ih-icon-btn hover:bg-green-50 hover:text-green-600">
+                      <Send className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => handleClone(form)} title="Clone to another quarter"
-                      className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
-                      <Copy className="w-4 h-4" />
-                    </button>
-                    {form.status === 'draft' && (
-                      <button onClick={() => handlePublish(form._id)} title="Publish"
-                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
-                        <Send className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button onClick={() => handleDelete(form._id)} title="Delete"
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  )}
+                  <button onClick={() => handleDelete(form._id)} title="Delete"
+                    className="ih-icon-btn hover:bg-red-50 hover:text-red-600">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             ))}

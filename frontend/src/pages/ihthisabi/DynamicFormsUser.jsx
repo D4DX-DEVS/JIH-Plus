@@ -234,8 +234,8 @@ const DynamicFormsUser = () => {
       {listLoading ? (
         <div className="text-gray-600">Loading...</div>
       ) : (
-        <div className="overflow-x-auto bg-white shadow rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
+        <div className="overflow-x-hidden sm:overflow-x-auto bg-white shadow rounded-lg">
+          <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Form</th>

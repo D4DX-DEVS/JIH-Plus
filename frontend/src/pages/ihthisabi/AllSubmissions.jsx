@@ -21,7 +21,10 @@ import {
   Star,
   AlertCircle,
   Globe,
-  UserX
+  UserX,
+  BarChart3,
+  SlidersHorizontal,
+  ChevronDown
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
@@ -44,6 +47,9 @@ const AllSubmissions = () => {
   const [quarterFilter, setQuarterFilter] = useState('all')
   const [yearFilter, setYearFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
+  // Filters stay collapsed on mobile so the list is visible without scrolling past
+  // a screenful of dropdowns. Always expanded from sm: up.
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const itemsPerPage = 10
 
   // Drawer state for professional inline details view
@@ -361,6 +367,12 @@ const AllSubmissions = () => {
   // submissions is already the current page of server-filtered results
   const paginatedSubmissions = submissions
 
+  // Drives the badge on the mobile "Filters" toggle so narrowed results are never
+  // silently hidden behind a collapsed panel.
+  const activeFilterCount = [
+    statusFilter, districtFilter, areaFilter, unitFilter, quarterFilter, yearFilter,
+  ].filter(v => v !== 'all').length
+
   const handleViewSubmission = (submissionId) => {
     // Open inline drawer with details instead of navigating
     setSelectedId(submissionId)
@@ -580,370 +592,291 @@ const AllSubmissions = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="ih-page-shell">
-        {/* Header */}
-        <div className="mb-4">
-          <div className="ih-page-header">
-            <div>
-              <h1 className="ih-page-title">All Submissions</h1>
-            </div>
-            <div className="flex w-full sm:w-auto items-center gap-2 flex-wrap">
-              {/* Alternative Submissions – hidden when abroad view is active */}
-              {!showAbroadSubmissions && !showNonSubmitted && (
-                <button
-                  onClick={() => {
-                    setShowAlternativeSubmissions(prev => !prev)
-                    setShowAbroadSubmissions(false)
-                    setShowNonSubmitted(false)
-                    if (!showAlternativeSubmissions && alternativeSubmissions.length === 0) {
-                      fetchAlternativeSubmissions(1)
-                    }
-                  }}
-                  className={`text-sm px-4 py-2 rounded-lg transition-colors w-full sm:w-auto ${
-                    showAlternativeSubmissions
-                      ? 'bg-orange-600 text-white hover:bg-orange-700'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <FileText className="w-4 h-4 mr-2 inline" />
-                  {showAlternativeSubmissions ? 'Regular Submissions' : 'Alternative Submissions'}
-                </button>
-              )}
+        {/* Header — desktop only. On mobile the app bar already names the page and
+            Export moves into the search row, so no row is spent on a title. */}
+        <div className="mb-2 hidden items-center justify-between gap-2 sm:flex">
+          <h1 className="ih-page-title">All Submissions</h1>
+          {!showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted && (
+            <button onClick={handleExport} className="btn-primary shrink-0 gap-1.5">
+              <Download className="w-4 h-4" />
+              Export
+            </button>
+          )}
+        </div>
 
-              {/* Abroad Submissions – hidden when alternative view is active */}
-              {!showAlternativeSubmissions && (
-                <button
-                  onClick={() => {
-                    setShowAbroadSubmissions(prev => !prev)
-                    setShowAlternativeSubmissions(false)
-                    setShowNonSubmitted(false)
-                  }}
-                  className={`text-sm px-4 py-2 rounded-lg transition-colors w-full sm:w-auto ${
-                    showAbroadSubmissions
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Globe className="w-4 h-4 mr-2 inline" />
-                  {showAbroadSubmissions ? 'Regular Submissions' : 'Abroad Submissions'}
-                </button>
-              )}
-
-              {/* Non-Submitted – hidden when alternative or abroad view is active */}
-              {!showAlternativeSubmissions && !showAbroadSubmissions && (
-                <button
-                  onClick={() => {
-                    setShowNonSubmitted(prev => !prev)
-                  }}
-                  className={`text-sm px-4 py-2 rounded-lg transition-colors w-full sm:w-auto ${
-                    showNonSubmitted
-                      ? 'bg-red-600 text-white hover:bg-red-700'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <UserX className="w-4 h-4 mr-2 inline" />
-                  {showNonSubmitted ? 'All Submissions' : 'Non-Submitted'}
-                </button>
-              )}
-
-              {/* Export only available in regular mode (not non-submitted) */}
-              {!showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted && (
-                <button
-                  onClick={handleExport}
-                  className="btn-primary text-sm w-full sm:w-auto"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </button>
-              )}
-            </div>
-          </div>
+        {/* View switcher — one compact row instead of four stacked full-width buttons */}
+        <div className="ih-segment mb-2">
+          <button
+            onClick={() => {
+              setShowAlternativeSubmissions(false)
+              setShowAbroadSubmissions(false)
+              setShowNonSubmitted(false)
+            }}
+            className={`ih-segment-btn ${
+              !showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted
+                ? 'ih-segment-btn-active' : ''
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Regular</span>
+          </button>
+          <button
+            onClick={() => {
+              setShowAlternativeSubmissions(true)
+              setShowAbroadSubmissions(false)
+              setShowNonSubmitted(false)
+              if (alternativeSubmissions.length === 0) fetchAlternativeSubmissions(1)
+            }}
+            className={`ih-segment-btn ${showAlternativeSubmissions ? 'ih-segment-btn-active text-orange-700' : ''}`}
+          >
+            <FileText className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Alt</span>
+          </button>
+          <button
+            onClick={() => {
+              setShowAbroadSubmissions(true)
+              setShowAlternativeSubmissions(false)
+              setShowNonSubmitted(false)
+            }}
+            className={`ih-segment-btn ${showAbroadSubmissions ? 'ih-segment-btn-active text-blue-700' : ''}`}
+          >
+            <Globe className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Abroad</span>
+          </button>
+          <button
+            onClick={() => {
+              setShowNonSubmitted(true)
+              setShowAlternativeSubmissions(false)
+              setShowAbroadSubmissions(false)
+            }}
+            className={`ih-segment-btn ${showNonSubmitted ? 'ih-segment-btn-active text-red-700' : ''}`}
+          >
+            <UserX className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Pending</span>
+          </button>
         </div>
 
         {/* Filters — only shown in regular submissions mode (not non-submitted) */}
         {!showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-3">
-          <div className="flex flex-col gap-3">
-            {/* First Row: Search and Status */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Search by Name */}
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search by member name..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="form-input pl-10"
-                  />
-                </div>
-              </div>
-              
-              {/* Status Filter */}
-              <div className="sm:w-48">
-                <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="submitted">Submitted</option>
-                    <option value="reviewed">Reviewed</option>
-                    <option value="approved">Approved</option>
-                  </select>
-                </div>
-              </div>
+        <div className="ih-surface mb-2 p-2 sm:p-3">
+          {/* Search + filter toggle share one row */}
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="ih-filter-icon" />
+              <input
+                type="text"
+                placeholder="Search member..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="ih-field pr-3"
+              />
+            </div>
+            <button
+              onClick={() => setFiltersOpen(o => !o)}
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-[7px] text-[11px] font-medium transition-colors sm:hidden ${
+                activeFilterCount > 0
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-gray-500'
+              }`}
+              style={activeFilterCount > 0 ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
+              aria-expanded={filtersOpen}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              {activeFilterCount > 0 && <span>{activeFilterCount}</span>}
+              <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${filtersOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <button
+              onClick={handleExport}
+              title="Export"
+              className="btn-primary shrink-0 px-2.5 py-[7px] sm:hidden"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Filter controls — collapsed on mobile until toggled, always shown from sm: */}
+          <div className={`${filtersOpen ? 'grid' : 'hidden'} mt-2 grid-cols-2 gap-2 sm:mt-2 sm:!grid sm:grid-cols-3 lg:grid-cols-6`}>
+            <div className="relative">
+              <Filter className="ih-filter-icon" />
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Status</option>
+                <option value="submitted">Submitted</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="approved">Approved</option>
+              </select>
             </div>
 
-            {/* Second Row: Location Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* District Filter */}
-              <div className="flex-1 sm:flex-initial sm:w-48">
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={districtFilter}
-                    onChange={(e) => {
-                      const next = e.target.value
-                      setDistrictFilter(next)
-                      // reset dependent filters
-                      setAreaFilter('all')
-                      setUnitFilter('all')
-                    }}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Districts</option>
-                    {uniqueDistricts.map(district => (
-                      <option key={district} value={district}>{district}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Area Filter */}
-              <div className="flex-1 sm:flex-initial sm:w-48">
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={areaFilter}
-                    onChange={(e) => {
-                      const next = e.target.value
-                      setAreaFilter(next)
-                      // reset unit when area changes
-                      setUnitFilter('all')
-                    }}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Areas</option>
-                    {uniqueAreas.map(area => (
-                      <option key={area} value={area}>{area}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Unit Filter */}
-              <div className="flex-1 sm:flex-initial sm:w-48">
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={unitFilter}
-                    onChange={(e) => setUnitFilter(e.target.value)}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Units</option>
-                    {uniqueUnits.map(unit => (
-                      <option key={unit} value={unit}>{unit}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+            <div className="relative">
+              <MapPin className="ih-filter-icon" />
+              <select
+                value={districtFilter}
+                onChange={(e) => { setDistrictFilter(e.target.value); setAreaFilter('all'); setUnitFilter('all') }}
+                className="ih-filter-select"
+              >
+                <option value="all">All Districts</option>
+                {uniqueDistricts.map(district => (
+                  <option key={district} value={district}>{district}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Third Row: Quarter + Year Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Year Filter */}
-              <div className="flex-1 sm:flex-initial sm:w-48">
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={yearFilter}
-                    onChange={(e) => setYearFilter(e.target.value)}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Years</option>
-                    {submissionYears.map(y => (
-                      <option key={y} value={String(y)}>{y}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Quarter Filter */}
-              <div className="flex-1 sm:flex-initial sm:w-48">
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <select
-                    value={quarterFilter}
-                    onChange={(e) => setQuarterFilter(e.target.value)}
-                    className="form-select pl-10"
-                  >
-                    <option value="all">All Quarters</option>
-                    <option value="1">Q1 (Jan–Mar)</option>
-                    <option value="2">Q2 (Apr–Jun)</option>
-                    <option value="3">Q3 (Jul–Sep)</option>
-                    <option value="4">Q4 (Oct–Dec)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Clear period filters */}
-              {(quarterFilter !== 'all' || yearFilter !== 'all') && (
-                <div className="flex items-center">
-                  <button
-                    onClick={() => { setQuarterFilter('all'); setYearFilter('all') }}
-                    className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 px-3 py-2 border border-gray-200 rounded-lg"
-                  >
-                    <CloseIcon className="w-3.5 h-3.5" />
-                    Clear Period
-                  </button>
-                </div>
-              )}
+            <div className="relative">
+              <MapPin className="ih-filter-icon" />
+              <select
+                value={areaFilter}
+                onChange={(e) => { setAreaFilter(e.target.value); setUnitFilter('all') }}
+                className="ih-filter-select"
+              >
+                <option value="all">All Areas</option>
+                {uniqueAreas.map(area => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
+              </select>
             </div>
+
+            <div className="relative">
+              <MapPin className="ih-filter-icon" />
+              <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Units</option>
+                {uniqueUnits.map(unit => (
+                  <option key={unit} value={unit}>{unit}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <Calendar className="ih-filter-icon" />
+              <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Years</option>
+                {submissionYears.map(y => (
+                  <option key={y} value={String(y)}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <Calendar className="ih-filter-icon" />
+              <select value={quarterFilter} onChange={(e) => setQuarterFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Quarters</option>
+                <option value="1">Q1 (Jan–Mar)</option>
+                <option value="2">Q2 (Apr–Jun)</option>
+                <option value="3">Q3 (Jul–Sep)</option>
+                <option value="4">Q4 (Oct–Dec)</option>
+              </select>
+            </div>
+
+            {activeFilterCount > 0 && (
+              <button
+                onClick={() => {
+                  setStatusFilter('all'); setDistrictFilter('all'); setAreaFilter('all')
+                  setUnitFilter('all'); setQuarterFilter('all'); setYearFilter('all')
+                }}
+                className="col-span-2 inline-flex items-center justify-center gap-1 rounded-full px-2 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:text-gray-800 sm:col-span-1"
+                style={{ backgroundColor: 'rgba(16,24,40,0.04)' }}
+              >
+                <CloseIcon className="w-3 h-3" />
+                Clear all
+              </button>
+            )}
           </div>
         </div>
         )}
 
         {/* Non-Submitted Filter Panel */}
         {showNonSubmitted && !showAlternativeSubmissions && !showAbroadSubmissions && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-3">
-            <div className="flex flex-col gap-3">
-              <div className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <UserX className="w-4 h-4 text-red-500" />
-                Filter members who have not submitted
+          <div className="ih-surface p-2 sm:p-3 mb-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+              <div className="relative">
+                <Calendar className="ih-filter-icon" />
+                <select value={nsYear} onChange={e => setNsYear(e.target.value)} className="ih-filter-select">
+                  <option value="">Year *</option>
+                  {nsYearOptions.map(y => (
+                    <option key={y} value={String(y)}>{y}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Row 1: Year + Quarter */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1 sm:flex-initial sm:w-48">
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <select
-                      value={nsYear}
-                      onChange={e => setNsYear(e.target.value)}
-                      className="form-select pl-10"
-                    >
-                      <option value="">Select Year *</option>
-                      {nsYearOptions.map(y => (
-                        <option key={y} value={String(y)}>{y}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex-1 sm:flex-initial sm:w-48">
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <select
-                      value={nsQuarter}
-                      onChange={e => setNsQuarter(e.target.value)}
-                      className="form-select pl-10"
-                    >
-                      <option value="">Select Quarter *</option>
-                      <option value="1">Q1 (Jan–Mar)</option>
-                      <option value="2">Q2 (Apr–Jun)</option>
-                      {!Q3_DISABLED && <option value="3">Q3 (Jul–Sep)</option>}
-                      <option value="4">Q4 (Oct–Dec)</option>
-                    </select>
-                  </div>
-                </div>
+              <div className="relative">
+                <Calendar className="ih-filter-icon" />
+                <select value={nsQuarter} onChange={e => setNsQuarter(e.target.value)} className="ih-filter-select">
+                  <option value="">Quarter *</option>
+                  <option value="1">Q1 (Jan–Mar)</option>
+                  <option value="2">Q2 (Apr–Jun)</option>
+                  {!Q3_DISABLED && <option value="3">Q3 (Jul–Sep)</option>}
+                  <option value="4">Q4 (Oct–Dec)</option>
+                </select>
               </div>
 
-              {/* Row 2: District + Area + Unit */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1 sm:flex-initial sm:w-48">
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <select
-                      value={nsDistrict}
-                      onChange={e => { setNsDistrict(e.target.value); setNsArea('all'); setNsUnit('all') }}
-                      className="form-select pl-10"
-                    >
-                      <option value="all">All Districts</option>
-                      {uniqueDistricts.map(d => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              <div className="relative">
+                <MapPin className="ih-filter-icon" />
+                <select
+                  value={nsDistrict}
+                  onChange={e => { setNsDistrict(e.target.value); setNsArea('all'); setNsUnit('all') }}
+                  className="ih-filter-select"
+                >
+                  <option value="all">All Districts</option>
+                  {uniqueDistricts.map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
 
-                <div className="flex-1 sm:flex-initial sm:w-48">
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <select
-                      value={nsArea}
-                      onChange={e => { setNsArea(e.target.value); setNsUnit('all') }}
-                      className="form-select pl-10"
-                    >
-                      <option value="all">All Areas</option>
-                      {nsUniqueAreas.map(a => (
-                        <option key={a} value={a}>{a}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              <div className="relative">
+                <MapPin className="ih-filter-icon" />
+                <select
+                  value={nsArea}
+                  onChange={e => { setNsArea(e.target.value); setNsUnit('all') }}
+                  className="ih-filter-select"
+                >
+                  <option value="all">All Areas</option>
+                  {nsUniqueAreas.map(a => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+              </div>
 
-                <div className="flex-1 sm:flex-initial sm:w-48">
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <select
-                      value={nsUnit}
-                      onChange={e => setNsUnit(e.target.value)}
-                      className="form-select pl-10"
-                    >
-                      <option value="all">All Units</option>
-                      {nsUniqueUnits.map(u => (
-                        <option key={u} value={u}>{u}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              <div className="relative">
+                <MapPin className="ih-filter-icon" />
+                <select value={nsUnit} onChange={e => setNsUnit(e.target.value)} className="ih-filter-select">
+                  <option value="all">All Units</option>
+                  {nsUniqueUnits.map(u => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={() => fetchNonSubmitted(1)}
-                    disabled={!nsQuarter || !nsYear || nonSubmittedLoading}
-                    className="btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {nonSubmittedLoading ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Search className="w-4 h-4" />
-                    )}
-                    Search
-                  </button>
-
-                  {nonSubmittedFetched && nonSubmittedList.length > 0 && (
-                    <>
-                      <button
-                        onClick={handleNonSubmittedExportCSV}
-                        className="text-sm px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 flex items-center gap-1"
-                      >
-                        <Download className="w-4 h-4" />
-                        CSV
-                      </button>
-                      <button
-                        onClick={handleNonSubmittedExportPDF}
-                        className="text-sm px-3 py-2 rounded-lg border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 flex items-center gap-1"
-                      >
-                        <Download className="w-4 h-4" />
-                        PDF
-                      </button>
-                    </>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => fetchNonSubmitted(1)}
+                  disabled={!nsQuarter || !nsYear || nonSubmittedLoading}
+                  className="btn-primary flex-1 gap-1 px-2 py-1.5 text-[11px] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+                >
+                  {nonSubmittedLoading ? (
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <Search className="w-3.5 h-3.5" />
                   )}
-                </div>
+                  Search
+                </button>
+
+                {nonSubmittedFetched && nonSubmittedList.length > 0 && (
+                  <>
+                    <button
+                      onClick={handleNonSubmittedExportCSV}
+                      title="Export CSV"
+                      className="ih-icon-btn border border-gray-300 bg-white hover:bg-gray-50 hover:text-gray-700"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={handleNonSubmittedExportPDF}
+                      title="Export PDF"
+                      className="ih-icon-btn border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -951,40 +884,39 @@ const AllSubmissions = () => {
 
         {/* Non-Submitted Results */}
         {showNonSubmitted && !showAlternativeSubmissions && !showAbroadSubmissions && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-3">
+          <div className="ih-surface overflow-hidden mb-3">
             {nonSubmittedLoading ? (
-              <div className="text-center py-12">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-gray-600">Searching non-submitted members...</p>
+              <div className="px-4 py-8 text-center sm:py-12">
+                <div className="mx-auto mb-2 h-7 w-7 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <p className="text-xs text-gray-500">Searching non-submitted members...</p>
               </div>
             ) : !nonSubmittedFetched ? (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <UserX className="w-8 h-8 text-gray-400" />
+              <div className="px-4 py-8 text-center sm:py-12">
+                <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-gray-100">
+                  <UserX className="w-5 h-5 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Select filters and search</h3>
-                <p className="text-gray-500 text-sm">Choose a quarter and year, then click Search to see who hasn't submitted.</p>
+                <h3 className="mb-1 text-sm font-medium text-gray-900">Select filters and search</h3>
+                <p className="text-xs text-gray-500">Choose a quarter and year, then tap Search.</p>
               </div>
             ) : nonSubmittedList.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 className="w-8 h-8 text-green-600" />
+              <div className="px-4 py-8 text-center sm:py-12">
+                <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-green-100">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">All members submitted!</h3>
-                <p className="text-gray-500 text-sm">
+                <h3 className="mb-1 text-sm font-medium text-gray-900">All members submitted</h3>
+                <p className="text-xs text-gray-500">
                   Everyone in the selected filters has submitted for {nonSubmittedPeriodDisplay}.
                 </p>
               </div>
             ) : (
               <>
                 {/* Summary bar */}
-                <div className="px-4 py-3 bg-red-50 border-b border-red-100 flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2 text-sm text-red-800">
-                    <UserX className="w-4 h-4" />
-                    <span className="font-semibold">{nonSubmittedPagination.total}</span> members have not submitted for{' '}
+                <div className="flex items-center gap-1.5 border-b border-red-100 bg-red-50 px-3 py-1.5 text-[11px] leading-tight text-red-800 sm:text-xs">
+                  <UserX className="w-3.5 h-3.5 shrink-0" />
+                  <span>
+                    <span className="font-semibold">{nonSubmittedPagination.total}</span> of {nonSubmittedTotalRukns} pending for{' '}
                     <span className="font-semibold">{nonSubmittedPeriodDisplay}</span>
-                    <span className="text-red-600 text-xs ml-1">(out of {nonSubmittedTotalRukns} total)</span>
-                  </div>
+                  </span>
                 </div>
 
                 {/* Desktop Table */}
@@ -1028,24 +960,24 @@ const AllSubmissions = () => {
                 </div>
 
                 {/* Mobile Cards */}
-                <div className="lg:hidden p-4 space-y-3">
+                <div className="lg:hidden ih-list">
                   {nonSubmittedList.map((member, index) => {
                     const serial = (nonSubmittedPagination.current - 1) * 10 + index + 1
                     return (
-                      <div key={String(member.id)} className="border border-gray-200 rounded-lg p-3">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-medium text-red-600">{serial}</span>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                            {member.ruknId && <div className="text-xs text-gray-500">ID: {member.ruknId}</div>}
+                      <div key={String(member.id)} className="ih-list-row">
+                        <div className="ih-avatar bg-red-100 text-red-600">{serial}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="ih-list-title">{member.name}</div>
+                          <div className="ih-list-meta flex items-center gap-1">
+                            <MapPin className="w-3 h-3 shrink-0" />
+                            <span className="truncate">
+                              {[member.district, member.area, member.unit].filter(Boolean).join(' - ') || 'N/A'}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex items-center text-xs text-gray-600">
-                          <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
-                          <span>{[member.district, member.area, member.unit].filter(Boolean).join(' - ') || 'N/A'}</span>
-                        </div>
+                        {member.ruknId && (
+                          <span className="ih-list-meta shrink-0">{member.ruknId}</span>
+                        )}
                       </div>
                     )
                   })}
@@ -1061,7 +993,7 @@ const AllSubmissions = () => {
         {showAbroadSubmissions ? (
           <AbroadSubmissions />
         ) : showAlternativeSubmissions ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="ih-surface overflow-hidden">
             {alternativeSubmissionsLoading ? (
               <div className="text-center py-12">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -1169,58 +1101,41 @@ const AllSubmissions = () => {
                     </tbody>
                   </table>
                 </div>
-                <div className="lg:hidden p-4 space-y-4">
-                  {alternativeSubmissions.map((submission) => {
-                    return (
+                <div className="lg:hidden ih-list">
+                  {alternativeSubmissions.map((submission) => (
                     <div
                       key={submission._id || submission.id}
-                      className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                      className="ih-list-row cursor-pointer"
                       onClick={() => navigate(`/ihthisabi/alternative-submissions/${submission._id || submission.id}`)}
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                            <span className="text-xs font-medium text-orange-600">
-                              {(submission.ruknName || submission.userId?.name || 'U').charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {submission.ruknName || submission.userId?.name || 'Unknown User'}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              RUKN ID: {submission.userId?.ruknId || 'N/A'}
-                            </div>
-                          </div>
-                        </div>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          submission.adminReply?.message 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-orange-100 text-orange-800'
-                        }`}>
-                          {submission.adminReply?.message ? 'Replied' : 'Submitted'}
-                        </span>
+                      <div className="ih-avatar bg-orange-100 text-orange-600">
+                        {(submission.ruknName || submission.userId?.name || 'U').charAt(0).toUpperCase()}
                       </div>
-                      <div className="space-y-2 text-xs text-gray-600">
-                        <div className="flex items-center">
-                          <MapPin className="w-3.5 h-3.5 mr-1" />
-                          {submission.district} - {submission.area} - {submission.unit}
+
+                      <div className="min-w-0 flex-1">
+                        <div className="ih-list-title">
+                          {submission.ruknName || submission.userId?.name || 'Unknown User'}
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span>Type: <span className="font-medium">{submission.type}</span></span>
-                          <span>Period: <span className="font-medium">{submission.periodDisplay || 'N/A'}</span></span>
+                        <div className="ih-list-meta flex items-center gap-1">
+                          <MapPin className="w-3 h-3 shrink-0" />
+                          <span className="truncate">
+                            {[submission.district, submission.area, submission.unit].filter(Boolean).join(' - ') || 'N/A'}
+                          </span>
                         </div>
-                        <div>
-                          <span className="font-medium">Reason:</span> {submission.reason?.substring(0, 80)}{submission.reason?.length > 80 ? '...' : ''}
-                        </div>
-                        <div className="flex items-center text-gray-500">
-                          <Calendar className="w-3.5 h-3.5 mr-1" />
-                              {formatDate(submission.submittedAt || submission.createdAt)}
+                        <div className="ih-list-meta">
+                          {submission.type} · {submission.periodDisplay || 'N/A'} · {formatDate(submission.submittedAt || submission.createdAt)}
                         </div>
                       </div>
+
+                      <span className={`ih-chip ${
+                        submission.adminReply?.message
+                          ? 'border-blue-200 bg-blue-100 text-blue-800'
+                          : 'border-orange-200 bg-orange-100 text-orange-800'
+                      }`}>
+                        {submission.adminReply?.message ? 'Replied' : 'Submitted'}
+                      </span>
                     </div>
-                    )
-                  })}
+                  ))}
                 </div>
 
                 <Pagination pagination={alternativePagination} onPageChange={fetchAlternativeSubmissions} loading={alternativeSubmissionsLoading} itemLabel="results" />
@@ -1231,15 +1146,15 @@ const AllSubmissions = () => {
         !showNonSubmitted ? (
         <>
         {/* Submissions Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="ih-surface overflow-hidden">
           {paginatedSubmissions.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-8 h-8 text-gray-400" />
+            <div className="px-4 py-8 text-center sm:py-12">
+              <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-gray-100">
+                <FileText className="w-5 h-5 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No submissions found</h3>
-              <p className="text-gray-600">
-                {searchTerm || statusFilter !== 'all' || districtFilter !== 'all' || areaFilter !== 'all' || unitFilter !== 'all'
+              <h3 className="mb-1 text-sm font-medium text-gray-900">No submissions found</h3>
+              <p className="text-xs text-gray-500">
+                {searchTerm || activeFilterCount > 0
                   ? 'Try adjusting your search or filter criteria.'
                   : 'Submissions will appear here once members start reporting.'
                 }
@@ -1316,35 +1231,23 @@ const AllSubmissions = () => {
                           </td>
                        
                           <td className="px-4 py-2.5 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${getStatusColor(submission.status)} truncate`}>
-                              {getStatusIcon(submission.status)}
-                              <span className="ml-1 capitalize">{submission.status}</span>
+                            <span className={`ih-chip ih-chip-dot ${getStatusColor(submission.status)}`}>
+                              <span className="capitalize">{submission.status}</span>
                             </span>
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap">
-                            <span 
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                                hasReply 
-                                  ? 'bg-blue-100 text-blue-800 border border-blue-200' 
-                                  : 'bg-orange-100 text-orange-800 border border-orange-200'
+                            <button
+                              className={`inline-flex items-center gap-1 text-[11px] font-medium transition-opacity hover:opacity-70 ${
+                                hasReply ? 'text-blue-500' : 'text-amber-600'
                               }`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleViewSubmission(submission.id);
                               }}
                             >
-                              {hasReply ? (
-                                <>
-                                  <MessageSquare className="w-3 h-3 mr-1" />
-                                  Replied
-                                </>
-                              ) : (
-                                <>
-                                  <Send className="w-3 h-3 mr-1" />
-                                  Reply
-                                </>
-                              )}
-                            </span>
+                              {hasReply ? <MessageSquare className="w-3 h-3" /> : <Send className="w-3 h-3" />}
+                              {hasReply ? 'Replied' : 'Reply'}
+                            </button>
                           </td>
                           <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-600">
                             <div className="flex items-center">
@@ -1359,95 +1262,56 @@ const AllSubmissions = () => {
                 </table>
               </div>
 
-              {/* Mobile Cards */}
-              <div className="lg:hidden">
-                <div className="p-4 space-y-4">
-                  {paginatedSubmissions.map((submission, index) => {
-                    const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;
-                    const hasReply = submission.adminReply?.message;
-                    return (
-                      <div 
-                        key={submission.id} 
-                        className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => handleViewSubmission(submission.id)}
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center">
-                            <div className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center mr-3">
-                              <span className="text-xs font-medium text-gray-600">
-                                {serialNumber}
-                              </span>
-                            </div>
-                            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mr-3">
-                              <span className="text-xs font-medium text-white">
-                                {(submission.ruknName || 'U').charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {submission.ruknName || 'Unknown User'}
-                              </div>
-                              <div className="text-xs text-gray-600 flex items-center">
-                                <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                                <span className="truncate max-w-[220px]" title={buildLocationDisplay(submission)}>
-                                  {buildLocationDisplay(submission)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[11px] font-medium border ${getStatusColor(submission.status)}`}>
-                              {getStatusIcon(submission.status)}
-                              <span className="ml-1 capitalize">{submission.status}</span>
-                            </span>
-                            <span 
-                              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                                hasReply 
-                                  ? 'bg-blue-100 text-blue-800 border border-blue-200' 
-                                  : 'bg-orange-100 text-orange-800 border border-orange-200'
-                              }`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewSubmission(submission.id);
-                              }}
-                            >
-                              {hasReply ? (
-                                <>
-                                  <MessageSquare className="w-3 h-3 mr-1" />
-                                  Replied
-                                </>
-                              ) : (
-                                <>
-                                  <Send className="w-3 h-3 mr-1" />
-                                  Reply
-                                </>
-                              )}
-                            </span>
-                          </div>
+              {/* Mobile Cards — two lines per row. Every child is min-w-0 or shrink-0
+                  so the status/reply chips can never be pushed off the card edge. */}
+              <div className="lg:hidden ih-list">
+                {paginatedSubmissions.map((submission, index) => {
+                  const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;
+                  const hasReply = submission.adminReply?.message;
+                  return (
+                    <div
+                      key={submission.id}
+                      className="ih-list-row cursor-pointer"
+                      onClick={() => handleViewSubmission(submission.id)}
+                    >
+                      <span className="w-3.5 shrink-0 text-[10px] font-medium text-gray-300">{serialNumber}</span>
+                      <div className="ih-avatar bg-gradient-to-br from-primary to-primary-700 text-white shadow-sm">
+                        {(submission.ruknName || 'U').charAt(0).toUpperCase()}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="ih-list-title">{submission.ruknName || 'Unknown User'}</div>
+                        <div className="ih-list-meta flex items-center gap-1">
+                          <MapPin className="w-3 h-3 shrink-0 opacity-60" />
+                          <span className="truncate" title={buildLocationDisplay(submission)}>
+                            {buildLocationDisplay(submission)}
+                          </span>
                         </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 mb-2 text-xs">
-                        <div>
-                          <span className="text-gray-500">Period:</span>
-                          <div className="font-medium">{submission.periodDisplay || 'N/A'}</div>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Status:</span>
-                          <div className="font-medium capitalize">{submission.status || 'submitted'}</div>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Submitted:</span>
-                          <div className="font-medium">{formatDate(submission.submittedAt || submission.createdAt)}</div>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Location:</span>
-                          <div className="font-medium">{buildLocationDisplay(submission)}</div>
+                        <div className="ih-list-meta">
+                          {submission.periodDisplay || 'N/A'} · {formatDate(submission.submittedAt || submission.createdAt)}
                         </div>
                       </div>
+
+                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        <span className={`ih-chip ih-chip-dot ${getStatusColor(submission.status)}`}>
+                          <span className="capitalize">{submission.status}</span>
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewSubmission(submission.id);
+                          }}
+                          className={`inline-flex items-center gap-1 text-[10px] font-medium leading-none transition-opacity hover:opacity-70 ${
+                            hasReply ? 'text-blue-500' : 'text-amber-600'
+                          }`}
+                        >
+                          {hasReply ? <MessageSquare className="w-2.5 h-2.5" /> : <Send className="w-2.5 h-2.5" />}
+                          {hasReply ? 'Replied' : 'Reply'}
+                        </button>
+                      </div>
                     </div>
-                    );
-                  })}
-                </div>
+                  );
+                })}
               </div>
 
               <Pagination pagination={pagination} onPageChange={setCurrentPage} loading={loading} itemLabel="results" />
