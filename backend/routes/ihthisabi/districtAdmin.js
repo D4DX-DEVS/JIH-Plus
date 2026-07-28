@@ -321,25 +321,28 @@ router.get('/areas/:area/details', protect, async (req, res) => {
       }
     });
 
+    const allMembers = [];
     const submittedMembers = [];
     const pendingMembers = [];
     members.forEach((member) => {
       const submission = submissionByUser.get(String(member._id));
+      const memberWithSubmission = { ...member, submission: submission || null };
+      allMembers.push(memberWithSubmission);
       if (submission) {
-        submittedMembers.push({ ...member, submission });
+        submittedMembers.push(memberWithSubmission);
       } else {
-        pendingMembers.push(member);
+        pendingMembers.push(memberWithSubmission);
       }
     });
 
     // Tab badge counts always reflect the full (unsearched) section sizes
-    const totalMembers = members.length;
+    const totalMembers = allMembers.length;
     const submittedCount = submittedMembers.length;
     const pendingCount = pendingMembers.length;
 
     const sectionList = section === 'submitted' ? submittedMembers
       : section === 'pending' ? pendingMembers
-      : members;
+      : allMembers;
 
     const searchedList = search
       ? sectionList.filter((member) => {

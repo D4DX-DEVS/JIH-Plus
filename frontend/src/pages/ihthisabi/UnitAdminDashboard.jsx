@@ -3,14 +3,14 @@ import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../../utils/ihthisabi/api'
 import { 
-  Users, 
-  FileText, 
-  UserCheck, 
-  Clock, 
+  Users,
+  FileText,
+  Clock,
   Settings,
   Eye,
   Calendar,
   MapPin,
+  ArrowUpRight,
   Phone,
   Mail,
   Plus,
@@ -29,11 +29,20 @@ const UnitAdminDashboard = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
+  const [unit, setUnit] = useState('')
   const [stats, setStats] = useState({
     totalMembers: 0,
-    totalSubmissions: 0,
-    pendingSubmissions: 0,
-    recentSubmissions: 0
+    currentQuarterSubmissions: 0,
+    previousQuarterSubmissions: 0,
+    quarterChangePercent: 0,
+    submittedCount: 0,
+    reviewedCount: 0,
+    approvedCount: 0,
+    completionRate: 0,
+    currentQuarter: null,
+    currentYear: null,
+    prevQuarter: null,
+    prevYear: null
   })
   const [members, setMembers] = useState([])
   const [membersPagination, setMembersPagination] = useState({ current: 1, pages: 1, total: 0 })
@@ -160,12 +169,21 @@ const UnitAdminDashboard = () => {
       if (dashboardResponse.data?.success) {
         const dashboardData = dashboardResponse.data
         const dashboardStats = dashboardData.data?.stats
+        setUnit(dashboardData.data?.unit || '')
         if (dashboardStats) {
           setStats({
             totalMembers: dashboardStats.totalMembers || 0,
-            totalSubmissions: dashboardStats.totalSubmissions || 0,
-            pendingSubmissions: dashboardStats.pendingCount || 0,
-            recentSubmissions: dashboardData.data?.recentSubmissions?.length || 0
+            currentQuarterSubmissions: dashboardStats.currentQuarterSubmissions || 0,
+            previousQuarterSubmissions: dashboardStats.previousQuarterSubmissions || 0,
+            quarterChangePercent: dashboardStats.quarterChangePercent ?? 0,
+            submittedCount: dashboardStats.submittedCount || 0,
+            reviewedCount: dashboardStats.reviewedCount || 0,
+            approvedCount: dashboardStats.approvedCount || 0,
+            completionRate: dashboardStats.completionRate || 0,
+            currentQuarter: dashboardStats.currentQuarter || null,
+            currentYear: dashboardStats.currentYear || null,
+            prevQuarter: dashboardStats.prevQuarter || null,
+            prevYear: dashboardStats.prevYear || null
           })
         }
       } else {
@@ -411,35 +429,102 @@ const UnitAdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="ih-page-shell">
+        {/* Header */}
+        <div className="mb-2 sm:mb-4">
+          <h1 className="ih-page-title">Unit Admin Dashboard</h1>
+          <p className="ih-page-subtitle">
+            Welcome back, <span className="font-medium text-gray-900">{user?.name || 'Unit Admin'}</span>
+          </p>
+          <p className="ih-page-subtitle flex items-center gap-1 mt-0.5">
+            <MapPin className="w-3 h-3 shrink-0 text-[#7B4FF2]" />
+            <span className="truncate">{unit || 'Loading unit…'}</span>
+          </p>
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4 mb-3 sm:mb-6">
-          {[
-            { label: 'Total Members', short: 'Members', value: stats.totalMembers, Icon: Users, tone: 'bg-blue-50 text-blue-600' },
-            { label: 'Total Submissions', short: 'Submissions', value: stats.totalSubmissions, Icon: FileText, tone: 'bg-green-50 text-green-600' },
-            { label: 'Recent Submissions', short: 'Recent', value: stats.recentSubmissions, Icon: UserCheck, tone: 'bg-purple-50 text-purple-600' },
-            {
-              label: 'Completion Rate',
-              short: 'Completion',
-              value: `${stats.totalMembers > 0 ? Math.round((stats.totalSubmissions / stats.totalMembers) * 100) : 0}%`,
-              Icon: Clock,
-              tone: 'bg-orange-50 text-orange-600',
-            },
-          ].map(({ label, short, value, Icon, tone }) => (
-            <div key={label} className="ih-stat-card">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="ih-stat-label truncate">
-                    <span className="sm:hidden">{short}</span>
-                    <span className="hidden sm:inline">{label}</span>
-                  </p>
-                  <p className="ih-stat-value mt-1">{value}</p>
-                </div>
-                <div className={`ih-stat-icon ${tone}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
+          <div
+            onClick={() => navigate('/ihthisabi/unitadmin/details?section=all')}
+            className="ih-stat-card cursor-pointer hover:shadow-md active:scale-[0.99] transition"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="ih-stat-label truncate">
+                  <span className="sm:hidden">Members</span>
+                  <span className="hidden sm:inline">Total Members</span>
+                </p>
+                <p className="ih-stat-value mt-1">{stats.totalMembers}</p>
+              </div>
+              <div className="ih-stat-icon bg-blue-50 text-blue-600">
+                <Users className="h-4 w-4" />
               </div>
             </div>
-          ))}
+          </div>
+
+          <div
+            onClick={() => navigate('/ihthisabi/unitadmin/details?section=submitted')}
+            className="ih-stat-card cursor-pointer hover:shadow-md active:scale-[0.99] transition"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="ih-stat-label truncate">
+                  <span className="sm:hidden">This Period</span>
+                  <span className="hidden sm:inline">This Period Submissions</span>
+                </p>
+                <p className="ih-stat-value mt-1">{stats.currentQuarterSubmissions}</p>
+                {stats.currentQuarter && (
+                  <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 truncate">
+                    Q{stats.currentQuarter} {stats.currentYear}
+                  </p>
+                )}
+              </div>
+              <div className="ih-stat-icon bg-green-50 text-green-600">
+                <FileText className="h-4 w-4" />
+              </div>
+            </div>
+          </div>
+
+          <div className="ih-stat-card">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="ih-stat-label truncate">
+                  <span className="sm:hidden">Completion</span>
+                  <span className="hidden sm:inline">Completion Rate</span>
+                </p>
+                <p className="ih-stat-value mt-1">{stats.completionRate}%</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 truncate">
+                  {stats.currentQuarterSubmissions} of {stats.totalMembers} members
+                </p>
+              </div>
+              <div className="ih-stat-icon bg-orange-50 text-orange-600">
+                <Clock className="h-4 w-4" />
+              </div>
+            </div>
+          </div>
+
+          <div className="ih-stat-card">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="ih-stat-label truncate">
+                  <span className="sm:hidden">vs Prev Qtr</span>
+                  <span className="hidden sm:inline">vs Previous Quarter</span>
+                </p>
+                <p className={`ih-stat-value mt-1 ${(stats.quarterChangePercent ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {(stats.quarterChangePercent ?? 0) >= 0 ? '+' : ''}{stats.quarterChangePercent ?? 0}%
+                </p>
+                {stats.prevQuarter && (
+                  <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 truncate">
+                    {stats.previousQuarterSubmissions} in Q{stats.prevQuarter} {stats.prevYear}
+                  </p>
+                )}
+              </div>
+              <div className={`ih-stat-icon ${(stats.quarterChangePercent ?? 0) >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                <ArrowUpRight
+                  className={`h-4 w-4 ${(stats.quarterChangePercent ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500 rotate-90'}`}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Tabs */}

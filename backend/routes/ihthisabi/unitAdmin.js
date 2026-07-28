@@ -98,6 +98,39 @@ const getUnitAdminScope = async (unitAdmin) => {
   };
 };
 
+// Walk back one submission quarter, skipping hidden quarters (mirrors districtAdmin.js / admin.js)
+const getPreviousAvailableQuarter = (quarter, year) => {
+  let prevQuarter = quarter - 1;
+  let prevYear = year;
+  if (prevQuarter < 1) {
+    prevQuarter = 4;
+    prevYear -= 1;
+  }
+  while (isQuarterHidden(prevQuarter)) {
+    prevQuarter -= 1;
+    if (prevQuarter < 1) {
+      prevQuarter = 4;
+      prevYear -= 1;
+    }
+  }
+  return { quarter: prevQuarter, year: prevYear };
+};
+
+const buildPeriodQuery = (quarter, year) => ({
+  'submissionPeriod.quarter': quarter,
+  'submissionPeriod.year': year
+});
+
+// Count regular + alternative submissions for a scope and period (admin/district parity)
+const countPeriodSubmissions = async (scopeQuery, quarter, year) => {
+  const periodQuery = buildPeriodQuery(quarter, year);
+  const [normal, alternative] = await Promise.all([
+    Submission.countDocuments({ $and: [scopeQuery, periodQuery] }),
+    AlternativeSubmit.countDocuments({ $and: [scopeQuery, periodQuery] })
+  ]);
+  return normal + alternative;
+};
+
 // ==================== DEBUG/TEST ENDPOINTS ====================
 
 // @desc    Debug endpoint to test token validation
@@ -441,30 +474,29 @@ router.get('/dashboard', protect, async (req, res) => {
 
     const totalMembers = await User.countDocuments(memberQuery);
 
-    // Get total submissions count
-    const totalSubmissions = await Submission.countDocuments({
-      ...submissionQuery,
-      ...req.quarterFilter
-    });
+    // Current submission quarter = previous completed quarter (admin/district parity)
+    const current = getAvailableSubmissionQuarter(new Date());
+    const previous = getPreviousAvailableQuarter(current.quarter, current.year);
 
-    // Get submissions by status
-    const submittedCount = await Submission.countDocuments({
-      ...submissionQuery,
-      status: 'submitted',
-      ...req.quarterFilter
-    });
+    const [
+      currentQuarterSubmissions,
+      previousQuarterSubmissions,
+      submittedCount,
+      reviewedCount,
+      approvedCount
+    ] = await Promise.all([
+      countPeriodSubmissions(submissionQuery, current.quarter, current.year),
+      countPeriodSubmissions(submissionQuery, previous.quarter, previous.year),
+      Submission.countDocuments({ $and: [submissionQuery, buildPeriodQuery(current.quarter, current.year)], status: 'submitted' }),
+      Submission.countDocuments({ $and: [submissionQuery, buildPeriodQuery(current.quarter, current.year)], status: 'reviewed' }),
+      Submission.countDocuments({ $and: [submissionQuery, buildPeriodQuery(current.quarter, current.year)], status: 'approved' })
+    ]);
 
-    const pendingCount = await Submission.countDocuments({
-      ...submissionQuery,
-      status: 'pending',
-      ...req.quarterFilter
-    });
+    const completionRate = totalMembers > 0 ? Math.round((currentQuarterSubmissions / totalMembers) * 100) : 0;
 
-    const draftCount = await Submission.countDocuments({
-      ...submissionQuery,
-      status: 'draft',
-      ...req.quarterFilter
-    });
+    const quarterChangePercent = previousQuarterSubmissions > 0
+      ? Math.round(((currentQuarterSubmissions - previousQuarterSubmissions) / previousQuarterSubmissions) * 100)
+      : currentQuarterSubmissions > 0 ? 100 : 0;
 
     // Get recent submissions (last 5)
     const recentSubmissions = await Submission.find({
@@ -476,7 +508,7 @@ router.get('/dashboard', protect, async (req, res) => {
     .limit(5)
     .select('status period submittedBy createdAt ruknName');
 
-    // Get members with submission counts
+    // Get members with submission counts for the current submission quarter
     const membersWithSubmissions = await User.aggregate([
       {
         $match: memberQuery
@@ -494,7 +526,8 @@ router.get('/dashboard', protect, async (req, res) => {
                     { $eq: ['$userId', '$$userId'] }
                   ]
                 },
-                ...req.quarterFilter
+                'submissionPeriod.quarter': current.quarter,
+                'submissionPeriod.year': current.year
               }
             }
           ],
@@ -516,9 +549,6 @@ router.get('/dashboard', protect, async (req, res) => {
         $limit: 10
       }
     ]);
-
-    // Calculate completion rate
-    const completionRate = totalMembers > 0 ? Math.round((submittedCount / totalMembers) * 100) : 0;
 
     // Add periodDisplay to recent submissions
     // The periodDisplay is a virtual field in the model, so we need to ensure it's included
@@ -552,11 +582,17 @@ router.get('/dashboard', protect, async (req, res) => {
         unit: unitAdmin.unit,
         stats: {
           totalMembers,
-          totalSubmissions,
+          currentQuarterSubmissions,
+          previousQuarterSubmissions,
+          quarterChangePercent,
           submittedCount,
-          pendingCount,
-          draftCount,
-          completionRate
+          reviewedCount,
+          approvedCount,
+          completionRate,
+          currentQuarter: current.quarter,
+          currentYear: current.year,
+          prevQuarter: previous.quarter,
+          prevYear: previous.year
         },
         recentSubmissions: recentSubmissionsWithPeriod,
         topContributors: membersWithSubmissions
@@ -568,6 +604,135 @@ router.get('/dashboard', protect, async (req, res) => {
       success: false,
       message: 'Server error'
     });
+  }
+});
+
+// @desc    Detailed breakdown of the unit admin's own unit: all members, submitted
+//          and pending for a given quarter (defaults to the current submission
+//          quarter). Mirrors districtadmin's /areas/:area/details, scoped to
+//          the unit admin's single unit instead of a district's area.
+// @route   GET /api/unitadmin/details
+// @access  Private (Unit Admin)
+router.get('/details', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'unitAdmin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Unit admin access required.'
+      });
+    }
+
+    const unitAdmin = await UnitAdmin.findById(req.user.userId);
+    if (!unitAdmin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Unit admin not found'
+      });
+    }
+
+    const current = getAvailableSubmissionQuarter(new Date());
+    let quarter = parseInt(req.query.quarter, 10);
+    let year = parseInt(req.query.year, 10);
+    if (!quarter || !year || quarter < 1 || quarter > 4) {
+      quarter = current.quarter;
+      year = current.year;
+    }
+
+    const { memberQuery, submissionQuery } = await getUnitAdminScope(unitAdmin);
+    const periodQuery = buildPeriodQuery(quarter, year);
+
+    const section = ['all', 'submitted', 'pending'].includes(req.query.section) ? req.query.section : 'all';
+    const { search = '' } = req.query;
+    const { page, limit, skip } = parsePagination(req.query);
+
+    const [members, submissions, altSubmissions] = await Promise.all([
+      User.find(memberQuery)
+        .select('ruknId name gender unit contactNo emailId lastLogin createdAt')
+        .sort({ name: 1 })
+        .lean(),
+      Submission.find({ $and: [submissionQuery, periodQuery] })
+        .select('userId submittedBy ruknId ruknName unit status createdAt')
+        .lean(),
+      AlternativeSubmit.find({ $and: [submissionQuery, periodQuery] })
+        .select('userId ruknName type reason createdAt')
+        .lean()
+    ]);
+
+    // Map each member to their submission (regular first, then alternative)
+    const submissionByUser = new Map();
+    submissions.forEach((s) => {
+      [s.userId, s.submittedBy].filter(Boolean).forEach((id) => {
+        if (!submissionByUser.has(String(id))) {
+          submissionByUser.set(String(id), {
+            submissionId: s._id,
+            status: s.status,
+            submittedAt: s.createdAt,
+            type: 'regular'
+          });
+        }
+      });
+    });
+    altSubmissions.forEach((s) => {
+      if (s.userId && !submissionByUser.has(String(s.userId))) {
+        submissionByUser.set(String(s.userId), {
+          submissionId: s._id,
+          status: 'alternative',
+          submittedAt: s.createdAt,
+          type: 'alternative',
+          altType: s.type
+        });
+      }
+    });
+
+    const allMembers = [];
+    const submittedMembers = [];
+    const pendingMembers = [];
+    members.forEach((member) => {
+      const submission = submissionByUser.get(String(member._id));
+      const memberWithSubmission = { ...member, submission: submission || null };
+      allMembers.push(memberWithSubmission);
+      if (submission) {
+        submittedMembers.push(memberWithSubmission);
+      } else {
+        pendingMembers.push(memberWithSubmission);
+      }
+    });
+
+    // Tab badge counts always reflect the full (unsearched) section sizes
+    const totalMembers = allMembers.length;
+    const submittedCount = submittedMembers.length;
+    const pendingCount = pendingMembers.length;
+
+    const sectionList = section === 'submitted' ? submittedMembers
+      : section === 'pending' ? pendingMembers
+      : allMembers;
+
+    const searchedList = search
+      ? sectionList.filter((member) => {
+          const q = search.toLowerCase();
+          return [member.name, member.ruknId, member.unit, member.contactNo]
+            .some((v) => v && String(v).toLowerCase().includes(q));
+        })
+      : sectionList;
+
+    const pageItems = searchedList.slice(skip, skip + limit);
+
+    res.json({
+      success: true,
+      data: {
+        unit: unitAdmin.unit,
+        period: { quarter, year },
+        section,
+        totalMembers,
+        submittedCount,
+        pendingCount,
+        items: pageItems,
+        pagination: buildPaginationMeta(searchedList.length, page, limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get unit admin details error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 

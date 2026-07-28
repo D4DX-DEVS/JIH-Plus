@@ -1600,7 +1600,10 @@ const AdminDashboard = () => {
             {dashboardData && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-3 sm:mb-6">
             {/* Total Users */}
-            <div className="ih-stat-card">
+            <div
+              onClick={() => navigate('members')}
+              className="ih-stat-card cursor-pointer hover:shadow-md active:scale-[0.99] transition"
+            >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="ih-stat-label">Total Users</p>
@@ -1637,7 +1640,10 @@ const AdminDashboard = () => {
             </div>
 
             {/* Current Period Submissions */}
-            <div className="ih-stat-card">
+            <div
+              onClick={() => navigate('submissions')}
+              className="ih-stat-card cursor-pointer hover:shadow-md active:scale-[0.99] transition"
+            >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="ih-stat-label">This Period</p>
@@ -1651,7 +1657,7 @@ const AdminDashboard = () => {
                 <span className="font-medium text-blue-600">{dashboardData.currentQuarterMale || 0} M</span>
                 <span className="font-medium text-pink-600">{dashboardData.currentQuarterFemale || 0} F</span>
                 <button
-                  onClick={() => navigate('submissions')}
+                  onClick={(e) => { e.stopPropagation(); navigate('submissions') }}
                   className="font-medium text-blue-600 transition-colors hover:text-blue-700"
                 >
                   View all →
