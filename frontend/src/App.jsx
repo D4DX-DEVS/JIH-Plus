@@ -45,6 +45,7 @@ import ProfilePage from './pages/ihthisabi/ProfilePage';
 import NotFound from './pages/ihthisabi/NotFound';
 import UnitAdminDashboard from './pages/ihthisabi/UnitAdminDashboard';
 import DistrictAdminDashboard from './pages/ihthisabi/DistrictAdminDashboard';
+import DistrictAreaDetails from './pages/ihthisabi/DistrictAreaDetails';
 import AlternativeSubmissionForm from './pages/ihthisabi/AlternativeSubmissionForm';
 import FormManagement from './pages/ihthisabi/FormManagement';
 import IhthisabiHelpDeskPage from './pages/ihthisabi/HelpDeskPage';
@@ -513,7 +514,7 @@ const IhthisabiRoutes = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="spinner w-12 h-12 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading AIKYAM...</p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -752,6 +753,14 @@ const IhthisabiRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={['districtAdmin']}>
               <DistrictAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/districtadmin/areas/:area"
+          element={
+            <ProtectedRoute allowedRoles={['districtAdmin']}>
+              <DistrictAreaDetails />
             </ProtectedRoute>
           }
         />
