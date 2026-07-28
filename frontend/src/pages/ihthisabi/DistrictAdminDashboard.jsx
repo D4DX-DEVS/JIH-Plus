@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../../utils/ihthisabi/api'
 import {
   Users,
@@ -10,6 +10,7 @@ import {
   MapPin,
   Search,
   ArrowUpDown,
+  ArrowUpRight,
   Printer,
   X as CloseIcon,
   Phone,
@@ -18,9 +19,28 @@ import {
   Loader2,
   Eye,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts'
 import Pagination from '../../components/ihthisabi/Pagination'
+import SubmissionReportView from '../../components/ihthisabi/SubmissionReportView'
+import { getQuarterName, getAvailableQuarters } from '../../utils/ihthisabi/quarterHelper'
+
+// Shared chart styling (same treatment as AdminDashboard)
+const AXIS = { tick: { fontSize: 10, fill: '#98A2B3' }, axisLine: false, tickLine: false }
+const GRID = { stroke: 'rgba(16,24,40,0.06)', vertical: false }
+const TOOLTIP = {
+  contentStyle: {
+    borderRadius: 12,
+    border: 'none',
+    boxShadow: '0 4px 8px rgba(16,24,40,.04), 0 12px 32px rgba(16,24,40,.10)',
+    fontSize: 11,
+  },
+  cursor: { fill: 'rgba(16,24,40,0.04)' },
+}
+const BRAND = '#7B4FF2'
+const PENDING_GRAY = '#CBD5E1'
 
 const TABS = [
   { key: 'overview', label: 'Overview', icon: BarChart3 },
@@ -66,6 +86,7 @@ const SortButton = ({ field, label, activeSort, onSort }) => {
 
 const DistrictAdminDashboard = () => {
   const location = useLocation()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const [areas, setAreas] = useState([])
 
@@ -74,13 +95,22 @@ const DistrictAdminDashboard = () => {
   const [district, setDistrict] = useState('')
   const [stats, setStats] = useState({
     totalMembers: 0,
-    totalSubmissions: 0,
+    currentQuarterSubmissions: 0,
+    previousQuarterSubmissions: 0,
+    quarterChangePercent: 0,
     submittedCount: 0,
     reviewedCount: 0,
     approvedCount: 0,
-    completionRate: 0
+    completionRate: 0,
+    currentQuarter: null,
+    currentYear: null,
+    prevQuarter: null,
+    prevYear: null
   })
   const [areaBreakdown, setAreaBreakdown] = useState([])
+  const [breakdownPeriod, setBreakdownPeriod] = useState(null) // { quarter, year } filter, null = current
+  const [availableYears, setAvailableYears] = useState([])
+  const [trend, setTrend] = useState([])
   const [recentSubmissions, setRecentSubmissions] = useState([])
 
   // Members
@@ -107,6 +137,7 @@ const DistrictAdminDashboard = () => {
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null)
   const [submissionDetails, setSubmissionDetails] = useState(null)
   const [submissionDetailsLoading, setSubmissionDetailsLoading] = useState(false)
+  const [submissionFormSchema, setSubmissionFormSchema] = useState(null)
 
   // Replies
   const [replies, setReplies] = useState([])
@@ -176,15 +207,20 @@ const DistrictAdminDashboard = () => {
     }
   }
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = async (period) => {
     try {
       setDashboardLoading(true)
-      const response = await api.get('/districtadmin/dashboard')
+      const response = await api.get('/districtadmin/dashboard', {
+        params: period ? { quarter: period.quarter, year: period.year } : {}
+      })
       if (response.data?.success) {
         const data = response.data.data
         setDistrict(data.district || '')
         setStats(data.stats || {})
         setAreaBreakdown(data.areaBreakdown || [])
+        setBreakdownPeriod(data.breakdownPeriod || null)
+        setAvailableYears(data.availableYears || [])
+        setTrend(data.trend || [])
         setRecentSubmissions(data.recentSubmissions || [])
       }
     } catch (error) {
@@ -293,9 +329,26 @@ const DistrictAdminDashboard = () => {
   const openSubmissionDetails = async (submissionId) => {
     setSelectedSubmissionId(submissionId)
     setSubmissionDetailsLoading(true)
+    setSubmissionFormSchema(null)
     try {
       const response = await api.get(`/districtadmin/submissions/${submissionId}`)
-      if (response.data?.success) setSubmissionDetails(response.data.data.submission)
+      if (response.data?.success) {
+        const sub = response.data.data.submission
+        setSubmissionDetails(sub)
+        // Dynamic submissions need the form schema for question labels
+        if (sub?.dynamicFormId && sub?.submissionPeriod?.quarter && sub?.submissionPeriod?.year) {
+          try {
+            const formRes = await api.get(
+              `/ihthisabi/application-forms/public/by-quarter/${sub.submissionPeriod.quarter}/${sub.submissionPeriod.year}`
+            )
+            if (formRes.data?.hasDynamicForm && formRes.data?.data) {
+              setSubmissionFormSchema(formRes.data.data)
+            }
+          } catch {
+            // schema unavailable — fallback rendering will be used
+          }
+        }
+      }
     } catch (error) {
       console.error('Error fetching submission details:', error)
     } finally {
@@ -414,49 +467,189 @@ const DistrictAdminDashboard = () => {
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-              {[
-                { label: 'Total Members', shortLabel: 'Members', value: stats.totalMembers, icon: Users },
-                { label: 'Total Submissions', shortLabel: 'Submissions', value: stats.totalSubmissions, icon: FileText },
-                { label: 'Completion Rate', shortLabel: 'Completion', value: `${stats.completionRate}%`, icon: BarChart3 },
-                { label: 'Submitted', shortLabel: 'Submitted', value: stats.submittedCount, icon: FileText }
-              ].map((card) => (
-                <div key={card.label} className="ih-stat-card min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="ih-stat-label truncate">
-                        <span className="sm:hidden">{card.shortLabel}</span>
-                        <span className="hidden sm:inline">{card.label}</span>
-                      </p>
-                      <p className="ih-stat-value mt-1">{card.value}</p>
-                    </div>
-                    <div className="ih-stat-icon bg-[#7B4FF2]/10">
-                      <card.icon className="w-4 h-4 text-[#7B4FF2]" />
-                    </div>
+              <div className="ih-stat-card min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="ih-stat-label truncate">
+                      <span className="sm:hidden">Members</span>
+                      <span className="hidden sm:inline">Total Members</span>
+                    </p>
+                    <p className="ih-stat-value mt-1">{stats.totalMembers}</p>
+                  </div>
+                  <div className="ih-stat-icon bg-[#7B4FF2]/10">
+                    <Users className="w-4 h-4 text-[#7B4FF2]" />
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="ih-stat-card min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="ih-stat-label truncate">
+                      <span className="sm:hidden">This Period</span>
+                      <span className="hidden sm:inline">This Period Submissions</span>
+                    </p>
+                    <p className="ih-stat-value mt-1">{stats.currentQuarterSubmissions}</p>
+                    {stats.currentQuarter && (
+                      <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 truncate">
+                        Q{stats.currentQuarter} {stats.currentYear}
+                      </p>
+                    )}
+                  </div>
+                  <div className="ih-stat-icon bg-[#7B4FF2]/10">
+                    <FileText className="w-4 h-4 text-[#7B4FF2]" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="ih-stat-card min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="ih-stat-label truncate">
+                      <span className="sm:hidden">Completion</span>
+                      <span className="hidden sm:inline">Completion Rate</span>
+                    </p>
+                    <p className="ih-stat-value mt-1">{stats.completionRate}%</p>
+                    <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 truncate">
+                      {stats.currentQuarterSubmissions} of {stats.totalMembers} members
+                    </p>
+                  </div>
+                  <div className="ih-stat-icon bg-[#7B4FF2]/10">
+                    <BarChart3 className="w-4 h-4 text-[#7B4FF2]" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="ih-stat-card min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="ih-stat-label truncate">
+                      <span className="sm:hidden">vs Prev Qtr</span>
+                      <span className="hidden sm:inline">vs Previous Quarter</span>
+                    </p>
+                    <p className={`ih-stat-value mt-1 ${(stats.quarterChangePercent ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                      {(stats.quarterChangePercent ?? 0) >= 0 ? '+' : ''}{stats.quarterChangePercent ?? 0}%
+                    </p>
+                    {stats.prevQuarter && (
+                      <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 truncate">
+                        {stats.previousQuarterSubmissions} in Q{stats.prevQuarter} {stats.prevYear}
+                      </p>
+                    )}
+                  </div>
+                  <div className={`ih-stat-icon ${(stats.quarterChangePercent ?? 0) >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                    <ArrowUpRight
+                      className={`w-4 h-4 ${(stats.quarterChangePercent ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500 rotate-90'}`}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={`grid grid-cols-1 gap-4 ${trend.length > 1 ? 'lg:grid-cols-2' : ''}`}>
+              {trend.length > 1 && (
+                <div className="ih-surface p-3 sm:p-5">
+                  <h2 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">Submissions by Quarter</h2>
+                  <p className="text-[11px] sm:text-xs text-gray-400 mb-3">Regular + alternative submissions across recent quarters</p>
+                  <div className="h-48 sm:h-56 lg:h-72!">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={trend} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                        <CartesianGrid {...GRID} />
+                        <XAxis dataKey="label" {...AXIS} interval={0} />
+                        <YAxis {...AXIS} allowDecimals={false} />
+                        <Tooltip {...TOOLTIP} />
+                        <Bar dataKey="count" name="Submissions" fill={BRAND} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              <div className="ih-surface p-3 sm:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 sm:mb-4">
+                  <div>
+                    <h2 className="text-sm sm:text-base font-semibold text-gray-900">Area Breakdown</h2>
+                    {breakdownPeriod && (
+                      <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5">
+                        {getQuarterName(breakdownPeriod.quarter)} {breakdownPeriod.year} · tap an area for details
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <select
+                      value={breakdownPeriod?.quarter || ''}
+                      onChange={(e) => fetchDashboard({ quarter: Number(e.target.value), year: breakdownPeriod?.year || stats.currentYear })}
+                      className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+                    >
+                      {getAvailableQuarters().map((q) => (
+                        <option key={q} value={q}>{getQuarterName(q)}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={breakdownPeriod?.year || ''}
+                      onChange={(e) => fetchDashboard({ quarter: breakdownPeriod?.quarter || stats.currentQuarter, year: Number(e.target.value) })}
+                      className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+                    >
+                      {(availableYears.length ? availableYears : [stats.currentYear].filter(Boolean)).map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {areaBreakdown.length > 0 && (
+                  <div
+                    className={trend.length > 1 ? 'lg:h-72! lg:overflow-y-auto lg:pr-1' : ''}
+                    style={{ height: Math.max(160, areaBreakdown.length * 26 + 40) }}
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={areaBreakdown.map((row) => ({
+                          area: row.area || 'Unspecified',
+                          Submitted: row.submissionCount,
+                          Pending: Math.max(0, row.memberCount - row.submissionCount)
+                        }))}
+                        layout="vertical"
+                        margin={{ top: 0, right: 8, left: 8, bottom: 0 }}
+                      >
+                        <CartesianGrid stroke="rgba(16,24,40,0.06)" horizontal={false} />
+                        <XAxis type="number" {...AXIS} allowDecimals={false} />
+                        <YAxis type="category" dataKey="area" width={90} {...AXIS} interval={0} />
+                        <Tooltip {...TOOLTIP} />
+                        <Legend wrapperStyle={{ fontSize: 11 }} />
+                        <Bar dataKey="Submitted" stackId="a" fill={BRAND} maxBarSize={14} />
+                        <Bar dataKey="Pending" stackId="a" fill={PENDING_GRAY} radius={[0, 4, 4, 0]} maxBarSize={14} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="ih-surface p-3 sm:p-5">
-              <h2 className="text-sm sm:text-base font-semibold text-gray-900 mb-3 sm:mb-4">Area Breakdown</h2>
               <table className="w-full table-fixed text-[11px] sm:text-sm">
                 <thead>
                   <tr className="text-left text-[9px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
-                    <th className="py-2 pr-1 sm:pr-4 w-[34%]">Area</th>
-                    <th className="py-2 pr-1 sm:pr-4 w-[22%]">Members</th>
-                    <th className="py-2 pr-1 sm:pr-4 w-[22%]"><span className="sm:hidden">Subs</span><span className="hidden sm:inline">Submissions</span></th>
-                    <th className="py-2 pr-1 sm:pr-4 w-[22%]"><span className="sm:hidden">Compl.</span><span className="hidden sm:inline">Completion</span></th>
+                    <th className="py-2 pr-1 sm:pr-4 w-[32%]">Area</th>
+                    <th className="py-2 pr-1 sm:pr-4 w-[20%]">Members</th>
+                    <th className="py-2 pr-1 sm:pr-4 w-[20%]"><span className="sm:hidden">Subs</span><span className="hidden sm:inline">Submissions</span></th>
+                    <th className="py-2 pr-1 sm:pr-4 w-[20%]"><span className="sm:hidden">Compl.</span><span className="hidden sm:inline">Completion</span></th>
+                    <th className="py-2 w-[8%]"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {areaBreakdown.length === 0 ? (
-                    <tr><td colSpan={4} className="py-6 text-center text-gray-400">No data available</td></tr>
+                    <tr><td colSpan={5} className="py-6 text-center text-gray-400">No data available</td></tr>
                   ) : areaBreakdown.map((row) => (
-                    <tr key={row.area} className="border-b border-gray-50 last:border-0">
-                      <td className="py-2 pr-1 sm:pr-4 font-medium text-gray-900 break-words">{row.area || 'Unspecified'}</td>
-                      <td className="py-2 pr-1 sm:pr-4">{row.memberCount}</td>
-                      <td className="py-2 pr-1 sm:pr-4">{row.submissionCount}</td>
-                      <td className="py-2 pr-1 sm:pr-4">{row.completionRate}%</td>
+                    <tr
+                      key={row.area}
+                      onClick={() => navigate(`/ihthisabi/districtadmin/areas/${encodeURIComponent(row.area || 'Unspecified')}?quarter=${breakdownPeriod?.quarter || ''}&year=${breakdownPeriod?.year || ''}`)}
+                      className="border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                    >
+                      <td className="py-2.5 pr-1 sm:pr-4 font-medium text-[#7B4FF2] break-words">{row.area || 'Unspecified'}</td>
+                      <td className="py-2.5 pr-1 sm:pr-4">{row.memberCount}</td>
+                      <td className="py-2.5 pr-1 sm:pr-4">{row.submissionCount}</td>
+                      <td className="py-2.5 pr-1 sm:pr-4">{row.completionRate}%</td>
+                      <td className="py-2.5 text-right"><ChevronRight className="w-3.5 h-3.5 text-gray-300 inline" /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -852,7 +1045,7 @@ const DistrictAdminDashboard = () => {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900">Submission Details</h3>
-              <button onClick={() => { setSelectedSubmissionId(null); setSubmissionDetails(null) }} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => { setSelectedSubmissionId(null); setSubmissionDetails(null); setSubmissionFormSchema(null) }} className="text-gray-400 hover:text-gray-600">
                 <CloseIcon className="w-5 h-5" />
               </button>
             </div>
@@ -862,19 +1055,20 @@ const DistrictAdminDashboard = () => {
                   <Loader2 className="w-5 h-5 text-[#7B4FF2] animate-spin mr-2" /> Loading…
                 </div>
               ) : submissionDetails ? (
-                <div className="space-y-3 text-sm">
+                <div className="space-y-4 text-sm">
                   <div className="flex items-center justify-between">
                     <h4 className="text-lg font-bold text-gray-900">{submissionDetails.ruknName}</h4>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[submissionDetails.status] || 'bg-gray-100 text-gray-800'}`}>
                       {submissionDetails.status}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3 pb-3 border-b border-gray-100">
                     <div><span className="text-gray-400">District:</span> <span className="font-medium">{submissionDetails.district}</span></div>
                     <div><span className="text-gray-400">Area:</span> <span className="font-medium">{submissionDetails.area}</span></div>
                     <div><span className="text-gray-400">Unit:</span> <span className="font-medium">{submissionDetails.unit}</span></div>
                     <div><span className="text-gray-400">Period:</span> <span className="font-medium">{submissionDetails.periodDisplay}</span></div>
                   </div>
+                  <SubmissionReportView submission={submissionDetails} formSchema={submissionFormSchema} />
                   {submissionDetails.adminReply?.message && (
                     <div className="rounded-lg bg-blue-50 border border-blue-100 p-3">
                       <p className="text-xs font-semibold text-blue-700 mb-1">Admin Reply</p>

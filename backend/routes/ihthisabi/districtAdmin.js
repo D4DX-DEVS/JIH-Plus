@@ -8,7 +8,9 @@ const UnitAdminReply = require('../../models/ihthisabi/UnitAdminReply');
 const { protect } = require('../../middlewares/ihthisabi/auth');
 const {
   getHiddenQuarterFilter,
-  getArchivedQuarterFilter
+  getArchivedQuarterFilter,
+  getAvailableSubmissionQuarter,
+  isQuarterHidden
 } = require('../../utils/quarterHelper');
 const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
 
@@ -65,6 +67,39 @@ const getDistrictAdminScope = (districtAdmin, { area } = {}) => {
     : { district: '__no_matching_district__' };
 
   return { memberQuery, submissionQuery };
+};
+
+// Walk back one submission quarter, skipping hidden quarters (mirrors admin.js)
+const getPreviousAvailableQuarter = (quarter, year) => {
+  let prevQuarter = quarter - 1;
+  let prevYear = year;
+  if (prevQuarter < 1) {
+    prevQuarter = 4;
+    prevYear -= 1;
+  }
+  while (isQuarterHidden(prevQuarter)) {
+    prevQuarter -= 1;
+    if (prevQuarter < 1) {
+      prevQuarter = 4;
+      prevYear -= 1;
+    }
+  }
+  return { quarter: prevQuarter, year: prevYear };
+};
+
+const buildPeriodQuery = (quarter, year) => ({
+  'submissionPeriod.quarter': quarter,
+  'submissionPeriod.year': year
+});
+
+// Count regular + alternative submissions for a scope and period (admin parity)
+const countPeriodSubmissions = async (scopeQuery, quarter, year) => {
+  const periodQuery = buildPeriodQuery(quarter, year);
+  const [normal, alternative] = await Promise.all([
+    Submission.countDocuments({ $and: [scopeQuery, periodQuery] }),
+    AlternativeSubmit.countDocuments({ $and: [scopeQuery, periodQuery] })
+  ]);
+  return normal + alternative;
 };
 
 const requireDistrictAdmin = async (req, res) => {
@@ -212,6 +247,130 @@ router.get('/areas', protect, async (req, res) => {
   }
 });
 
+// @desc    Detailed breakdown for a single area: all members, submitted and pending
+//          for a given quarter (defaults to the current submission quarter)
+// @route   GET /api/districtadmin/areas/:area/details
+// @access  Private (District Admin)
+router.get('/areas/:area/details', protect, async (req, res) => {
+  try {
+    const districtAdmin = await requireDistrictAdmin(req, res);
+    if (!districtAdmin) return;
+
+    const area = req.params.area;
+    const current = getAvailableSubmissionQuarter(new Date());
+    let quarter = parseInt(req.query.quarter, 10);
+    let year = parseInt(req.query.year, 10);
+    if (!quarter || !year || quarter < 1 || quarter > 4) {
+      quarter = current.quarter;
+      year = current.year;
+    }
+
+    // 'Unspecified' rows in the breakdown represent members with no area set
+    const isUnspecified = area === 'Unspecified';
+    const { memberQuery, submissionQuery } = getDistrictAdminScope(
+      districtAdmin,
+      isUnspecified ? {} : { area }
+    );
+    if (isUnspecified) {
+      const noArea = { $in: [null, ''] };
+      memberQuery.area = noArea;
+      submissionQuery.area = noArea;
+    }
+    const periodQuery = buildPeriodQuery(quarter, year);
+
+    const section = ['all', 'submitted', 'pending'].includes(req.query.section) ? req.query.section : 'all';
+    const { search = '' } = req.query;
+    const { page, limit, skip } = parsePagination(req.query);
+
+    const [members, submissions, altSubmissions] = await Promise.all([
+      User.find(memberQuery)
+        .select('ruknId name gender unit area contactNo emailId lastLogin createdAt')
+        .sort({ name: 1 })
+        .lean(),
+      Submission.find({ $and: [submissionQuery, periodQuery] })
+        .select('userId submittedBy ruknId ruknName unit status createdAt')
+        .lean(),
+      AlternativeSubmit.find({ $and: [submissionQuery, periodQuery] })
+        .select('userId ruknName type reason createdAt')
+        .lean()
+    ]);
+
+    // Map each member to their submission (regular first, then alternative)
+    const submissionByUser = new Map();
+    submissions.forEach((s) => {
+      [s.userId, s.submittedBy].filter(Boolean).forEach((id) => {
+        if (!submissionByUser.has(String(id))) {
+          submissionByUser.set(String(id), {
+            submissionId: s._id,
+            status: s.status,
+            submittedAt: s.createdAt,
+            type: 'regular'
+          });
+        }
+      });
+    });
+    altSubmissions.forEach((s) => {
+      if (s.userId && !submissionByUser.has(String(s.userId))) {
+        submissionByUser.set(String(s.userId), {
+          submissionId: s._id,
+          status: 'alternative',
+          submittedAt: s.createdAt,
+          type: 'alternative',
+          altType: s.type
+        });
+      }
+    });
+
+    const submittedMembers = [];
+    const pendingMembers = [];
+    members.forEach((member) => {
+      const submission = submissionByUser.get(String(member._id));
+      if (submission) {
+        submittedMembers.push({ ...member, submission });
+      } else {
+        pendingMembers.push(member);
+      }
+    });
+
+    // Tab badge counts always reflect the full (unsearched) section sizes
+    const totalMembers = members.length;
+    const submittedCount = submittedMembers.length;
+    const pendingCount = pendingMembers.length;
+
+    const sectionList = section === 'submitted' ? submittedMembers
+      : section === 'pending' ? pendingMembers
+      : members;
+
+    const searchedList = search
+      ? sectionList.filter((member) => {
+          const q = search.toLowerCase();
+          return [member.name, member.ruknId, member.unit, member.contactNo]
+            .some((v) => v && String(v).toLowerCase().includes(q));
+        })
+      : sectionList;
+
+    const pageItems = searchedList.slice(skip, skip + limit);
+
+    res.json({
+      success: true,
+      data: {
+        district: districtAdmin.district,
+        area,
+        period: { quarter, year },
+        section,
+        totalMembers,
+        submittedCount,
+        pendingCount,
+        items: pageItems,
+        pagination: buildPaginationMeta(searchedList.length, page, limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get district admin area details error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // @desc    Get dashboard statistics for the district (overview + area breakdown)
 // @route   GET /api/districtadmin/dashboard
 // @access  Private (District Admin)
@@ -222,29 +381,44 @@ router.get('/dashboard', protect, async (req, res) => {
 
     const { memberQuery, submissionQuery } = getDistrictAdminScope(districtAdmin);
 
-    const totalMembers = await User.countDocuments(memberQuery);
+    // Current submission quarter = previous completed quarter (admin parity)
+    const current = getAvailableSubmissionQuarter(new Date());
+    const previous = getPreviousAvailableQuarter(current.quarter, current.year);
 
-    const totalSubmissions = await Submission.countDocuments({
-      ...submissionQuery,
-      ...req.quarterFilter
-    });
-    const submittedCount = await Submission.countDocuments({
-      ...submissionQuery,
-      status: 'submitted',
-      ...req.quarterFilter
-    });
-    const reviewedCount = await Submission.countDocuments({
-      ...submissionQuery,
-      status: 'reviewed',
-      ...req.quarterFilter
-    });
-    const approvedCount = await Submission.countDocuments({
-      ...submissionQuery,
-      status: 'approved',
-      ...req.quarterFilter
-    });
+    // Optional quarter/year filter — scopes the area breakdown (defaults to current)
+    let breakdownQuarter = parseInt(req.query.quarter, 10);
+    let breakdownYear = parseInt(req.query.year, 10);
+    if (!breakdownQuarter || !breakdownYear || breakdownQuarter < 1 || breakdownQuarter > 4) {
+      breakdownQuarter = current.quarter;
+      breakdownYear = current.year;
+    }
+    const breakdownPeriodQuery = buildPeriodQuery(breakdownQuarter, breakdownYear);
 
-    const completionRate = totalMembers > 0 ? Math.round((totalSubmissions / totalMembers) * 100) : 0;
+    const [
+      totalMembers,
+      currentQuarterSubmissions,
+      previousQuarterSubmissions,
+      submittedCount,
+      reviewedCount,
+      approvedCount,
+      availableYears
+    ] = await Promise.all([
+      User.countDocuments(memberQuery),
+      countPeriodSubmissions(submissionQuery, current.quarter, current.year),
+      countPeriodSubmissions(submissionQuery, previous.quarter, previous.year),
+      Submission.countDocuments({ $and: [submissionQuery, buildPeriodQuery(current.quarter, current.year)], status: 'submitted' }),
+      Submission.countDocuments({ $and: [submissionQuery, buildPeriodQuery(current.quarter, current.year)], status: 'reviewed' }),
+      Submission.countDocuments({ $and: [submissionQuery, buildPeriodQuery(current.quarter, current.year)], status: 'approved' }),
+      Submission.distinct('submissionPeriod.year', submissionQuery)
+    ]);
+
+    const completionRate = totalMembers > 0
+      ? Math.round((currentQuarterSubmissions / totalMembers) * 100)
+      : 0;
+
+    const quarterChangePercent = previousQuarterSubmissions > 0
+      ? Math.round(((currentQuarterSubmissions - previousQuarterSubmissions) / previousQuarterSubmissions) * 100)
+      : currentQuarterSubmissions > 0 ? 100 : 0;
 
     const recentSubmissions = await Submission.find({
       ...submissionQuery,
@@ -261,22 +435,57 @@ router.get('/dashboard', protect, async (req, res) => {
       { $sort: { memberCount: -1 } }
     ]);
 
-    // Submissions-per-area breakdown for the current (available) quarter window
-    const submissionsByArea = await Submission.aggregate([
-      { $match: { ...submissionQuery, ...req.quarterFilter } },
-      { $group: { _id: { $ifNull: ['$area', 'Unspecified'] }, submissionCount: { $sum: 1 } } },
-      { $sort: { submissionCount: -1 } }
+    // Submissions-per-area breakdown for the selected quarter (regular + alternative)
+    const areaAggPipeline = [
+      { $match: { $and: [submissionQuery, breakdownPeriodQuery] } },
+      { $group: { _id: { $ifNull: ['$area', 'Unspecified'] }, submissionCount: { $sum: 1 } } }
+    ];
+    const [submissionsByArea, altByArea] = await Promise.all([
+      Submission.aggregate(areaAggPipeline),
+      AlternativeSubmit.aggregate(areaAggPipeline)
     ]);
 
     const submissionsByAreaMap = new Map(submissionsByArea.map((row) => [row._id, row.submissionCount]));
-    const areaBreakdown = membersByArea.map((row) => ({
-      area: row._id,
-      memberCount: row.memberCount,
-      submissionCount: submissionsByAreaMap.get(row._id) || 0,
-      completionRate: row.memberCount > 0
-        ? Math.round(((submissionsByAreaMap.get(row._id) || 0) / row.memberCount) * 100)
-        : 0
-    }));
+    altByArea.forEach((row) => {
+      submissionsByAreaMap.set(row._id, (submissionsByAreaMap.get(row._id) || 0) + row.submissionCount);
+    });
+    const areaBreakdown = membersByArea.map((row) => {
+      const submissionCount = submissionsByAreaMap.get(row._id) || 0;
+      return {
+        area: row._id,
+        memberCount: row.memberCount,
+        submissionCount,
+        completionRate: row.memberCount > 0 ? Math.round((submissionCount / row.memberCount) * 100) : 0
+      };
+    });
+
+    // Quarterly trend (regular + alternative) for charts, respecting hidden/archived quarters
+    const trendPipeline = [
+      { $match: { $and: [submissionQuery, req.quarterFilter] } },
+      {
+        $group: {
+          _id: { year: '$submissionPeriod.year', quarter: '$submissionPeriod.quarter' },
+          count: { $sum: 1 }
+        }
+      }
+    ];
+    const [trendNormal, trendAlt] = await Promise.all([
+      Submission.aggregate(trendPipeline),
+      AlternativeSubmit.aggregate(trendPipeline)
+    ]);
+    const trendMap = new Map();
+    [...trendNormal, ...trendAlt].forEach((row) => {
+      if (!row._id?.year || !row._id?.quarter) return;
+      const key = `${row._id.year}-${row._id.quarter}`;
+      trendMap.set(key, (trendMap.get(key) || 0) + row.count);
+    });
+    const trend = [...trendMap.entries()]
+      .map(([key, count]) => {
+        const [year, quarter] = key.split('-').map(Number);
+        return { year, quarter, count, label: `Q${quarter} ${year}` };
+      })
+      .sort((a, b) => (a.year - b.year) || (a.quarter - b.quarter))
+      .slice(-6);
 
     res.json({
       success: true,
@@ -284,13 +493,22 @@ router.get('/dashboard', protect, async (req, res) => {
         district: districtAdmin.district,
         stats: {
           totalMembers,
-          totalSubmissions,
+          currentQuarterSubmissions,
+          previousQuarterSubmissions,
+          quarterChangePercent,
           submittedCount,
           reviewedCount,
           approvedCount,
-          completionRate
+          completionRate,
+          currentQuarter: current.quarter,
+          currentYear: current.year,
+          prevQuarter: previous.quarter,
+          prevYear: previous.year
         },
+        breakdownPeriod: { quarter: breakdownQuarter, year: breakdownYear },
+        availableYears: availableYears.filter(Boolean).sort((a, b) => b - a),
         areaBreakdown,
+        trend,
         recentSubmissions
       }
     });
