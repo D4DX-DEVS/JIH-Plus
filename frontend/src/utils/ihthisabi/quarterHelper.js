@@ -4,7 +4,7 @@
  */
 
 // Feature flag to disable Q3 submissions
-export const Q3_DISABLED = true;
+export const Q3_DISABLED = false;
 
 /**
  * Check if Q3 is disabled

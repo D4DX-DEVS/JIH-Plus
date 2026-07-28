@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import ConfirmationModal from './ConfirmationModal'
 import PoweredByD4DX from '../sidebars/PoweredByD4DX'
 import LogoWhite from '../../assets/LogoWhite.png'
+import LogoColor from '../../assets/LogoColor.png'
 import { 
   Home, 
   FileText, 
@@ -30,6 +31,7 @@ const Layout = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState(new Set())
 
@@ -242,19 +244,6 @@ const Layout = () => {
     }
   }
 
-  // Find current active label for mobile top bar
-  const activeLabel = (() => {
-    for (const item of navigation) {
-      if (item.type === 'group') {
-        const activeChild = item.children.find(c => isActive(c.href))
-        if (activeChild) return activeChild.name
-      } else if (item.href && isActive(item.href)) {
-        return item.name
-      }
-    }
-    return navigation[0]?.name || 'IHTHISABI'
-  })()
-
   const roleLabel = user?.role === 'unitAdmin'
     ? 'Unit Admin'
     : user?.role === 'districtAdmin'
@@ -393,30 +382,38 @@ const Layout = () => {
         <div className="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur-xl backdrop-saturate-150 shadow-[0_1px_0_rgba(16,24,40,0.06)]">
           <div className="flex items-center justify-between gap-2 px-3 py-1.5">
             <div className="min-w-0 flex items-center gap-2">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-900/5 active:bg-gray-900/10"
-                aria-label="Open navigation"
-              >
-                <Menu className="w-4 h-4" />
-              </button>
-              <div className="min-w-0">
-                <p className="truncate text-[13px] font-semibold leading-tight text-gray-900">
-                  {activeLabel}
-                </p>
-                <p className="truncate text-[10px] leading-tight text-gray-500">
-                  {user?.unit || user?.username || roleLabel}
-                </p>
-              </div>
+              <img src={LogoColor} alt="IHTHISABI" className="h-8 w-8 shrink-0 object-contain" />
+              <p className="truncate text-[11px] leading-tight text-gray-500">
+                {user?.unit || user?.username || roleLabel}
+              </p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-500 transition-colors hover:bg-red-100"
-              aria-label="Logout"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setProfileMenuOpen((prev) => !prev)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+                aria-label="Account menu"
+              >
+                <User className="w-4 h-4" />
+              </button>
+
+              {profileMenuOpen && (
+                <div className="absolute right-0 top-10 z-30 w-52 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
+                  <PoweredByD4DX />
+                  <button
+                    onClick={() => { setProfileMenuOpen(false); handleLogout() }}
+                    className="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
+
+          {profileMenuOpen && (
+            <div className="fixed inset-0 z-20" onClick={() => setProfileMenuOpen(false)} />
+          )}
         </div>
 
         {/* Page content */}

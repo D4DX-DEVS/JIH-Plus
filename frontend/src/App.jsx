@@ -44,6 +44,7 @@ import SubmissionDetails from './pages/ihthisabi/SubmissionDetails';
 import ProfilePage from './pages/ihthisabi/ProfilePage';
 import NotFound from './pages/ihthisabi/NotFound';
 import UnitAdminDashboard from './pages/ihthisabi/UnitAdminDashboard';
+import UnitAdminDetails from './pages/ihthisabi/UnitAdminDetails';
 import DistrictAdminDashboard from './pages/ihthisabi/DistrictAdminDashboard';
 import DistrictAreaDetails from './pages/ihthisabi/DistrictAreaDetails';
 import AlternativeSubmissionForm from './pages/ihthisabi/AlternativeSubmissionForm';
@@ -708,16 +709,24 @@ const IhthisabiRoutes = () => {
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/unitadmin/members" 
+        <Route
+          path="/unitadmin/members"
           element={
             <ProtectedRoute allowedRoles={['unitAdmin']}>
               <UnitAdminDashboard />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/unitadmin/submit-form" 
+        <Route
+          path="/unitadmin/details"
+          element={
+            <ProtectedRoute allowedRoles={['unitAdmin']}>
+              <UnitAdminDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/unitadmin/submit-form"
           element={
             <ProtectedRoute allowedRoles={['unitAdmin']}>
               <SubmissionForm userRole="unitAdmin" />
