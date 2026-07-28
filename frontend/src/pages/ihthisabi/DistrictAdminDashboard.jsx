@@ -467,7 +467,10 @@ const DistrictAdminDashboard = () => {
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-              <div className="ih-stat-card min-w-0">
+              <div
+                onClick={() => navigate('/ihthisabi/districtadmin/members')}
+                className="ih-stat-card min-w-0 cursor-pointer hover:shadow-md active:scale-[0.99] transition"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="ih-stat-label truncate">
@@ -482,7 +485,10 @@ const DistrictAdminDashboard = () => {
                 </div>
               </div>
 
-              <div className="ih-stat-card min-w-0">
+              <div
+                onClick={() => navigate('/ihthisabi/districtadmin/submissions')}
+                className="ih-stat-card min-w-0 cursor-pointer hover:shadow-md active:scale-[0.99] transition"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="ih-stat-label truncate">
