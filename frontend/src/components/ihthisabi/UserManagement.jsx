@@ -4,10 +4,12 @@ import { useLocation as useHierarchyLocation } from '../../hooks/useLocation'
 import UnitAdminProfileModal from './UnitAdminProfileModal'
 import UserProfileModal from './UserProfileModal'
 import ConfirmationModal from './ConfirmationModal'
+import MemberFormModal from './MemberFormModal'
 import Pagination from './Pagination'
-import { 
-  Upload, 
-  Users, 
+import {
+  Upload,
+  UserPlus,
+  Users,
   Search, 
   Filter, 
   Trash2, 
@@ -44,6 +46,8 @@ const UserManagement = () => {
   const [meta, setMeta] = useState({ totalUsers: 0, activeUsers: 0, units: [] })
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [uploadResult, setUploadResult] = useState(null)
+  const [templateLoading, setTemplateLoading] = useState(false)
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false)
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false)
   const [deleteAllLoading, setDeleteAllLoading] = useState(false)
   const [showUnitAdminsOnly, setShowUnitAdminsOnly] = useState(false)
@@ -68,7 +72,11 @@ const UserManagement = () => {
   const [transferArea, setTransferArea] = useState('')
   const [transferUnit, setTransferUnit] = useState('')
   const [abroadCountries, setAbroadCountries] = useState([])
+  const [abroadAreas, setAbroadAreas] = useState([])
+  const [abroadUnits, setAbroadUnits] = useState([])
   const [transferAbroadCountry, setTransferAbroadCountry] = useState('')
+  const [transferAbroadArea, setTransferAbroadArea] = useState('')
+  const [transferAbroadUnit, setTransferAbroadUnit] = useState('')
   const [transferWorking, setTransferWorking] = useState(false)
   const [transferError, setTransferError] = useState('')
   const {
@@ -123,17 +131,39 @@ const UserManagement = () => {
     }
   }, [searchTerm, appendLocationFilter])
 
-  useEffect(() => {
-    const fetchMeta = async () => {
-      try {
-        const response = await api.get('/ihthisabi/admin/users/meta')
-        setMeta(response.data.data)
-      } catch (error) {
-        console.error('Error fetching users meta:', error)
-      }
+  const fetchMeta = useCallback(async () => {
+    try {
+      const response = await api.get('/ihthisabi/admin/users/meta')
+      setMeta(response.data.data)
+    } catch (error) {
+      console.error('Error fetching users meta:', error)
     }
-    fetchMeta()
   }, [])
+
+  useEffect(() => {
+    fetchMeta()
+  }, [fetchMeta])
+
+  // Download the model Excel so admins fill in exactly the columns the parser expects
+  const handleDownloadTemplate = async () => {
+    setTemplateLoading(true)
+    try {
+      const response = await api.get('/ihthisabi/admin/members-template', { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'member-upload-template.xlsx')
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Template download error:', error)
+      toast.error('Failed to download the model Excel')
+    } finally {
+      setTemplateLoading(false)
+    }
+  }
 
   // Handle file upload
   const handleFileUpload = async () => {
@@ -154,13 +184,15 @@ const UserManagement = () => {
         timeout: 90000 // allow up to 60s for large Excel processing
       })
 
+      // Keep the modal open — the result summary (including skipped rows) renders inside it
       setUploadResult(response.data.data)
       toast.success('Excel file processed successfully!')
-      setShowUploadModal(false)
       setSelectedFile(null)
       fetchUsers() // Refresh users list
+      fetchMeta()
     } catch (error) {
       console.error('Upload error:', error)
+      setUploadResult(error.response?.data?.data || null)
       toast.error(error.response?.data?.message || 'Failed to upload file')
     } finally {
       setUploadLoading(false)
@@ -191,7 +223,9 @@ const UserManagement = () => {
     setTransferError('')
     setTransferMode('location')
     setTransferDistrict(''); setTransferArea(''); setTransferUnit('')
-    setTransferAbroadCountry('')
+    setTransferDistricts([]); setTransferAreas([]); setTransferUnits([])
+    setTransferAbroadCountry(''); setTransferAbroadArea(''); setTransferAbroadUnit('')
+    setAbroadAreas([]); setAbroadUnits([])
     setTransferModal({ isOpen: true, user })
     // Fetch districts and abroad countries in parallel
     try {
@@ -200,8 +234,10 @@ const UserManagement = () => {
         api.get('/ihthisabi/admin/abroad-countries')
       ])
       setTransferDistricts(distRes.data.data || [])
-      setAbroadCountries(countryRes.data.data || [])
-    } catch { /* ignore */ }
+      setAbroadCountries(countryRes.data.data?.countries || [])
+    } catch (err) {
+      setTransferError(err.response?.data?.message || 'Failed to load locations')
+    }
   }
 
   const handleTransferDistrictChange = async (districtName) => {
@@ -224,6 +260,25 @@ const UserManagement = () => {
     } catch { /* ignore */ }
   }
 
+  const handleTransferAbroadCountryChange = async (countryId) => {
+    setTransferAbroadCountry(countryId); setTransferAbroadArea(''); setTransferAbroadUnit('')
+    setAbroadAreas([]); setAbroadUnits([])
+    if (!countryId) return
+    try {
+      const res = await api.get('/ihthisabi/admin/abroad-areas', { params: { country: countryId } })
+      setAbroadAreas(res.data.data?.areas || [])
+    } catch { /* ignore */ }
+  }
+
+  const handleTransferAbroadAreaChange = async (areaId) => {
+    setTransferAbroadArea(areaId); setTransferAbroadUnit(''); setAbroadUnits([])
+    if (!areaId) return
+    try {
+      const res = await api.get('/ihthisabi/admin/abroad-units', { params: { area: areaId } })
+      setAbroadUnits(res.data.data?.units || [])
+    } catch { /* ignore */ }
+  }
+
   const confirmTransfer = async () => {
     setTransferError('')
     const { user } = transferModal
@@ -232,7 +287,10 @@ const UserManagement = () => {
       setTransferWorking(true)
       try {
         await api.put(`/ihthisabi/admin/users/${user._id}/transfer`, {
-          isAbroad: true, abroadCountry: transferAbroadCountry
+          isAbroad: true,
+          abroadCountry: transferAbroadCountry,
+          abroadArea: transferAbroadArea || null,
+          abroadUnit: transferAbroadUnit || null
         })
         toast.success('User transferred to abroad')
         setTransferModal({ isOpen: false, user: null })
@@ -384,13 +442,23 @@ const UserManagement = () => {
             </button>
           )}
           {!showUnitAdminsOnly && (
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="btn-primary shrink-0 gap-1 px-2 py-1.5 text-[11px] sm:px-4 sm:py-2 sm:text-sm"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              Upload
-            </button>
+            <>
+              <button
+                onClick={() => setShowAddMemberModal(true)}
+                className="btn-primary shrink-0 gap-1 px-2 py-1.5 text-[11px] sm:px-4 sm:py-2 sm:text-sm"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span className="sm:hidden">Add</span>
+                <span className="hidden sm:inline">Add Member</span>
+              </button>
+              <button
+                onClick={() => { setUploadResult(null); setShowUploadModal(true) }}
+                className="btn-ghost shrink-0 gap-1 border border-gray-300 px-2 py-1.5 text-[11px] sm:px-4 sm:py-2 sm:text-sm"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Upload
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -745,8 +813,8 @@ const UserManagement = () => {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg my-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium text-gray-900">Upload Excel File</h3>
               <button
@@ -770,28 +838,92 @@ const UserManagement = () => {
                 />
               </div>
 
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="text-sm text-blue-900">
+                    <p className="font-medium">Not sure about the format?</p>
+                    <p className="mt-0.5 text-blue-700">Download the model Excel and fill your members into it.</p>
+                  </div>
+                  <button
+                    onClick={handleDownloadTemplate}
+                    disabled={templateLoading}
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    {templateLoading ? 'Preparing…' : 'Model Excel'}
+                  </button>
+                </div>
+              </div>
+
               <div className="text-sm text-gray-600">
-                <p className="font-medium mb-2">Expected Excel format:</p>
+                <p className="font-medium mb-2">Expected columns:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>Column A: S.NO (Serial Number)</li>
-                  <li>Column B: RUKN NAME (ENGLISH)</li>
-                  <li>Column C: GENDER</li>
-                  <li>Column D: UNIT (MUQAM)</li>
-                  <li>Column E: RUKN ID</li>
+                  <li>SL NO <span className="text-gray-400">(optional)</span></li>
+                  <li>DISTRICT, AREA, UNIT <span className="text-red-500">— required</span></li>
+                  <li>RUKN ID <span className="text-red-500">— required, digits only, unique</span></li>
+                  <li>RUKN NAME <span className="text-red-500">— required</span></li>
+                  <li>GENDER <span className="text-red-500">— required (Male / Female)</span></li>
+                  <li>CONTACT NO, EMAIL ID, COUNTRY <span className="text-gray-400">(optional)</span></li>
                 </ul>
+                <p className="mt-2 text-xs text-gray-500">
+                  An existing Rukn ID updates that member instead of creating a duplicate.
+                </p>
               </div>
 
               {uploadResult && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h4 className="font-medium text-green-800 mb-2">Upload Results:</h4>
-                  <ul className="text-sm text-green-700 space-y-1">
-                    <li>Total processed: {uploadResult.totalProcessed}</li>
-                    <li>Created: {uploadResult.created}</li>
-                    <li>Updated: {uploadResult.updated}</li>
-                    {uploadResult.errors && uploadResult.errors.length > 0 && (
-                      <li>Errors: {uploadResult.errors.length}</li>
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <h4 className="font-medium text-gray-900 mb-2">Upload Results</h4>
+                  <ul className="text-sm text-gray-700 space-y-1">
+                    <li>Imported rows: {uploadResult.totalProcessed}</li>
+                    <li className="text-green-700">Created: {uploadResult.created}</li>
+                    <li className="text-green-700">Updated: {uploadResult.updated}</li>
+                    {uploadResult.errors?.length > 0 && (
+                      <li className="text-red-700">Failed to save: {uploadResult.errors.length}</li>
+                    )}
+                    {uploadResult.skipped?.length > 0 && (
+                      <li className="text-amber-700">Skipped rows: {uploadResult.skipped.length}</li>
                     )}
                   </ul>
+
+                  {uploadResult.skipped?.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs font-medium text-amber-800 mb-1">
+                        These rows were not imported — fix them and upload again:
+                      </p>
+                      <div className="max-h-40 overflow-y-auto rounded border border-amber-200 bg-amber-50">
+                        <table className="w-full text-xs">
+                          <tbody>
+                            {uploadResult.skipped.map((s, i) => (
+                              <tr key={`${s.row}-${i}`} className="border-b border-amber-100 last:border-0">
+                                <td className="px-2 py-1 text-amber-900 whitespace-nowrap">Row {s.row}</td>
+                                <td className="px-2 py-1 text-amber-900">{s.name || s.ruknId || '—'}</td>
+                                <td className="px-2 py-1 text-amber-700">{s.reason}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {uploadResult.errors?.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs font-medium text-red-800 mb-1">Rows that failed to save:</p>
+                      <div className="max-h-40 overflow-y-auto rounded border border-red-200 bg-red-50">
+                        <table className="w-full text-xs">
+                          <tbody>
+                            {uploadResult.errors.map((err, i) => (
+                              <tr key={`${err.ruknId}-${i}`} className="border-b border-red-100 last:border-0">
+                                <td className="px-2 py-1 text-red-900 whitespace-nowrap">{err.ruknId}</td>
+                                <td className="px-2 py-1 text-red-900">{err.name}</td>
+                                <td className="px-2 py-1 text-red-700">{err.error}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -807,7 +939,7 @@ const UserManagement = () => {
                   onClick={() => setShowUploadModal(false)}
                   className="btn-ghost flex-1"
                 >
-                  Cancel
+                  {uploadResult ? 'Close' : 'Cancel'}
                 </button>
               </div>
             </div>
@@ -872,6 +1004,17 @@ const UserManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Add Member Modal */}
+      <MemberFormModal
+        isOpen={showAddMemberModal}
+        onClose={() => setShowAddMemberModal(false)}
+        editUser={null}
+        onSaved={() => {
+          fetchUsers(1) // newest members sort to the top of page 1
+          fetchMeta()
+        }}
+      />
 
       {/* Unit Admin Profile Modal */}
       <UnitAdminProfileModal
@@ -945,7 +1088,7 @@ const UserManagement = () => {
                   >
                     <option value="">Select district</option>
                     {transferDistricts.map((d) => (
-                      <option key={d._id || d.district} value={d.district}>{d.district}</option>
+                      <option key={d.name} value={d.name}>{d.name}</option>
                     ))}
                   </select>
                 </div>
@@ -959,7 +1102,7 @@ const UserManagement = () => {
                   >
                     <option value="">Select area</option>
                     {transferAreas.map((a) => (
-                      <option key={a._id || a.area} value={a.area}>{a.area}</option>
+                      <option key={`${a.district}-${a.name}`} value={a.name}>{a.name}</option>
                     ))}
                   </select>
                 </div>
@@ -973,7 +1116,7 @@ const UserManagement = () => {
                   >
                     <option value="">Select unit</option>
                     {transferUnits.map((u) => (
-                      <option key={u._id || u.unit} value={u.unit}>{u.unit}</option>
+                      <option key={`${u.district}-${u.area}-${u.name}`} value={u.name}>{u.name}</option>
                     ))}
                   </select>
                 </div>
@@ -981,18 +1124,48 @@ const UserManagement = () => {
             )}
 
             {transferMode === 'abroad' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                <select
-                  value={transferAbroadCountry}
-                  onChange={(e) => setTransferAbroadCountry(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="">Select country</option>
-                  {abroadCountries.map((c) => (
-                    <option key={c._id} value={c._id}>{c.title}</option>
-                  ))}
-                </select>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                  <select
+                    value={transferAbroadCountry}
+                    onChange={(e) => handleTransferAbroadCountryChange(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value="">Select country</option>
+                    {abroadCountries.map((c) => (
+                      <option key={c._id} value={c._id}>{c.title}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Area <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <select
+                    value={transferAbroadArea}
+                    onChange={(e) => handleTransferAbroadAreaChange(e.target.value)}
+                    disabled={!transferAbroadCountry || abroadAreas.length === 0}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
+                  >
+                    <option value="">{!transferAbroadCountry ? 'Select country first' : abroadAreas.length === 0 ? 'No areas available' : 'Select area'}</option>
+                    {abroadAreas.map((a) => (
+                      <option key={a._id} value={a._id}>{a.title}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <select
+                    value={transferAbroadUnit}
+                    onChange={(e) => setTransferAbroadUnit(e.target.value)}
+                    disabled={!transferAbroadArea || abroadUnits.length === 0}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
+                  >
+                    <option value="">{!transferAbroadArea ? 'Select area first' : abroadUnits.length === 0 ? 'No units available' : 'Select unit'}</option>
+                    {abroadUnits.map((u) => (
+                      <option key={u._id} value={u._id}>{u.title}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             )}
 

@@ -16,6 +16,16 @@ const fs = require('fs');
  * - Column J: INR (Country/Location)
  */
 const parseExcelFile = async (filePath) => {
+  const { users } = await parseMembersExcelFile(filePath);
+  return users;
+};
+
+/**
+ * Same parse as parseExcelFile, but also reports the rows that were rejected and why,
+ * so the admin uploading the file can see exactly what did not get imported.
+ * Returns { users, skipped: [{ row, reason, ruknId, name }] }
+ */
+const parseMembersExcelFile = async (filePath) => {
   try {
     // Read the Excel file
     const workbook = XLSX.readFile(filePath);
@@ -89,17 +99,20 @@ const parseExcelFile = async (filePath) => {
     // Extract data rows (skip header and any empty rows)
     const dataRows = jsonData.slice(headerRowIndex + 1);
     const users = [];
-    
+    const skipped = [];
+    const seenRuknIds = new Set();
+
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i];
-      
+      const rowNumber = i + headerRowIndex + 2; // 1-based sheet row as shown in Excel
+
       // Skip empty rows
       if (!row || row.every(cell => !cell || String(cell).trim() === '')) {
         continue;
       }
-      
+
       const name = String(row[columnMap.name] || '').trim();
-      const gender = columnMap.gender !== -1 ? String(row[columnMap.gender] || '').trim() : 'Male';
+      const gender = columnMap.gender !== -1 ? String(row[columnMap.gender] || '').trim() : '';
       const district = columnMap.district !== -1 ? String(row[columnMap.district] || '').trim() : '';
       const area = columnMap.area !== -1 ? String(row[columnMap.area] || '').trim() : '';
       const unit = columnMap.unit !== -1 ? String(row[columnMap.unit] || '').trim() : '';
@@ -107,30 +120,33 @@ const parseExcelFile = async (filePath) => {
       const contactNo = columnMap.contactNo !== -1 ? String(row[columnMap.contactNo] || '').trim() : '';
       const emailId = columnMap.emailId !== -1 ? String(row[columnMap.emailId] || '').trim() : '';
       const country = columnMap.country !== -1 ? String(row[columnMap.country] || '').trim() : '';
-      
-      // Skip rows with missing essential data
-      if (!name || !ruknId) {
-        console.log(`Skipping row ${i + headerRowIndex + 2}: Missing name or RUKN ID`);
-        continue;
-      }
+
+      const reject = (reason) => skipped.push({ row: rowNumber, reason, ruknId, name });
+
+      // Every member needs an identity, a gender and a full location
+      if (!name) { reject('Missing Rukn Name'); continue; }
+      if (!ruknId) { reject('Missing Rukn ID'); continue; }
+
       // Ensure RUKN ID is numeric only
       const numericRuknId = ruknId.replace(/\s+/g, '');
-      if (!/^\d+$/.test(numericRuknId)) {
-        console.log(`Skipping row ${i + headerRowIndex + 2}: Invalid RUKN ID "${ruknId}"`);
-        continue;
-      }
-      
+      if (!/^\d+$/.test(numericRuknId)) { reject(`Invalid Rukn ID "${ruknId}" — digits only`); continue; }
+      if (seenRuknIds.has(numericRuknId)) { reject(`Duplicate Rukn ID "${numericRuknId}" in this file`); continue; }
+
+      const normalizedGender = normalizeGender(gender);
+      if (!normalizedGender) { reject(gender ? `Unrecognised Gender "${gender}"` : 'Missing Gender'); continue; }
+
+      if (!district) { reject('Missing District'); continue; }
+      if (!area) { reject('Missing Area'); continue; }
+
       const cleanUnit = cleanUnitName(unit);
-      if (!cleanUnit) {
-        console.log(`Skipping row ${i + headerRowIndex + 2}: Missing Unit`);
-        continue;
-      }
-      
+      if (!cleanUnit) { reject('Missing Unit'); continue; }
+
+      seenRuknIds.add(numericRuknId);
       users.push({
         name,
-        gender: ['Male', 'Female'].includes(gender) ? gender : 'Male',
-        district: district || '',
-        area: area || '',
+        gender: normalizedGender,
+        district,
+        area,
         unit: cleanUnit,
         ruknId: numericRuknId,
         contactNo: contactNo || '',
@@ -139,14 +155,26 @@ const parseExcelFile = async (filePath) => {
         serialNo: columnMap.serialNo !== -1 ? row[columnMap.serialNo] : i + 1
       });
     }
-    
-    console.log(`Parsed ${users.length} users from Excel file`);
-    return users;
-    
+
+    console.log(`Parsed ${users.length} users from Excel file (${skipped.length} rows skipped)`);
+    return { users, skipped };
+
   } catch (error) {
     console.error('Error parsing Excel file:', error);
     throw error;
   }
+};
+
+/**
+ * Map the many ways a sheet writes gender onto the User model's enum.
+ * Returns 'Male' | 'Female', or '' when the cell is empty/unrecognised.
+ */
+const normalizeGender = (value) => {
+  const v = String(value || '').trim().toLowerCase();
+  if (!v) return '';
+  if (['m', 'male', 'man', 'boy'].includes(v)) return 'Male';
+  if (['f', 'female', 'fe male', 'woman', 'girl'].includes(v)) return 'Female';
+  return '';
 };
 
 /**
@@ -388,7 +416,51 @@ const parseUnitAdminExcelFile = async (filePath) => {
   }
 };
 
+/**
+ * Build the model workbook that admins download before a bulk upload.
+ * Headers here are exactly what parseMembersExcelFile looks for, so a file
+ * filled in from this template always maps cleanly.
+ */
+const MEMBER_TEMPLATE_HEADERS = [
+  'SL NO', 'DISTRICT', 'AREA', 'UNIT', 'RUKN ID', 'RUKN NAME', 'GENDER', 'CONTACT NO', 'EMAIL ID', 'COUNTRY'
+];
+
+const buildMemberTemplateWorkbook = () => {
+  const sampleRows = [
+    [1, 'Malappuram East', 'Perinthalmanna', 'Pandikkad', '120071', 'Sahla Zainuddeen', 'Female', '9876543210', 'sahla@example.com', 'IN'],
+    [2, 'Ernakulam', 'Kochi', 'Vyttila', '120242', 'Abdul Shukkoor K H', 'Male', '9876500000', 'shukkoor@example.com', 'IN']
+  ];
+
+  const sheet = XLSX.utils.aoa_to_sheet([MEMBER_TEMPLATE_HEADERS, ...sampleRows]);
+  sheet['!cols'] = [
+    { wch: 7 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 12 },
+    { wch: 26 }, { wch: 10 }, { wch: 15 }, { wch: 26 }, { wch: 10 }
+  ];
+
+  const instructions = XLSX.utils.aoa_to_sheet([
+    ['How to use this template'],
+    [],
+    ['1.', 'Fill your member rows in the "Members" sheet. Do not rename or reorder the header row.'],
+    ['2.', 'Required for every row: DISTRICT, AREA, UNIT, RUKN ID, RUKN NAME, GENDER.'],
+    ['3.', 'RUKN ID must be digits only and unique. An existing Rukn ID updates that member instead of creating a duplicate.'],
+    ['4.', 'GENDER must be Male or Female (M / F also accepted).'],
+    ['5.', 'CONTACT NO, EMAIL ID and COUNTRY are optional.'],
+    ['6.', 'DISTRICT, AREA and UNIT are matched by name — spell them exactly as they appear in Master Data.'],
+    ['7.', 'Delete the two sample rows before uploading.'],
+    [],
+    ['Rows missing any required value are skipped and listed back to you after the upload.']
+  ]);
+  instructions['!cols'] = [{ wch: 5 }, { wch: 110 }];
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, sheet, 'Members');
+  XLSX.utils.book_append_sheet(workbook, instructions, 'Instructions');
+  return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+};
+
 module.exports = {
   parseExcelFile,
-  parseUnitAdminExcelFile
+  parseMembersExcelFile,
+  parseUnitAdminExcelFile,
+  buildMemberTemplateWorkbook
 };
