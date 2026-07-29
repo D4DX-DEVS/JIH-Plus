@@ -15,7 +15,7 @@ const AbroadUnit = require('../../models/ihthisabi/AbroadUnit');
 const LocationMaster = require('../../models/ihthisabi/LocationMaster');
 const { protect, authorize } = require('../../middlewares/ihthisabi/auth');
 const upload = require('../../middlewares/ihthisabi/upload');
-const { parseExcelFile, parseUnitAdminExcelFile } = require('../../utils/excelParser');
+const { parseExcelFile, parseMembersExcelFile, parseUnitAdminExcelFile, buildMemberTemplateWorkbook } = require('../../utils/excelParser');
 const { sendWhatsAppMessage, formatReplyMessage, formatStructuredReplyMessage } = require('../../utils/whatsapp');
 const { enqueueBroadcast, getBroadcastJob } = require('../../utils/whatsappBroadcastQueue');
 const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
@@ -1488,6 +1488,21 @@ router.get('/debug/counts', async (req, res) => {
   }
 });
 
+// @desc    Download the model Excel file for bulk member upload
+// @route   GET /api/ihthisabi/admin/members-template
+// @access  Private (Admin only)
+router.get('/members-template', (req, res) => {
+  try {
+    const buffer = buildMemberTemplateWorkbook();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="member-upload-template.xlsx"');
+    res.send(buffer);
+  } catch (error) {
+    console.error('Member template error:', error);
+    res.status(500).json({ success: false, message: 'Failed to build template', error: error.message });
+  }
+});
+
 // @desc    Upload Excel file and create/update users
 // @route   POST /api/admin/upload-excel
 // @access  Private (Admin only)
@@ -1503,12 +1518,16 @@ router.post('/upload-excel', upload.single('excelFile'), async (req, res) => {
     console.log('Processing uploaded file:', req.file.filename);
 
     // Parse Excel file
-    const users = await parseExcelFile(req.file.path);
-    
+    const { users, skipped } = await parseMembersExcelFile(req.file.path);
+
     if (users.length === 0) {
+      try { fs.unlinkSync(req.file.path); } catch { /* already gone */ }
       return res.status(400).json({
         success: false,
-        message: 'No valid user data found in Excel file'
+        message: skipped.length
+          ? `No importable rows. ${skipped.length} row(s) were rejected — check the required columns against the model file.`
+          : 'No valid user data found in Excel file',
+        data: { totalProcessed: 0, created: 0, updated: 0, skipped }
       });
     }
 
@@ -1578,7 +1597,8 @@ router.post('/upload-excel', upload.single('excelFile'), async (req, res) => {
         totalProcessed: users.length,
         created,
         updated,
-        errors: errors.length > 0 ? errors : undefined
+        errors: errors.length > 0 ? errors : undefined,
+        skipped: skipped.length > 0 ? skipped : undefined
       }
     });
 
