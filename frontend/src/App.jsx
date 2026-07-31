@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { ErrorProvider } from './contexts/ErrorContext';
 import LandingPage from './pages/LandingPage';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -94,12 +95,14 @@ function App() {
     localStorage.removeItem('userToken');
     localStorage.removeItem('userData');
     setIsAuthenticated(false);
+    toast.success('Logged out successfully');
   };
 
   const handleAdminLogout = () => {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminData');
     setIsAdminAuthenticated(false);
+    toast.success('Logged out successfully');
   };
 
   // Helper function to determine default dashboard based on user data

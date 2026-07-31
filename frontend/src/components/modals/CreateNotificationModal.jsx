@@ -2,8 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { X, Send, Building, MapPin, AlertCircle, Search } from 'lucide-react';
 import axios from 'axios';
 
-const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCreated }) => {
-  const [formData, setFormData] = useState({
+const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCreated, notification }) => {
+  const isEdit = Boolean(notification);
+  const [formData, setFormData] = useState(() => notification ? {
+    title: notification.title || '',
+    description: notification.description || '',
+    recipients: {
+      areas: (notification.recipients?.areas || []).map(a => ({ areaId: a.areaId, areaName: a.areaName })),
+      units: (notification.recipients?.units || []).map(u => ({ unitId: u.unitId, unitName: u.unitName })),
+      district: notification.recipients?.district
+        ? { districtId: notification.recipients.district.districtId, districtName: notification.recipients.district.districtName }
+        : null
+    }
+  } : {
     title: '',
     description: '',
     recipients: {
@@ -55,38 +66,19 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
   const fetchDistricts = async (token) => {
     setLoadingDistricts(true);
     try {
-      // Primary: lightweight hierarchy endpoint
+      // Use the local location-master DB — the same collection district/area/unit
+      // accounts log in against, so the ids picked here line up with the ids in
+      // their JWTs and notifications actually reach them.
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/user/hierarchy/districts`,
+        `${import.meta.env.VITE_API_URL}/api/user/hierarchy/districts-db`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const rawList = response.data?.districts ?? response.data?.data ?? response.data ?? [];
+      const rawList = response.data?.data ?? [];
       const list = Array.isArray(rawList) ? rawList : [];
-      console.log('Districts response (normalized list length):', list.length, list);
       setDistricts(list.map(normalizeDistrict));
     } catch (err) {
-      console.error('Failed to load districts via /api/user/hierarchy/districts, trying fallback', err?.response?.data || err?.message);
-      // Fallback: legacy notifications hierarchy (brings full tree)
-      try {
-        const fallback = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/notifications/hierarchy/all`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const tree = fallback.data?.data;
-        if (fallback.data?.success && Array.isArray(tree)) {
-          console.log('Fallback district tree size:', tree.length);
-          const districtList = tree.map(d => normalizeDistrict(d));
-          setDistricts(districtList);
-          // Avoid using fallback area/unit data to prevent stale listings; let live calls fill on expand.
-          setAreasByDistrict({});
-          setUnitsByArea({});
-        } else {
-          setError('Failed to load districts');
-        }
-      } catch (fallbackErr) {
-        console.error('Fallback hierarchy load failed', fallbackErr?.response?.data || fallbackErr?.message);
-        setError('Failed to load districts');
-      }
+      console.error('Failed to load districts', err?.response?.data || err?.message);
+      setError('Failed to load districts');
     } finally {
       setLoadingDistricts(false);
     }
@@ -97,12 +89,11 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
     setLoadingAreas((prev) => ({ ...prev, [districtId]: true }));
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/user/hierarchy/areas/${encodeURIComponent(districtId)}`,
+        `${import.meta.env.VITE_API_URL}/api/user/hierarchy/areas-db/${encodeURIComponent(districtId)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const rawList = response.data?.areas ?? response.data?.data ?? response.data ?? [];
+      const rawList = response.data?.data ?? [];
       const list = Array.isArray(rawList) ? rawList : [];
-      console.log('Areas response for district', districtId, 'len:', list.length, list);
       setAreasByDistrict((prev) => ({
         ...prev,
         [districtId]: list.map(normalizeArea)
@@ -265,25 +256,21 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                 district: formData.recipients.district
               };
             } else if (userData?.role === 'district') {
+        // Only the areas/units the district admin actually picked are
+        // recipients — the district itself is the sender, not a target,
+        // so it must not be tagged as a recipient here.
         recipients = {
           areas: formData.recipients.areas,
           units: formData.recipients.units,
-          district: userData.districtId ? {
-            districtId: userData.districtId,
-            districtName: userData.district
-          } : null
+          district: null
         };
       } else if (userData?.role === 'area') {
+        // Only the units the area admin actually picked are recipients — the
+        // area (and its parent district) is the sender here, not a target.
         recipients = {
-          areas: [{
-            areaId: userData.areaId,
-            areaName: userData.area
-          }],
+          areas: [],
           units: formData.recipients.units,
-          district: userData.districtId ? {
-            districtId: userData.districtId,
-            districtName: userData.district
-          } : null
+          district: null
         };
       }
 
@@ -293,11 +280,19 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
         recipients
       };
       console.log(payload);
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/notifications/create`,
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      if (isEdit) {
+        await axios.put(
+          `${import.meta.env.VITE_API_URL}/api/notifications/${notification._id}`,
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/notifications/create`,
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
 
       onClose();
       // Reset form and filters
@@ -325,7 +320,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
   };
 
   const getTotalRecipients = () => {
-    return formData.recipients.areas.length + formData.recipients.units.length;
+    return (formData.recipients.district ? 1 : 0) + formData.recipients.areas.length + formData.recipients.units.length;
   };
 
   if (!isOpen) return null;
@@ -335,7 +330,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-[#002349]/5 to-[#957C3D]/5">
         <div>
-          <h2 className="text-xl font-bold text-[#002349]">Create Notification</h2>
+          <h2 className="text-xl font-bold text-[#002349]">{isEdit ? 'Edit Notification' : 'Create Notification'}</h2>
           <p className="text-sm text-gray-600 mt-1 font-medium">
             {userData?.role === 'admin' || userData?.role === 'superadmin'
               ? 'Send a notification to any district, area, or unit'
@@ -788,12 +783,12 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
             {submitting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Sending...</span>
+                <span>{isEdit ? 'Saving...' : 'Sending...'}</span>
               </>
             ) : (
               <>
                 <Send className="w-4 h-4" />
-                <span>Send Notification</span>
+                <span>{isEdit ? 'Save Changes' : 'Send Notification'}</span>
               </>
             )}
           </button>

@@ -79,7 +79,23 @@ const fetchDistrictData = async () => {
     }
   };
 
-  
+// Area/unit JWTs carry `areaName`/`unitName` (see /api/user/login/unified) —
+// never the bare `area`/`unit` keys this file originally assumed. Resolve both
+// spellings so senders are named correctly and can find their own notifications.
+const identityOf = (user) => ({
+  district: user.district || user.districtName || '',
+  area: user.area || user.areaName || '',
+  unit: user.unit || user.unitName || ''
+});
+
+// The sender's own account id, as stored on notification.sender at create time.
+const senderObjectId = (user) => {
+  const raw = user.id || user._id || user.userId;
+  return raw && mongoose.Types.ObjectId.isValid(raw)
+    ? new mongoose.Types.ObjectId(raw)
+    : null;
+};
+
 // Create notification - Simple Implementation
 router.post('/create', unifiedAuth, async (req, res) => {
   try {
@@ -101,12 +117,19 @@ router.post('/create', unifiedAuth, async (req, res) => {
       });
     }
 
-    // Get sender information from JWT
+    // Get sender information from JWT — must key off the sender's own role,
+    // since an area/unit admin's token also carries their parent district's
+    // (and area's) name, which would otherwise win a plain truthiness check.
+    const identity = identityOf(req.user);
     let senderName = 'Admin';
     if (req.user.role === 'admin' || req.user.role === 'superadmin') {
       senderName = req.user.role === 'superadmin' ? 'Super Admin' : 'Admin';
-    } else {
-      senderName = req.user.district || req.user.area || req.user.unit || 'Admin';
+    } else if (req.user.role === 'district') {
+      senderName = identity.district || 'Admin';
+    } else if (req.user.role === 'area') {
+      senderName = identity.area || 'Admin';
+    } else if (req.user.role === 'unit') {
+      senderName = identity.unit || 'Admin';
     }
     const senderRole = req.user.role;
     
@@ -166,72 +189,99 @@ router.post('/create', unifiedAuth, async (req, res) => {
 router.get('/my-notifications', unifiedAuth, async (req, res) => {
   try {
     const userRole = req.user.role;
-    const { page = 1, limit = 50 } = req.query;
+    const { page = 1, limit = 50, filter } = req.query;
     const skip = (page - 1) * limit;
 
-    // Build simple query based on user role
-    let query = {};
+    // recipientConditions: notifications addressed to this user (received)
+    // senderCondition: notifications authored by this user (sent)
+    let recipientConditions = [];
+    let senderCondition = null;
+
+    const identity = identityOf(req.user);
+    const ownId = senderObjectId(req.user);
+
+    // "Sent by me" = same role AND (same account id OR same display name).
+    // The id branch also rescues notifications saved before the name lookup
+    // was fixed, whose senderName fell back to 'Admin'.
+    const sentByMe = (role, name) => {
+      const clauses = [];
+      if (ownId) clauses.push({ sender: ownId });
+      if (name) clauses.push({ senderName: name });
+      if (clauses.length === 0) return null;
+      return { senderRole: role, $or: clauses };
+    };
 
     if (userRole === 'district') {
-      // District admins see notifications sent to their district OR sent by them
       const districtConditions = [];
-      
-      // If we have districtId (ObjectId), use it
       if (req.user.districtId && mongoose.Types.ObjectId.isValid(req.user.districtId)) {
         districtConditions.push({ 'recipients.district.districtId': new mongoose.Types.ObjectId(req.user.districtId) });
       }
-      // Always check by name (string)
-      if (req.user.district) {
-        districtConditions.push({ 'recipients.district.districtName': req.user.district });
+      if (identity.district) {
+        districtConditions.push({ 'recipients.district.districtName': identity.district });
       }
-      
-      query = {
-        $or: [
-          ...districtConditions,
-          { 'senderName': req.user.district }
-        ]
-      };
+      recipientConditions = districtConditions;
+      senderCondition = sentByMe('district', identity.district);
     } else if (userRole === 'area') {
-      // Area admins see notifications sent to their area OR sent by them
+      // Area admins see notifications sent to their area, to their parent district, OR sent by them
       const areaConditions = [];
-      
+      const districtConditions = [];
+
       // If we have areaId (ObjectId), use it
       if (req.user.areaId && mongoose.Types.ObjectId.isValid(req.user.areaId)) {
         areaConditions.push({ 'recipients.areas.areaId': new mongoose.Types.ObjectId(req.user.areaId) });
       }
       // Always check by name (string)
-      if (req.user.area) {
-        areaConditions.push({ 'recipients.areas.areaName': req.user.area });
+      if (identity.area) {
+        areaConditions.push({ 'recipients.areas.areaName': identity.area });
       }
-      
-      query = {
-        $or: [
-          ...areaConditions,
-          { 'senderName': req.user.area }
-        ]
-      };
+
+      // District matching (for notifications sent to the district that includes this area)
+      if (req.user.districtId && mongoose.Types.ObjectId.isValid(req.user.districtId)) {
+        districtConditions.push({ 'recipients.district.districtId': new mongoose.Types.ObjectId(req.user.districtId) });
+      }
+      if (identity.district) {
+        districtConditions.push({ 'recipients.district.districtName': identity.district });
+      }
+
+      recipientConditions = [...areaConditions, ...districtConditions];
+      senderCondition = sentByMe('area', identity.area);
     } else if (userRole === 'unit') {
-      // Unit admins see notifications sent to their unit OR sent by them
+      // Unit admins see notifications sent to their unit, their parent area, their parent district
       const unitConditions = [];
-      
+      const areaConditions = [];
+      const districtConditions = [];
+
       // If we have unitId (ObjectId), use it
       if (req.user.unitId && mongoose.Types.ObjectId.isValid(req.user.unitId)) {
         unitConditions.push({ 'recipients.units.unitId': new mongoose.Types.ObjectId(req.user.unitId) });
       }
       // Always check by name (string)
-      if (req.user.unit) {
-        unitConditions.push({ 'recipients.units.unitName': req.user.unit });
+      if (identity.unit) {
+        unitConditions.push({ 'recipients.units.unitName': identity.unit });
       }
-      
-      query = {
-        $or: [
-          ...unitConditions,
-          { 'senderName': req.user.unit }
-        ]
-      };
+
+      // Area matching (for notifications sent to the area that includes this unit)
+      if (req.user.areaId && mongoose.Types.ObjectId.isValid(req.user.areaId)) {
+        areaConditions.push({ 'recipients.areas.areaId': new mongoose.Types.ObjectId(req.user.areaId) });
+      }
+      if (identity.area) {
+        areaConditions.push({ 'recipients.areas.areaName': identity.area });
+      }
+
+      // District matching (for notifications sent to the district that includes this unit)
+      if (req.user.districtId && mongoose.Types.ObjectId.isValid(req.user.districtId)) {
+        districtConditions.push({ 'recipients.district.districtId': new mongoose.Types.ObjectId(req.user.districtId) });
+      }
+      if (identity.district) {
+        districtConditions.push({ 'recipients.district.districtName': identity.district });
+      }
+
+      recipientConditions = [...unitConditions, ...areaConditions, ...districtConditions];
+      senderCondition = null; // unit admins cannot create notifications
     } else if (userRole === 'admin' || userRole === 'superadmin') {
-      // Admin and superadmin see notifications they sent
-      query = {
+      // Admin and superadmin only ever see notifications they sent
+      recipientConditions = [];
+      senderCondition = {
         $or: [
           { 'senderRole': 'admin' },
           { 'senderRole': 'superadmin' },
@@ -239,6 +289,18 @@ router.get('/my-notifications', unifiedAuth, async (req, res) => {
           { 'senderName': 'Admin' }
         ]
       };
+    }
+
+    let query;
+    if (filter === 'sent') {
+      query = senderCondition || { _id: null };
+    } else if (filter === 'received') {
+      query = recipientConditions.length > 0 ? { $or: recipientConditions } : { _id: null };
+    } else {
+      // Backward-compatible combined view (received + sent together)
+      const combined = [...recipientConditions];
+      if (senderCondition) combined.push(senderCondition);
+      query = combined.length > 0 ? { $or: combined } : { _id: null };
     }
 
     const notifications = await Notification.find(query)
@@ -253,15 +315,15 @@ router.get('/my-notifications', unifiedAuth, async (req, res) => {
       notifications: notifications,
       pagination: {
         currentPage: parseInt(page),
-        totalPages: Math.ceil(totalCount / limit),
+        totalPages: Math.max(1, Math.ceil(totalCount / limit)),
         totalCount
       }
     });
 
   } catch (error) {
     console.error('Error fetching notifications:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to fetch notifications'
     });
   }
@@ -389,6 +451,69 @@ router.post('/:id/read', unifiedAuth, async (req, res) => {
   }
 });
 
+// PUT /api/notifications/:id - Edit notification
+router.put('/:id', unifiedAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, recipients } = req.body;
+
+    if (!title || !description || !recipients) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title, description, and recipients are required'
+      });
+    }
+
+    const notification = await Notification.findById(id);
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: 'Notification not found'
+      });
+    }
+
+    // Check if user can edit this notification (only sender can edit)
+    const userRole = req.user.role;
+    const { district: userDistrict, area: userArea } = identityOf(req.user);
+    const ownId = senderObjectId(req.user);
+    const isOwnSend = ownId && notification.sender && notification.sender.equals(ownId);
+
+    let canEdit = false;
+    if (userRole === 'admin' || userRole === 'superadmin') {
+      canEdit = true; // Admin and superadmin can edit any notification
+    } else if (userRole === 'district' && (isOwnSend || notification.senderName === userDistrict)) {
+      canEdit = true;
+    } else if (userRole === 'area' && (isOwnSend || notification.senderName === userArea)) {
+      canEdit = true;
+    }
+
+    if (!canEdit) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only edit notifications you sent'
+      });
+    }
+
+    notification.title = title;
+    notification.description = description;
+    notification.recipients = recipients;
+    await notification.save();
+
+    res.json({
+      success: true,
+      message: 'Notification updated successfully',
+      notification
+    });
+
+  } catch (error) {
+    console.error('Error updating notification:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update notification'
+    });
+  }
+});
+
 // DELETE /api/notifications/:id - Delete notification
 router.delete('/:id', unifiedAuth, async (req, res) => {
   try {
@@ -405,16 +530,16 @@ router.delete('/:id', unifiedAuth, async (req, res) => {
 
     // Check if user can delete this notification (only sender can delete)
     const userRole = req.user.role;
-    const userDistrict = req.user.district;
-    const userArea = req.user.area;
-    const userUnit = req.user.unit;
+    const { district: userDistrict, area: userArea } = identityOf(req.user);
+    const ownId = senderObjectId(req.user);
+    const isOwnSend = ownId && notification.sender && notification.sender.equals(ownId);
 
     let canDelete = false;
     if (userRole === 'admin' || userRole === 'superadmin') {
       canDelete = true; // Admin and superadmin can delete any notification
-    } else if (userRole === 'district' && notification.senderName === userDistrict) {
+    } else if (userRole === 'district' && (isOwnSend || notification.senderName === userDistrict)) {
       canDelete = true;
-    } else if (userRole === 'area' && notification.senderName === userArea) {
+    } else if (userRole === 'area' && (isOwnSend || notification.senderName === userArea)) {
       canDelete = true;
     }
 
@@ -446,9 +571,7 @@ router.delete('/:id', unifiedAuth, async (req, res) => {
 router.get('/unread-count', unifiedAuth, async (req, res) => {
   try {
     const userRole = req.user.role;
-    const userDistrict = req.user.district;
-    const userArea = req.user.area;
-    const userUnit = req.user.unit;
+    const { district: userDistrict, area: userArea, unit: userUnit } = identityOf(req.user);
     const userDistrictId = req.user.districtId;
     const userAreaId = req.user.areaId;
     const userUnitId = req.user.unitId;
@@ -469,12 +592,7 @@ router.get('/unread-count', unifiedAuth, async (req, res) => {
         districtConditions.push({ 'recipients.district.districtName': userDistrict });
       }
       
-      query = {
-        $or: [
-          ...districtConditions,
-          { senderName: userDistrict } // notifications sent by this district admin
-        ]
-      };
+      query = districtConditions.length > 0 ? { $or: districtConditions } : { _id: null };
     } else if (userRole === 'area') {
       // Build query with both ID and name matching
       const areaConditions = [];
@@ -496,13 +614,8 @@ router.get('/unread-count', unifiedAuth, async (req, res) => {
         districtConditions.push({ 'recipients.district.districtName': userDistrict });
       }
       
-      query = {
-        $or: [
-          ...areaConditions,
-          ...districtConditions,
-          { senderName: userArea } // notifications sent by this area admin
-        ]
-      };
+      const areaCombined = [...areaConditions, ...districtConditions];
+      query = areaCombined.length > 0 ? { $or: areaCombined } : { _id: null };
     } else if (userRole === 'unit') {
       // Build query with both ID and name matching
       const unitConditions = [];

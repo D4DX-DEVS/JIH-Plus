@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Plus, Calendar, AlertCircle, Menu } from 'lucide-react';
+import { Bell, Plus, Calendar, AlertCircle, Menu, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import CreateNotificationModal from '../components/modals/CreateNotificationModal';
+import NotificationDetailModal from '../components/modals/NotificationDetailModal';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
@@ -11,11 +12,15 @@ import axios from 'axios';
 
 const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLogout }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('received');
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingNotification, setEditingNotification] = useState(null);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalCount: 0 });
+  const PAGE_SIZE = 10;
   const [unreadCount, setUnreadCount] = useState(0);
   const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
   const [areaSidebarOpen, setAreaSidebarOpen] = useState(false);
@@ -57,19 +62,14 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
 
   const userData = propUserData || loadedUserData;
   const userRole = userData?.role;
-  const userDistrict = userData?.district;
-  const userArea = userData?.area;
 
-  // Initialize activeTab based on user role
-  useEffect(() => {
-    if (!userRole) return;
-    
-    if (userRole === 'unit') {
-      setActiveTab('received');
-    } else if (userRole === 'admin' || userRole === 'superadmin') {
-      setActiveTab('sent');
-    }
-  }, [userRole]);
+  // Default tab depends on role — admins only ever have a "sent" view, units
+  // only a "received" view. Computed synchronously so the very first fetch
+  // uses the right filter (avoids a wrong-then-right race on mount).
+  const [activeTab, setActiveTab] = useState(() => {
+    if (userRole === 'admin' || userRole === 'superadmin') return 'sent';
+    return 'received';
+  });
 
   // Fetch notifications
   const fetchNotifications = async () => {
@@ -94,40 +94,16 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       }
       
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/notifications/my-notifications?page=1&limit=50`,
-        { 
+        `${import.meta.env.VITE_API_URL}/api/notifications/my-notifications`,
+        {
+          params: { page, limit: PAGE_SIZE, filter: activeTab === 'sent' ? 'sent' : 'received' },
           headers: { Authorization: `Bearer ${token}` },
           timeout: 5000
         }
       );
 
-      let filteredNotifications = response.data.notifications || [];
-
-      // Filter by sent/received based on active tab
-      if (activeTab === 'sent') {
-        if (userRole === 'admin' || userRole === 'superadmin') {
-          filteredNotifications = filteredNotifications.filter(n => 
-            n.senderName === 'Super Admin' || 
-            n.senderName === 'Admin' || 
-            n.senderRole === 'admin' || 
-            n.senderRole === 'superadmin'
-          );
-        } else {
-          filteredNotifications = filteredNotifications.filter(n => 
-            n.senderName === userDistrict || n.senderName === userArea
-          );
-        }
-      } else {
-        if (userRole === 'admin' || userRole === 'superadmin') {
-          filteredNotifications = [];
-        } else {
-          filteredNotifications = filteredNotifications.filter(n => 
-            n.senderName !== userDistrict && n.senderName !== userArea
-          );
-        }
-      }
-      
-      setNotifications(filteredNotifications);
+      setNotifications(response.data.notifications || []);
+      setPagination(response.data.pagination || { currentPage: 1, totalPages: 1, totalCount: 0 });
       setLoading(false);
       setError('');
     } catch (error) {
@@ -184,7 +160,12 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
     }
   };
 
-  // Fetch data when activeTab or userRole changes
+  // Reset to page 1 whenever the tab changes (each tab paginates independently)
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab]);
+
+  // Fetch data when activeTab, userRole, or page changes
   useEffect(() => {
     if (!userRole) {
       setLoading(false);
@@ -194,15 +175,15 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
     const token = (userRole === 'admin' || userRole === 'superadmin')
       ? localStorage.getItem('adminToken')
       : localStorage.getItem('userToken');
-    
+
     if (!token) {
       setLoading(false);
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     Promise.all([
       fetchNotifications(),
       fetchUnreadCount()
@@ -211,7 +192,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       setError('Failed to load notifications. Please try again.');
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, userRole]);
+  }, [activeTab, userRole, page]);
 
   // Load adminData on mount
   useEffect(() => {
@@ -635,7 +616,28 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
 
   const handleNotificationCreated = () => {
     setShowCreateModal(false);
+    setEditingNotification(null);
     fetchNotifications();
+  };
+
+  const openCreateModal = () => {
+    setEditingNotification(null);
+    setShowCreateModal((prev) => !prev);
+  };
+
+  const openEditModal = (notification) => {
+    setEditingNotification(notification);
+    setShowCreateModal(true);
+  };
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setEditingNotification(null);
+  };
+
+  const goToPage = (newPage) => {
+    if (newPage < 1 || newPage > (pagination.totalPages || 1)) return;
+    setPage(newPage);
   };
 
   const showReceivedTab = userData?.role !== 'admin' && userData?.role !== 'superadmin';
@@ -715,7 +717,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
           )}
           {(userData?.role === 'admin' || userData?.role === 'superadmin' || userData?.role === 'district' || userData?.role === 'area') && (
             <button
-              onClick={() => setShowCreateModal((prev) => !prev)}
+              onClick={openCreateModal}
               className="inline-flex items-center gap-2 rounded-xl bg-[#002349] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1a3a5c]"
             >
               <Plus className="w-4 h-4" />
@@ -728,8 +730,9 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       {showCreateModal ? (
         <CreateNotificationModal
           isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
+          onClose={closeCreateModal}
           userData={userData}
+          notification={editingNotification}
           onNotificationCreated={handleNotificationCreated}
         />
       ) : (
@@ -788,7 +791,8 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
               notifications.map((notification) => (
                 <div
                   key={notification._id}
-                  className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm transition hover:shadow-md"
+                  onClick={() => setSelectedNotification(notification)}
+                  className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm transition hover:shadow-md cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
@@ -800,10 +804,10 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
                           <p className="text-sm font-semibold text-[#002349]">{notification.title}</p>
                           {!notification.hasRead && <span className="rounded-full bg-[#957C3D]/10 px-2 py-0.5 text-[10px] font-semibold text-[#957C3D]">New</span>}
                         </div>
-                        <p className="text-sm text-gray-600">{notification.description}</p>
+                        <p className="text-sm text-gray-600 line-clamp-2">{notification.description}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 flex-shrink-0">
                       <Calendar className="h-3.5 w-3.5" />
                       {formatDate(notification.createdAt)}
                     </div>
@@ -816,16 +820,25 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
                     )}
                     <div className="flex items-center gap-2">
                       {activeTab === 'sent' && (
-                        <button
-                          onClick={() => deleteNotification(notification._id)}
-                          className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                        <>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openEditModal(notification); }}
+                            className="inline-flex items-center gap-1 rounded-md border border-[#002349]/30 px-2 py-1 text-xs font-semibold text-[#002349] hover:bg-[#002349]/5"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteNotification(notification._id); }}
+                            className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
+                        </>
                       )}
                       {activeTab === 'received' && !notification.hasRead && (
                         <button
-                          onClick={() => markAsRead(notification._id)}
+                          onClick={(e) => { e.stopPropagation(); markAsRead(notification._id); }}
                           className="rounded-md border border-[#002349] px-2 py-1 text-xs font-semibold text-[#002349] hover:bg-[#002349]/5"
                         >
                           Mark as read
@@ -837,8 +850,40 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
               ))
             )}
           </div>
+
+          {!loading && !error && notifications.length > 0 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-gray-500">
+                Page {pagination.currentPage} of {pagination.totalPages} · {pagination.totalCount} total
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => goToPage(page - 1)}
+                  disabled={pagination.currentPage <= 1}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  Previous
+                </button>
+                <button
+                  onClick={() => goToPage(page + 1)}
+                  disabled={pagination.currentPage >= pagination.totalPages}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Next
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
+
+      <NotificationDetailModal
+        isOpen={Boolean(selectedNotification)}
+        onClose={() => setSelectedNotification(null)}
+        notification={selectedNotification}
+      />
 
       <ConfirmationModal
         isOpen={showLogoutModal}

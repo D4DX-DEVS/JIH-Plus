@@ -152,6 +152,23 @@ router.get('/hierarchy/districts', async (req, res) => {
   }
 });
 
+// Get all districts straight from the local DB (the location-master
+// collection that district/area/unit accounts actually log in against, and
+// whose _ids are what end up in JWTs). Callers that need recipient ids to
+// line up with a logged-in user's identity (e.g. notification recipients)
+// should use this instead of the external-hierarchy-backed /hierarchy/districts.
+router.get('/hierarchy/districts-db', async (req, res) => {
+  try {
+    const districts = await District.find({ isActive: true })
+      .select('_id name uniqueCode')
+      .sort({ name: 1 })
+      .lean();
+    res.json({ success: true, data: districts });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message || 'Failed to load districts' });
+  }
+});
+
 // Get areas for a districtId
 router.get('/hierarchy/areas/:districtId', async (req, res) => {
   try {
@@ -183,11 +200,23 @@ router.get('/hierarchy/areas-db/:districtId', async (req, res) => {
 router.get('/hierarchy/units/:areaId', async (req, res) => {
   try {
     const { areaId } = req.params;
-    const units = await UnitMaster.find({ areaId, isActive: true })
+    const localUnits = await UnitMaster.find({ areaId, isActive: true })
       .select('_id name uniqueCode areaId districtId')
       .sort({ name: 1 })
       .lean();
-    res.json({ success: true, data: units });
+
+    if (localUnits.length > 0) {
+      return res.json({ success: true, data: localUnits });
+    }
+
+    // areaId didn't match a local AreaMaster _id (most callers pass the
+    // external hierarchy area id) — fall back to the external units API.
+    try {
+      const externalUnits = await fetchUnitData(areaId);
+      return res.json({ success: true, data: externalUnits });
+    } catch (externalError) {
+      return res.json({ success: true, data: [] });
+    }
   } catch (e) {
     res.status(500).json({ success: false, message: e.message || 'Failed to load units' });
   }
