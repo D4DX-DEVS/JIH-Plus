@@ -825,7 +825,7 @@ function ReportBuilderView({ reportId, onLogout }) {
                 <X size={18} />
               </button>
             </div>
-            <ConfigContent />
+            {ConfigContent()}
           </div>
         )}
 
@@ -834,7 +834,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           <div className="px-4 pt-4 pb-2 border-b">
             <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400">Configuration</h2>
           </div>
-          <ConfigContent />
+          {ConfigContent()}
         </aside>
 
         {/* Right: canvas */}
