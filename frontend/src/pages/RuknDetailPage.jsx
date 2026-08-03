@@ -736,10 +736,10 @@ const RuknDetailPage = () => {
   return (
     <>
       {/* Screen-Only Display */}
-      <div className="screen-only min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-x-hidden">
+      <div className="screen-only h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
         {sidebarElement}
 
-        <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile menu toggle */}
         <div className="lg:hidden px-4 pt-4">
           <button
@@ -751,9 +751,9 @@ const RuknDetailPage = () => {
           </button>
         </div>
 
-        <div className="min-h-screen bg-gray-50">
+        <div className="flex-1 overflow-y-auto bg-gray-50">
           {/* Form Content */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6">
             {/* Header with Back, Heading and Print Button */}
             <div className="mb-6 flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">

@@ -687,10 +687,10 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-x-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       {sidebarElement}
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile toggle */}
         <div className="lg:hidden px-4 pt-4">
           <button
@@ -702,7 +702,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
           {/* Header with Close Button on same horizontal level */}
           <div className="mb-6 flex items-start justify-between">
             <h1 className="text-4xl font-bold text-[#002349]">

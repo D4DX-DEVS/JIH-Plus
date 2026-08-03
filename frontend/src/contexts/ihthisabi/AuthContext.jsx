@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react'
+import React, { createContext, useContext, useReducer, useEffect, useState } from 'react'
 import { api } from '../../utils/ihthisabi/api'
 import toast from 'react-hot-toast'
 
@@ -64,6 +64,11 @@ const authReducer = (state, action) => {
 
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState)
+  // True only while the one-time stored-token check on app boot is running.
+  // Kept separate from state.loading, which also toggles on every login()
+  // call — routing must not unmount the login page mid-request just
+  // because a login attempt is in flight.
+  const [initializing, setInitializing] = useState(true)
 
   // Set initial auth token in API headers immediately
   useEffect(() => {
@@ -239,7 +244,7 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    checkAuth()
+    checkAuth().finally(() => setInitializing(false))
   }, [])
 
   const login = async (credentials) => {
@@ -255,9 +260,11 @@ export const AuthProvider = ({ children }) => {
           password: credentials.password
         })
       } else if (credentials.role === 'unified') {
-        // Unified login - auto-detects if user is unit admin or member
+        // Unified login - auto-detects roles; selectedRole completes a
+        // multi-role login after the user picks a role
         response = await api.post('/auth/unified-login', {
-          ruknId: credentials.ruknId
+          ruknId: credentials.ruknId,
+          ...(credentials.selectedRole ? { role: credentials.selectedRole } : {})
         })
       } else if (credentials.role === 'unitAdmin') {
         // Unit admin login via unitAdmin route
@@ -278,6 +285,19 @@ export const AuthProvider = ({ children }) => {
         })
       }
       
+      // Multi-role account and no role chosen yet: hand the choice back to
+      // the caller (LoginPage renders the role picker) without authenticating
+      if (response.data.data?.requiresRoleSelection) {
+        dispatch({ type: 'AUTH_FAILURE', payload: null })
+        return {
+          success: true,
+          requiresRoleSelection: true,
+          ruknId: response.data.data.ruknId,
+          name: response.data.data.name,
+          availableRoles: response.data.data.availableRoles || []
+        }
+      }
+
       const { user, token } = response.data.data
 
       // Set token header immediately so the next call can use it
@@ -331,6 +351,29 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Switch to another role held by the same RUKN ID (multi-role users)
+  const switchRole = async (role) => {
+    try {
+      const response = await api.post('/auth/switch-role', { role })
+      const { user, token } = response.data.data
+
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      localStorage.setItem('token', token)
+
+      dispatch({
+        type: 'AUTH_SUCCESS',
+        payload: { user, token }
+      })
+
+      toast.success(`Switched to ${user.role === 'districtAdmin' ? 'District Admin' : user.role === 'unitAdmin' ? 'Unit Admin' : 'Member'}`)
+      return { success: true, user }
+    } catch (error) {
+      const message = error.response?.data?.message || 'Role switch failed'
+      toast.error(message)
+      return { success: false, error: message }
+    }
+  }
+
   const logout = () => {
     // Clear token from localStorage immediately
     localStorage.removeItem('token')
@@ -375,9 +418,11 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     ...state,
+    initializing,
     login,
     register,
     logout,
+    switchRole,
     updateProfile,
     changePassword,
     clearError

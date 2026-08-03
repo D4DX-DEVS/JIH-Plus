@@ -436,7 +436,7 @@ const DistrictSurveyPage = () => {
 
   if (isAdmin) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-x-hidden">
+      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
         <AdminSidebar
           activeTab="monthly"
           onTabChange={handleSidebarNavigate}
@@ -456,7 +456,7 @@ const DistrictSurveyPage = () => {
           onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
         />
 
-        <div className="flex-1 relative z-10 box-border">
+        <div className="flex-1 relative z-10 box-border flex flex-col min-w-0 overflow-hidden">
           <div className="lg:hidden px-4 pt-4">
             <button
               onClick={() => setIsSidebarOpen(true)}
@@ -466,7 +466,7 @@ const DistrictSurveyPage = () => {
               <span>Menu</span>
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto pb-24 lg:pb-0">
             {formContent}
           </div>
         </div>

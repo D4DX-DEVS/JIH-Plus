@@ -1216,10 +1216,34 @@ router.get('/consolidation/dynamic', async (req, res) => {
       ...(unit ? { unit } : {})
     });
 
+    // Values may be stored as strings (form inputs) or numbers; coerce safely
+    const toNumber = (path, fallback = 0) => ({
+      $convert: { input: path, to: 'double', onError: fallback, onNull: fallback }
+    });
+
+    // Data-entry garbage exists in real submissions (phone numbers typed into
+    // count fields, negatives). Consolidate only values inside the question's
+    // min/max bounds, defaulting to [0, SANE_MAX] when the form defines none,
+    // and report how many answers were ignored as invalid.
+    const SANE_MAX = 100000;
+    const boundsFor = (def) => ({
+      lo: typeof def?.min === 'number' ? def.min : 0,
+      hi: typeof def?.max === 'number' ? def.max : SANE_MAX
+    });
+    // $let over the converted value: null => not answered, out of bounds => invalid
+    const boundedAcc = (path, lo, hi) => {
+      const vn = toNumber(path, null);
+      const isValid = { $and: [{ $ne: ['$$vn', null] }, { $gte: ['$$vn', lo] }, { $lte: ['$$vn', hi] }] };
+      return {
+        value: { $let: { vars: { vn }, in: { $cond: [isValid, '$$vn', null] } } },
+        invalid: { $let: { vars: { vn }, in: { $cond: [{ $and: [{ $ne: ['$$vn', null] }, { $not: isValid }] }, 1, 0] } } }
+      };
+    };
+
     const breakdowns = {};
     for (const question of appForm.questions) {
       const qId = question.questionId;
-      if (['radio', 'dropdown', 'checkbox', 'star'].includes(question.answerType)) {
+      if (['radio', 'dropdown', 'star'].includes(question.answerType)) {
         const pipeline = [
           { $match: baseMatch },
           { $group: {
@@ -1231,25 +1255,58 @@ router.get('/consolidation/dynamic', async (req, res) => {
         const results = await Submission.aggregate(pipeline);
         breakdowns[qId] = {};
         results.forEach(r => { breakdowns[qId][r.value] = r.count; });
-      } else if (question.answerType === 'number') {
+      } else if (question.answerType === 'checkbox') {
+        // Checkbox answers are arrays of selected option values — unwind so each
+        // selected option is counted separately (not per unique combination)
         const pipeline = [
           { $match: baseMatch },
+          { $project: {
+            v: {
+              $cond: [
+                { $isArray: `$dynamicFormData.${qId}` },
+                `$dynamicFormData.${qId}`,
+                [`$dynamicFormData.${qId}`]
+              ]
+            }
+          }},
+          { $unwind: '$v' },
+          { $match: { v: { $nin: [null, ''] } } },
+          { $group: { _id: '$v', count: { $sum: 1 } } },
+          { $project: { _id: 0, value: { $convert: { input: '$_id', to: 'string', onError: 'other', onNull: 'notSet' } }, count: 1 } }
+        ];
+        const results = await Submission.aggregate(pipeline);
+        breakdowns[qId] = {};
+        results.forEach(r => { breakdowns[qId][r.value] = r.count; });
+      } else if (question.answerType === 'number') {
+        const { lo, hi } = boundsFor(question);
+        const acc = boundedAcc(`$dynamicFormData.${qId}`, lo, hi);
+        const pipeline = [
+          { $match: baseMatch },
+          { $project: { v: acc.value, invalid: acc.invalid } },
           { $group: {
             _id: null,
-            sum: { $sum: { $ifNull: [`$dynamicFormData.${qId}`, 0] } },
-            avg: { $avg: { $ifNull: [`$dynamicFormData.${qId}`, 0] } },
-            min: { $min: `$dynamicFormData.${qId}` },
-            max: { $max: `$dynamicFormData.${qId}` }
+            sum: { $sum: { $ifNull: ['$v', 0] } },
+            // $avg/$min/$max ignore nulls, so unanswered/invalid entries drop out
+            avg: { $avg: '$v' },
+            min: { $min: '$v' },
+            max: { $max: '$v' },
+            invalid: { $sum: '$invalid' }
           }},
           { $project: { _id: 0 } }
         ];
         const results = await Submission.aggregate(pipeline);
-        breakdowns[qId] = results[0] || { sum: 0, avg: 0, min: 0, max: 0 };
+        breakdowns[qId] = results[0] || { sum: 0, avg: 0, min: 0, max: 0, invalid: 0 };
       } else if (question.answerType === 'group') {
         const groupAcc = {};
         if (question.subFields) {
           question.subFields.forEach(sf => {
-            groupAcc[sf.fieldId + '_sum'] = { $sum: { $ifNull: [`$dynamicFormData.${qId}.${sf.fieldId}`, 0] } };
+            // Only numeric sub-fields are summable
+            if (sf.type !== 'text') {
+              const { lo, hi } = boundsFor(sf);
+              const acc = boundedAcc(`$dynamicFormData.${qId}.${sf.fieldId}`, lo, hi);
+              groupAcc[sf.fieldId + '_sum'] = { $sum: { $ifNull: [acc.value, 0] } };
+              groupAcc[sf.fieldId + '_invalid'] = { $sum: acc.invalid };
+            }
           });
         }
         if (Object.keys(groupAcc).length > 0) {
@@ -1275,6 +1332,102 @@ router.get('/consolidation/dynamic', async (req, res) => {
     });
   } catch (error) {
     console.error('Dynamic consolidation error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Top submissions for a number question (who reported the highest values)
+// @route   GET /api/admin/consolidation/dynamic/top
+// @access  Private (Admin only)
+router.get('/consolidation/dynamic/top', async (req, res) => {
+  try {
+    const { quarter, year, questionId, district, area, unit, limit } = req.query;
+
+    if (!quarter || !year || !questionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Quarter, year and questionId are required'
+      });
+    }
+
+    const appForm = await ApplicationForm.findOne({
+      quarter: Number(quarter),
+      year: Number(year),
+      status: 'published'
+    });
+
+    if (!appForm) {
+      return res.status(404).json({
+        success: false,
+        message: 'No published dynamic form found for this quarter'
+      });
+    }
+
+    const question = appForm.questions.find(q => q.questionId === questionId);
+    if (!question || question.answerType !== 'number') {
+      return res.status(400).json({
+        success: false,
+        message: 'Question not found or is not a number question'
+      });
+    }
+
+    const baseMatch = {
+      'submissionPeriod.quarter': Number(quarter),
+      'submissionPeriod.year': Number(year),
+      dynamicFormData: { $ne: null }
+    };
+    if (district) baseMatch.district = district;
+    if (area) baseMatch.area = area;
+    if (unit) baseMatch.unit = unit;
+
+    // Same validity bounds as the consolidation aggregation, so garbage
+    // entries (phone numbers, negatives) never appear as "highest"
+    const SANE_MAX = 100000;
+    const lo = typeof question.min === 'number' ? question.min : 0;
+    const hi = typeof question.max === 'number' ? question.max : SANE_MAX;
+    const vn = { $convert: { input: `$dynamicFormData.${questionId}`, to: 'double', onError: null, onNull: null } };
+
+    const topLimit = Math.min(Number(limit) || 5, 20);
+
+    const rows = await Submission.aggregate([
+      { $match: baseMatch },
+      { $project: {
+        ruknId: 1,
+        ruknName: 1,
+        district: 1,
+        area: 1,
+        unit: 1,
+        value: {
+          $let: {
+            vars: { vn },
+            in: {
+              $cond: [
+                { $and: [{ $ne: ['$$vn', null] }, { $gte: ['$$vn', lo] }, { $lte: ['$$vn', hi] }] },
+                '$$vn',
+                null
+              ]
+            }
+          }
+        }
+      }},
+      { $match: { value: { $ne: null } } },
+      { $sort: { value: -1 } },
+      { $limit: topLimit }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        question: {
+          questionId: question.questionId,
+          questionText: question.questionText,
+          questionTextMl: question.questionTextMl
+        },
+        top: rows
+      }
+    });
+  } catch (error) {
+    console.error('Dynamic consolidation top error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 });

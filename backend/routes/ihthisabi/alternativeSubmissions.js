@@ -8,6 +8,7 @@ const {
   validateSubmissionQuarter
 } = require('../../utils/quarterHelper');
 const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
+const { buildOwnerMatch } = require('../../utils/submissionOwnerMatch');
 
 const router = express.Router();
 
@@ -71,13 +72,16 @@ router.post('/', protect, authorize('rukn', 'unitAdmin'), validate(schemas.alter
 
     // Get userId - unitAdmin uses req.user.userId, rukn uses req.user._id
     const userId = req.user.userId || req.user._id;
+    const ruknId = req.user.ruknId;
+    const ownerMatch = buildOwnerMatch(ruknId, userId);
 
     // Normalize reason: convert empty strings to undefined
     const normalizedReason = reason && reason.trim() ? reason.trim() : undefined;
 
     // CRITICAL: Check if user has already submitted regular submission for this quarter
+    // under ANY of their roles (rukn / unitAdmin / districtAdmin)
     const existingRegularSubmission = await Submission.findOne({
-      userId: userId,
+      ...ownerMatch,
       'submissionPeriod.year': submissionYear,
       'submissionPeriod.quarter': submissionQuarter
     });
@@ -91,7 +95,7 @@ router.post('/', protect, authorize('rukn', 'unitAdmin'), validate(schemas.alter
 
     // Check if user has already submitted alternative submission for this quarter
     const existingAlternativeSubmission = await AlternativeSubmit.findOne({
-      userId: userId,
+      ...ownerMatch,
       'submissionPeriod.year': submissionYear,
       'submissionPeriod.quarter': submissionQuarter
     });
@@ -106,6 +110,7 @@ router.post('/', protect, authorize('rukn', 'unitAdmin'), validate(schemas.alter
     // Create alternative submission
     const alternativeSubmission = await AlternativeSubmit.create({
       userId: userId,
+      ruknId,
       type,
       district,
       area,
@@ -164,8 +169,9 @@ router.get('/my-submissions', protect, authorize('rukn', 'unitAdmin'), validateQ
     // Get userId - unitAdmin uses req.user.userId, rukn uses req.user._id
     const userId = req.user.userId || req.user._id;
 
-    // Build query
-    const query = { userId: userId };
+    // Build query. Match by ruknId so an alt-submission made under another
+    // role shows up here too.
+    const query = buildOwnerMatch(req.user.ruknId, userId);
 
     if (year) {
       query['submissionPeriod.year'] = parseInt(year);

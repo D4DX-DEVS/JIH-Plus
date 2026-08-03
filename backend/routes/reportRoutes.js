@@ -279,7 +279,7 @@ router.get('/admin/reports/for-consolidation', adminAuth, async (req, res) => {
     if (year) query.year = Number(year);
 
     const reports = await Report.find(query)
-      .select('_id title titleBase type reportFor month year scheduledFor isPublished')
+      .select('_id title titleBase type reportFor month quarter year scheduledFor isPublished')
       .sort({ year: -1, month: -1, createdAt: -1 })
       .lean();
 
@@ -290,100 +290,185 @@ router.get('/admin/reports/for-consolidation', adminAuth, async (req, res) => {
   }
 });
 
-// @desc    Get consolidation data for a specific report
+// ─── Consolidation (answer aggregation) helpers ──────────────────────────────
+
+const CHOICE_TYPES = ['radio', 'select', 'dropdown', 'yesno'];
+const MULTI_TYPES = ['checkbox', 'multiselect'];
+// Layout-only field types that carry no answer data
+const LAYOUT_TYPES = ['title', 'html', 'page', 'group', 'column'];
+
+const isEmptyAnswer = (v) =>
+  v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
+
+// Mirrors frontend utils/rowColumnTable.js: a cell is summable only when its
+// row is an input row AND its column is an input Number column. Legacy row
+// fields with no meta default to text-input cells, so they produce no sums.
+function rowCellSums(field, values) {
+  const rows = field.rowTitles || [];
+  const cols = field.columnTitles || [];
+  const colMeta = cols.map((_, ci) => {
+    const m = (field.columnMeta || [])[ci] || {};
+    return {
+      kind: m.kind === 'static' ? 'static' : 'input',
+      inputType: m.inputType === 'number' ? 'number' : 'text'
+    };
+  });
+  const rowMeta = rows.map((_, ri) => {
+    const m = (field.rowMeta || [])[ri] || {};
+    return { kind: m.kind === 'static' ? 'static' : 'input' };
+  });
+  return rows.map((_, ri) => cols.map((_, ci) => {
+    const summable = rowMeta[ri].kind === 'input'
+      && colMeta[ci].kind === 'input'
+      && colMeta[ci].inputType === 'number';
+    if (!summable) return null;
+    let sum = 0;
+    values.forEach(v => {
+      const n = parseFloat(v?.[ri]?.[ci]);
+      if (Number.isFinite(n)) sum += n;
+    });
+    return sum;
+  }));
+}
+
+// Build the consolidated breakdown for one form field across all submissions
+function consolidateField(field, submissions) {
+  const key = `field_${field.id}`;
+  const values = submissions.map(s => (s.formData ? s.formData[key] : undefined));
+  const total = submissions.length;
+  const base = {
+    id: field.id,
+    label: field.label,
+    type: field.type,
+    helpText: field.helpText || ''
+  };
+
+  if (CHOICE_TYPES.includes(field.type)) {
+    const options = field.type === 'yesno' ? ['Yes', 'No'] : (field.options || []);
+    const counts = {};
+    options.forEach(o => { counts[o] = 0; });
+    let notAnswered = 0;
+    values.forEach(v => {
+      if (isEmptyAnswer(v)) { notAnswered++; return; }
+      const k = String(v);
+      counts[k] = (counts[k] || 0) + 1;
+    });
+    return { ...base, kind: 'choice', options: Object.keys(counts), counts, notAnswered };
+  }
+
+  if (MULTI_TYPES.includes(field.type)) {
+    const counts = {};
+    (field.options || []).forEach(o => { counts[o] = 0; });
+    let notAnswered = 0;
+    values.forEach(v => {
+      if (isEmptyAnswer(v)) { notAnswered++; return; }
+      const arr = Array.isArray(v) ? v : [v];
+      arr.forEach(o => {
+        const k = String(o);
+        counts[k] = (counts[k] || 0) + 1;
+      });
+    });
+    return { ...base, kind: 'multi', options: Object.keys(counts), counts, notAnswered };
+  }
+
+  if (field.type === 'number') {
+    let sum = 0, count = 0, min = null, max = null;
+    values.forEach(v => {
+      if (isEmptyAnswer(v)) return;
+      const n = parseFloat(v);
+      if (!Number.isFinite(n)) return;
+      sum += n;
+      count++;
+      min = min === null ? n : Math.min(min, n);
+      max = max === null ? n : Math.max(max, n);
+    });
+    return {
+      ...base, kind: 'number',
+      sum, count, min, max,
+      avg: count > 0 ? sum / count : 0,
+      notAnswered: total - count
+    };
+  }
+
+  if (field.type === 'row') {
+    return {
+      ...base, kind: 'table',
+      rowTitles: field.rowTitles || [],
+      columnTitles: field.columnTitles || [],
+      firstColumnHeader: field.firstColumnHeader || '',
+      cellSums: rowCellSums(field, values)
+    };
+  }
+
+  // text, textarea, date, file, etc. — not aggregatable, just report coverage
+  const answered = values.filter(v => !isEmptyAnswer(v)).length;
+  return { ...base, kind: 'text', answered, notAnswered: total - answered };
+}
+
+// @desc    Consolidated answer breakdown for a specific report
 // @route   GET /api/admin/reports/consolidation
 // @access  Private (Admin only)
 router.get('/admin/reports/consolidation', adminAuth, async (req, res) => {
   try {
-    const { reportId, districtId, areaId } = req.query;
+    const { reportId, districtId, areaId, unitId } = req.query;
 
     if (!reportId) {
       return res.status(400).json({ success: false, message: 'reportId is required' });
     }
 
-    const report = await Report.findById(reportId)
-      .select('reportFor title type month year')
-      .lean();
+    const report = await Report.findById(reportId).lean();
     if (!report) {
       return res.status(404).json({ success: false, message: 'Report not found' });
     }
 
     const { reportFor } = report;
 
-    // Fetch all active locations of the relevant type
+    // Resolve the submitter universe (location docs ARE the submitters),
+    // scoped by the optional district/area/unit filters
     let locations = [];
     if (reportFor === 'district') {
-      const docs = await District.find({ isActive: true })
-        .select('_id name uniqueCode')
-        .lean();
-      locations = docs.map(d => ({ _id: d._id, name: d.name, accessCode: d.uniqueCode }));
+      const filter = { isActive: true };
+      if (districtId) filter._id = districtId;
+      locations = await District.find(filter).select('_id').lean();
     } else if (reportFor === 'area') {
       const filter = { isActive: true };
       if (districtId) filter.districtId = districtId;
-      const docs = await AreaMaster.find(filter)
-        .populate('districtId', 'name')
-        .select('_id name uniqueCode districtId')
-        .lean();
-      locations = docs.map(a => ({
-        _id: a._id,
-        name: a.name,
-        accessCode: a.uniqueCode,
-        districtName: a.districtId?.name || ''
-      }));
+      if (areaId) filter._id = areaId;
+      locations = await AreaMaster.find(filter).select('_id').lean();
     } else if (reportFor === 'unit') {
       const filter = { isActive: true };
       if (districtId) filter.districtId = districtId;
       if (areaId) filter.areaId = areaId;
-      const docs = await UnitMaster.find(filter)
-        .populate('districtId', 'name')
-        .populate('areaId', 'name')
-        .select('_id name uniqueCode districtId areaId')
-        .lean();
-      locations = docs.map(u => ({
-        _id: u._id,
-        name: u.name,
-        accessCode: u.uniqueCode,
-        districtName: u.districtId?.name || '',
-        areaName: u.areaId?.name || ''
-      }));
+      if (unitId) filter._id = unitId;
+      locations = await UnitMaster.find(filter).select('_id').lean();
+    }
+    const locationIds = new Set(locations.map(l => l._id.toString()));
+
+    // Only submitted reports carry answers; scope them to the location filter
+    const allSubmitted = await ReportSubmission.find({ reportId, status: 'submitted' })
+      .select('userId formData')
+      .lean();
+    const submissions = allSubmitted.filter(
+      s => s.userId && locationIds.has(s.userId.toString())
+    );
+
+    const legacy = !(report.pages && report.pages.length > 0);
+
+    let pages = [];
+    if (!legacy) {
+      pages = report.pages
+        .map(pg => ({
+          id: pg.id,
+          title: pg.title,
+          fields: (pg.fields || [])
+            .filter(f => f.enabled !== false && !LAYOUT_TYPES.includes(f.type))
+            .map(f => consolidateField(f, submissions))
+        }))
+        .filter(pg => pg.fields.length > 0);
     }
 
-    // Fetch all submissions for this report
-    const submissions = await ReportSubmission.find({ reportId })
-      .select('userId status submittedAt createdAt')
-      .lean();
-
-    // Build a map: locationId -> submission
-    const submissionMap = {};
-    submissions.forEach(s => {
-      if (s.userId) submissionMap[s.userId.toString()] = s;
-    });
-
-    // Categorize into submitted / pending / notStarted
-    const submitted = [];
-    const pending = [];
-    const notStarted = [];
-
-    locations.forEach(loc => {
-      const sub = submissionMap[loc._id.toString()];
-      const info = {
-        _id: loc._id,
-        name: loc.name,
-        accessCode: loc.accessCode,
-        districtName: loc.districtName || '',
-        areaName: loc.areaName || ''
-      };
-      if (!sub) {
-        notStarted.push(info);
-      } else if (sub.status === 'submitted') {
-        submitted.push({ ...info, submittedAt: sub.submittedAt });
-      } else {
-        pending.push({ ...info, startedAt: sub.createdAt });
-      }
-    });
-
-    const total = locations.length;
-    const submissionRate = total > 0 ? Math.round((submitted.length / total) * 100) : 0;
+    const totalLocations = locations.length;
+    const submittedCount = submissions.length;
 
     res.json({
       success: true,
@@ -396,15 +481,14 @@ router.get('/admin/reports/consolidation', adminAuth, async (req, res) => {
         year: report.year
       },
       stats: {
-        total,
-        submittedCount: submitted.length,
-        pendingCount: pending.length,
-        notStartedCount: notStarted.length,
-        submissionRate
+        totalLocations,
+        submittedCount,
+        submissionRate: totalLocations > 0
+          ? Math.round((submittedCount / totalLocations) * 100)
+          : 0
       },
-      submitted,
-      pending,
-      notStarted
+      legacy,
+      pages
     });
   } catch (error) {
     console.error('Error fetching consolidation:', error);

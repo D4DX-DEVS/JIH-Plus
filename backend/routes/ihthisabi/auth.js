@@ -9,14 +9,153 @@ const ihthisabiConnection = require('../../config/ihthisabiConnection');
 
 const router = express.Router();
 
-// @desc    Unified Login - Auto-detects Unit Admin or Member
+// Look up every role account a RUKN ID holds across the three role collections.
+const findRoleAccounts = async (ruknId) => {
+  const [districtAdmin, unitAdmin, rukn] = await Promise.all([
+    DistrictAdmin.findOne({ ruknId }),
+    UnitAdmin.findOne({ ruknId }),
+    User.findOne({ ruknId, role: 'rukn' }).populate('abroadCountry')
+  ]);
+  return { districtAdmin, unitAdmin, rukn };
+};
+
+// Active roles only, ordered by privilege (district > unit > member).
+const buildAvailableRoles = (accounts) => {
+  const roles = [];
+  if (accounts.districtAdmin && accounts.districtAdmin.isActive) {
+    roles.push({
+      role: 'districtAdmin',
+      label: 'District Admin',
+      name: accounts.districtAdmin.name,
+      scope: accounts.districtAdmin.district
+    });
+  }
+  if (accounts.unitAdmin && accounts.unitAdmin.isActive) {
+    roles.push({
+      role: 'unitAdmin',
+      label: 'Unit Admin',
+      name: accounts.unitAdmin.name,
+      scope: accounts.unitAdmin.unit
+    });
+  }
+  if (accounts.rukn && accounts.rukn.isActive) {
+    roles.push({
+      role: 'rukn',
+      label: 'Member',
+      name: accounts.rukn.name,
+      scope: accounts.rukn.unit
+    });
+  }
+  return roles;
+};
+
+// Issue a token + user payload for one of the accounts. Response shapes are kept
+// identical to the original single-role login branches.
+const issueLoginForRole = async (role, accounts) => {
+  if (role === 'districtAdmin') {
+    const districtAdmin = accounts.districtAdmin;
+    districtAdmin.lastLogin = new Date();
+    await districtAdmin.save();
+
+    const token = jwt.sign(
+      {
+        userId: districtAdmin._id,
+        role: 'districtAdmin',
+        district: districtAdmin.district,
+        ruknId: districtAdmin.ruknId,
+        name: districtAdmin.name
+      },
+      process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+      { expiresIn: process.env.JWT_EXPIRE || '30d' }
+    );
+
+    return {
+      message: 'District Admin login successful',
+      token,
+      user: {
+        id: districtAdmin._id,
+        role: 'districtAdmin',
+        ruknId: districtAdmin.ruknId,
+        name: districtAdmin.name,
+        district: districtAdmin.district,
+        contactNo: districtAdmin.contactNo,
+        emailId: districtAdmin.emailId
+      }
+    };
+  }
+
+  if (role === 'unitAdmin') {
+    const unitAdmin = accounts.unitAdmin;
+    unitAdmin.lastLogin = new Date();
+    await unitAdmin.save();
+
+    const token = jwt.sign(
+      {
+        userId: unitAdmin._id,
+        role: 'unitAdmin',
+        unit: unitAdmin.unit,
+        ruknId: unitAdmin.ruknId,
+        name: unitAdmin.name
+      },
+      process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+      { expiresIn: process.env.JWT_EXPIRE || '30d' }
+    );
+
+    return {
+      message: 'Unit Admin login successful',
+      token,
+      user: {
+        id: unitAdmin._id,
+        role: 'unitAdmin',
+        ruknId: unitAdmin.ruknId,
+        name: unitAdmin.name,
+        unit: unitAdmin.unit,
+        district: unitAdmin.district,
+        contactNo: unitAdmin.contactNo,
+        emailId: unitAdmin.emailId
+      }
+    };
+  }
+
+  // role === 'rukn'
+  const user = accounts.rukn;
+  user.lastLogin = new Date();
+  await user.save();
+
+  const token = await generateToken(user._id);
+
+  return {
+    message: 'Member login successful',
+    token,
+    user: {
+      id: user._id,
+      role: user.role,
+      ruknId: user.ruknId,
+      name: user.name,
+      gender: user.gender,
+      unit: user.unit,
+      district: user.district,
+      area: user.area,
+      contactNo: user.contactNo,
+      emailId: user.emailId,
+      country: user.country,
+      isAbroad: user.isAbroad,
+      abroadCountry: user.abroadCountry ? { _id: user.abroadCountry._id, title: user.abroadCountry.title } : null
+    }
+  };
+};
+
+// @desc    Unified Login - Detects every role a RUKN ID holds.
+//          Single role -> logs straight in (same response shape as before).
+//          Multiple roles -> returns requiresRoleSelection + availableRoles;
+//          the client re-calls with { ruknId, role } to complete login.
 // @route   POST /api/auth/unified-login
 // @access  Public
 router.post('/unified-login', async (req, res) => {
   try {
-    const { ruknId } = req.body;
+    const { ruknId, role: requestedRole } = req.body;
 
-    console.log('Unified login attempt with RUKN ID:', ruknId);
+    console.log('Unified login attempt with RUKN ID:', ruknId, requestedRole ? `(role: ${requestedRole})` : '');
 
     // Validate required field
     if (!ruknId) {
@@ -38,113 +177,18 @@ router.post('/unified-login', async (req, res) => {
       });
     }
 
-    // Check District Admin first — it's the higher-privilege role, and some
-    // district admins are also unit admins for their home unit (promoted rukns),
-    // so this must win the lookup precedence over the Unit Admin check below.
-    const DistrictAdmin = require('../../models/ihthisabi/DistrictAdmin');
-    const districtAdmin = await DistrictAdmin.findOne({ ruknId: ruknId });
+    // Gather every role this RUKN ID holds across the three role collections
+    const accounts = await findRoleAccounts(ruknId);
+    const availableRoles = buildAvailableRoles(accounts);
 
-    if (districtAdmin) {
-      if (!districtAdmin.isActive) {
+    if (availableRoles.length === 0) {
+      // Distinguish "exists but deactivated" from "not found"
+      if (accounts.districtAdmin || accounts.unitAdmin || accounts.rukn) {
         return res.status(401).json({
           success: false,
           message: 'Your account is deactivated. Please contact main admin.'
         });
       }
-
-      districtAdmin.lastLogin = new Date();
-      await districtAdmin.save();
-
-      const token = jwt.sign(
-        {
-          userId: districtAdmin._id,
-          role: 'districtAdmin',
-          district: districtAdmin.district,
-          ruknId: districtAdmin.ruknId,
-          name: districtAdmin.name
-        },
-        process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
-        { expiresIn: process.env.JWT_EXPIRE || '30d' }
-      );
-
-      console.log('District Admin login successful:', districtAdmin.name, districtAdmin.ruknId);
-
-      return res.json({
-        success: true,
-        message: 'District Admin login successful',
-        data: {
-          user: {
-            id: districtAdmin._id,
-            role: 'districtAdmin',
-            ruknId: districtAdmin.ruknId,
-            name: districtAdmin.name,
-            district: districtAdmin.district,
-            contactNo: districtAdmin.contactNo,
-            emailId: districtAdmin.emailId
-          },
-          token
-        }
-      });
-    }
-
-    // Not a District Admin — check if it's a Unit Admin
-    const UnitAdmin = require('../../models/ihthisabi/UnitAdmin');
-    const unitAdmin = await UnitAdmin.findOne({ ruknId: ruknId });
-
-    if (unitAdmin) {
-      // Check if unit admin is active
-      if (!unitAdmin.isActive) {
-        return res.status(401).json({
-          success: false,
-          message: 'Your account is deactivated. Please contact main admin.'
-        });
-      }
-
-      // Update last login
-      unitAdmin.lastLogin = new Date();
-      await unitAdmin.save();
-
-      // Generate token with unit admin role
-      const token = jwt.sign(
-        {
-          userId: unitAdmin._id,
-          role: 'unitAdmin',
-          unit: unitAdmin.unit,
-          ruknId: unitAdmin.ruknId,
-          name: unitAdmin.name
-        },
-        process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
-        { expiresIn: process.env.JWT_EXPIRE || '30d' }
-      );
-
-      console.log('Unit Admin login successful:', unitAdmin.name, unitAdmin.ruknId);
-
-      return res.json({
-        success: true,
-        message: 'Unit Admin login successful',
-        data: {
-          user: {
-            id: unitAdmin._id,
-            role: 'unitAdmin',
-            ruknId: unitAdmin.ruknId,
-            name: unitAdmin.name,
-            unit: unitAdmin.unit,
-            district: unitAdmin.district,
-            contactNo: unitAdmin.contactNo,
-            emailId: unitAdmin.emailId
-          },
-          token
-        }
-      });
-    }
-
-    // If not a Unit Admin or District Admin, check if it's a regular Member
-    const user = await User.findOne({
-      ruknId: ruknId,
-      role: 'rukn'
-    }).populate('abroadCountry');
-
-    if (!user) {
       console.log('No user found with RUKN ID:', ruknId);
       return res.status(401).json({
         success: false,
@@ -152,42 +196,42 @@ router.post('/unified-login', async (req, res) => {
       });
     }
 
-    // Check if user is active
-    if (!user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'Your account is deactivated. Please contact admin.'
+    let selectedRole;
+    if (requestedRole) {
+      // Second step of a multi-role login: the client sends the chosen role
+      if (!availableRoles.some(r => r.role === requestedRole)) {
+        return res.status(401).json({
+          success: false,
+          message: 'You are not authorized for the selected role.'
+        });
+      }
+      selectedRole = requestedRole;
+    } else if (availableRoles.length === 1) {
+      selectedRole = availableRoles[0].role;
+    } else {
+      // Multiple roles and none chosen yet — ask the client to pick one
+      console.log('Multiple roles found for RUKN ID:', ruknId, availableRoles.map(r => r.role));
+      return res.json({
+        success: true,
+        message: 'Multiple roles found. Please select a role to continue.',
+        data: {
+          requiresRoleSelection: true,
+          ruknId,
+          name: availableRoles[0].name,
+          availableRoles
+        }
       });
     }
 
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
+    const { message, token, user } = await issueLoginForRole(selectedRole, accounts);
 
-    // Generate token
-    const token = await generateToken(user._id);
-
-    console.log('Member login successful:', user.name, user.ruknId);
+    console.log(`${message}:`, user.name, user.ruknId);
 
     return res.json({
       success: true,
-      message: 'Member login successful',
+      message,
       data: {
-        user: {
-          id: user._id,
-          role: user.role,
-          ruknId: user.ruknId,
-          name: user.name,
-          gender: user.gender,
-          unit: user.unit,
-          district: user.district,
-          area: user.area,
-          contactNo: user.contactNo,
-          emailId: user.emailId,
-          country: user.country,
-          isAbroad: user.isAbroad,
-          abroadCountry: user.abroadCountry ? { _id: user.abroadCountry._id, title: user.abroadCountry.title } : null
-        },
+        user: { ...user, availableRoles },
         token
       }
     });
@@ -196,6 +240,59 @@ router.post('/unified-login', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error during login'
+    });
+  }
+});
+
+// @desc    Switch to another role held by the same RUKN ID (multi-role users)
+// @route   POST /api/auth/switch-role
+// @access  Private (districtAdmin / unitAdmin / rukn tokens only)
+router.post('/switch-role', protect, async (req, res) => {
+  try {
+    const { role } = req.body;
+
+    if (!role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Target role is required'
+      });
+    }
+
+    const ruknId = req.user.ruknId;
+    if (!ruknId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Role switching is not available for this account.'
+      });
+    }
+
+    const accounts = await findRoleAccounts(ruknId);
+    const availableRoles = buildAvailableRoles(accounts);
+
+    if (!availableRoles.some(r => r.role === role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized for the selected role.'
+      });
+    }
+
+    const { message, token, user } = await issueLoginForRole(role, accounts);
+
+    console.log('Role switch successful:', ruknId, '->', role);
+
+    return res.json({
+      success: true,
+      message: `Switched role. ${message}`,
+      data: {
+        user: { ...user, availableRoles },
+        token
+      }
+    });
+  } catch (error) {
+    console.error('Switch role error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during role switch'
     });
   }
 });
@@ -323,7 +420,6 @@ router.get('/me', protect, async (req, res) => {
 
     // Check if it's a unitAdmin
     if (req.user.role === 'unitAdmin' && req.user.userId) {
-      const UnitAdmin = require('../../models/ihthisabi/UnitAdmin');
       const unitAdmin = await UnitAdmin.findById(req.user.userId);
 
       if (!unitAdmin) {
@@ -332,6 +428,8 @@ router.get('/me', protect, async (req, res) => {
           message: 'Unit admin not found'
         });
       }
+
+      const availableRoles = buildAvailableRoles(await findRoleAccounts(unitAdmin.ruknId));
 
       return res.json({
         success: true,
@@ -346,7 +444,8 @@ router.get('/me', protect, async (req, res) => {
             area: unitAdmin.area,
             contactNo: unitAdmin.contactNo,
             emailId: unitAdmin.emailId,
-            lastLogin: unitAdmin.lastLogin
+            lastLogin: unitAdmin.lastLogin,
+            availableRoles
           }
         }
       });
@@ -363,6 +462,8 @@ router.get('/me', protect, async (req, res) => {
         });
       }
 
+      const availableRoles = buildAvailableRoles(await findRoleAccounts(districtAdmin.ruknId));
+
       return res.json({
         success: true,
         data: {
@@ -374,7 +475,8 @@ router.get('/me', protect, async (req, res) => {
             district: districtAdmin.district,
             contactNo: districtAdmin.contactNo,
             emailId: districtAdmin.emailId,
-            lastLogin: districtAdmin.lastLogin
+            lastLogin: districtAdmin.lastLogin,
+            availableRoles
           }
         }
       });
@@ -389,6 +491,10 @@ router.get('/me', protect, async (req, res) => {
         message: 'User not found'
       });
     }
+
+    const availableRoles = user.ruknId
+      ? buildAvailableRoles(await findRoleAccounts(user.ruknId))
+      : [];
 
     res.json({
       success: true,
@@ -406,7 +512,8 @@ router.get('/me', protect, async (req, res) => {
           country: user.country,
           isAbroad: user.isAbroad,
           abroadCountry: user.abroadCountry ? { _id: user.abroadCountry._id, title: user.abroadCountry.title } : null,
-          lastLogin: user.lastLogin
+          lastLogin: user.lastLogin,
+          availableRoles
         }
       }
     });

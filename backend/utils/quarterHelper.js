@@ -46,6 +46,32 @@ const getQuarterFromMonth = (month) => {
   return 1;
 };
 
+const QUARTER_LABELS = {
+  1: 'Q1 (Jan-Mar)',
+  2: 'Q2 (Apr-Jun)',
+  3: 'Q3 (Jul-Sep)',
+  4: 'Q4 (Oct-Dec)'
+};
+
+/**
+ * Human-readable "Q1 (Jan-Mar) 2026" label for a submissionPeriod.
+ * Mirrors the Submission/AlternativeSubmit model's `periodDisplay` virtual,
+ * but works on plain objects too (e.g. aggregation results, where Mongoose
+ * virtuals aren't computed).
+ * @param {{year?: number, quarter?: number, month?: number}} submissionPeriod
+ * @returns {string}
+ */
+const getPeriodDisplay = (submissionPeriod) => {
+  if (!submissionPeriod) return 'N/A';
+
+  const quarter = submissionPeriod.quarter || (submissionPeriod.month ? getQuarterFromMonth(submissionPeriod.month) : null);
+  if (quarter) {
+    return `${QUARTER_LABELS[quarter]} ${submissionPeriod.year}`;
+  }
+
+  return submissionPeriod.year || 'N/A';
+};
+
 /**
  * Get the CURRENT quarter (the quarter we are currently in)
  * This is for informational purposes only
@@ -281,6 +307,7 @@ module.exports = {
   getHiddenQuarterFilter,
   buildCombinedQuarterFilter,
   getArchivedQuarterFilter,
-  HIDDEN_QUARTERS
+  HIDDEN_QUARTERS,
+  getPeriodDisplay
 };
 

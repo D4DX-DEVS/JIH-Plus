@@ -16,6 +16,7 @@ const {
   getArchivedQuarterFilter
 } = require('../../utils/quarterHelper');
 const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
+const { buildOwnerMatch } = require('../../utils/submissionOwnerMatch');
 
 
 const router = express.Router();
@@ -654,16 +655,18 @@ router.get('/details', protect, async (req, res) => {
         .select('userId submittedBy ruknId ruknName unit status createdAt')
         .lean(),
       AlternativeSubmit.find({ $and: [submissionQuery, periodQuery] })
-        .select('userId ruknName type reason createdAt')
+        .select('userId ruknId ruknName type reason createdAt')
         .lean()
     ]);
 
-    // Map each member to their submission (regular first, then alternative)
+    // Map each member to their submission (regular first, then alternative).
+    // Key by ruknId first (falling back to the account _id) so a submission
+    // made under any of a multi-role member's other roles still matches here.
     const submissionByUser = new Map();
     submissions.forEach((s) => {
-      [s.userId, s.submittedBy].filter(Boolean).forEach((id) => {
-        if (!submissionByUser.has(String(id))) {
-          submissionByUser.set(String(id), {
+      [s.ruknId, s.userId, s.submittedBy].filter(Boolean).map(String).forEach((key) => {
+        if (!submissionByUser.has(key)) {
+          submissionByUser.set(key, {
             submissionId: s._id,
             status: s.status,
             submittedAt: s.createdAt,
@@ -673,22 +676,24 @@ router.get('/details', protect, async (req, res) => {
       });
     });
     altSubmissions.forEach((s) => {
-      if (s.userId && !submissionByUser.has(String(s.userId))) {
-        submissionByUser.set(String(s.userId), {
-          submissionId: s._id,
-          status: 'alternative',
-          submittedAt: s.createdAt,
-          type: 'alternative',
-          altType: s.type
-        });
-      }
+      [s.ruknId, s.userId].filter(Boolean).map(String).forEach((key) => {
+        if (!submissionByUser.has(key)) {
+          submissionByUser.set(key, {
+            submissionId: s._id,
+            status: 'alternative',
+            submittedAt: s.createdAt,
+            type: 'alternative',
+            altType: s.type
+          });
+        }
+      });
     });
 
     const allMembers = [];
     const submittedMembers = [];
     const pendingMembers = [];
     members.forEach((member) => {
-      const submission = submissionByUser.get(String(member._id));
+      const submission = submissionByUser.get(String(member.ruknId)) || submissionByUser.get(String(member._id));
       const memberWithSubmission = { ...member, submission: submission || null };
       allMembers.push(memberWithSubmission);
       if (submission) {
@@ -1512,9 +1517,13 @@ router.post('/submit-form', protect, async (req, res) => {
       });
     }
 
+    const ownerMatch = buildOwnerMatch(unitAdmin.ruknId, req.user.userId);
+
     // CRITICAL: Check if unit admin has already submitted alternative submission for this quarter
+    // (matches by ruknId first, so an alt-submission made under another role — e.g.
+    // while logged in as Member — is still detected here)
     const existingAlternativeSubmission = await AlternativeSubmit.findOne({
-      userId: req.user.userId,
+      ...ownerMatch,
       'submissionPeriod.year': submissionYear,
       'submissionPeriod.quarter': submissionQuarter
     });
@@ -1527,8 +1536,9 @@ router.post('/submit-form', protect, async (req, res) => {
     }
 
     // Check if unit admin has already submitted regular submission for this quarter
+    // under ANY of their roles (rukn / unitAdmin / districtAdmin)
     const existingSubmission = await Submission.findOne({
-      userId: req.user.userId,
+      ...ownerMatch,
       'submissionPeriod.year': submissionYear,
       'submissionPeriod.quarter': submissionQuarter
     });
@@ -1631,9 +1641,10 @@ router.get('/my-submissions', protect, async (req, res) => {
 
     const { page = 1, limit = 10, year, month, quarter } = req.query;
 
-    // Build query for unit admin's own submissions
+    // Build query for unit admin's own submissions. Match by ruknId so a
+    // submission made under another role (e.g. Member) shows up here too.
     const query = {
-      userId: req.user.userId,
+      ...buildOwnerMatch(req.user.ruknId, req.user.userId),
       ...req.quarterFilter
     };
 

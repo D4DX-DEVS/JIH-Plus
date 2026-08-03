@@ -196,6 +196,23 @@ function ConfirmModal({ message, onConfirm, onCancel, loading }) {
   );
 }
 
+// Mobile-only detail view: the full row data (parent hierarchy, credentials)
+// that the compact mobile list hides behind a tap, shown here instead.
+function DetailModal({ title, rows, onClose }) {
+  return (
+    <Modal title={title} onClose={onClose}>
+      <div className="space-y-3 text-sm">
+        {rows.map((r, i) => (
+          <div key={i} className="flex items-center justify-between gap-3">
+            <span className="text-gray-500 shrink-0">{r.label}</span>
+            <span className="text-gray-800 text-right min-w-0">{r.value}</span>
+          </div>
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
 // ── States Tab ────────────────────────────────────────────────────────────────
 function StatesTab() {
   const [states, setStates] = useState([]);
@@ -377,6 +394,7 @@ function DistrictsTab() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [newCred, setNewCred] = useState(null);
   const [resetResult, setResetResult] = useState(null);
+  const [detailItem, setDetailItem] = useState(null);
   // Transform state
   const [splitItem, setSplitItem] = useState(null);
   const [splitChildren, setSplitChildren] = useState([]);
@@ -558,7 +576,9 @@ function DistrictsTab() {
       )}
 
       {loading ? <p className="text-center py-8 text-gray-400">Loading…</p> : (
-        <div className="overflow-x-auto">
+        <>
+        {/* Desktop: full table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
@@ -607,6 +627,54 @@ function DistrictsTab() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile: name + actions only; tap name for state/username/password */}
+        <div className="lg:hidden border rounded-lg divide-y divide-gray-100 overflow-hidden">
+          {districts.map((d) => (
+            <div key={d._id}>
+              <button
+                onClick={() => setDetailItem(d)}
+                className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left hover:bg-gray-50"
+              >
+                <span className="font-medium text-gray-800 truncate">{d.name}</span>
+                <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+              </button>
+              <div className="flex items-center gap-1 flex-wrap px-4 pb-2.5">
+                <button title="Reset password" onClick={() => handleResetPassword(d._id)}
+                  className="inline-flex items-center px-2 py-1.5 text-amber-600 hover:bg-amber-50 rounded">
+                  <RefreshCw className="w-4 h-4" /></button>
+                <button title="Split district" onClick={() => handleSplitOpen(d)}
+                  className="inline-flex items-center px-2 py-1.5 text-purple-600 hover:bg-purple-50 rounded">
+                  <Scissors className="w-4 h-4" /></button>
+                <button title="Merge into another district" onClick={() => handleMergeOpen(d)}
+                  className="inline-flex items-center px-2 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded">
+                  <GitMerge className="w-4 h-4" /></button>
+                <button title="Edit" onClick={() => { setEditItem(d); setName(d.name); setShowAdd(true); setError(''); }}
+                  className="inline-flex items-center px-2 py-1.5 text-blue-600 hover:bg-blue-50 rounded">
+                  <Pencil className="w-4 h-4" /></button>
+                <button title="Delete" onClick={() => setDeleteItem(d)}
+                  className="inline-flex items-center px-2 py-1.5 text-red-500 hover:bg-red-50 rounded">
+                  <Trash2 className="w-4 h-4" /></button>
+              </div>
+            </div>
+          ))}
+          {districts.length === 0 && (
+            <p className="text-center py-8 text-gray-400">No districts yet</p>
+          )}
+        </div>
+        </>
+      )}
+
+      {detailItem && (
+        <DetailModal
+          title={detailItem.name}
+          onClose={() => setDetailItem(null)}
+          rows={[
+            { label: 'State', value: detailItem.stateId?.name || '—' },
+            { label: 'Username', value: <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-[#002349]">{detailItem.uniqueCode}</span> },
+            { label: 'Password', value: <PasswordCell password={detailItem.password} /> },
+          ]}
+        />
       )}
 
       <PaginationBar
@@ -789,6 +857,7 @@ function AreasTab() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [newCred, setNewCred] = useState(null);
   const [resetResult, setResetResult] = useState(null);
+  const [detailItem, setDetailItem] = useState(null);
   // Transform state
   const [splitItem, setSplitItem] = useState(null);
   const [splitChildren, setSplitChildren] = useState([]);
@@ -996,7 +1065,9 @@ function AreasTab() {
       )}
 
       {loading ? <p className="text-center py-8 text-gray-400">Loading…</p> : (
-        <div className="overflow-x-auto">
+        <>
+        {/* Desktop: full table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
@@ -1048,6 +1119,57 @@ function AreasTab() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile: name + actions only; tap name for district/username/password */}
+        <div className="lg:hidden border rounded-lg divide-y divide-gray-100 overflow-hidden">
+          {areas.map((a) => (
+            <div key={a._id}>
+              <button
+                onClick={() => setDetailItem(a)}
+                className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left hover:bg-gray-50"
+              >
+                <span className="font-medium text-gray-800 truncate">{a.name}</span>
+                <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+              </button>
+              <div className="flex items-center gap-1 flex-wrap px-4 pb-2.5">
+                <button title="Reset password" onClick={() => handleResetPassword(a._id)}
+                  className="inline-flex items-center px-2 py-1.5 text-amber-600 hover:bg-amber-50 rounded">
+                  <RefreshCw className="w-4 h-4" /></button>
+                <button title="Split area" onClick={() => handleSplitOpen(a)}
+                  className="inline-flex items-center px-2 py-1.5 text-purple-600 hover:bg-purple-50 rounded">
+                  <Scissors className="w-4 h-4" /></button>
+                <button title="Merge into another area" onClick={() => handleMergeOpen(a)}
+                  className="inline-flex items-center px-2 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded">
+                  <GitMerge className="w-4 h-4" /></button>
+                <button title="Transfer to another district" onClick={() => handleTransferOpen(a)}
+                  className="inline-flex items-center px-2 py-1.5 text-teal-600 hover:bg-teal-50 rounded">
+                  <ArrowRightLeft className="w-4 h-4" /></button>
+                <button title="Edit" onClick={() => { setEditItem(a); setName(a.name); setShowAdd(true); setError(''); }}
+                  className="inline-flex items-center px-2 py-1.5 text-blue-600 hover:bg-blue-50 rounded">
+                  <Pencil className="w-4 h-4" /></button>
+                <button title="Delete" onClick={() => setDeleteItem(a)}
+                  className="inline-flex items-center px-2 py-1.5 text-red-500 hover:bg-red-50 rounded">
+                  <Trash2 className="w-4 h-4" /></button>
+              </div>
+            </div>
+          ))}
+          {areas.length === 0 && (
+            <p className="text-center py-8 text-gray-400">No areas yet</p>
+          )}
+        </div>
+        </>
+      )}
+
+      {detailItem && (
+        <DetailModal
+          title={detailItem.name}
+          onClose={() => setDetailItem(null)}
+          rows={[
+            { label: 'District', value: detailItem.districtId?.name || '—' },
+            { label: 'Username', value: <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-[#002349]">{detailItem.uniqueCode}</span> },
+            { label: 'Password', value: <PasswordCell password={detailItem.password} /> },
+          ]}
+        />
       )}
 
       <PaginationBar
@@ -1255,6 +1377,7 @@ function UnitsTab() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [newCred, setNewCred] = useState(null);
   const [resetResult, setResetResult] = useState(null);
+  const [detailItem, setDetailItem] = useState(null);
   // Transform state
   const [splitItem, setSplitItem] = useState(null);
   const [splitSideA, setSplitSideA] = useState('');
@@ -1494,7 +1617,9 @@ function UnitsTab() {
       )}
 
       {loading ? <p className="text-center py-8 text-gray-400">Loading…</p> : (
-        <div className="overflow-x-auto">
+        <>
+        {/* Desktop: full table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
@@ -1548,6 +1673,58 @@ function UnitsTab() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile: name + actions only; tap name for area/district/username/password */}
+        <div className="lg:hidden border rounded-lg divide-y divide-gray-100 overflow-hidden">
+          {units.map((u) => (
+            <div key={u._id}>
+              <button
+                onClick={() => setDetailItem(u)}
+                className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left hover:bg-gray-50"
+              >
+                <span className="font-medium text-gray-800 truncate">{u.name}</span>
+                <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+              </button>
+              <div className="flex items-center gap-1 flex-wrap px-4 pb-2.5">
+                <button title="Reset password" onClick={() => handleResetPassword(u._id)}
+                  className="inline-flex items-center px-2 py-1.5 text-amber-600 hover:bg-amber-50 rounded">
+                  <RefreshCw className="w-4 h-4" /></button>
+                <button title="Split unit" onClick={() => handleSplitOpen(u)}
+                  className="inline-flex items-center px-2 py-1.5 text-purple-600 hover:bg-purple-50 rounded">
+                  <Scissors className="w-4 h-4" /></button>
+                <button title="Merge into another unit" onClick={() => handleMergeOpen(u)}
+                  className="inline-flex items-center px-2 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded">
+                  <GitMerge className="w-4 h-4" /></button>
+                <button title="Transfer to another area" onClick={() => handleTransferOpen(u)}
+                  className="inline-flex items-center px-2 py-1.5 text-teal-600 hover:bg-teal-50 rounded">
+                  <ArrowRightLeft className="w-4 h-4" /></button>
+                <button title="Edit" onClick={() => { setEditItem(u); setName(u.name); setShowAdd(true); setError(''); }}
+                  className="inline-flex items-center px-2 py-1.5 text-blue-600 hover:bg-blue-50 rounded">
+                  <Pencil className="w-4 h-4" /></button>
+                <button title="Delete" onClick={() => setDeleteItem(u)}
+                  className="inline-flex items-center px-2 py-1.5 text-red-500 hover:bg-red-50 rounded">
+                  <Trash2 className="w-4 h-4" /></button>
+              </div>
+            </div>
+          ))}
+          {units.length === 0 && (
+            <p className="text-center py-8 text-gray-400">No units yet</p>
+          )}
+        </div>
+        </>
+      )}
+
+      {detailItem && (
+        <DetailModal
+          title={detailItem.name}
+          onClose={() => setDetailItem(null)}
+          rows={[
+            { label: 'Area', value: detailItem.areaId?.name || '—' },
+            { label: 'District', value: detailItem.districtId?.name || '—' },
+            { label: 'Username', value: <span className="font-mono bg-gray-100 px-2 py-0.5 rounded text-[#002349]">{detailItem.uniqueCode}</span> },
+            { label: 'Password', value: <PasswordCell password={detailItem.password} /> },
+          ]}
+        />
       )}
 
       <PaginationBar
