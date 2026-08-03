@@ -23,17 +23,41 @@ import {
   Archive,
   MapPin,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  ArrowLeftRight
 } from 'lucide-react'
 
 const Layout = () => {
-  const { user, logout } = useAuth()
+  const { user, logout, switchRole } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState(new Set())
+  const [switchingRole, setSwitchingRole] = useState(false)
+
+  // Other roles this RUKN ID holds (multi-role users only)
+  const otherRoles = (user?.availableRoles || []).filter(r => r.role !== user?.role)
+
+  const roleDashboardPath = {
+    admin: '/ihthisabi/admin',
+    districtAdmin: '/ihthisabi/districtadmin',
+    unitAdmin: '/ihthisabi/unitadmin',
+    rukn: '/ihthisabi/dashboard'
+  }
+
+  const handleSwitchRole = async (targetRole) => {
+    if (switchingRole) return
+    setSwitchingRole(true)
+    const result = await switchRole(targetRole)
+    setSwitchingRole(false)
+    if (result.success) {
+      setSidebarOpen(false)
+      setProfileMenuOpen(false)
+      navigate(roleDashboardPath[result.user.role] || '/ihthisabi/dashboard', { replace: true })
+    }
+  }
 
   const handleLogout = () => {
     setShowLogoutModal(true)
@@ -365,6 +389,30 @@ const Layout = () => {
 
           {/* Powered by and logout at bottom */}
           <div className="mt-auto p-4 border-t border-white/10 bg-[#1A0D3D]/30 backdrop-blur-sm">
+            {/* Role switcher — only for users holding multiple roles */}
+            {otherRoles.length > 0 && (
+              <div className="mb-3">
+                <p className="px-1 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-purple-300/70">
+                  Switch Role
+                </p>
+                <div className="space-y-1">
+                  {otherRoles.map((roleOption) => (
+                    <button
+                      key={roleOption.role}
+                      onClick={() => handleSwitchRole(roleOption.role)}
+                      disabled={switchingRole}
+                      className="w-full flex items-center px-3 py-2 text-xs font-medium text-white/80 bg-white/5 hover:bg-[#7B4FF2] hover:text-white rounded-lg transition-all duration-200 border border-white/10 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <ArrowLeftRight className="w-3.5 h-3.5 mr-2 flex-shrink-0" />
+                      <span className="flex-1 text-left truncate">
+                        {roleOption.label}
+                        {roleOption.scope ? ` · ${roleOption.scope}` : ''}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <PoweredByD4DX dark />
             <button
               onClick={handleLogout}
@@ -399,6 +447,17 @@ const Layout = () => {
               {profileMenuOpen && (
                 <div className="absolute right-0 top-10 z-30 w-52 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
                   <PoweredByD4DX />
+                  {otherRoles.map((roleOption) => (
+                    <button
+                      key={roleOption.role}
+                      onClick={() => handleSwitchRole(roleOption.role)}
+                      disabled={switchingRole}
+                      className="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                    >
+                      <ArrowLeftRight className="w-4 h-4" />
+                      <span className="truncate">Switch to {roleOption.label}</span>
+                    </button>
+                  ))}
                   <button
                     onClick={() => { setProfileMenuOpen(false); handleLogout() }}
                     className="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"

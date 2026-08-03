@@ -1019,6 +1019,41 @@ const SubmissionForm = ({ userRole }) => {
       const districtObj = isAbroadUser ? null : districts.find(d => (d._id || d.id) === districtVal)
       const areaObj = isAbroadUser ? null : areas.find(a => (a._id || a.id) === areaVal)
 
+      // Reject out-of-range numbers before saving (mirrors consolidation bounds)
+      // so garbage values (phone numbers, negatives) never reach the database
+      const NUMBER_MAX_DEFAULT = 100000
+      for (const q of dynamicForm.questions) {
+        const qLabel = q.questionTextMl || q.questionText
+        if (q.answerType === 'number') {
+          const raw = dynamicFormData[q.questionId]
+          if (raw !== undefined && raw !== null && raw !== '') {
+            const num = Number(raw)
+            const lo = typeof q.min === 'number' ? q.min : 0
+            const hi = typeof q.max === 'number' ? q.max : NUMBER_MAX_DEFAULT
+            if (Number.isNaN(num) || num < lo || num > hi) {
+              toast.error(`"${qLabel}" — ${lo} നും ${hi} നും ഇടയിലുള്ള സംഖ്യ നൽകുക (enter a number between ${lo} and ${hi})`)
+              setLoading(false)
+              return
+            }
+          }
+        } else if (q.answerType === 'group') {
+          for (const [sfIdx, sf] of (q.subFields || []).entries()) {
+            if (sf.type !== 'number') continue
+            const effectiveFieldId = sf.fieldId || `field_${sfIdx}`
+            const raw = (dynamicFormData[q.questionId] || {})[effectiveFieldId]
+            if (raw === undefined || raw === null || raw === '') continue
+            const num = Number(raw)
+            const lo = typeof sf.min === 'number' ? sf.min : 0
+            const hi = typeof sf.max === 'number' ? sf.max : NUMBER_MAX_DEFAULT
+            if (Number.isNaN(num) || num < lo || num > hi) {
+              toast.error(`"${sf.labelMl || sf.label}" — ${lo} നും ${hi} നും ഇടയിലുള്ള സംഖ്യ നൽകുക (enter a number between ${lo} and ${hi})`)
+              setLoading(false)
+              return
+            }
+          }
+        }
+      }
+
       const processedData = {}
       dynamicForm.questions.forEach(q => {
         const val = dynamicFormData[q.questionId]
@@ -1094,7 +1129,7 @@ const SubmissionForm = ({ userRole }) => {
             <input type="number" value={value ?? ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
               className="form-input w-full max-w-xs px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
               placeholder={question.placeholder || '0'}
-              min={question.min} max={question.max} />
+              min={question.min ?? 0} max={question.max ?? 100000} />
           )}
 
           {question.answerType === 'radio' && (
@@ -1157,7 +1192,8 @@ const SubmissionForm = ({ userRole }) => {
                       onChange={(e) => handleDynamicGroupFieldChange(qId, effectiveFieldId, e.target.value)}
                       className="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
                       placeholder={sf.placeholder || (sf.type === 'number' ? '0' : '')}
-                      min={sf.min} max={sf.max} />
+                      min={sf.type === 'number' ? (sf.min ?? 0) : undefined}
+                      max={sf.type === 'number' ? (sf.max ?? 100000) : undefined} />
                   </div>
                 )
               })}

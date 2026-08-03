@@ -955,7 +955,7 @@ const AdminDashboardPage = ({ onLogout }) => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-x-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       {/* Sidebar */}
       <AdminSidebar
         activeTab={activeTab}
@@ -973,7 +973,7 @@ const AdminDashboardPage = ({ onLogout }) => {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 relative z-10 box-border">
+      <div className="flex-1 relative z-10 box-border flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header with Menu Button */}
         <header className="lg:hidden bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
           <div className="flex items-center justify-between px-4 py-4">
@@ -992,7 +992,7 @@ const AdminDashboardPage = ({ onLogout }) => {
         </header>
 
       {/* Main Content */}
-        <main className="px-4 sm:px-6 lg:px-8 py-6 relative z-0">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6 relative z-0">
           {showDetailView ? (
             <FormDetailPage
               formId={selectedFormId}

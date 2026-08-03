@@ -447,7 +447,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
               <span>Menu</span>
             </button>
           </div>
-          <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
             {content}
           </main>
         </div>
@@ -490,7 +490,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
               <div className="w-10" />
             </div>
           </header>
-          <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
             {content}
           </main>
         </div>

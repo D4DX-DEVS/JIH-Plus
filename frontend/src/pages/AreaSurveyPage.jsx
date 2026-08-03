@@ -213,10 +213,10 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-x-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       {sidebarElement}
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile toggle */}
         <div className="lg:hidden px-4 pt-4">
           <button
@@ -228,7 +228,7 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
           {/* Progress Bar */}
           <div className="bg-white shadow-lg border border-gray-200 rounded-2xl mb-4 hover:shadow-xl transition-all duration-500">
             <div className="px-4 py-3">

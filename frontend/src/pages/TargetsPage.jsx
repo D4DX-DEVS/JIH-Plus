@@ -914,7 +914,7 @@ const TargetsPage = ({ onLogout }) => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-4xl mx-auto w-full">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 lg:pb-6 max-w-4xl mx-auto w-full">
           {error && <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>}
 
           {selectedTargetId ? (

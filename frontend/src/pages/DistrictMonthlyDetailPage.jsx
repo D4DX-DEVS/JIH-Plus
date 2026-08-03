@@ -111,7 +111,7 @@ const DistrictMonthlyDetailPage = () => {
 
   if (!survey) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-x-hidden">
+      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
         <AdminSidebar
           activeTab="monthly"
           onTabChange={handleSidebarNavigate}
@@ -126,8 +126,8 @@ const DistrictMonthlyDetailPage = () => {
           isMobileOpen={isSidebarOpen}
           onMobileToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
-        <div className="flex-1 relative z-10 box-border">
-          <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="flex-1 relative z-10 box-border flex flex-col min-w-0 overflow-hidden">
+          <div className="flex-1 bg-white flex items-center justify-center">
             <div className="text-center">
               <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-8 max-w-md shadow-lg animate-fade-in">
                 <p className="text-yellow-700 mb-6 font-semibold">No report data passed. Go back and open from admin dashboard.</p>
@@ -155,7 +155,7 @@ const DistrictMonthlyDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-x-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <AdminSidebar
         activeTab="monthly"
         onTabChange={handleSidebarNavigate}
@@ -171,7 +171,7 @@ const DistrictMonthlyDetailPage = () => {
         onMobileToggle={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
-      <div className="flex-1 relative z-10 box-border">
+      <div className="flex-1 relative z-10 box-border flex flex-col min-w-0 overflow-hidden">
         <div className="lg:hidden px-4 pt-4">
           <button
             onClick={() => setIsSidebarOpen(true)}
@@ -181,7 +181,7 @@ const DistrictMonthlyDetailPage = () => {
             <span>Menu</span>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-24 lg:pb-0">
           <DistrictSurveyView 
             survey={survey} 
             onBack={handleBack} 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Scissors, GitMerge, ArrowRightLeft, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { X, Scissors, GitMerge, ArrowRightLeft, ChevronDown, ChevronUp, Plus, Pencil, Trash2 } from 'lucide-react';
 import { api } from '../../utils/ihthisabi/api';
 import Pagination from './Pagination';
 
@@ -60,6 +60,9 @@ function DistrictsTab() {
   const [addName, setAddName] = useState('');
   const [addWorking, setAddWorking] = useState(false);
   const [addError, setAddError] = useState('');
+  const [renameItem, setRenameItem] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [deleteItem, setDeleteItem] = useState(null);
 
   const load = useCallback(async (page = 1) => {
     setLoading(true); setError('');
@@ -120,6 +123,26 @@ function DistrictsTab() {
     setAddWorking(false);
   };
 
+  const handleRenameConfirm = async () => {
+    const newName = renameValue.trim();
+    if (!newName) return setTxError('Name is required');
+    setTxWorking(true); setTxError('');
+    try {
+      await api.post(`${BASE}/districts/rename`, { oldName: renameItem.name, newName });
+      setRenameItem(null); load(pagination.current);
+    } catch (e) { setTxError(e.response?.data?.message || 'Rename failed'); }
+    setTxWorking(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setTxWorking(true); setTxError('');
+    try {
+      await api.post(`${BASE}/districts/delete`, { name: deleteItem.name });
+      setDeleteItem(null); load(pagination.current);
+    } catch (e) { setTxError(e.response?.data?.message || 'Delete failed'); }
+    setTxWorking(false);
+  };
+
   return (
     <div>
       <div className="flex justify-end mb-3">
@@ -148,12 +171,20 @@ function DistrictsTab() {
                 <td className="px-4 py-3 font-medium text-gray-800">{d.name}</td>
                 <td className="px-4 py-3 text-gray-600">{d.count}</td>
                 <td className="px-4 py-3 text-right space-x-1">
+                  <button title="Rename district" onClick={() => { setTxError(''); setRenameItem(d); setRenameValue(d.name); }}
+                    className="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">
+                    <Pencil className="w-3.5 h-3.5" /></button>
                   <button title="Split district" onClick={() => handleSplitOpen(d)}
                     className="inline-flex items-center px-2 py-1 text-purple-600 hover:bg-purple-50 rounded">
                     <Scissors className="w-3.5 h-3.5" /></button>
                   <button title="Merge into another district" onClick={() => { setTxError(''); setMergeItem(d); setMergeSurvivor(''); }}
                     className="inline-flex items-center px-2 py-1 text-indigo-600 hover:bg-indigo-50 rounded">
                     <GitMerge className="w-3.5 h-3.5" /></button>
+                  <button
+                    title={d.count > 0 ? `Cannot delete: ${d.count} member(s) assigned` : 'Delete district'}
+                    onClick={() => { setTxError(''); setDeleteItem(d); }}
+                    className="inline-flex items-center px-2 py-1 text-red-600 hover:bg-red-50 rounded">
+                    <Trash2 className="w-3.5 h-3.5" /></button>
                 </td>
               </tr>
             ))}
@@ -259,6 +290,46 @@ function DistrictsTab() {
             </div>
           </div>
         </Modal>
+      )}
+      {/* Rename District Modal */}
+      {renameItem && (
+        <Modal title={`Rename District: "${renameItem.name}"`} onClose={() => setRenameItem(null)}>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">New Name</label>
+              <input value={renameValue} onChange={(e) => setRenameValue(e.target.value)} autoFocus
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]" />
+            </div>
+            <ErrorMsg msg={txError} />
+            <div className="flex gap-3 justify-end mt-2">
+              <button onClick={() => setRenameItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={handleRenameConfirm} disabled={txWorking}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                {txWorking ? <Spinner /> : null} Rename
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {/* Delete District Modal */}
+      {deleteItem && (
+        <Modal title={`Delete District: "${deleteItem.name}"`} onClose={() => setDeleteItem(null)}>
+          {deleteItem.count > 0 ? (
+            <p className="text-sm text-red-600">
+              Cannot delete — {deleteItem.count} member(s) are still assigned to this district. Transfer or merge them out first.
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600">This will permanently remove "{deleteItem.name}" from Master Data. This action cannot be undone.</p>
+          )}
+          <ErrorMsg msg={txError} />
+          <div className="flex gap-3 justify-end mt-4">
+            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={handleDeleteConfirm} disabled={txWorking || deleteItem.count > 0}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              {txWorking ? <Spinner /> : null} Delete
+            </button>
+          </div>
+        </Modal>
       )}    </div>
   );
 }
@@ -294,6 +365,9 @@ function AreasTab() {
   const [addDistrict, setAddDistrict] = useState('');
   const [addWorking, setAddWorking] = useState(false);
   const [addError, setAddError] = useState('');
+  const [renameItem, setRenameItem] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [deleteItem, setDeleteItem] = useState(null);
 
   const loadDistricts = useCallback(async () => {
     try {
@@ -378,6 +452,26 @@ function AreasTab() {
     setAddWorking(false);
   };
 
+  const handleRenameConfirm = async () => {
+    const newName = renameValue.trim();
+    if (!newName) return setTxError('Name is required');
+    setTxWorking(true); setTxError('');
+    try {
+      await api.post(`${BASE}/areas/rename`, { district: renameItem.district, oldName: renameItem.name, newName });
+      setRenameItem(null); loadAreas();
+    } catch (e) { setTxError(e.response?.data?.message || 'Rename failed'); }
+    setTxWorking(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setTxWorking(true); setTxError('');
+    try {
+      await api.post(`${BASE}/areas/delete`, { district: deleteItem.district, name: deleteItem.name });
+      setDeleteItem(null); loadAreas();
+    } catch (e) { setTxError(e.response?.data?.message || 'Delete failed'); }
+    setTxWorking(false);
+  };
+
   return (
     <div>
       <div className="mb-4 flex items-center gap-2">
@@ -418,6 +512,9 @@ function AreasTab() {
                   <td className="px-4 py-3 text-gray-600">{a.district}</td>
                   <td className="px-4 py-3 text-gray-600">{a.count}</td>
                   <td className="px-4 py-3 text-right space-x-1">
+                    <button title="Rename area" onClick={() => { setTxError(''); setRenameItem(a); setRenameValue(a.name); }}
+                      className="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">
+                      <Pencil className="w-3.5 h-3.5" /></button>
                     <button title="Split area" onClick={() => handleSplitOpen(a)}
                       className="inline-flex items-center px-2 py-1 text-purple-600 hover:bg-purple-50 rounded">
                       <Scissors className="w-3.5 h-3.5" /></button>
@@ -427,6 +524,11 @@ function AreasTab() {
                     <button title="Transfer to another district" onClick={() => { setTxError(''); setTransferItem(a); setTransferTarget(''); }}
                       className="inline-flex items-center px-2 py-1 text-teal-600 hover:bg-teal-50 rounded">
                       <ArrowRightLeft className="w-3.5 h-3.5" /></button>
+                    <button
+                      title={a.count > 0 ? `Cannot delete: ${a.count} member(s) assigned` : 'Delete area'}
+                      onClick={() => { setTxError(''); setDeleteItem(a); }}
+                      className="inline-flex items-center px-2 py-1 text-red-600 hover:bg-red-50 rounded">
+                      <Trash2 className="w-3.5 h-3.5" /></button>
                   </td>
                 </tr>
               ))}
@@ -589,6 +691,46 @@ function AreasTab() {
             </div>
           </div>
         </Modal>
+      )}
+      {/* Rename Area Modal */}
+      {renameItem && (
+        <Modal title={`Rename Area: "${renameItem.name}"`} onClose={() => setRenameItem(null)}>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">New Name</label>
+              <input value={renameValue} onChange={(e) => setRenameValue(e.target.value)} autoFocus
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]" />
+            </div>
+            <ErrorMsg msg={txError} />
+            <div className="flex gap-3 justify-end mt-2">
+              <button onClick={() => setRenameItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={handleRenameConfirm} disabled={txWorking}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                {txWorking ? <Spinner /> : null} Rename
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {/* Delete Area Modal */}
+      {deleteItem && (
+        <Modal title={`Delete Area: "${deleteItem.name}"`} onClose={() => setDeleteItem(null)}>
+          {deleteItem.count > 0 ? (
+            <p className="text-sm text-red-600">
+              Cannot delete — {deleteItem.count} member(s) are still assigned to this area. Transfer or merge them out first.
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600">This will permanently remove "{deleteItem.name}" from Master Data. This action cannot be undone.</p>
+          )}
+          <ErrorMsg msg={txError} />
+          <div className="flex gap-3 justify-end mt-4">
+            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={handleDeleteConfirm} disabled={txWorking || deleteItem.count > 0}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              {txWorking ? <Spinner /> : null} Delete
+            </button>
+          </div>
+        </Modal>
       )}    </div>
   );
 }
@@ -627,6 +769,9 @@ function UnitsTab() {
   const [addAreas, setAddAreas] = useState([]);
   const [addWorking, setAddWorking] = useState(false);
   const [addError, setAddError] = useState('');
+  const [renameItem, setRenameItem] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [deleteItem, setDeleteItem] = useState(null);
 
   const loadDistricts = useCallback(async () => {
     try {
@@ -734,6 +879,30 @@ function UnitsTab() {
     setAddWorking(false);
   };
 
+  const handleRenameConfirm = async () => {
+    const newName = renameValue.trim();
+    if (!newName) return setTxError('Name is required');
+    setTxWorking(true); setTxError('');
+    try {
+      await api.post(`${BASE}/units/rename`, {
+        district: renameItem.district, area: renameItem.area, oldName: renameItem.name, newName
+      });
+      setRenameItem(null); loadUnits();
+    } catch (e) { setTxError(e.response?.data?.message || 'Rename failed'); }
+    setTxWorking(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setTxWorking(true); setTxError('');
+    try {
+      await api.post(`${BASE}/units/delete`, {
+        district: deleteItem.district, area: deleteItem.area, name: deleteItem.name
+      });
+      setDeleteItem(null); loadUnits();
+    } catch (e) { setTxError(e.response?.data?.message || 'Delete failed'); }
+    setTxWorking(false);
+  };
+
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -782,6 +951,9 @@ function UnitsTab() {
                   <td className="px-4 py-3 text-gray-600">{u.district}</td>
                   <td className="px-4 py-3 text-gray-600">{u.count}</td>
                   <td className="px-4 py-3 text-right space-x-1">
+                    <button title="Rename unit" onClick={() => { setTxError(''); setRenameItem(u); setRenameValue(u.name); }}
+                      className="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">
+                      <Pencil className="w-3.5 h-3.5" /></button>
                     <button title="Split unit" onClick={() => { setTxError(''); setSplitSideA(u.name); setSplitSideB(''); setSplitItem(u); }}
                       className="inline-flex items-center px-2 py-1 text-purple-600 hover:bg-purple-50 rounded">
                       <Scissors className="w-3.5 h-3.5" /></button>
@@ -791,6 +963,11 @@ function UnitsTab() {
                     <button title="Transfer to another area" onClick={() => { setTxError(''); setTransferItem(u); setTransferDistrictFilter(''); setTransferTargetKey(''); }}
                       className="inline-flex items-center px-2 py-1 text-teal-600 hover:bg-teal-50 rounded">
                       <ArrowRightLeft className="w-3.5 h-3.5" /></button>
+                    <button
+                      title={u.count > 0 ? `Cannot delete: ${u.count} member(s) assigned` : 'Delete unit'}
+                      onClick={() => { setTxError(''); setDeleteItem(u); }}
+                      className="inline-flex items-center px-2 py-1 text-red-600 hover:bg-red-50 rounded">
+                      <Trash2 className="w-3.5 h-3.5" /></button>
                   </td>
                 </tr>
               ))}
@@ -953,6 +1130,46 @@ function UnitsTab() {
             </div>
           </div>
         </Modal>
+      )}
+      {/* Rename Unit Modal */}
+      {renameItem && (
+        <Modal title={`Rename Unit: "${renameItem.name}"`} onClose={() => setRenameItem(null)}>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">New Name</label>
+              <input value={renameValue} onChange={(e) => setRenameValue(e.target.value)} autoFocus
+                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]" />
+            </div>
+            <ErrorMsg msg={txError} />
+            <div className="flex gap-3 justify-end mt-2">
+              <button onClick={() => setRenameItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={handleRenameConfirm} disabled={txWorking}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                {txWorking ? <Spinner /> : null} Rename
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {/* Delete Unit Modal */}
+      {deleteItem && (
+        <Modal title={`Delete Unit: "${deleteItem.name}"`} onClose={() => setDeleteItem(null)}>
+          {deleteItem.count > 0 ? (
+            <p className="text-sm text-red-600">
+              Cannot delete — {deleteItem.count} member(s) are still assigned to this unit. Transfer or merge them out first.
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600">This will permanently remove "{deleteItem.name}" from Master Data. This action cannot be undone.</p>
+          )}
+          <ErrorMsg msg={txError} />
+          <div className="flex gap-3 justify-end mt-4">
+            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={handleDeleteConfirm} disabled={txWorking || deleteItem.count > 0}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              {txWorking ? <Spinner /> : null} Delete
+            </button>
+          </div>
+        </Modal>
       )}    </div>
   );
 }
@@ -993,9 +1210,11 @@ export default function MasterDataManagement() {
       {/* Legend */}
       <div className="mt-6 flex flex-wrap gap-4 text-xs text-gray-500 border-t pt-4">
         <span className="flex items-center gap-1"><Plus className="w-3.5 h-3.5 text-[#002349]" /> Add</span>
+        <span className="flex items-center gap-1"><Pencil className="w-3.5 h-3.5 text-blue-600" /> Rename</span>
         <span className="flex items-center gap-1"><Scissors className="w-3.5 h-3.5 text-purple-600" /> Split</span>
         <span className="flex items-center gap-1"><GitMerge className="w-3.5 h-3.5 text-indigo-600" /> Merge</span>
         <span className="flex items-center gap-1"><ArrowRightLeft className="w-3.5 h-3.5 text-teal-600" /> Transfer</span>
+        <span className="flex items-center gap-1"><Trash2 className="w-3.5 h-3.5 text-red-600" /> Delete</span>
       </div>
     </div>
   );

@@ -640,7 +640,7 @@ const MembershipPage = () => {
           </button>
         </div>
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-5 min-w-0">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 space-y-5 min-w-0">
         {/* Page Heading with Filters */}
         <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="flex-1">

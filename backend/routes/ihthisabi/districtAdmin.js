@@ -10,7 +10,8 @@ const {
   getHiddenQuarterFilter,
   getArchivedQuarterFilter,
   getAvailableSubmissionQuarter,
-  isQuarterHidden
+  isQuarterHidden,
+  getPeriodDisplay
 } = require('../../utils/quarterHelper');
 const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
 
@@ -291,16 +292,18 @@ router.get('/areas/:area/details', protect, async (req, res) => {
         .select('userId submittedBy ruknId ruknName unit status createdAt')
         .lean(),
       AlternativeSubmit.find({ $and: [submissionQuery, periodQuery] })
-        .select('userId ruknName type reason createdAt')
+        .select('userId ruknId ruknName type reason createdAt')
         .lean()
     ]);
 
-    // Map each member to their submission (regular first, then alternative)
+    // Map each member to their submission (regular first, then alternative).
+    // Key by ruknId first (falling back to the account _id) so a submission
+    // made under any of a multi-role member's other roles still matches here.
     const submissionByUser = new Map();
     submissions.forEach((s) => {
-      [s.userId, s.submittedBy].filter(Boolean).forEach((id) => {
-        if (!submissionByUser.has(String(id))) {
-          submissionByUser.set(String(id), {
+      [s.ruknId, s.userId, s.submittedBy].filter(Boolean).map(String).forEach((key) => {
+        if (!submissionByUser.has(key)) {
+          submissionByUser.set(key, {
             submissionId: s._id,
             status: s.status,
             submittedAt: s.createdAt,
@@ -310,22 +313,24 @@ router.get('/areas/:area/details', protect, async (req, res) => {
       });
     });
     altSubmissions.forEach((s) => {
-      if (s.userId && !submissionByUser.has(String(s.userId))) {
-        submissionByUser.set(String(s.userId), {
-          submissionId: s._id,
-          status: 'alternative',
-          submittedAt: s.createdAt,
-          type: 'alternative',
-          altType: s.type
-        });
-      }
+      [s.ruknId, s.userId].filter(Boolean).map(String).forEach((key) => {
+        if (!submissionByUser.has(key)) {
+          submissionByUser.set(key, {
+            submissionId: s._id,
+            status: 'alternative',
+            submittedAt: s.createdAt,
+            type: 'alternative',
+            altType: s.type
+          });
+        }
+      });
     });
 
     const allMembers = [];
     const submittedMembers = [];
     const pendingMembers = [];
     members.forEach((member) => {
-      const submission = submissionByUser.get(String(member._id));
+      const submission = submissionByUser.get(String(member.ruknId)) || submissionByUser.get(String(member._id));
       const memberWithSubmission = { ...member, submission: submission || null };
       allMembers.push(memberWithSubmission);
       if (submission) {
@@ -655,13 +660,14 @@ router.get('/submissions', protect, async (req, res) => {
     const districtAdmin = await requireDistrictAdmin(req, res);
     if (!districtAdmin) return;
 
-    const { search = '', area = '', status = '', sortBy = 'createdAt', sortDir = 'desc' } = req.query;
+    const { search = '', area = '', quarter = '', year = '', sortBy = 'createdAt', sortDir = 'desc' } = req.query;
     const { page, limit, skip } = parsePagination(req.query);
 
     const { submissionQuery } = getDistrictAdminScope(districtAdmin, { area });
 
     const query = { ...submissionQuery, ...req.quarterFilter };
-    if (status) query.status = status;
+    if (quarter) query['submissionPeriod.quarter'] = parseInt(quarter, 10);
+    if (year) query['submissionPeriod.year'] = parseInt(year, 10);
     if (search) {
       const searchRegex = { $regex: escapeRegex(search), $options: 'i' };
       query.$or = [
@@ -676,16 +682,40 @@ router.get('/submissions', protect, async (req, res) => {
     const sortableFields = ['ruknName', 'area', 'unit', 'status', 'createdAt'];
     const field = sortableFields.includes(sortBy) ? sortBy : 'createdAt';
 
-    const [submissions, total] = await Promise.all([
-      Submission.find(query)
-        .select('_id submittedBy userId ruknName ruknId unit area submissionPeriod periodDisplay createdAt status adminReply')
-        .populate({ path: 'submittedBy', select: 'ruknId name' })
-        .populate({ path: 'userId', select: 'ruknId name' })
-        .sort({ [field]: dir })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Submission.countDocuments(query)
+    // A multi-role member (rukn / unitAdmin / districtAdmin) can have separate
+    // Submission docs for the same quarter — one per role they submitted
+    // under. Collapse those to a single row per person+quarter (keeping the
+    // most recent one) before sorting/paginating.
+    const dedupePipeline = [
+      { $match: query },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: {
+            owner: { $ifNull: ['$ruknId', '$userId'] },
+            year: '$submissionPeriod.year',
+            quarter: '$submissionPeriod.quarter'
+          },
+          doc: { $first: '$$ROOT' }
+        }
+      },
+      { $replaceRoot: { newRoot: '$doc' } }
+    ];
+
+    const [submissions, countResult] = await Promise.all([
+      Submission.aggregate([
+        ...dedupePipeline,
+        { $sort: { [field]: dir } },
+        { $skip: skip },
+        { $limit: limit }
+      ]),
+      Submission.aggregate([...dedupePipeline, { $count: 'total' }])
+    ]);
+    const total = countResult[0]?.total || 0;
+
+    await Submission.populate(submissions, [
+      { path: 'submittedBy', select: 'ruknId name' },
+      { path: 'userId', select: 'ruknId name' }
     ]);
 
     const trimmedSubmissions = submissions.map((submission) => ({
@@ -695,7 +725,7 @@ router.get('/submissions', protect, async (req, res) => {
       ruknName: submission.ruknName || submission.submittedBy?.name || submission.userId?.name || 'Unknown Member',
       unit: submission.unit,
       area: submission.area,
-      quarter: submission.periodDisplay,
+      quarter: getPeriodDisplay(submission.submissionPeriod),
       status: submission.status,
       createdAt: submission.createdAt,
       adminReply: submission.adminReply

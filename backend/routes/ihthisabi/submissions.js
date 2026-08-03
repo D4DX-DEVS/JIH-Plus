@@ -7,6 +7,7 @@ const { protect, authorize } = require('../../middlewares/ihthisabi/auth');
 const { migrateStaticToDynamic } = require('../../utils/staticToDynamicMigration');
 const { validate, schemas, validateQuery } = require('../../middlewares/ihthisabi/validation');
 const { buildPaginationMeta } = require('../../utils/pagination');
+const { buildOwnerMatch } = require('../../utils/submissionOwnerMatch');
 const { 
   getAvailableSubmissionQuarter, 
   validateSubmissionQuarter,
@@ -182,9 +183,15 @@ router.post('/', protect, authorize('rukn'), validateSubmissionMiddleware, async
     // DEBUG: Log final submission period before creating
     console.log('[Rukn Submit] Final submissionPeriod to be saved:', JSON.stringify(finalSubmissionPeriod));
 
+    // Get ruknId from user (should be available in req.user from auth middleware)
+    const userRuknId = req.user.ruknId;
+    const ownerMatch = buildOwnerMatch(userRuknId, req.user._id);
+
     // CRITICAL: Check if user has already submitted alternative submission for this quarter
+    // (matches by ruknId first, so an alt-submission made under another role — e.g.
+    // while logged in as Unit Admin — is still detected here)
     const existingAlternativeSubmission = await AlternativeSubmit.findOne({
-      userId: req.user._id,
+      ...ownerMatch,
       'submissionPeriod.year': submissionYear,
       'submissionPeriod.quarter': submissionQuarter
     });
@@ -197,8 +204,9 @@ router.post('/', protect, authorize('rukn'), validateSubmissionMiddleware, async
     }
 
     // Check if user has already submitted regular submission for this quarter
+    // under ANY of their roles (rukn / unitAdmin / districtAdmin)
     const existingSubmission = await Submission.findOne({
-      userId: req.user._id,
+      ...ownerMatch,
       'submissionPeriod.year': submissionYear,
       'submissionPeriod.quarter': submissionQuarter
     });
@@ -209,9 +217,6 @@ router.post('/', protect, authorize('rukn'), validateSubmissionMiddleware, async
         message: 'You have already submitted for this quarter'
       });
     }
-
-    // Get ruknId from user (should be available in req.user from auth middleware)
-    const userRuknId = req.user.ruknId;
 
     // Build submission data
     const submissionData = {
@@ -296,9 +301,10 @@ router.get('/my-submissions', protect, authorize('rukn'), validateQuery(schemas.
   try {
     const { page = 1, limit = 10, year, month, quarter } = req.query;
 
-    // Build query - EXCLUDE Q3 submissions
+    // Build query - EXCLUDE Q3 submissions. Match by ruknId so a submission
+    // made under another role (e.g. Unit Admin) shows up here too.
     const query = {
-      userId: req.user._id,
+      ...buildOwnerMatch(req.user.ruknId, req.user._id),
       ...req.quarterFilter // Filter out archived quarters
     };
 

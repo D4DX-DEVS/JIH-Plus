@@ -32,6 +32,18 @@ async function bulkUpdateLocation(filter, update) {
   ]);
 }
 
+/**
+ * Count User (rukn members) + UnitAdmin records scoped to a location path.
+ * Used to block deletion while members/unit-admins still reference the location.
+ */
+async function countAtLocation(filter) {
+  const [userCount, uaCount] = await Promise.all([
+    User.countDocuments({ ...filter, role: 'rukn' }),
+    UnitAdmin.countDocuments(filter)
+  ]);
+  return userCount + uaCount;
+}
+
 // ── READ (aggregated from User documents) ────────────────────────────────────
 
 // GET /api/ihthisabi/admin/master-data/districts?page=&limit=
@@ -218,6 +230,199 @@ router.post('/units', async (req, res) => {
     if (err.code === 11000) {
       return res.status(409).json({ success: false, message: `Unit "${(req.body.name || '').trim()}" already exists in this area` });
     }
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── RENAME (edit) ────────────────────────────────────────────────────────────
+
+// POST /api/ihthisabi/admin/master-data/districts/rename
+// Body: { oldName, newName }
+router.post('/districts/rename', async (req, res) => {
+  try {
+    const oldName = (req.body.oldName || '').trim();
+    const newName = (req.body.newName || '').trim();
+    if (!oldName || !newName) {
+      return res.status(400).json({ success: false, message: 'oldName and newName are required' });
+    }
+    if (oldName === newName) {
+      return res.status(400).json({ success: false, message: 'New name must be different' });
+    }
+
+    const [userExists, masterExists] = await Promise.all([
+      User.exists({ role: 'rukn', district: newName }),
+      LocationMaster.exists({ type: 'district', name: newName })
+    ]);
+    if (userExists || masterExists) {
+      return res.status(409).json({ success: false, message: `District "${newName}" already exists. Use merge instead.` });
+    }
+
+    await bulkUpdateLocation({ district: oldName }, { $set: { district: newName } });
+    await Promise.all([
+      LocationMaster.updateMany({ type: 'district', name: oldName }, { $set: { name: newName } }),
+      LocationMaster.updateMany({ type: 'area', district: oldName }, { $set: { district: newName } }),
+      LocationMaster.updateMany({ type: 'unit', district: oldName }, { $set: { district: newName } })
+    ]);
+
+    res.json({ success: true, message: `District "${oldName}" renamed to "${newName}"`, data: { oldName, newName } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/ihthisabi/admin/master-data/areas/rename
+// Body: { district, oldName, newName }
+router.post('/areas/rename', async (req, res) => {
+  try {
+    const district = (req.body.district || '').trim();
+    const oldName = (req.body.oldName || '').trim();
+    const newName = (req.body.newName || '').trim();
+    if (!district || !oldName || !newName) {
+      return res.status(400).json({ success: false, message: 'district, oldName and newName are required' });
+    }
+    if (oldName === newName) {
+      return res.status(400).json({ success: false, message: 'New name must be different' });
+    }
+
+    const [userExists, masterExists] = await Promise.all([
+      User.exists({ role: 'rukn', district, area: newName }),
+      LocationMaster.exists({ type: 'area', district, name: newName })
+    ]);
+    if (userExists || masterExists) {
+      return res.status(409).json({ success: false, message: `Area "${newName}" already exists in "${district}". Use merge instead.` });
+    }
+
+    await bulkUpdateLocation({ district, area: oldName }, { $set: { area: newName } });
+    await Promise.all([
+      LocationMaster.updateMany({ type: 'area', district, name: oldName }, { $set: { name: newName } }),
+      LocationMaster.updateMany({ type: 'unit', district, area: oldName }, { $set: { area: newName } })
+    ]);
+
+    res.json({ success: true, message: `Area "${oldName}" renamed to "${newName}"`, data: { district, oldName, newName } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/ihthisabi/admin/master-data/units/rename
+// Body: { district, area, oldName, newName }
+router.post('/units/rename', async (req, res) => {
+  try {
+    const district = (req.body.district || '').trim();
+    const area = (req.body.area || '').trim();
+    const oldName = (req.body.oldName || '').trim();
+    const newName = (req.body.newName || '').trim();
+    if (!district || !area || !oldName || !newName) {
+      return res.status(400).json({ success: false, message: 'district, area, oldName and newName are required' });
+    }
+    if (oldName === newName) {
+      return res.status(400).json({ success: false, message: 'New name must be different' });
+    }
+
+    const [userExists, masterExists] = await Promise.all([
+      User.exists({ role: 'rukn', district, area, unit: newName }),
+      LocationMaster.exists({ type: 'unit', district, area, name: newName })
+    ]);
+    if (userExists || masterExists) {
+      return res.status(409).json({ success: false, message: `Unit "${newName}" already exists in "${district} / ${area}". Use merge instead.` });
+    }
+
+    await bulkUpdateLocation({ district, area, unit: oldName }, { $set: { unit: newName } });
+    await LocationMaster.updateMany({ type: 'unit', district, area, name: oldName }, { $set: { name: newName } });
+
+    res.json({ success: true, message: `Unit "${oldName}" renamed to "${newName}"`, data: { district, area, oldName, newName } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── DELETE ───────────────────────────────────────────────────────────────────
+
+// POST /api/ihthisabi/admin/master-data/districts/delete
+// Body: { name }
+router.post('/districts/delete', async (req, res) => {
+  try {
+    const name = (req.body.name || '').trim();
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'name is required' });
+    }
+
+    const memberCount = await countAtLocation({ district: name });
+    if (memberCount > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot delete "${name}": ${memberCount} member(s)/unit-admin(s) still assigned to it`
+      });
+    }
+
+    await LocationMaster.deleteMany({
+      $or: [
+        { type: 'district', name },
+        { type: 'area', district: name },
+        { type: 'unit', district: name }
+      ]
+    });
+
+    res.json({ success: true, message: `District "${name}" deleted` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/ihthisabi/admin/master-data/areas/delete
+// Body: { district, name }
+router.post('/areas/delete', async (req, res) => {
+  try {
+    const district = (req.body.district || '').trim();
+    const name = (req.body.name || '').trim();
+    if (!district || !name) {
+      return res.status(400).json({ success: false, message: 'district and name are required' });
+    }
+
+    const memberCount = await countAtLocation({ district, area: name });
+    if (memberCount > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot delete "${name}": ${memberCount} member(s)/unit-admin(s) still assigned to it`
+      });
+    }
+
+    await LocationMaster.deleteMany({
+      $or: [
+        { type: 'area', district, name },
+        { type: 'unit', district, area: name }
+      ]
+    });
+
+    res.json({ success: true, message: `Area "${name}" deleted` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/ihthisabi/admin/master-data/units/delete
+// Body: { district, area, name }
+router.post('/units/delete', async (req, res) => {
+  try {
+    const district = (req.body.district || '').trim();
+    const area = (req.body.area || '').trim();
+    const name = (req.body.name || '').trim();
+    if (!district || !area || !name) {
+      return res.status(400).json({ success: false, message: 'district, area and name are required' });
+    }
+
+    const memberCount = await countAtLocation({ district, area, unit: name });
+    if (memberCount > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot delete "${name}": ${memberCount} member(s)/unit-admin(s) still assigned to it`
+      });
+    }
+
+    await LocationMaster.deleteMany({ type: 'unit', district, area, name });
+
+    res.json({ success: true, message: `Unit "${name}" deleted` });
+  } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });

@@ -117,10 +117,10 @@ function ReportListView({ onLogout }) {
   const filtered = search ? reports.filter(r => r.title?.toLowerCase().includes(search.toLowerCase())) : reports;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex overflow-x-hidden">
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => setShowLogoutModal(true)} adminData={adminData} />
 
-      <div className="flex-1 min-w-0 flex flex-col overflow-x-hidden">
+      <div className="flex-1 min-w-0 flex flex-col overflow-y-auto overflow-x-hidden">
         <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center gap-3 sticky top-0 z-10 shadow-sm">
           <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 hover:text-gray-700 lg:hidden"><Menu size={22} /></button>
           <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
@@ -134,7 +134,7 @@ function ReportListView({ onLogout }) {
           </button>
         </div>
 
-      <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full min-w-0 overflow-x-hidden">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-6xl mx-auto w-full min-w-0 overflow-x-hidden">
         {error && <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>}
         {success && <div className="mb-3 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">{success}</div>}
 

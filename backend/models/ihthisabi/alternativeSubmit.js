@@ -8,6 +8,11 @@ const alternativeSubmitSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    ruknId: {
+        type: String,
+        trim: true,
+        maxlength: [50, 'Rukn ID cannot exceed 50 characters']
+    },
     type: {
         type: String,
         enum: ['Aged', 'Patient'],

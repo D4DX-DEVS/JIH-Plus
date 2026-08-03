@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
-import { User, Shield, Home, AlertCircle } from 'lucide-react'
+import { User, Shield, Home, AlertCircle, Users, Building2, ArrowLeft } from 'lucide-react'
 import logoColor from '../../assets/LogoColor.png'
 
 const LoginPage = () => {
@@ -17,6 +17,8 @@ const LoginPage = () => {
   const [showMainAdminLogin, setShowMainAdminLogin] = useState(false)
   const [error, setError] = useState(null)
   const [adminError, setAdminError] = useState(null)
+  // Set when the RUKN ID holds multiple roles: { ruknId, name, availableRoles }
+  const [roleSelection, setRoleSelection] = useState(null)
   
   const { login, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
@@ -81,14 +83,26 @@ const LoginPage = () => {
     try {
       console.log('Login with RUKN ID:', formData.ruknId)
       const result = await login({ ruknId: formData.ruknId, role: 'unified' })
-      
+
       // Check for explicit failure - DO NOT navigate
       if (result.success === false) {
         setError(result.error || 'Invalid RUKN ID. Please check and try again.')
         setLoading(false)
         return // Stay on login page
       }
-      
+
+      // Multiple roles found - show role picker instead of navigating
+      if (result.requiresRoleSelection) {
+        setError(null)
+        setLoading(false)
+        setRoleSelection({
+          ruknId: result.ruknId || formData.ruknId,
+          name: result.name,
+          availableRoles: result.availableRoles
+        })
+        return
+      }
+
       // Only navigate on successful login
       if (result.success && result.user) {
         // Clear error state before navigation
@@ -118,6 +132,52 @@ const LoginPage = () => {
     } catch (error) {
       console.error('Login error:', error)
       // Handle unexpected errors - DO NOT navigate
+      setError(error.response?.data?.message || 'An error occurred. Please try again.')
+      setLoading(false)
+    }
+  }
+
+  // Complete a multi-role login with the role the user picked
+  const handleRoleSelect = async (selectedRole) => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const result = await login({
+        ruknId: roleSelection.ruknId,
+        role: 'unified',
+        selectedRole
+      })
+
+      if (result.success === false) {
+        setError(result.error || 'Login failed. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      if (result.success && result.user) {
+        setError(null)
+        setLoading(false)
+
+        setTimeout(() => {
+          let redirectPath = '/ihthisabi/dashboard'
+          if (result.user.role === 'admin' || result.user.role === 'mainAdmin') {
+            redirectPath = '/ihthisabi/admin'
+          } else if (result.user.role === 'unitAdmin') {
+            redirectPath = '/ihthisabi/unitadmin'
+          } else if (result.user.role === 'districtAdmin') {
+            redirectPath = '/ihthisabi/districtadmin'
+          } else if (result.user.role === 'rukn') {
+            redirectPath = '/ihthisabi/dashboard'
+          }
+          navigate(redirectPath, { replace: true })
+        }, 100)
+      } else {
+        setError('Login failed. Please try again.')
+        setLoading(false)
+      }
+    } catch (error) {
+      console.error('Role selection login error:', error)
       setError(error.response?.data?.message || 'An error occurred. Please try again.')
       setLoading(false)
     }
@@ -232,6 +292,7 @@ const LoginPage = () => {
                 setShowMainAdminLogin(true)
                 setError(null)
                 setAdminError(null)
+                setRoleSelection(null)
               }}
               className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
                 showMainAdminLogin
@@ -243,8 +304,78 @@ const LoginPage = () => {
             </button>
           </div>
 
+          {/* Role Selection (multi-role RUKN IDs) */}
+          {!showMainAdminLogin && roleSelection && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="text-center">
+                <p className="text-sm font-semibold text-[#002349]">
+                  Welcome{roleSelection.name ? `, ${roleSelection.name}` : ''}!
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  Your RUKN ID has multiple roles. Choose which dashboard you want to access.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {roleSelection.availableRoles.map((roleOption) => {
+                  const Icon = roleOption.role === 'districtAdmin'
+                    ? Building2
+                    : roleOption.role === 'unitAdmin'
+                      ? Users
+                      : User
+                  return (
+                    <button
+                      key={roleOption.role}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => handleRoleSelect(roleOption.role)}
+                      className="w-full flex items-center gap-3 p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-[#7B4FF2] hover:bg-[#7B4FF2]/5 transition-all duration-200 text-left disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#7B4FF2]/10 flex items-center justify-center">
+                        <Icon className="h-5 w-5 text-[#7B4FF2]" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[#002349]">{roleOption.label}</p>
+                        {roleOption.scope && (
+                          <p className="text-xs text-gray-500">{roleOption.scope}</p>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 flex items-start space-x-2 animate-fade-in">
+                  <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700 font-medium">{error}</p>
+                </div>
+              )}
+
+              {loading && (
+                <div className="flex items-center justify-center text-xs text-gray-600">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#7B4FF2] border-t-transparent mr-2"></div>
+                  Signing in...
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setRoleSelection(null)
+                  setError(null)
+                }}
+                className="w-full flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-[#002349] transition-colors duration-200"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Use a different RUKN ID
+              </button>
+            </div>
+          )}
+
           {/* RUKN Login Form */}
-          {!showMainAdminLogin && (
+          {!showMainAdminLogin && !roleSelection && (
             <div className="space-y-5">
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* RUKN ID Field */}

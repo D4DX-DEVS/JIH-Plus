@@ -1,682 +1,155 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { api } from '../../utils/ihthisabi/api'
-import { Download, Filter, MapPin, RefreshCcw } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { pdf, Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer'
-import NotoSansMalayalam from '../../assets/fonts/NotoSansMalayalam-Regular.ttf'
+import { BarChart3, CalendarRange, Filter, AlertCircle, Users, RefreshCcw, Trophy, X, FileText } from 'lucide-react'
+import { getAvailableQuarters, getQuarterName } from '../../utils/ihthisabi/quarterHelper'
 
+// Consolidation: pick a year + quarter, the published dynamic form for that
+// period is loaded, and every question is summarized (option counts for
+// radio/dropdown/checkbox/star, sums for number fields, a totals table for
+// grouped/tabular fields) with district/area/unit filters (default: all).
 const Consolidation = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth()
-  const [loading, setLoading] = useState(true)
-  const [allSubmissions, setAllSubmissions] = useState([])
-  const [totalSubmissions, setTotalSubmissions] = useState(0)
-  const [result, setResult] = useState(null)
-  const [fetching, setFetching] = useState(false)
-  const [pdfGenerating, setPdfGenerating] = useState(false)
-  const [fontReady, setFontReady] = useState(false)
+  const navigate = useNavigate()
 
-  // Load Malayalam font once and register with react-pdf
-  useEffect(() => {
-    let mounted = true
-    const loadFont = async () => {
-      try {
-        const res = await fetch(NotoSansMalayalam)
-        const buf = await res.arrayBuffer()
-        // Convert to base64 data URL because react-pdf expects a string source
-        const base64 = btoa(
-          String.fromCharCode(...new Uint8Array(buf))
-        )
-        const dataUrl = `data:font/ttf;base64,${base64}`
-        Font.register({
-          family: 'NotoSansMalayalam',
-          src: dataUrl,
-          format: 'truetype'
-        })
-        if (mounted) setFontReady(true)
-      } catch (err) {
-        console.error('Failed to load Malayalam font', err)
-        if (mounted) toast.error('Failed to load Malayalam font for PDF')
-      }
-    }
-    loadFont()
-    return () => { mounted = false }
-  }, [])
+  // Step 1 — period selection
+  const [selectedYear, setSelectedYear] = useState('')
+  const [selectedQuarter, setSelectedQuarter] = useState('')
 
-  // Location filters
+  // Step 2 — location filters (default all)
   const [district, setDistrict] = useState('all')
   const [area, setArea] = useState('all')
   const [unit, setUnit] = useState('all')
-  
-  // Quarter/Year filters for dynamic form support
-  const [selectedQuarter, setSelectedQuarter] = useState('')
-  const [selectedYear, setSelectedYear] = useState('')
-  const [dynamicFormForQuarter, setDynamicFormForQuarter] = useState(null)
-  const [dynamicResult, setDynamicResult] = useState(null)
+  const [districts, setDistricts] = useState([])
+  const [areas, setAreas] = useState([])
+  const [units, setUnits] = useState([])
 
-  // Field selection and value
-  const [selectedField, setSelectedField] = useState('')
-  const [fieldValue, setFieldValue] = useState('')
-  const [fieldValueMin, setFieldValueMin] = useState('')
-  const [fieldValueMax, setFieldValueMax] = useState('')
+  // Result
+  const [data, setData] = useState(null)
+  const [formMissing, setFormMissing] = useState(false)
+  const [fetching, setFetching] = useState(false)
+  const [error, setError] = useState(null)
 
-  // Translation helper function
-  const translateValue = (val) => {
-    const translations = {
-      'complete': 'പൂർണം',
-      'partial': 'ഭാഗികം',
-      'notread': 'വായിച്ചില്ല',
-      'incomplete': 'അപൂർണം',
-      'yes': 'അതെ',
-      'no': 'ഇല്ല',
-      'satisfactory': 'തൃപ്തികരം',
-      'unsatisfactory': 'തൃപ്തികരമല്ല',
-      'notApplicable': 'ബാധകമല്ല',
-      'almost': 'ഏറെക്കുറെ',
-      'small': 'ചെറിയ തോതിൽ',
-      'none': '-',
-      'fullAttended': 'പൂർണമായി ഹാജരായി',
-      'others': 'മറ്റുള്ളവർ',
-      '3': '3 യോഗങ്ങൾ',
-      '2': '2 യോഗങ്ങൾ',
-      '1': '1 യോഗം',
-      '0': '0 യോഗങ്ങൾ',
-      // notSet appears when a field was absent in older submissions (no value recorded)
-      'notSet': 'രേഖപ്പെടുത്തിയില്ല'
-    };
-    return translations[val] || val;
-  };
+  // "Who reported the highest?" modal (number questions)
+  const [topView, setTopView] = useState(null) // the question being inspected
+  const [topRows, setTopRows] = useState([])
+  const [topLoading, setTopLoading] = useState(false)
+  const [topError, setTopError] = useState(null)
 
-  // Available filterable fields with their configurations (in Malayalam)
-  const filterableFields = [
-    {
-      id: 'quranStatus',
-      label: 'ഖുർആൻ പഠനം',
-      type: 'select',
-      options: [
-        { value: 'complete', label: 'പൂർണം' },
-        { value: 'partial', label: 'ഭാഗികം' },
-        { value: 'none', label: '-' }
-      ]
-    },
-    {
-      id: 'islami',
-      label: 'പുസ്തക വായന - മുസ്‌ലിം വനിതകളും ഇസ്‌ലാമിക പ്രബോധനവും',
-      type: 'select',
-      options: [
-        { value: 'complete', label: 'പൂർണം' },
-        { value: 'partial', label: 'ഭാഗികം' },
-        { value: 'notread', label: 'വായിച്ചില്ല' }
-      ]
-    },
-    {
-      id: 'atma',
-      label: 'പുസ്തക വായന - മദീനയിലെ ഏടുകളിൽ നിന്ന്',
-      type: 'select',
-      options: [
-        { value: 'complete', label: 'പൂർണം' },
-        { value: 'partial', label: 'ഭാഗികം' },
-        { value: 'notread', label: 'വായിച്ചില്ല' }
-      ]
-    },
-    {
-      id: 'baithulmaal',
-      label: 'ബൈതുല്മാല് (2%)',
-      type: 'select',
-      options: [
-        { value: 'complete', label: 'പൂർണം' },
-        { value: 'partial', label: 'ഭാഗികം' },
-        { value: 'incomplete', label: 'അപൂർണം' }
-      ]
-    },
-    {
-      id: 'zakatPaid',
-      label: 'സകാത്ത് ബൈതുല്മാലിൽ അടച്ചോ?',
-      type: 'select',
-      options: [
-        { value: 'yes', label: 'അതെ' },
-        { value: 'no', label: 'ഇല്ല' },
-        { value: 'notApplicable', label: 'ബാധകമല്ല' }
-      ]
-    },
-    {
-      id: 'recruitEffort',
-      label: 'മൂന്ന് പേരെ ചേർക്കാനുള്ള ശ്രമം',
-      type: 'select',
-      options: [
-        { value: 'satisfactory', label: 'തൃപ്തികരം' },
-        { value: 'unsatisfactory', label: 'തൃപ്തികരമല്ല' }
-      ]
-    },
-    {
-      id: 'meqathService',
-      label: 'മീഖാത്തീ സേവന പ്രവർത്തനം',
-      type: 'select',
-      options: [
-        { value: 'yes', label: 'അതെ' },
-        { value: 'no', label: 'ഇല്ല' }
-      ]
-    },
-    {
-      id: 'skillUsage',
-      label: 'വ്യക്തിഗത കഴിവുകൾ ഉപയോഗിച്ചോ?',
-      type: 'select',
-      options: [
-        { value: 'yes', label: 'അതെ' },
-        { value: 'no', label: 'ഇല്ല' }
-      ]
-    },
-    {
-      id: 'jamaathAgenda',
-      label: 'ജമാഅത്തെ അജണ്ട നടപ്പാക്കുന്നുണ്ടോ?',
-      type: 'select',
-      options: [
-        { value: 'yes', label: 'അതെ' },
-        { value: 'no', label: 'ഇല്ല' },
-        { value: 'almost', label: 'ഏറെക്കുറെ' }
-      ]
-    },
-    {
-      id: 'jamaathInfluence',
-      label: 'ജമാഅത്തെ യോഗം സ്വാധീനം ചെലുത്തുന്നുണ്ടോ?',
-      type: 'select',
-      options: [
-        { value: 'yes', label: 'അതെ' },
-        { value: 'no', label: 'ഇല്ല' },
-        { value: 'small', label: 'ചെറിയ തോതിൽ' }
-      ]
-    },
-    {
-      id: 'hadithCount',
-      label: 'ഹദീസ് പഠനം',
-      type: 'range'
-    },
-    {
-      id: 'newMembers',
-      label: 'പുതിയ വ്യക്തികൾ',
-      type: 'range'
-    },
-    {
-      id: 'muslimRelations',
-      label: 'മുസ്ലിം വ്യക്തിബന്ധങ്ങൾ',
-      type: 'range'
-    },
-    {
-      id: 'communityRelations',
-      label: 'സഹോദര സമുദായങ്ങളുമായുള്ള ബന്ധം',
-      type: 'range'
-    },
-    {
-      id: 'scoreCount',
-      label: 'സ്‌ക്വാഡുകൾ ',
-      type: 'range'
-    },
-    {
-      id: 'weeklyMeeting',
-      label: 'പ്രതിവാര യോഗം',
-      type: 'select',
-      options: [
-        { value: 'fullAttended', label: 'പൂർണമായി ഹാജരായി' },
-        { value: 'others', label: 'മറ്റുള്ളവർ' }
-      ]
-    },
-    {
-      id: 'jamaathMeeting',
-      label: 'ജമാഅത്തെ യോഗം',
-      type: 'select',
-      options: [
-        { value: 'fullAttended', label: 'പൂർണമായി ഹാജരായി' },
-        { value: 'others', label: 'മറ്റുള്ളവർ' }
-      ]
-    },
-    {
-      id: 'grihameetings',
-      label: 'ഗൃഹ യോഗങ്ങൾ',
-      type: 'select',
-      options: [
-        { value: '3', label: '3 യോഗങ്ങൾ' },
-        { value: '2', label: '2 യോഗങ്ങൾ' },
-        { value: '1', label: '1 യോഗം' },
-        { value: '0', label: '0 യോഗങ്ങൾ' }
-      ]
-    },
-    {
-      id: 'thahreekiMeetings',
-      label: 'തഹ്രീക്കി യോഗങ്ങൾ',
-      type: 'select',
-      options: [
-        { value: '3', label: '3 യോഗങ്ങൾ' },
-        { value: '2', label: '2 യോഗങ്ങൾ' },
-        { value: '1', label: '1 യോഗം' },
-        { value: '0', label: '0 യോഗങ്ങൾ' }
-      ]
-    }
-  ]
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: currentYear - 2023 + 1 }, (_, i) => currentYear - i)
+  const quarters = getAvailableQuarters()
+  const periodChosen = Boolean(selectedYear && selectedQuarter)
+  const isAdmin = user?.role === 'admin'
 
-  const fetchAllSubmissions = async () => {
-    try {
-      setLoading(true)
-      setAllSubmissions([])
-      
-      // First, get page 1 to know total pages
-      const firstPageResponse = await api.get('/ihthisabi/admin/submissions', {
-        params: {
-          page: 1,
-          limit: 150
-        }
-      })
-
-      const firstPageData = firstPageResponse.data.data
-      const pagination = firstPageData.pagination || {}
-      const totalPages = pagination.pages || 1
-      const totalCount = pagination.total || 0
-      
-      setTotalSubmissions(totalCount)
-
-      // If only one page, we're done
-      if (totalPages === 1) {
-        setAllSubmissions(firstPageData.submissions || [])
-        setLoading(false)
-        return
-      }
-
-      // Load all remaining pages in parallel
-      const pagePromises = []
-      for (let page = 2; page <= totalPages; page++) {
-        pagePromises.push(
-          api.get('/ihthisabi/admin/submissions', {
-            params: {
-              page: page,
-              limit: 150
-            }
-          })
-        )
-      }
-
-      // Execute all page requests in parallel
-      const responses = await Promise.all(pagePromises)
-      
-      // Combine all submissions
-      let allSubs = [...(firstPageData.submissions || [])]
-      responses.forEach(response => {
-        allSubs = [...allSubs, ...(response.data.data.submissions || [])]
-      })
-
-      setAllSubmissions(allSubs)
-      console.log(`Loaded all ${totalPages} pages, total submissions: ${allSubs.length}`)
-    } catch (error) {
-      console.error('Failed to fetch submissions:', error)
-      toast.error('ഫിൽട്ടറുകൾക്കായി സമർപ്പണങ്ങൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല')
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Filter dropdown options come from the master-data endpoints (cascading)
+  useEffect(() => {
+    if (!isAdmin) return
+    api.get('/ihthisabi/admin/master-data/districts')
+      .then(res => setDistricts((res.data.data || []).map(d => d.name).sort()))
+      .catch(() => {})
+  }, [isAdmin])
 
   useEffect(() => {
-    if (!user || user.role !== 'admin') return
-    fetchAllSubmissions()
-  }, [user])
-
-  const getNormalizedLocation = (s) => {
-    const parts = typeof s.locationDisplay === 'string' ? s.locationDisplay.split('-').map(p => p.trim()) : []
-    return {
-      district: s.district || parts[0] || '',
-      area: s.area || parts[1] || '',
-      unit: s.unit || s.unitName || parts[parts.length - 1] || ''
+    if (district === 'all') {
+      setAreas([])
+      setArea('all')
+      return
     }
-  }
+    api.get('/ihthisabi/admin/master-data/areas', { params: { district } })
+      .then(res => setAreas((res.data.data || []).map(a => a.name).sort()))
+      .catch(() => {})
+  }, [district])
 
-  const districts = useMemo(() => {
-    const set = new Set()
-    allSubmissions.forEach(s => { const { district } = getNormalizedLocation(s); if (district) set.add(district) })
-    return Array.from(set).sort()
-  }, [allSubmissions])
-
-  const areas = useMemo(() => {
-    const set = new Set()
-    allSubmissions.forEach(s => {
-      const { district: d, area: a } = getNormalizedLocation(s)
-      if ((district === 'all' || d === district) && a) set.add(a)
-    })
-    return Array.from(set).sort()
-  }, [allSubmissions, district])
-
-  const units = useMemo(() => {
-    const set = new Set()
-    allSubmissions.forEach(s => {
-      const { district: d, area: a, unit: u } = getNormalizedLocation(s)
-      const okD = district === 'all' || d === district
-      const okA = area === 'all' || a === area
-      if (okD && okA && u) set.add(u)
-    })
-    return Array.from(set).sort()
-  }, [allSubmissions, district, area])
-
-  // Get selected field configuration
-  const selectedFieldConfig = useMemo(() => {
-    return filterableFields.find(f => f.id === selectedField) || null
-  }, [selectedField])
-
-  // Reset field value when field changes
   useEffect(() => {
-    setFieldValue('')
-    setFieldValueMin('')
-    setFieldValueMax('')
-  }, [selectedField])
-
-  // Check for dynamic form when quarter/year changes
-  useEffect(() => {
-    const checkDynamic = async () => {
-      if (!selectedQuarter || !selectedYear) {
-        setDynamicFormForQuarter(null)
-        setDynamicResult(null)
-        return
-      }
-      try {
-        const res = await api.get(`/ihthisabi/application-forms/public/by-quarter/${selectedQuarter}/${selectedYear}`)
-        if (res.data?.hasDynamicForm && res.data?.data) {
-          setDynamicFormForQuarter(res.data.data)
-        } else {
-          setDynamicFormForQuarter(null)
-        }
-      } catch {
-        setDynamicFormForQuarter(null)
-      }
+    if (district === 'all' || area === 'all') {
+      setUnits([])
+      setUnit('all')
+      return
     }
-    checkDynamic()
-  }, [selectedQuarter, selectedYear])
+    api.get('/ihthisabi/admin/master-data/units', { params: { district, area } })
+      .then(res => setUnits((res.data.data || []).map(u => u.name).sort()))
+      .catch(() => {})
+  }, [district, area])
 
-  const resetFilters = () => {
-    setDistrict('all')
-    setArea('all')
-    setUnit('all')
-    setSelectedQuarter('')
-    setSelectedYear('')
-    setSelectedField('')
-    setFieldValue('')
-    setFieldValueMin('')
-    setFieldValueMax('')
-    setResult(null)
-    setDynamicResult(null)
-    setDynamicFormForQuarter(null)
-  }
+  // Fetch consolidation whenever period or a location filter changes.
+  // The endpoint returns the published form itself, so a 404 means no
+  // dynamic form is published for the chosen quarter.
+  useEffect(() => {
+    if (!periodChosen || !isAdmin) return
+    let cancelled = false
 
-  const applyFilters = async () => {
-    try {
+    const fetchConsolidation = async () => {
       setFetching(true)
-      setDynamicResult(null)
-
-      // If dynamic form quarter is selected, use dynamic endpoint
-      if (dynamicFormForQuarter && selectedQuarter && selectedYear) {
+      setError(null)
+      setFormMissing(false)
+      try {
         const params = { quarter: selectedQuarter, year: selectedYear }
         if (district !== 'all') params.district = district
         if (area !== 'all') params.area = area
         if (unit !== 'all') params.unit = unit
-        if (selectedField) {
-          const dynQ = dynamicFormForQuarter.questions?.find(q => q.questionId === selectedField)
-          if (dynQ?.answerType === 'number') {
-            params.questionId = selectedField
-            if (fieldValueMin) params.questionValueMin = fieldValueMin
-            if (fieldValueMax) params.questionValueMax = fieldValueMax
-          } else if (fieldValue) {
-            params.questionId = selectedField
-            params.questionValue = fieldValue
-          }
-        }
-        const res = await api.get('/ihthisabi/admin/consolidation/dynamic', { params })
-        setDynamicResult(res.data?.data || null)
-        setResult(null)
-        return
-      }
 
-      const params = {}
+        const res = await api.get('/ihthisabi/admin/consolidation/dynamic', { params })
+        if (cancelled) return
+        setData(res.data.data)
+      } catch (err) {
+        if (cancelled) return
+        setData(null)
+        if (err.response?.status === 404) {
+          setFormMissing(true)
+        } else {
+          setError(err.response?.data?.message || 'Failed to load consolidation data')
+        }
+      } finally {
+        if (!cancelled) setFetching(false)
+      }
+    }
+
+    fetchConsolidation()
+    return () => { cancelled = true }
+  }, [periodChosen, isAdmin, selectedYear, selectedQuarter, district, area, unit])
+
+  const form = data?.form || null
+  const breakdowns = data?.breakdowns || {}
+  const totalSubmissions = data?.total || 0
+
+  const sortedQuestions = useMemo(
+    () => (form?.questions ? [...form.questions].sort((a, b) => (a.order || 0) - (b.order || 0)) : []),
+    [form]
+  )
+
+  const scopeLabel = district === 'all'
+    ? 'All Districts'
+    : [district, area !== 'all' ? area : null, unit !== 'all' ? unit : null].filter(Boolean).join(' › ')
+
+  // Open the "top values" modal for a number question and load who reported them
+  const openTopView = async (question) => {
+    setTopView(question)
+    setTopRows([])
+    setTopError(null)
+    setTopLoading(true)
+    try {
+      const params = { quarter: selectedQuarter, year: selectedYear, questionId: question.questionId, limit: 5 }
       if (district !== 'all') params.district = district
       if (area !== 'all') params.area = area
       if (unit !== 'all') params.unit = unit
-      if (selectedQuarter) params.quarter = selectedQuarter
-      if (selectedYear) params.year = selectedYear
-      
-      if (selectedField && selectedFieldConfig) {
-        if (selectedFieldConfig.type === 'range') {
-          if (fieldValueMin) {
-            if (selectedField === 'hadithCount') params.hadithMin = fieldValueMin
-            else if (selectedField === 'newMembers') params.newMembersMin = fieldValueMin
-            else if (selectedField === 'muslimRelations') params.muslimRelationsMin = fieldValueMin
-            else if (selectedField === 'communityRelations') params.communityRelationsMin = fieldValueMin
-            else if (selectedField === 'scoreCount') params.scoreCountMin = fieldValueMin
-          }
-          if (fieldValueMax) {
-            if (selectedField === 'hadithCount') params.hadithMax = fieldValueMax
-            else if (selectedField === 'newMembers') params.newMembersMax = fieldValueMax
-            else if (selectedField === 'muslimRelations') params.muslimRelationsMax = fieldValueMax
-            else if (selectedField === 'communityRelations') params.communityRelationsMax = fieldValueMax
-            else if (selectedField === 'scoreCount') params.scoreCountMax = fieldValueMax
-          }
-        } else {
-          if (fieldValue && fieldValue !== '') {
-            params[selectedField] = String(fieldValue)
-          }
-        }
-      }
-
-      const res = await api.get('/ihthisabi/admin/consolidation', { params })
-      setResult(res.data?.data || { total: 0, breakdown: {}, sums: {} })
-    } catch (e) {
-      setResult({ total: 0, breakdown: {}, sums: {} })
-    } finally {
-      setFetching(false)
-    }
-  }
-
-  const handleExportPdf = async () => {
-    if (!result) {
-      toast.error('Apply filters before exporting PDF')
-      return
-    }
-    if (!fontReady) {
-      toast.error('Font not loaded yet. Please try again.')
-      return
-    }
-
-    setPdfGenerating(true)
-
-    const formatPercent = () => {
-      const total = totalSubmissions || allSubmissions.length || 0
-      if (!total) return '0.0%'
-      return `${((result.total / total) * 100).toFixed(1)}%`
-    }
-
-    const fieldLabel = selectedFieldConfig?.label || 'None'
-    const fieldValueLabel = selectedFieldConfig?.type === 'range'
-      ? `${fieldValueMin || '-'} to ${fieldValueMax || '-'}`
-      : (selectedField ? translateValue(fieldValue) || fieldValue : 'N/A')
-
-    const sectionStyles = StyleSheet.create({
-      page: {
-        fontFamily: 'NotoSansMalayalam',
-        padding: 24,
-        fontSize: 10,
-        color: '#1f2937'
-      },
-      title: {
-        fontSize: 18,
-        marginBottom: 6,
-        color: '#0f172a'
-      },
-      meta: {
-        fontSize: 9,
-        color: '#475569',
-        marginBottom: 2
-      },
-      section: {
-        marginTop: 12
-      },
-      sectionTitle: {
-        fontSize: 12,
-        marginBottom: 6,
-        color: '#0f172a'
-      },
-      table: {
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-        borderRadius: 4,
-        overflow: 'hidden'
-      },
-      row: {
-        flexDirection: 'row'
-      },
-      cell: {
-        flex: 1,
-        borderRightWidth: 1,
-        borderRightColor: '#e5e7eb',
-        paddingVertical: 6,
-        paddingHorizontal: 8,
-        fontSize: 9
-      },
-      headerCell: {
-        backgroundColor: '#0b63c5',
-        color: '#ffffff',
-      },
-      lastCell: {
-        borderRightWidth: 0
-      },
-      noData: {
-        fontSize: 10,
-        color: '#6b7280',
-        marginTop: 6
-      }
-    })
-
-    const renderTable = (headers, rows) => (
-      <View style={sectionStyles.table}>
-        <View style={sectionStyles.row}>
-          {headers.map((h, idx) => (
-            <Text
-              key={h}
-              style={[
-                sectionStyles.cell,
-                sectionStyles.headerCell,
-                idx === headers.length - 1 && sectionStyles.lastCell
-              ]}
-            >
-              {h}
-            </Text>
-          ))}
-        </View>
-        {rows.map((r, idx) => (
-          <View key={idx} style={sectionStyles.row}>
-            {r.map((c, ci) => (
-              <Text
-                key={ci}
-                style={[
-                  sectionStyles.cell,
-                  ci === r.length - 1 && sectionStyles.lastCell
-                ]}
-              >
-                {c}
-              </Text>
-            ))}
-          </View>
-        ))}
-      </View>
-    )
-
-    const breakdowns = [
-      { title: 'Zakat Paid', map: result.breakdown?.zakatPaid },
-      { title: 'Baithulmaal (2%)', map: result.breakdown?.baithulmaal },
-      { title: 'Quran Study', map: result.breakdown?.quranStatus },
-      { title: 'Book Reading - Islami', map: result.breakdown?.bookReading?.islami },
-      { title: 'Book Reading - Atma', map: result.breakdown?.bookReading?.atma },
-      { title: 'Recruit Effort', map: result.breakdown?.recruitEffort },
-      { title: 'Meqath Service', map: result.breakdown?.meqathService },
-      { title: 'Skill Usage', map: result.breakdown?.skillUsage },
-      { title: 'Jamaath Agenda', map: result.breakdown?.jamaathAgenda },
-      { title: 'Jamaath Influence', map: result.breakdown?.jamaathInfluence }
-    ]
-
-    const doc = (
-      <Document>
-        <Page size="A4" style={sectionStyles.page}>
-          <Text style={sectionStyles.title}>Consolidation Report</Text>
-          <Text style={sectionStyles.meta}>Generated: {new Date().toLocaleString('en-IN')}</Text>
-          <Text style={sectionStyles.meta}>
-            Filters — District: {district === 'all' ? 'All' : district} | Area: {area === 'all' ? 'All' : area} | Unit: {unit === 'all' ? 'All' : unit}
-          </Text>
-          <Text style={sectionStyles.meta}>Field Filter: {fieldLabel} | Value: {fieldValueLabel}</Text>
-
-          <View style={sectionStyles.section}>
-            <Text style={sectionStyles.sectionTitle}>Summary</Text>
-            {renderTable(
-              ['Metric', 'Value'],
-              [
-                ['Matches', result.total ?? 0],
-                ['Total submissions', totalSubmissions || allSubmissions.length || 0],
-                ['Percentage', formatPercent()]
-              ]
-            )}
-          </View>
-
-          <View style={sectionStyles.section}>
-            <Text style={sectionStyles.sectionTitle}>Totals</Text>
-            {renderTable(
-              ['Totals', 'Value'],
-              [
-                ['Hadith Count (sum)', result.sums?.hadithCount ?? 0],
-                ['New Members (sum)', result.sums?.newMembers ?? 0],
-                ['Muslim Relations (sum)', result.sums?.muslimRelations ?? 0],
-                ['Community Relations (sum)', result.sums?.communityRelations ?? 0],
-                ['Score Count (sum)', result.sums?.scoreCount ?? 0],
-                ['Weekly Attendance', result.sums?.weekly_hadir ?? 0],
-                ['Weekly Leave', result.sums?.weekly_leave ?? 0],
-                ['Weekly Absent', result.sums?.weekly_absent ?? 0],
-                ['Jamaath Attendance', result.sums?.jamaath_hadir ?? 0],
-                ['Jamaath Leave', result.sums?.jamaath_leave ?? 0],
-                ['Jamaath Absent', result.sums?.jamaath_absent ?? 0]
-              ]
-            )}
-          </View>
-
-          {breakdowns.map(({ title, map }) => {
-            const entries = Object.entries(map || {})
-            if (!entries.length) return null
-            return (
-              <View key={title} style={sectionStyles.section}>
-                <Text style={sectionStyles.sectionTitle}>{title}</Text>
-                {renderTable(
-                  [title, 'Count'],
-                  entries.map(([k, v]) => [translateValue(k) || 'N/A', v ?? 0])
-                )}
-              </View>
-            )
-          })}
-
-          {!breakdowns.some(({ map }) => map && Object.keys(map).length) && (
-            <Text style={sectionStyles.noData}>No breakdown data for current filters.</Text>
-          )}
-        </Page>
-      </Document>
-    )
-
-    try {
-      const blob = await pdf(doc).toBlob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `consolidation-${new Date().toISOString().slice(0, 10)}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-      toast.success('PDF exported successfully')
+      const res = await api.get('/ihthisabi/admin/consolidation/dynamic/top', { params })
+      setTopRows(res.data.data.top || [])
     } catch (err) {
-      console.error('PDF export failed', err)
-      toast.error('Failed to export PDF')
+      setTopError(err.response?.data?.message || 'Failed to load top values')
     } finally {
-      setPdfGenerating(false)
+      setTopLoading(false)
     }
   }
 
-  if (authLoading || loading) {
+  const closeTopView = () => {
+    setTopView(null)
+    setTopRows([])
+    setTopError(null)
+  }
+
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-600 text-sm">ലോഡ് ചെയ്യുന്നു…</div>
@@ -691,29 +164,227 @@ const Consolidation = () => {
     )
   }
 
-  const Stat = ({ label, value }) => (
-    <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-      <div className="text-[11px] text-gray-500 mb-1">{label}</div>
-      <div className="text-lg font-semibold text-gray-900">{value ?? 0}</div>
-    </div>
-  )
+  const percentOf = (count) => (totalSubmissions > 0 ? Math.round((count / totalSubmissions) * 100) : 0)
 
-  const renderBreakdown = (title, map) => (
-    <div className="border border-gray-200 rounded-lg p-3">
-      <div className="text-sm font-semibold text-gray-900 mb-2">{title}</div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-        {Object.entries(map || {}).map(([k, v]) => (
-          <div key={k} className="flex items-center justify-between px-2 py-1.5 text-xs bg-white border border-gray-200 rounded">
-            <span className="text-gray-700 truncate mr-2">{translateValue(k) || 'N/A'}</span>
-            <span className="font-semibold text-gray-900">{v}</span>
+  // Option-count breakdown for radio / dropdown / checkbox / star questions
+  const renderChoiceBreakdown = (question) => {
+    const counts = breakdowns[question.questionId] || {}
+    let rows
+
+    if (question.answerType === 'star') {
+      const maxStars = question.max || 5
+      rows = Array.from({ length: maxStars }, (_, i) => {
+        const value = String(i + 1)
+        return { key: value, label: `${value} ★`, count: counts[value] || 0 }
+      }).reverse()
+    } else {
+      rows = (question.options || []).map(opt => ({
+        key: opt.value,
+        label: opt.label,
+        labelMl: opt.labelMl,
+        count: counts[opt.value] || 0
+      }))
+    }
+
+    // Answers recorded in data that don't match a defined option
+    const knownKeys = new Set(rows.map(r => r.key))
+    Object.entries(counts).forEach(([key, count]) => {
+      if (!knownKeys.has(key) && key !== 'notSet') {
+        rows.push({ key, label: key, count })
+      }
+    })
+
+    const notAnswered = question.answerType === 'checkbox' ? 0 : (counts.notSet || 0)
+
+    return (
+      <div className="space-y-2.5">
+        {rows.map(row => {
+          const pct = percentOf(row.count)
+          return (
+            <div key={row.key}>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="min-w-0 text-sm text-gray-700">
+                  <span className="font-medium">{row.label}</span>
+                  {row.labelMl && row.labelMl !== row.label && (
+                    <span className="text-gray-500"> · {row.labelMl}</span>
+                  )}
+                </div>
+                <div className="flex items-baseline gap-2 flex-shrink-0">
+                  <span className="text-sm font-bold text-gray-900">{row.count}</span>
+                  <span className="text-xs text-gray-500 w-10 text-right">{pct}%</span>
+                </div>
+              </div>
+              <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-[#7B4FF2] transition-all duration-500"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          )
+        })}
+        {notAnswered > 0 && (
+          <div className="flex items-center justify-between pt-1 text-xs text-gray-400">
+            <span>Not answered</span>
+            <span>{notAnswered}</span>
           </div>
-        ))}
-        {(!map || Object.keys(map).length === 0) && (
+        )}
+        {rows.length === 0 && (
           <div className="text-xs text-gray-500">ഡാറ്റ ഇല്ല</div>
         )}
       </div>
-    </div>
-  )
+    )
+  }
+
+  // Sum / average tiles for standalone number questions
+  const renderNumberBreakdown = (question) => {
+    const stats = breakdowns[question.questionId] || {}
+    const tiles = [
+      { label: 'Total', value: stats.sum ?? 0 },
+      { label: 'Average', value: stats.avg != null ? Math.round(stats.avg * 100) / 100 : 0 },
+      { label: 'Lowest', value: stats.min ?? 0 }
+    ]
+    return (
+      <div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {tiles.map(tile => (
+            <div key={tile.label} className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+              <div className="text-[11px] text-gray-500 mb-1">{tile.label}</div>
+              <div className="text-lg font-semibold text-gray-900">{tile.value}</div>
+            </div>
+          ))}
+          {/* Highest is clickable: shows who reported the top values */}
+          <button
+            type="button"
+            onClick={() => openTopView(question)}
+            className="p-3 rounded-lg bg-[#7B4FF2]/5 border border-[#7B4FF2]/30 text-left hover:bg-[#7B4FF2]/10 hover:border-[#7B4FF2] transition-all duration-200 cursor-pointer group"
+            title="See who reported the highest values"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] text-gray-500">Highest</span>
+              <Trophy className="w-3.5 h-3.5 text-[#7B4FF2] opacity-60 group-hover:opacity-100" />
+            </div>
+            <div className="text-lg font-semibold text-gray-900">{stats.max ?? 0}</div>
+            <div className="text-[10px] text-[#7B4FF2] mt-0.5">Tap to see who ›</div>
+          </button>
+        </div>
+        {(stats.invalid || 0) > 0 && (
+          <p className="mt-2 text-[11px] text-amber-600">
+            {stats.invalid} invalid {stats.invalid === 1 ? 'answer' : 'answers'} (out-of-range values) ignored.
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  // Single totals table for grouped/tabular (row-column) questions
+  const renderGroupBreakdown = (question) => {
+    const sums = breakdowns[question.questionId] || {}
+    const numericFields = (question.subFields || []).filter(sf => sf.type !== 'text')
+
+    if (numericFields.length === 0) {
+      return <div className="text-xs text-gray-500">This table has no countable fields.</div>
+    }
+
+    const invalidTotal = numericFields.reduce((s, sf) => s + (sums[`${sf.fieldId}_invalid`] || 0), 0)
+
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Field</th>
+              <th className="text-right py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {numericFields.map(sf => (
+              <tr key={sf.fieldId} className="border-b border-gray-100 last:border-0">
+                <td className="py-2.5 pr-4 text-gray-700">
+                  <span className="font-medium">{sf.label}</span>
+                  {sf.labelMl && sf.labelMl !== sf.label && (
+                    <span className="text-gray-500"> · {sf.labelMl}</span>
+                  )}
+                </td>
+                <td className="py-2.5 text-right font-bold text-gray-900">
+                  {sums[`${sf.fieldId}_sum`] ?? 0}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {invalidTotal > 0 && (
+          <p className="mt-2 text-[11px] text-amber-600">
+            {invalidTotal} invalid {invalidTotal === 1 ? 'entry' : 'entries'} (out-of-range values) ignored.
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  const renderQuestionCard = (question) => {
+    const isChoice = ['radio', 'dropdown', 'checkbox', 'star'].includes(question.answerType)
+    const isNumber = question.answerType === 'number'
+    const isGroup = question.answerType === 'group'
+    const isText = question.answerType === 'text' || question.answerType === 'textarea'
+
+    const typeBadge = {
+      radio: 'Single choice',
+      dropdown: 'Single choice',
+      checkbox: 'Multiple choice',
+      star: 'Rating',
+      number: 'Number',
+      group: 'Table totals',
+      text: 'Text',
+      textarea: 'Text'
+    }[question.answerType] || question.answerType
+
+    return (
+      <div key={question.questionId} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-gray-900">{question.questionText}</h3>
+            {question.questionTextMl && question.questionTextMl !== question.questionText && (
+              <p className="text-xs text-gray-500 mt-0.5">{question.questionTextMl}</p>
+            )}
+          </div>
+          <span className="flex-shrink-0 px-2 py-0.5 rounded-full bg-[#7B4FF2]/10 text-[#7B4FF2] text-[10px] font-semibold uppercase tracking-wide">
+            {typeBadge}
+          </span>
+        </div>
+
+        {isChoice && renderChoiceBreakdown(question)}
+        {isNumber && renderNumberBreakdown(question)}
+        {isGroup && renderGroupBreakdown(question)}
+        {isText && (
+          <div className="text-xs text-gray-500">
+            Written answers are not consolidated — read them in All Submissions.
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Insert a section heading whenever the section changes (questions are in order)
+  const questionBlocks = []
+  let lastSection = null
+  sortedQuestions.forEach(question => {
+    const section = question.section || ''
+    if (section && section !== lastSection) {
+      questionBlocks.push(
+        <div key={`section-${section}`} className="pt-2">
+          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            {section}
+            {question.sectionMl && question.sectionMl !== section && (
+              <span className="font-medium normal-case tracking-normal"> · {question.sectionMl}</span>
+            )}
+          </h2>
+        </div>
+      )
+    }
+    lastSection = section || lastSection
+    questionBlocks.push(renderQuestionCard(question))
+  })
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -722,408 +393,244 @@ const Consolidation = () => {
           <div className="ih-page-header">
             <div>
               <h1 className="ih-page-title">Consolidation</h1>
-              <p className="ih-page-subtitle">Filter and summarize submissions by each question</p>
+              <p className="ih-page-subtitle">Select a year and quarter to see the combined results of every answer</p>
             </div>
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Step 1 — period selection */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-          {/* Quarter/Year Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Quarter</label>
-              <select value={selectedQuarter} onChange={(e) => { setSelectedQuarter(e.target.value); setSelectedField(''); setFieldValue('') }}
-                className="form-select text-sm">
-                <option value="">All Quarters</option>
-                <option value="1">Q1 (Jan-Mar)</option>
-                <option value="2">Q2 (Apr-Jun)</option>
-                <option value="4">Q4 (Oct-Dec)</option>
-              </select>
-            </div>
+          <div className="flex items-center gap-2 mb-3">
+            <CalendarRange className="w-4 h-4 text-[#7B4FF2]" />
+            <span className="text-sm font-semibold text-gray-900">1. Choose the report period</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 max-w-md">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Year</label>
-              <select value={selectedYear} onChange={(e) => { setSelectedYear(e.target.value); setSelectedField(''); setFieldValue('') }}
-                className="form-select text-sm">
-                <option value="">All Years</option>
-                {[2026, 2025, 2024, 2023].map(y => (
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="form-select text-sm"
+              >
+                <option value="">Select year</option>
+                {years.map(y => (
                   <option key={y} value={y}>{y}</option>
                 ))}
               </select>
             </div>
-            {dynamicFormForQuarter && (
-              <div className="col-span-2 flex items-end">
-                <div className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
-                  Dynamic form: <strong>{dynamicFormForQuarter.title}</strong> ({dynamicFormForQuarter.questions?.length} questions)
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Quarter</label>
+              <select
+                value={selectedQuarter}
+                onChange={(e) => setSelectedQuarter(e.target.value)}
+                className="form-select text-sm"
+              >
+                <option value="">Select quarter</option>
+                {quarters.map(q => (
+                  <option key={q} value={q}>{getQuarterName(q)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Nothing selected yet */}
+        {!periodChosen && (
+          <div className="bg-white rounded-xl shadow-sm border border-dashed border-gray-300 p-10 text-center">
+            <BarChart3 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <p className="text-sm font-medium text-gray-700">Pick a year and quarter above</p>
+            <p className="text-xs text-gray-500 mt-1">The consolidated report of that quarter's form will appear here.</p>
+          </div>
+        )}
+
+        {/* No published form for the chosen quarter */}
+        {periodChosen && !fetching && formMissing && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800">
+                No published form for {getQuarterName(Number(selectedQuarter))} {selectedYear}
+              </p>
+              <p className="text-xs text-amber-700 mt-1">
+                Publish a dynamic form for this quarter in Form Management, then its submissions can be consolidated here.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
+        {periodChosen && !fetching && error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
+        {/* Loading */}
+        {periodChosen && fetching && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-10 flex items-center justify-center gap-2 text-sm text-gray-600">
+            <RefreshCcw className="w-4 h-4 animate-spin" />
+            ലോഡ് ചെയ്യുന്നു…
+          </div>
+        )}
+
+        {/* Results */}
+        {periodChosen && !fetching && !formMissing && !error && data && (
+          <>
+            {/* Step 2 — location filters */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Filter className="w-4 h-4 text-[#7B4FF2]" />
+                <span className="text-sm font-semibold text-gray-900">2. Filter by location (optional)</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">District</label>
+                  <select value={district} onChange={(e) => setDistrict(e.target.value)} className="form-select text-sm">
+                    <option value="all">All Districts</option>
+                    {districts.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Area</label>
+                  <select
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
+                    className="form-select text-sm"
+                    disabled={district === 'all'}
+                  >
+                    <option value="all">All Areas</option>
+                    {areas.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Unit</label>
+                  <select
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    className="form-select text-sm"
+                    disabled={district === 'all' || area === 'all'}
+                  >
+                    <option value="all">All Units</option>
+                    {units.map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary bar */}
+            <div className="bg-gradient-to-r from-[#1E1040] to-[#2D1B69] rounded-xl shadow-sm p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs text-purple-300">{form?.title}</p>
+                <p className="text-sm font-semibold text-white">
+                  {getQuarterName(Number(selectedQuarter))} {selectedYear} · {scopeLabel}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
+                <Users className="w-4 h-4 text-purple-300" />
+                <span className="text-lg font-bold text-white">{totalSubmissions}</span>
+                <span className="text-xs text-purple-300">submissions consolidated</span>
+              </div>
+            </div>
+
+            {totalSubmissions === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm border border-dashed border-gray-300 p-10 text-center">
+                <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm font-medium text-gray-700">No submissions found</p>
+                <p className="text-xs text-gray-500 mt-1">No one in {scopeLabel} has submitted this quarter's form yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {questionBlocks}
               </div>
             )}
-          </div>
+          </>
+        )}
+      </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            {/* District */}
-            <div>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select 
-                  value={district} 
-                  onChange={(e) => { 
-                    setDistrict(e.target.value)
-                    setArea('all')
-                    setUnit('all')
-                  }}
-                  className="form-select pl-10"
-                >
-                  <option value="all">All Districts</option>
-                  {districts.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {/* Area */}
-            <div>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select 
-                  value={area} 
-                  onChange={(e) => { 
-                    setArea(e.target.value)
-                    setUnit('all')
-                  }}
-                  className="form-select pl-10"
-                >
-                  <option value="all">All Areas</option>
-                  {areas.map(a => <option key={a} value={a}>{a}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {/* Unit */}
-            <div>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select 
-                  value={unit} 
-                  onChange={(e) => setUnit(e.target.value)}
-                  className="form-select pl-10"
-                >
-                  <option value="all">All Units</option>
-                  {units.map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {/* Field Selection */}
-            <div>
-              <div className="relative">
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select 
-                  value={selectedField} 
-                  onChange={(e) => setSelectedField(e.target.value)}
-                  className="form-select pl-10"
-                >
-                  <option value="">ഫിൽട്ടർ ഫീൽഡ് തിരഞ്ഞെടുക്കുക</option>
-                  {dynamicFormForQuarter
-                    ? dynamicFormForQuarter.questions
-                        ?.filter(q => ['radio', 'dropdown', 'checkbox', 'star', 'number'].includes(q.answerType))
-                        .map(q => (
-                          <option key={q.questionId} value={q.questionId}>{q.questionTextMl || q.questionText}</option>
-                        ))
-                    : filterableFields.map(field => (
-                        <option key={field.id} value={field.id}>{field.label}</option>
-                      ))
-                  }
-                </select>
-              </div>
-            </div>
-
-            {/* Field Value - Dynamic based on selected field */}
-            <div>
-              {dynamicFormForQuarter && selectedField ? (() => {
-                const dynQ = dynamicFormForQuarter.questions?.find(q => q.questionId === selectedField)
-                if (!dynQ) return <input type="text" placeholder="Select a field first" disabled className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-400 cursor-not-allowed" />
-                if (dynQ.answerType === 'number') {
-                  return (
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="number"
-                        placeholder="കുറഞ്ഞത്"
-                        value={fieldValueMin}
-                        onChange={(e) => setFieldValueMin(e.target.value)}
-                        className="form-input"
-                      />
-                      <input
-                        type="number"
-                        placeholder="കൂടുതൽ"
-                        value={fieldValueMax}
-                        onChange={(e) => setFieldValueMax(e.target.value)}
-                        className="form-input"
-                      />
-                    </div>
-                  )
-                }
-                return (
-                  <select value={fieldValue} onChange={(e) => setFieldValue(e.target.value)} className="form-select">
-                    <option value="">മൂല്യം തിരഞ്ഞെടുക്കുക</option>
-                    {dynQ.options?.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.labelMl || opt.label}</option>
-                    ))}
-                  </select>
-                )
-              })() : !selectedField || !selectedFieldConfig ? (
-                <input
-                  type="text"
-                  placeholder="ആദ്യം ഒരു ഫീൽഡ് തിരഞ്ഞെടുക്കുക"
-                  disabled
-                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-400 cursor-not-allowed"
-                />
-              ) : selectedFieldConfig.type === 'range' ? (
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="number"
-                    placeholder="കുറഞ്ഞത്"
-                    value={fieldValueMin}
-                    onChange={(e) => setFieldValueMin(e.target.value)}
-                    className="form-input"
-                  />
-                  <input
-                    type="number"
-                    placeholder="കൂടുതൽ"
-                    value={fieldValueMax}
-                    onChange={(e) => setFieldValueMax(e.target.value)}
-                    className="form-input"
-                  />
+      {/* Top-values modal: who reported the highest, with link to their full report */}
+      {topView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={closeTopView} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col">
+            <div className="flex items-start justify-between gap-3 p-4 border-b border-gray-100">
+              <div className="flex items-start gap-2 min-w-0">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#7B4FF2]/10 flex items-center justify-center">
+                  <Trophy className="w-4 h-4 text-[#7B4FF2]" />
                 </div>
-              ) : (
-                <select
-                  value={fieldValue}
-                  onChange={(e) => setFieldValue(e.target.value)}
-                  className="form-select"
-                >
-                  <option value="">മൂല്യം തിരഞ്ഞെടുക്കുക</option>
-                  {selectedFieldConfig.options.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-gray-900">Highest reported values</h3>
+                  <p className="text-xs text-gray-500 truncate">{topView.questionTextMl || topView.questionText}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{scopeLabel}</p>
+                </div>
+              </div>
+              <button
+                onClick={closeTopView}
+                className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto">
+              {topLoading && (
+                <div className="flex items-center justify-center gap-2 py-8 text-sm text-gray-600">
+                  <RefreshCcw className="w-4 h-4 animate-spin" />
+                  ലോഡ് ചെയ്യുന്നു…
+                </div>
+              )}
+
+              {!topLoading && topError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">{topError}</div>
+              )}
+
+              {!topLoading && !topError && topRows.length === 0 && (
+                <div className="py-8 text-center text-sm text-gray-500">No valid answers found for this question.</div>
+              )}
+
+              {!topLoading && !topError && topRows.length > 0 && (
+                <div className="space-y-2">
+                  {topRows.map((row, index) => (
+                    <div
+                      key={row._id}
+                      className={`flex items-center gap-3 p-3 rounded-xl border ${
+                        index === 0 ? 'border-[#7B4FF2]/40 bg-[#7B4FF2]/5' : 'border-gray-200 bg-white'
+                      }`}
+                    >
+                      <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                        index === 0 ? 'bg-[#7B4FF2] text-white' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {index + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {row.ruknName || 'Unknown'}
+                          {row.ruknId && <span className="font-normal text-gray-500"> · {row.ruknId}</span>}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {[row.district, row.area, row.unit].filter(Boolean).join(' › ')}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0 text-lg font-bold text-gray-900">{row.value}</div>
+                      <button
+                        onClick={() => navigate(`/ihthisabi/submissions/${row._id}`)}
+                        className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#7B4FF2] text-white text-xs font-semibold hover:bg-[#6a3dd9] transition-colors"
+                        title="View this rukn's complete submitted report"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        Report
+                      </button>
+                    </div>
                   ))}
-                </select>
+                </div>
               )}
             </div>
           </div>
-
-          <div className="mt-4 flex items-center gap-2">
-            <button 
-              onClick={applyFilters} 
-              disabled={fetching}
-              className="btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {fetching ? 'പ്രയോഗിക്കുന്നു…' : 'ഫിൽട്ടറുകൾ പ്രയോഗിക്കുക'}
-            </button>
-            <button 
-              onClick={resetFilters} 
-              className="btn-ghost text-sm"
-            >
-              <RefreshCcw className="w-4 h-4 mr-1" /> പുനഃക്രമീകരിക്കുക
-            </button>
-            {/* PDF export temporarily hidden; functionality retained for later use */}
-            {false && (
-              <button
-                onClick={handleExportPdf}
-                disabled={fetching || !result || pdfGenerating || !fontReady}
-                className="btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                {pdfGenerating ? 'Generating…' : 'Export PDF'}
-              </button>
-            )}
-          </div>
         </div>
-
-        {/* Results */}
-        <div className="space-y-4">
-          {/* Dynamic Form Results */}
-          {dynamicResult ? (
-            dynamicResult.total === 0 ? (
-              <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Filter className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No matching submissions</h3>
-                <p className="text-sm text-gray-600">No submissions found for this dynamic form quarter.</p>
-              </div>
-            ) : (
-              <>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                    Dynamic Form Results: {dynamicResult.form?.title}
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Matching Submissions</div>
-                      <div className="text-2xl font-bold text-primary">{dynamicResult.total}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Total for Quarter</div>
-                      <div className="text-2xl font-bold text-gray-900">{dynamicResult.totalForQuarter}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-gray-500 mb-1">Percentage</div>
-                      <div className="text-2xl font-bold text-green-600">
-                        {dynamicResult.totalForQuarter > 0
-                          ? ((dynamicResult.total / dynamicResult.totalForQuarter) * 100).toFixed(1)
-                          : '0.0'}%
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {dynamicResult.form?.questions?.map(q => {
-                    const breakdown = dynamicResult.breakdowns?.[q.questionId]
-                    if (!breakdown) return null
-                    const label = q.questionTextMl || q.questionText
-
-                    if (['radio', 'dropdown', 'checkbox', 'star'].includes(q.answerType)) {
-                      return renderBreakdown(label, breakdown)
-                    }
-                    if (q.answerType === 'number') {
-                      return (
-                        <div key={q.questionId} className="border border-gray-200 rounded-lg p-3">
-                          <div className="text-sm font-semibold text-gray-900 mb-2">{label}</div>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            <div className="px-2 py-1.5 text-xs bg-white border border-gray-200 rounded flex justify-between">
-                              <span className="text-gray-500">Sum</span>
-                              <span className="font-semibold">{breakdown.sum ?? 0}</span>
-                            </div>
-                            <div className="px-2 py-1.5 text-xs bg-white border border-gray-200 rounded flex justify-between">
-                              <span className="text-gray-500">Avg</span>
-                              <span className="font-semibold">{(breakdown.avg ?? 0).toFixed(1)}</span>
-                            </div>
-                            <div className="px-2 py-1.5 text-xs bg-white border border-gray-200 rounded flex justify-between">
-                              <span className="text-gray-500">Min</span>
-                              <span className="font-semibold">{breakdown.min ?? 0}</span>
-                            </div>
-                            <div className="px-2 py-1.5 text-xs bg-white border border-gray-200 rounded flex justify-between">
-                              <span className="text-gray-500">Max</span>
-                              <span className="font-semibold">{breakdown.max ?? 0}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    }
-                    if (q.answerType === 'group') {
-                      return (
-                        <div key={q.questionId} className="border border-gray-200 rounded-lg p-3">
-                          <div className="text-sm font-semibold text-gray-900 mb-2">{label}</div>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            {Object.entries(breakdown).map(([k, v]) => (
-                              <div key={k} className="px-2 py-1.5 text-xs bg-white border border-gray-200 rounded flex justify-between">
-                                <span className="text-gray-500 truncate mr-2">{k.replace('_sum', '')}</span>
-                                <span className="font-semibold">{v}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    }
-                    return null
-                  })}
-                </div>
-              </>
-            )
-          ) : result ? (
-            result.total === 0 ? (
-              <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Filter className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">തിരഞ്ഞെടുത്ത ഓപ്ഷനുകൾക്ക് മൂല്യങ്ങൾ ഇല്ല</h3>
-                <p className="text-sm text-gray-600">
-                  നിങ്ങളുടെ ഫിൽട്ടർ മാനദണ്ഡങ്ങൾക്ക് പൊരുത്തപ്പെടുന്ന സമർപ്പണങ്ങൾ ഒന്നുമില്ല. ദയവായി ഫിൽട്ടറുകൾ മാറ്റി വീണ്ടും ശ്രമിക്കുക.
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Filter Summary Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-2">ഫിൽട്ടർ സംഗ്രഹം</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">പൊരുത്തപ്പെട്ട സമർപ്പണങ്ങൾ</div>
-                          <div className="text-2xl font-bold text-primary">{result.total}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">ആകെ സമർപ്പണങ്ങൾ</div>
-                          <div className="text-2xl font-bold text-gray-900">{totalSubmissions || allSubmissions.length}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">ശതമാനം</div>
-                          <div className="text-2xl font-bold text-green-600">
-                            {totalSubmissions > 0 
-                              ? ((result.total / totalSubmissions) * 100).toFixed(1)
-                              : allSubmissions.length > 0
-                              ? ((result.total / allSubmissions.length) * 100).toFixed(1)
-                              : '0.0'
-                            }%
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                  <Stat label="ഹദീസ് എണ്ണം (സം)" value={result.sums?.hadithCount} />
-                  <Stat label="പുതിയ വ്യക്തികൾ (സം)" value={result.sums?.newMembers} />
-                  <Stat label="മുസ്ലിം വ്യക്തിബന്ധങ്ങൾ (സം)" value={result.sums?.muslimRelations} />
-                  <Stat label="സഹോദര സമുദായങ്ങളുമായുള്ള ബന്ധം (സം)" value={result.sums?.communityRelations} />
-                  <Stat label="സ്‌ക്വാഡുകൾ  (സം)" value={result.sums?.scoreCount} />
-                  <Stat label="പൊരുത്തപ്പെട്ടവ" value={result.total} />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {renderBreakdown('സകാത്ത് ബൈതുല്മാലിൽ അടച്ചോ?', result.breakdown?.zakatPaid)}
-                  {renderBreakdown('ബൈതുല്മാല് (2%)', result.breakdown?.baithulmaal)}
-                  {renderBreakdown('ഖുർആൻ പഠനം', result.breakdown?.quranStatus)}
-                  {renderBreakdown('പുസ്തക വായന - മുസ്‌ലിം വനിതകളും ഇസ്‌ലാമിക പ്രബോധനവും', result.breakdown?.bookReading?.islami)}
-                  {renderBreakdown('പുസ്തക വായന - മദീനയിലെ ഏടുകളിൽ നിന്ന്', result.breakdown?.bookReading?.atma)}
-                  {renderBreakdown('മൂന്ന് പേരെ ചേർക്കാനുള്ള ശ്രമം', result.breakdown?.recruitEffort)}
-                  {renderBreakdown('മീഖാത്തീ സേവന പ്രവർത്തനം', result.breakdown?.meqathService)}
-                  {renderBreakdown('വ്യക്തിഗത കഴിവുകൾ ഉപയോഗിച്ചോ?', result.breakdown?.skillUsage)}
-                  {renderBreakdown('ജമാഅത്തെ അജണ്ട നടപ്പാക്കുന്നുണ്ടോ?', result.breakdown?.jamaathAgenda)}
-                  {renderBreakdown('ജമാഅത്തെ യോഗം സ്വാധീനം ചെലുത്തുന്നുണ്ടോ?', result.breakdown?.jamaathInfluence)}
-                  {renderBreakdown('പ്രതിവാര യോഗം', result.breakdown?.weeklyMeeting)}
-                  {renderBreakdown('ജമാഅത്തെ യോഗം', result.breakdown?.jamaathMeeting)}
-                  {renderBreakdown('ഗൃഹ യോഗങ്ങൾ', result.breakdown?.grihameetings)}
-                  {renderBreakdown('തഹ്രീകി യോഗങ്ങൾ', result.breakdown?.thahreekiMeetings)}
-                </div>
-
-                <div className="border border-gray-200 rounded-lg p-3">
-                  <div className="text-sm font-semibold text-gray-900 mb-2">യോഗങ്ങളുടെ ആകെത്തുക</div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                    <Stat label="പ്രതിവാര ഹാജർ" value={result.sums?.weekly_hadir} />
-                    <Stat label="പ്രതിവാര ലീവ്" value={result.sums?.weekly_leave} />
-                    <Stat label="പ്രതിവാര ആബ്സന്റ്" value={result.sums?.weekly_absent} />
-                    <Stat label="ജമാഅത്തെ ഹാജർ" value={result.sums?.jamaath_hadir} />
-                    <Stat label="ജമാഅത്തെ ലീവ്" value={result.sums?.jamaath_leave} />
-                    <Stat label="ജമാഅത്തെ ആബ്സന്റ്" value={result.sums?.jamaath_absent} />
-                  </div>
-                </div>
-              </>
-            )
-          ) : (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-              <p className="text-sm text-gray-600">
-                ലൊക്കേഷൻ ഫിൽട്ടറുകളും ഫിൽട്ടർ ചെയ്യാനുള്ള ഫീൽഡും തിരഞ്ഞെടുത്ത് "ഫിൽട്ടറുകൾ പ്രയോഗിക്കുക" ക്ലിക്ക് ചെയ്ത് കൂട്ടിച്ചേർക്കൽ ഫലങ്ങൾ കാണുക.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   )
 }
 
 export default Consolidation
-
-

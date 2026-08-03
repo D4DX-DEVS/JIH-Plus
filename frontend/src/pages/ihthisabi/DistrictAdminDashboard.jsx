@@ -132,7 +132,8 @@ const DistrictAdminDashboard = () => {
   const [submissionsLoaded, setSubmissionsLoaded] = useState(false)
   const [submissionsSearch, setSubmissionsSearch] = useState('')
   const [submissionsArea, setSubmissionsArea] = useState('')
-  const [submissionsStatus, setSubmissionsStatus] = useState('')
+  const [submissionsQuarter, setSubmissionsQuarter] = useState('')
+  const [submissionsYear, setSubmissionsYear] = useState('')
   const [submissionsSort, setSubmissionsSort] = useState({ by: 'createdAt', dir: 'desc' })
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null)
   const [submissionDetails, setSubmissionDetails] = useState(null)
@@ -188,7 +189,7 @@ const DistrictAdminDashboard = () => {
   useEffect(() => {
     if (submissionsLoaded) fetchSubmissions(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [submissionsArea, submissionsStatus, submissionsSort])
+  }, [submissionsArea, submissionsQuarter, submissionsYear, submissionsSort])
 
   useEffect(() => {
     if (!printMode) return
@@ -264,7 +265,8 @@ const DistrictAdminDashboard = () => {
           limit: 10,
           search: submissionsSearch || undefined,
           area: submissionsArea || undefined,
-          status: submissionsStatus || undefined,
+          quarter: submissionsQuarter || undefined,
+          year: submissionsYear || undefined,
           sortBy: submissionsSort.by,
           sortDir: submissionsSort.dir
         }
@@ -407,7 +409,8 @@ const DistrictAdminDashboard = () => {
       const rows = await fetchAllPages('/districtadmin/submissions', 'submissions', {
         search: submissionsSearch || undefined,
         area: submissionsArea || undefined,
-        status: submissionsStatus || undefined,
+        quarter: submissionsQuarter || undefined,
+        year: submissionsYear || undefined,
         sortBy: submissionsSort.by,
         sortDir: submissionsSort.dir
       })
@@ -815,14 +818,24 @@ const DistrictAdminDashboard = () => {
               {areas.map((a) => <option key={a} value={a}>{a}</option>)}
             </select>
             <select
-              value={submissionsStatus}
-              onChange={(e) => setSubmissionsStatus(e.target.value)}
+              value={submissionsQuarter}
+              onChange={(e) => setSubmissionsQuarter(e.target.value)}
               className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
             >
-              <option value="">All Statuses</option>
-              <option value="submitted">Submitted</option>
-              <option value="reviewed">Reviewed</option>
-              <option value="approved">Approved</option>
+              <option value="">All Quarters</option>
+              {getAvailableQuarters().map((q) => (
+                <option key={q} value={q}>{getQuarterName(q)}</option>
+              ))}
+            </select>
+            <select
+              value={submissionsYear}
+              onChange={(e) => setSubmissionsYear(e.target.value)}
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+            >
+              <option value="">All Years</option>
+              {(availableYears.length ? availableYears : [stats.currentYear].filter(Boolean)).map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
             </select>
             <button
               onClick={() => fetchSubmissions(1)}

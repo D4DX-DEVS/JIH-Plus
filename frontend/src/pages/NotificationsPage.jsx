@@ -434,7 +434,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 min-w-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>
@@ -466,7 +466,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
             <span>Menu</span>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 min-w-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>
@@ -499,7 +499,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
             <span>Menu</span>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 min-w-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>
@@ -530,7 +530,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
             <span>Menu</span>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 min-w-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>

@@ -560,7 +560,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
   const areaName = area?.name || survey?.area || userData.area || userData.areaName || '—';
 
   const renderWithSidebar = (content) => (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-x-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <AreaAdminSidebar
         activeTab="monthly"
         onNavigate={handleSidebarNavigate}
@@ -573,7 +573,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
         onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <div className="lg:hidden px-4 pt-4">
           <button
             onClick={() => setIsSidebarOpen(true)}
@@ -583,7 +583,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
             <span>Menu</span>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6">
           {content}
         </div>
       </div>
@@ -638,7 +638,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-x-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <AreaAdminSidebar
         activeTab="monthly"
         onNavigate={handleSidebarNavigate}
@@ -651,7 +651,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
         onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile toggle */}
         <div className="lg:hidden px-4 pt-4">
           <button
@@ -663,7 +663,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
           {/* Header - No container */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
