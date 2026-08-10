@@ -69,9 +69,29 @@ router.get('/submissions', async (req, res) => {
         match.userId = { $nin: abroadUserIds };
       }
     }
-    if (quarter) match['submissionPeriod.quarter'] = parseInt(quarter, 10);
+    if (quarter) {
+      // Legacy docs may lack submissionPeriod.quarter (the display derives it from
+      // month), so fall back to the month range — keeps displayed period and filter
+      // results consistent. $and keeps this composable with the userId $or above.
+      const quarterNum = parseInt(quarter, 10);
+      const monthStart = (quarterNum - 1) * 3 + 1;
+      match.$and = [
+        ...(match.$and || []),
+        {
+          $or: [
+            { 'submissionPeriod.quarter': quarterNum },
+            {
+              'submissionPeriod.quarter': { $in: [null] },
+              'submissionPeriod.month': { $gte: monthStart, $lte: monthStart + 2 }
+            }
+          ]
+        }
+      ];
+    }
     if (year) match['submissionPeriod.year'] = parseInt(year, 10);
-    if (status) match.status = status;
+    // Docs missing status are displayed as 'submitted' (see $ifNull in the
+    // projection), so the 'submitted' filter must match them too.
+    if (status) match.status = status === 'submitted' ? { $in: ['submitted', null] } : status;
 
     // District/area/unit/search filter on the RESOLVED location (current rukn location
     // via the lookups below), matching the semantics the frontend used to apply client-side.
@@ -79,7 +99,10 @@ router.get('/submissions', async (req, res) => {
     if (district) resolvedMatch.district = district;
     if (area) resolvedMatch.area = area;
     if (unit) resolvedMatch.unit = unit;
-    if (search) resolvedMatch.ruknName = { $regex: escapeRegexSubmissions(search), $options: 'i' };
+    if (search) {
+      const searchRegex = { $regex: escapeRegexSubmissions(search), $options: 'i' };
+      resolvedMatch.$or = [{ ruknName: searchRegex }, { ruknId: searchRegex }];
+    }
 
     const pipeline = [
       { $match: match }, // Q3 submissions are visible in admin list view
@@ -90,7 +113,7 @@ router.get('/submissions', async (req, res) => {
           let: { uid: '$userId' },
           pipeline: [
             { $match: { $expr: { $eq: ['$_id', '$$uid'] } } },
-            { $project: { district: 1, area: 1, unit: 1, name: 1, username: 1 } }
+            { $project: { district: 1, area: 1, unit: 1, name: 1, username: 1, ruknId: 1 } }
           ],
           as: 'user'
         }
@@ -152,6 +175,12 @@ router.get('/submissions', async (req, res) => {
               { $ifNull: ['$user.name', { $ifNull: ['$unitAdminUser.name', '$user.username'] }] }
             ]
           },
+          ruknId: {
+            $ifNull: [
+              '$ruknId',
+              { $ifNull: ['$user.ruknId', '$unitAdminUser.ruknId'] }
+            ]
+          },
           periodDisplay: {
             $cond: [
               { $ifNull: ['$submissionPeriod.year', false] },
@@ -197,6 +226,7 @@ router.get('/submissions', async (req, res) => {
                 _id: 0,
                 id: '$_id',
                 ruknName: 1,
+                ruknId: 1,
                 district: 1,
                 area: 1,
                 unit: 1,
@@ -4576,7 +4606,7 @@ router.delete('/archive-quarters/:id', requireSuperAdmin, async (req, res) => {
 // @access  Private (Admin only)
 router.get('/non-submitted', async (req, res) => {
   try {
-    const { quarter, year, district, area, unit } = req.query;
+    const { quarter, year, district, area, unit, search } = req.query;
 
     if (!quarter || !year) {
       return res.status(400).json({ success: false, message: 'Quarter and year are required' });
@@ -4597,6 +4627,10 @@ router.get('/non-submitted', async (req, res) => {
     if (district && district !== 'all') userFilter.district = district;
     if (area && area !== 'all') userFilter.area = area;
     if (unit && unit !== 'all') userFilter.unit = unit;
+    if (search && search.trim()) {
+      const searchRegex = { $regex: escapeRegexSubmissions(search.trim()), $options: 'i' };
+      userFilter.$or = [{ name: searchRegex }, { ruknId: searchRegex }];
+    }
 
     // Fetch all rukn users matching location filter
     const allRukns = await User.find(userFilter)
@@ -4618,29 +4652,53 @@ router.get('/non-submitted', async (req, res) => {
       });
     }
 
-    // Find all userIds who submitted for this quarter/year
-    const submissions = await Submission.find({
-      'submissionPeriod.quarter': quarterNum,
-      'submissionPeriod.year': yearNum
-    }).select('userId').lean();
+    // Find everyone who submitted for this quarter/year. Legacy docs may lack
+    // submissionPeriod.quarter (the list view derives it from month), so match
+    // the month range as a fallback — otherwise their owners leak into "pending".
+    const monthStart = (quarterNum - 1) * 3 + 1;
+    const periodMatch = {
+      'submissionPeriod.year': yearNum,
+      $or: [
+        { 'submissionPeriod.quarter': quarterNum },
+        {
+          'submissionPeriod.quarter': { $in: [null] },
+          'submissionPeriod.month': { $gte: monthStart, $lte: monthStart + 2 }
+        }
+      ]
+    };
+    // Alternative submissions (aged/sick) block a regular submission for the same
+    // quarter, so those members are counted as submitted — not pending forever.
+    const [submissions, altSubmissions] = await Promise.all([
+      Submission.find(periodMatch).select('userId ruknId').lean(),
+      AlternativeSubmit.find(periodMatch).select('userId ruknId').lean()
+    ]);
+    const allPeriodDocs = [...submissions, ...altSubmissions];
 
-    const submittedUserIds = new Set(submissions.map(s => String(s.userId)));
-
-    // Unit admins submit with userId = UnitAdmin._id (not User._id).
-    // Find unit admins who submitted and cross-reference by ruknId so their
-    // corresponding User records are not listed as non-submitted.
-    const submittedUnitAdmins = await UnitAdmin.find(
-      { _id: { $in: Array.from(submittedUserIds) } }
-    ).select('ruknId').lean();
-    const submittedUnitAdminRuknIds = new Set(
-      submittedUnitAdmins.map(ua => ua.ruknId).filter(Boolean)
+    const submittedUserIds = new Set(allPeriodDocs.map(s => String(s.userId)));
+    // ruknId is the cross-role owner key (a member may submit while logged in as
+    // Unit Admin, or their User record may have been re-imported with a new _id).
+    const submittedRuknIds = new Set(
+      allPeriodDocs.map(s => s.ruknId && String(s.ruknId).trim()).filter(Boolean)
     );
+
+    // Legacy submissions without a stored ruknId: unit admins submit with
+    // userId = UnitAdmin._id (not User._id) — cross-reference by ruknId so their
+    // corresponding User records are not listed as non-submitted.
+    const docsWithoutRuknId = allPeriodDocs.filter(s => !s.ruknId);
+    if (docsWithoutRuknId.length > 0) {
+      const submittedUnitAdmins = await UnitAdmin.find(
+        { _id: { $in: docsWithoutRuknId.map(s => s.userId) } }
+      ).select('ruknId').lean();
+      submittedUnitAdmins.forEach(ua => {
+        if (ua.ruknId) submittedRuknIds.add(String(ua.ruknId).trim());
+      });
+    }
 
     // Members who have not submitted
     const nonSubmitted = allRukns
       .filter(u =>
         !submittedUserIds.has(String(u._id)) &&
-        !(u.ruknId && submittedUnitAdminRuknIds.has(u.ruknId))
+        !(u.ruknId && submittedRuknIds.has(String(u.ruknId).trim()))
       )
       .map(u => ({
         id: u._id,

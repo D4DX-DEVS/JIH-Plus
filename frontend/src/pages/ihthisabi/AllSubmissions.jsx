@@ -75,6 +75,7 @@ const AllSubmissions = () => {
   const [nsDistrict, setNsDistrict] = useState('all')
   const [nsArea, setNsArea] = useState('all')
   const [nsUnit, setNsUnit] = useState('all')
+  const [nsSearch, setNsSearch] = useState('')
   const [nonSubmittedList, setNonSubmittedList] = useState([])
   const [nonSubmittedLoading, setNonSubmittedLoading] = useState(false)
   const [nonSubmittedFetched, setNonSubmittedFetched] = useState(false)
@@ -212,6 +213,7 @@ const AllSubmissions = () => {
       if (nsDistrict !== 'all') params.district = nsDistrict
       if (nsArea !== 'all') params.area = nsArea
       if (nsUnit !== 'all') params.unit = nsUnit
+      if (nsSearch.trim()) params.search = nsSearch.trim()
       const response = await api.get('/ihthisabi/admin/non-submitted', { params })
       if (response.data?.success) {
         setNonSubmittedList(response.data.data.nonSubmitted || [])
@@ -235,6 +237,7 @@ const AllSubmissions = () => {
     if (nsDistrict !== 'all') params.district = nsDistrict
     if (nsArea !== 'all') params.area = nsArea
     if (nsUnit !== 'all') params.unit = nsUnit
+    if (nsSearch.trim()) params.search = nsSearch.trim()
     const response = await api.get('/ihthisabi/admin/non-submitted', { params })
     return response.data?.data?.nonSubmitted || []
   }
@@ -665,7 +668,7 @@ const AllSubmissions = () => {
               <Search className="ih-filter-icon" />
               <input
                 type="text"
-                placeholder="Search member..."
+                placeholder="Search name or Rukn ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="ih-field pr-3"
@@ -785,6 +788,19 @@ const AllSubmissions = () => {
         {/* Non-Submitted Filter Panel */}
         {showNonSubmitted && !showAlternativeSubmissions && !showAbroadSubmissions && (
           <div className="ih-surface p-2 sm:p-3 mb-2">
+            <div className="relative mb-2">
+              <Search className="ih-filter-icon" />
+              <input
+                type="text"
+                placeholder="Search name or Rukn ID..."
+                value={nsSearch}
+                onChange={(e) => setNsSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && nsQuarter && nsYear && !nonSubmittedLoading) fetchNonSubmitted(1)
+                }}
+                className="ih-field pr-3"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
               <div className="relative">
                 <Calendar className="ih-filter-icon" />
