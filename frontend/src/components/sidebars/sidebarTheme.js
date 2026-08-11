@@ -4,9 +4,9 @@
 
 // Malayalam labels + accent colour per dynamic report type.
 export const DYNAMIC_REPORT_META = {
-  monthly: { label: 'പ്രതിമാസ', color: 'sky' },
-  quarterly: { label: 'ത്രൈമാസ', color: 'violet' },
-  yearly: { label: 'വാർഷിക', color: 'emerald' },
+  monthly: { label: 'പ്രതിമാസം', color: 'sky' },
+  quarterly: { label: 'ത്രൈമാസം', color: 'violet' },
+  yearly: { label: 'വാർഷികം', color: 'emerald' },
   special: { label: 'സ്പെഷ്യൽ', color: 'amber' },
 };
 
