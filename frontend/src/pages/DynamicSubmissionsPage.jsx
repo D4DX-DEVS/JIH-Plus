@@ -26,10 +26,10 @@ import { downloadDynamicReportPdf } from '../utils/dynamicReportPdfGenerator';
 import jihLogo from '../assets/LogoColor.png';
 
 const TYPE_LABELS = {
-  monthly: 'മന്ത്ലി',
-  yearly: 'ഇയർലി',
+  monthly: 'പ്രതിമാസം',
+  yearly: 'വാർഷികം',
   special: 'സ്പെഷ്യൽ',
-  quarterly: 'ക്വാർട്ടർലി'
+  quarterly: 'ത്രൈമാസം'
 };
 
 const TYPE_ICONS = {
