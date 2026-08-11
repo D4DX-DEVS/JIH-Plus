@@ -1,6 +1,7 @@
 const express = require('express');
 const AlternativeSubmit = require('../../models/ihthisabi/alternativeSubmit');
 const Submission = require('../../models/ihthisabi/Submission');
+const User = require('../../models/ihthisabi/User');
 const { protect, authorize } = require('../../middlewares/ihthisabi/auth');
 const { validate, schemas, validateQuery } = require('../../middlewares/ihthisabi/validation');
 const {
@@ -11,6 +12,8 @@ const { parsePagination, buildPaginationMeta } = require('../../utils/pagination
 const { buildOwnerMatch } = require('../../utils/submissionOwnerMatch');
 
 const router = express.Router();
+
+const escapeRegex = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // @desc    Submit alternative form
 // @route   POST /api/alternative-submissions
@@ -212,7 +215,7 @@ router.get('/my-submissions', protect, authorize('rukn', 'unitAdmin'), validateQ
 // @access  Private (Admin only)
 router.get('/all', protect, authorize('admin'), validateQuery(schemas.adminFilter), async (req, res) => {
   try {
-    const { year, month, district, area, unit } = req.query;
+    const { year, month, quarter, district, area, unit, status, search } = req.query;
     const { page: pageNum, limit: limitNum, skip } = parsePagination(req.query);
 
     // Build query
@@ -226,6 +229,10 @@ router.get('/all', protect, authorize('admin'), validateQuery(schemas.adminFilte
       query['submissionPeriod.month'] = parseInt(month);
     }
 
+    if (quarter) {
+      query['submissionPeriod.quarter'] = parseInt(quarter);
+    }
+
     if (district) {
       query.district = district;
     }
@@ -236,6 +243,24 @@ router.get('/all', protect, authorize('admin'), validateQuery(schemas.adminFilte
 
     if (unit) {
       query.unit = unit;
+    }
+
+    // Status here is derived from adminReply: 'replied' = has a reply, 'submitted' = none yet
+    if (status === 'replied') {
+      query['adminReply.message'] = { $exists: true, $nin: [null, ''] };
+    } else if (status === 'submitted') {
+      query['adminReply.message'] = { $in: [null, ''] };
+    }
+
+    if (search) {
+      const searchRegex = { $regex: escapeRegex(search), $options: 'i' };
+      // Older docs may lack the doc-level ruknId, so also match via the user's ruknId
+      const matchedUsers = await User.find({ ruknId: searchRegex }).select('_id').lean();
+      query.$or = [
+        { ruknName: searchRegex },
+        { ruknId: searchRegex },
+        { userId: { $in: matchedUsers.map(u => u._id) } }
+      ];
     }
 
     // Get alternative submissions

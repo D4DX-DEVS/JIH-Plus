@@ -144,7 +144,10 @@ const schemas = {
     unit: Joi.string().trim().allow(''),
     year: Joi.number().min(2020).max(2030),
     month: Joi.number().min(1).max(12),
-    status: Joi.string().valid('submitted', 'reviewed', 'approved').allow(''),
+    quarter: Joi.number().min(1).max(4),
+    search: Joi.string().trim().allow(''),
+    // 'replied' applies only to alternative submissions (derived from adminReply)
+    status: Joi.string().valid('submitted', 'reviewed', 'approved', 'replied').allow(''),
     page: Joi.number().min(1).default(1),
     limit: Joi.number().min(1).max(100).default(10)
   }),

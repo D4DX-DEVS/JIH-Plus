@@ -68,6 +68,18 @@ const AllSubmissions = () => {
   const [alternativePagination, setAlternativePagination] = useState({ current: 1, pages: 1, total: 0 })
   const alternativeItemsPerPage = 10
 
+  // Alternative submissions filter state (mirrors the regular submissions filters)
+  const [altSearchTerm, setAltSearchTerm] = useState('')
+  const [altStatusFilter, setAltStatusFilter] = useState('all')
+  const [altDistrictFilter, setAltDistrictFilter] = useState('all')
+  const [altAreaFilter, setAltAreaFilter] = useState('all')
+  const [altUnitFilter, setAltUnitFilter] = useState('all')
+  const [altYearFilter, setAltYearFilter] = useState('all')
+  const [altQuarterFilter, setAltQuarterFilter] = useState('all')
+  const [altFiltersOpen, setAltFiltersOpen] = useState(false)
+  const [altUniqueAreas, setAltUniqueAreas] = useState([])
+  const [altUniqueUnits, setAltUniqueUnits] = useState([])
+
   // Non-submitted view state
   const [showNonSubmitted, setShowNonSubmitted] = useState(false)
   const [nsQuarter, setNsQuarter] = useState('')
@@ -144,6 +156,42 @@ const AllSubmissions = () => {
     const t = setTimeout(() => setDebouncedSearchTerm(searchTerm), 400)
     return () => clearTimeout(t)
   }, [searchTerm])
+
+  const [debouncedAltSearchTerm, setDebouncedAltSearchTerm] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedAltSearchTerm(altSearchTerm), 400)
+    return () => clearTimeout(t)
+  }, [altSearchTerm])
+
+  // Cascading area/unit options for the alternative submissions filter
+  useEffect(() => {
+    if (altDistrictFilter === 'all') {
+      setAltUniqueAreas([])
+      setAltAreaFilter('all')
+      return
+    }
+    api.get('/ihthisabi/admin/master-data/areas', { params: { district: altDistrictFilter } })
+      .then(res => setAltUniqueAreas((res.data.data || []).map(a => a.name).sort()))
+      .catch(() => {})
+  }, [altDistrictFilter])
+
+  useEffect(() => {
+    if (altDistrictFilter === 'all' || altAreaFilter === 'all') {
+      setAltUniqueUnits([])
+      setAltUnitFilter('all')
+      return
+    }
+    api.get('/ihthisabi/admin/master-data/units', { params: { district: altDistrictFilter, area: altAreaFilter } })
+      .then(res => setAltUniqueUnits((res.data.data || []).map(u => u.name).sort()))
+      .catch(() => {})
+  }, [altDistrictFilter, altAreaFilter])
+
+  // Refetch alternative submissions from page 1 whenever the tab opens or a filter changes
+  useEffect(() => {
+    if (!showAlternativeSubmissions || !user || user.role !== 'admin') return
+    fetchAlternativeSubmissions(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAlternativeSubmissions, altStatusFilter, altDistrictFilter, altAreaFilter, altUnitFilter, altQuarterFilter, altYearFilter, debouncedAltSearchTerm])
 
   useEffect(() => {
     // Only fetch data if user is authenticated and is admin
@@ -376,6 +424,10 @@ const AllSubmissions = () => {
     statusFilter, districtFilter, areaFilter, unitFilter, quarterFilter, yearFilter,
   ].filter(v => v !== 'all').length
 
+  const altActiveFilterCount = [
+    altStatusFilter, altDistrictFilter, altAreaFilter, altUnitFilter, altQuarterFilter, altYearFilter,
+  ].filter(v => v !== 'all').length
+
   const handleViewSubmission = (submissionId) => {
     // Open inline drawer with details instead of navigating
     setSelectedId(submissionId)
@@ -468,12 +520,15 @@ const AllSubmissions = () => {
   const fetchAlternativeSubmissions = async (page = alternativePagination.current) => {
     try {
       setAlternativeSubmissionsLoading(true)
-      const response = await api.get('/alternative-submissions/all', {
-        params: {
-          page: page,
-          limit: alternativeItemsPerPage
-        }
-      })
+      const params = { page: page, limit: alternativeItemsPerPage }
+      if (altStatusFilter !== 'all') params.status = altStatusFilter
+      if (altDistrictFilter !== 'all') params.district = altDistrictFilter
+      if (altAreaFilter !== 'all') params.area = altAreaFilter
+      if (altUnitFilter !== 'all') params.unit = altUnitFilter
+      if (altQuarterFilter !== 'all') params.quarter = altQuarterFilter
+      if (altYearFilter !== 'all') params.year = altYearFilter
+      if (debouncedAltSearchTerm) params.search = debouncedAltSearchTerm
+      const response = await api.get('/alternative-submissions/all', { params })
       if (response.data?.success) {
         setAlternativeSubmissions(response.data.data.alternativeSubmissions || [])
         setAlternativePagination(response.data.data.pagination || { current: 1, pages: 1, total: 0 })
@@ -628,7 +683,6 @@ const AllSubmissions = () => {
               setShowAlternativeSubmissions(true)
               setShowAbroadSubmissions(false)
               setShowNonSubmitted(false)
-              if (alternativeSubmissions.length === 0) fetchAlternativeSubmissions(1)
             }}
             className={`ih-segment-btn ${showAlternativeSubmissions ? 'ih-segment-btn-active text-orange-700' : ''}`}
           >
@@ -773,6 +827,122 @@ const AllSubmissions = () => {
                 onClick={() => {
                   setStatusFilter('all'); setDistrictFilter('all'); setAreaFilter('all')
                   setUnitFilter('all'); setQuarterFilter('all'); setYearFilter('all')
+                }}
+                className="col-span-2 inline-flex items-center justify-center gap-1 rounded-full px-2 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:text-gray-800 sm:col-span-1"
+                style={{ backgroundColor: 'rgba(16,24,40,0.04)' }}
+              >
+                <CloseIcon className="w-3 h-3" />
+                Clear all
+              </button>
+            )}
+          </div>
+        </div>
+        )}
+
+        {/* Alternative submissions filters — same controls as the regular view */}
+        {showAlternativeSubmissions && (
+        <div className="ih-surface mb-2 p-2 sm:p-3">
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="ih-filter-icon" />
+              <input
+                type="text"
+                placeholder="Search name or Rukn ID..."
+                value={altSearchTerm}
+                onChange={(e) => setAltSearchTerm(e.target.value)}
+                className="ih-field pr-3"
+              />
+            </div>
+            <button
+              onClick={() => setAltFiltersOpen(o => !o)}
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-[7px] text-[11px] font-medium transition-colors sm:hidden ${
+                altActiveFilterCount > 0
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-gray-500'
+              }`}
+              style={altActiveFilterCount > 0 ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
+              aria-expanded={altFiltersOpen}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              {altActiveFilterCount > 0 && <span>{altActiveFilterCount}</span>}
+              <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${altFiltersOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+
+          <div className={`${altFiltersOpen ? 'grid' : 'hidden'} mt-2 grid-cols-2 gap-2 sm:mt-2 sm:!grid sm:grid-cols-3 lg:grid-cols-6`}>
+            <div className="relative">
+              <Filter className="ih-filter-icon" />
+              <select value={altStatusFilter} onChange={(e) => setAltStatusFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Status</option>
+                <option value="submitted">Submitted</option>
+                <option value="replied">Replied</option>
+              </select>
+            </div>
+
+            <div className="relative">
+              <MapPin className="ih-filter-icon" />
+              <select
+                value={altDistrictFilter}
+                onChange={(e) => { setAltDistrictFilter(e.target.value); setAltAreaFilter('all'); setAltUnitFilter('all') }}
+                className="ih-filter-select"
+              >
+                <option value="all">All Districts</option>
+                {uniqueDistricts.map(district => (
+                  <option key={district} value={district}>{district}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <MapPin className="ih-filter-icon" />
+              <select
+                value={altAreaFilter}
+                onChange={(e) => { setAltAreaFilter(e.target.value); setAltUnitFilter('all') }}
+                className="ih-filter-select"
+              >
+                <option value="all">All Areas</option>
+                {altUniqueAreas.map(area => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <MapPin className="ih-filter-icon" />
+              <select value={altUnitFilter} onChange={(e) => setAltUnitFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Units</option>
+                {altUniqueUnits.map(unit => (
+                  <option key={unit} value={unit}>{unit}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <Calendar className="ih-filter-icon" />
+              <select value={altYearFilter} onChange={(e) => setAltYearFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Years</option>
+                {submissionYears.map(y => (
+                  <option key={y} value={String(y)}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <Calendar className="ih-filter-icon" />
+              <select value={altQuarterFilter} onChange={(e) => setAltQuarterFilter(e.target.value)} className="ih-filter-select">
+                <option value="all">All Quarters</option>
+                <option value="1">Q1 (Jan–Mar)</option>
+                <option value="2">Q2 (Apr–Jun)</option>
+                <option value="3">Q3 (Jul–Sep)</option>
+                <option value="4">Q4 (Oct–Dec)</option>
+              </select>
+            </div>
+
+            {altActiveFilterCount > 0 && (
+              <button
+                onClick={() => {
+                  setAltStatusFilter('all'); setAltDistrictFilter('all'); setAltAreaFilter('all')
+                  setAltUnitFilter('all'); setAltQuarterFilter('all'); setAltYearFilter('all')
                 }}
                 className="col-span-2 inline-flex items-center justify-center gap-1 rounded-full px-2 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:text-gray-800 sm:col-span-1"
                 style={{ backgroundColor: 'rgba(16,24,40,0.04)' }}
@@ -1021,7 +1191,11 @@ const AllSubmissions = () => {
                   <FileText className="w-8 h-8 text-gray-400" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No alternative submissions found</h3>
-                <p className="text-gray-600">No alternative submissions have been submitted yet.</p>
+                <p className="text-gray-600">
+                  {altSearchTerm || altActiveFilterCount > 0
+                    ? 'Try adjusting your search or filter criteria.'
+                    : 'No alternative submissions have been submitted yet.'}
+                </p>
               </div>
             ) : (
               <>
