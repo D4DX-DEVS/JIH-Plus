@@ -60,7 +60,7 @@ export default defineConfig(({ command }) => ({
       manifest: {
         name: 'JIH Report & IHTHISABI',
         short_name: 'JIH Report',
-        description: 'JIH Organisation Expansion Portal and IHTHISABI Report - Member Management and Reporting',
+        description: 'JIH Portal and IHTHISABI Report - Member Management and Reporting',
         theme_color: '#7C3AED',
         background_color: '#ffffff',
         display: 'standalone',
