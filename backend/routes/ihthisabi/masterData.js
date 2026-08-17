@@ -51,7 +51,7 @@ async function countAtLocation(filter) {
 // When `page` is absent, returns the full list (used internally by dropdown consumers).
 router.get('/districts', async (req, res) => {
   try {
-    const { page, limit } = req.query;
+    const { page, limit, search } = req.query;
     const [userRows, masterRows] = await Promise.all([
       User.aggregate([
         { $match: { role: 'rukn', district: { $nin: [null, ''] } } },
@@ -66,7 +66,11 @@ router.get('/districts', async (req, res) => {
       if (!map.has(r.name)) map.set(r.name, { name: r.name, count: 0 });
     });
 
-    const allRows = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    let allRows = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    if (search) {
+      const re = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      allRows = allRows.filter((r) => re.test(r.name));
+    }
 
     if (!page) {
       return res.json({ success: true, data: allRows });
@@ -86,7 +90,7 @@ router.get('/districts', async (req, res) => {
 // GET /api/ihthisabi/admin/master-data/areas?district=&page=&limit=
 router.get('/areas', async (req, res) => {
   try {
-    const { district, page, limit } = req.query;
+    const { district, page, limit, search } = req.query;
     const userMatch = { role: 'rukn', area: { $nin: [null, ''] } };
     if (district) userMatch.district = district;
     const masterFilter = { type: 'area', isActive: true };
@@ -110,7 +114,11 @@ router.get('/areas', async (req, res) => {
       if (!map.has(key)) map.set(key, { district: r.district, name: r.name, count: 0 });
     });
 
-    const allRows = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    let allRows = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    if (search) {
+      const re = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      allRows = allRows.filter((r) => re.test(r.name));
+    }
 
     // When page param is absent return all (used internally by modals)
     if (!page) {
@@ -131,7 +139,7 @@ router.get('/areas', async (req, res) => {
 // GET /api/ihthisabi/admin/master-data/units?district=&area=&page=&limit=
 router.get('/units', async (req, res) => {
   try {
-    const { district, area, page, limit } = req.query;
+    const { district, area, page, limit, search } = req.query;
     const userMatch = { role: 'rukn', unit: { $nin: [null, ''] } };
     if (district) userMatch.district = district;
     if (area) userMatch.area = area;
@@ -157,7 +165,11 @@ router.get('/units', async (req, res) => {
       if (!map.has(key)) map.set(key, { district: r.district, area: r.area, name: r.name, count: 0 });
     });
 
-    const allRows = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    let allRows = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    if (search) {
+      const re = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      allRows = allRows.filter((r) => re.test(r.name));
+    }
 
     // When page param is absent return all (used internally by modals)
     if (!page) {
