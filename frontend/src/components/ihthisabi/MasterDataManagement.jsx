@@ -1,9 +1,33 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Scissors, GitMerge, ArrowRightLeft, ChevronDown, ChevronUp, Plus, Pencil, Trash2 } from 'lucide-react';
+import { X, Scissors, GitMerge, ArrowRightLeft, ChevronDown, ChevronUp, Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { api } from '../../utils/ihthisabi/api';
 import Pagination from './Pagination';
 
 const BASE = '/ihthisabi/admin/master-data';
+
+function useDebounced(value, delay = 400) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
+
+function SearchBox({ value, onChange, placeholder }) {
+  return (
+    <div className="relative">
+      <Search className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="text-sm border rounded-lg pl-8 pr-3 py-1.5 w-48 focus:outline-none focus:ring-2 focus:ring-[#002349]"
+      />
+    </div>
+  );
+}
 
 // ── Shared UI Primitives ──────────────────────────────────────────────────────
 
@@ -45,6 +69,8 @@ function DistrictsTab() {
   const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const search = useDebounced(searchInput);
 
   // Transform state
   const [splitItem, setSplitItem] = useState(null);
@@ -67,7 +93,9 @@ function DistrictsTab() {
   const load = useCallback(async (page = 1) => {
     setLoading(true); setError('');
     try {
-      const res = await api.get(`${BASE}/districts`, { params: { page, limit: 10 } });
+      const params = { page, limit: 10 };
+      if (search) params.search = search;
+      const res = await api.get(`${BASE}/districts`, { params });
       setDistricts(res.data.data);
       setPagination({
         current: res.data.page || 1,
@@ -77,7 +105,7 @@ function DistrictsTab() {
       });
     } catch { setError('Failed to load districts'); }
     setLoading(false);
-  }, []);
+  }, [search]);
 
   useEffect(() => { load(1); }, [load]);
 
@@ -145,7 +173,8 @@ function DistrictsTab() {
 
   return (
     <div>
-      <div className="flex justify-end mb-3">
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <SearchBox value={searchInput} onChange={setSearchInput} placeholder="Search districts…" />
         <button
           onClick={() => { setAddOpen(true); setAddName(''); setAddError(''); }}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#002349] text-white text-sm rounded-lg hover:bg-[#002349]/90">
@@ -342,6 +371,8 @@ function AreasTab() {
   const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const search = useDebounced(searchInput);
 
   // pagination
   const [page, setPage] = useState(1);
@@ -381,15 +412,17 @@ function AreasTab() {
     try {
       const params = { page, limit: LIMIT };
       if (selectedDistrict) params.district = selectedDistrict;
+      if (search) params.search = search;
       const res = await api.get(`${BASE}/areas`, { params });
       setAreas(res.data.data);
       setTotalPages(res.data.totalPages || 1);
       setTotal(res.data.total || 0);
     } catch { setError('Failed to load areas'); }
     setLoading(false);
-  }, [selectedDistrict, page]);
+  }, [selectedDistrict, search, page]);
 
   useEffect(() => { loadDistricts(); }, [loadDistricts]);
+  useEffect(() => { setPage(1); }, [search]);
   useEffect(() => { loadAreas(); }, [loadAreas]);
 
   const handleSplitOpen = async (a) => {
@@ -481,6 +514,7 @@ function AreasTab() {
           <option value="">All Districts</option>
           {districts.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
         </select>
+        <SearchBox value={searchInput} onChange={setSearchInput} placeholder="Search areas…" />
         <div className="ml-auto">
           <button
             onClick={() => { setAddOpen(true); setAddName(''); setAddDistrict(''); setAddError(''); }}
@@ -745,6 +779,8 @@ function UnitsTab() {
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const search = useDebounced(searchInput);
 
   // pagination
   const [page, setPage] = useState(1);
@@ -793,15 +829,17 @@ function UnitsTab() {
       const params = { page, limit: LIMIT };
       if (selectedDistrict) params.district = selectedDistrict;
       if (selectedArea) params.area = selectedArea;
+      if (search) params.search = search;
       const res = await api.get(`${BASE}/units`, { params });
       setUnits(res.data.data);
       setTotalPages(res.data.totalPages || 1);
       setTotal(res.data.total || 0);
     } catch { setError('Failed to load units'); }
     setLoading(false);
-  }, [selectedDistrict, selectedArea, page]);
+  }, [selectedDistrict, selectedArea, search, page]);
 
   useEffect(() => { loadDistricts(); loadAllAreas(); }, [loadDistricts, loadAllAreas]);
+  useEffect(() => { setPage(1); }, [search]);
   useEffect(() => { loadUnits(); }, [loadUnits]);
 
   const filteredAreas = allAreas.filter((a) => !selectedDistrict || a.district === selectedDistrict);
@@ -918,6 +956,7 @@ function UnitsTab() {
           <option value="">All</option>
           {filteredAreas.map((a) => <option key={`${a.district}-${a.name}`} value={a.name}>{a.name}</option>)}
         </select>
+        <SearchBox value={searchInput} onChange={setSearchInput} placeholder="Search units…" />
         <div className="ml-auto">
           <button
             onClick={() => { setAddOpen(true); setAddName(''); setAddDistrict(''); setAddArea(''); setAddAreas([]); setAddError(''); }}
