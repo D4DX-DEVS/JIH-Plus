@@ -7,7 +7,6 @@ import {
   Calendar,
   CalendarDays,
   Star,
-  Users,
   BarChart3,
   BarChart2,
   MapPin,
@@ -58,12 +57,6 @@ const AdminSidebar = ({
       onClick: () => navigate('/expansion-portal/dashboard')
     },
     {
-      id: 'membership',
-      label: 'അംഗത്വം',
-      icon: Users,
-      onClick: onNavigateToMembership
-    },
-    {
       id: 'stats',
       label: 'സ്ഥിതിവിവരക്കണക്കുകൾ',
       icon: BarChart3
@@ -110,7 +103,7 @@ const AdminSidebar = ({
       id: 'notifications',
       label: 'നോട്ടിഫിക്കേഷൻ',
       icon: Bell,
-      onClick: onNavigateToNotifications
+      onClick: onNavigateToNotifications || (() => navigate('/notifications'))
     },
     {
       id: 'targets',
@@ -142,18 +135,18 @@ const AdminSidebar = ({
   const isMasterDataRoute = location.pathname.startsWith('/admin/master-data');
   const isDynamicSubmissionsRoute = location.pathname.startsWith('/admin/dynamic-submissions');
   const isDashboardRoute = location.pathname === '/expansion-portal/dashboard';
-  const isMembershipRoute = location.pathname.startsWith('/membership');
 
-  // Curated mobile bottom nav — the key admin destinations + More (opens sidebar).
+  // Curated mobile bottom nav — the key admin destinations. The full menu
+  // stays one tap away via the top bar's hamburger.
   const bottomNavItems = [
     { key: 'dashboard', label: 'Home', icon: LayoutDashboard, active: isDashboardRoute,
       onClick: () => navigate('/expansion-portal/dashboard') },
-    { key: 'membership', label: 'Members', icon: Users, active: isMembershipRoute,
-      onClick: () => navigate('/membership', { state: { roleHint: 'admin' } }) },
     { key: 'reports', label: 'Reports', icon: Eye, active: isReportsRoute,
       onClick: () => navigate('/view-reports') },
     { key: 'data', label: 'Data', icon: MapPin, active: isMasterDataRoute,
       onClick: () => navigate('/admin/master-data') },
+    { key: 'notifications', label: 'Alerts', icon: Bell, active: isNotificationsRoute,
+      onClick: () => { if (onNavigateToNotifications) onNavigateToNotifications(); else navigate('/notifications'); } },
     { key: 'more', label: 'More', icon: Menu, active: false,
       onClick: () => { if (toggleSidebar) toggleSidebar(); } },
   ];

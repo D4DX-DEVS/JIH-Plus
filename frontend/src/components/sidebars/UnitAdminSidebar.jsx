@@ -5,7 +5,6 @@ import {
   CalendarDays,
   Star,
   ClipboardList,
-  Users,
   BarChart3,
   BarChart2,
   Bell,
@@ -59,7 +58,6 @@ const UnitAdminSidebar = ({
   const navItems = [
     { id: 'dashboard', label: 'ഡാഷ്ബോർഡ്', icon: LayoutDashboard },
     { id: 'stats', label: 'സ്ഥിതിവിവരക്കണക്കുകൾ', icon: BarChart3 },
-    { id: 'membership', label: 'അംഗത്വം', icon: Users, onClick: onNavigateToMembership },
     {
       id: 'dynamic-reports',
       type: 'group',
@@ -76,7 +74,7 @@ const UnitAdminSidebar = ({
       id: 'notifications',
       label: 'നോട്ടിഫിക്കേഷൻ',
       icon: Bell,
-      onClick: onNotifications || (() => { onNavigate?.('notifications'); })
+      onClick: onNotifications || (() => navigate('/notifications'))
     },
     { id: 'targets', label: 'ടാർഗറ്റ്', icon: TargetIcon, onClick: () => navigate('/targets') }
   ];
@@ -114,8 +112,8 @@ const UnitAdminSidebar = ({
       onClick: () => goTab('stats') },
     { key: 'reports', label: 'Reports', icon: FileText, active: location.pathname.startsWith('/user-reports'),
       onClick: () => navigate('/user-reports') },
-    { key: 'members', label: 'Members', icon: Users, active: location.pathname.startsWith('/membership'),
-      onClick: () => { if (onNavigateToMembership) onNavigateToMembership(); } },
+    { key: 'notifications', label: 'Alerts', icon: Bell, active: location.pathname.startsWith('/notifications'),
+      onClick: () => { if (onNotifications) onNotifications(); else navigate('/notifications'); } },
     { key: 'more', label: 'More', icon: Menu, active: false,
       onClick: () => { if (onMobileToggle) onMobileToggle(); } },
   ];

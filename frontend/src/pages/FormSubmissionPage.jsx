@@ -162,7 +162,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
       {/* Page Heading */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
         <div>
-          <h1 className="text-4xl font-bold text-[#002349]">
+          <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
             വാർഷിക റിപ്പോർട്ട്
           </h1>
           <p className="text-sm text-gray-600">

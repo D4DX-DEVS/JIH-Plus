@@ -8,14 +8,16 @@ import {
   Check,
   AlertTriangle,
   TrendingUp,
-  Menu,
   X,
   Trash2,
   RefreshCw,
   Users,
   Sliders,
   LayoutList,
-  Building2
+  Building2,
+  CheckCircle2,
+  Send,
+  MapPin
 } from 'lucide-react';
 import axios from 'axios';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
@@ -34,6 +36,7 @@ import {
   deleteTarget
 } from '../services/targetService';
 import jihLogo from '../assets/LogoColor.png';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -54,24 +57,42 @@ function distributeEqually(total, n) {
 const RollupBadge = ({ status, diff }) => {
   if (status === 'exceeded') {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+      <span className="inline-flex max-w-full items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
         <TrendingUp size={11} /> +{diff} exceeded
       </span>
     );
   }
   if (status === 'exact') {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+      <span className="inline-flex max-w-full items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
         <Check size={11} /> Exact
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+    <span className="inline-flex max-w-full items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
       <AlertTriangle size={11} /> {Math.abs(diff)} below
     </span>
   );
 };
+
+// Stat tile for the target rollup. Mirrors StatCard in SubmissionsAnalytics:
+// `w-full` on the text block keeps long labels inside the card border.
+// `wide` is for the status tile: its badge cannot fit a third of a phone
+// screen, so it takes the full row and lays out horizontally instead.
+const RollupTile = ({ icon: Icon, label, value, tone, wide = false }) => (
+  <div className={`bg-white rounded-2xl border border-gray-200 p-2.5 sm:p-4 shadow-sm flex gap-1.5 sm:gap-3 overflow-hidden ${
+    wide ? 'col-span-2 sm:col-span-1 flex-row items-center gap-3' : 'flex-col sm:flex-row items-start sm:items-center'
+  }`}>
+    <div className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${tone}`}>
+      <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+    </div>
+    <div className="w-full min-w-0 sm:w-auto">
+      <div className="text-lg sm:text-2xl font-bold text-[#002349] leading-none">{value}</div>
+      <p className="text-[10px] sm:text-xs text-gray-500 mt-1 font-medium leading-tight break-words [overflow-wrap:anywhere]">{label}</p>
+    </div>
+  </div>
+);
 
 // ─── Create Target Modal (admin only) ─────────────────────────────────────────
 
@@ -632,8 +653,15 @@ function TargetDetailView({ targetId, role, onBack }) {
 
   useEffect(() => { load(); }, [load]);
 
-  if (loading) return <div className="py-20 text-center text-gray-400">Loading...</div>;
-  if (error) return <div className="py-20 text-center text-red-500">{error}</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-24">
+      <div className="text-center">
+        <div className="inline-block w-8 h-8 border-4 border-[#002349] border-t-transparent rounded-full animate-spin" />
+        <p className="mt-4 text-gray-500 text-sm">Loading target...</p>
+      </div>
+    </div>
+  );
+  if (error) return <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl text-sm">{error}</div>;
   if (!data) return null;
 
   const { target, allocations, rollup } = data;
@@ -651,56 +679,64 @@ function TargetDetailView({ targetId, role, onBack }) {
 
   return (
     <div className="space-y-6">
-      <button onClick={onBack} className="flex items-center gap-1 text-sm text-gray-500 hover:text-[#002349]">
+      <button onClick={onBack} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 -ml-2 text-sm font-medium text-gray-500 hover:bg-white hover:text-[#002349] transition-colors">
         <ArrowLeft size={15} /> Back to targets
       </button>
 
       {/* Header card */}
-      <div className="bg-white rounded-2xl border p-5 shadow-sm">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h2 className="text-xl font-bold text-[#002349]">{target.title}</h2>
-            {target.description && <p className="text-sm text-gray-500 mt-0.5">{target.description}</p>}
-            <p className="text-xs text-gray-400 mt-1">District: {target.districtId?.name || '—'}</p>
-            {role === 'unit' && (myUnitAlloc?.unitName || userData.unitName) && (
-              <p className="text-xs text-gray-400 mt-0.5">Unit: {myUnitAlloc?.unitName || userData.unitName}</p>
-            )}
-            {role === 'area' && (myAreaAlloc?.areaName || userData.areaName) && (
-              <p className="text-xs text-gray-400 mt-0.5">Area: {myAreaAlloc?.areaName || userData.areaName}</p>
-            )}
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-gray-400">Target</p>
-            <p className="text-3xl font-bold text-[#002349]">{target.targetCount.toLocaleString()}</p>
-          </div>
-        </div>
-        {/* Rollup summary */}
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          <div className="bg-gray-50 rounded-xl px-3 py-2.5 text-center">
-            <p className="text-xs text-gray-400">Submitted</p>
-            <p className="text-lg font-bold text-[#002349]">{rollup.totalSubmitted.toLocaleString()}</p>
-          </div>
-          <div className="bg-gray-50 rounded-xl px-3 py-2.5 text-center">
-            <p className="text-xs text-gray-400">Allocated to Units</p>
-            <p className="text-lg font-bold text-gray-700">{rollup.totalAllocatedToUnits.toLocaleString()}</p>
-          </div>
-          <div className="bg-gray-50 rounded-xl px-3 py-2.5 text-center">
-            <p className="text-xs text-gray-400">Status</p>
-            <div className="flex justify-center mt-0.5">
-              <RollupBadge status={rollup.status} diff={rollup.difference} />
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-2.5">
+            <div className="p-2 bg-[#002349]/10 rounded-lg flex-shrink-0">
+              <TargetIcon className="w-5 h-5 text-[#002349]" />
             </div>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-xl font-bold text-[#002349] leading-snug break-words">{target.title}</h2>
+              {target.description && (
+                <p className="text-xs sm:text-sm text-gray-500 mt-0.5 break-words">{target.description}</p>
+              )}
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+                  <MapPin className="w-3 h-3" /> {target.districtId?.name || '—'}
+                </span>
+                {role === 'unit' && (myUnitAlloc?.unitName || userData.unitName) && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-medium text-orange-700">
+                    <Building2 className="w-3 h-3" /> {myUnitAlloc?.unitName || userData.unitName}
+                  </span>
+                )}
+                {role === 'area' && (myAreaAlloc?.areaName || userData.areaName) && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700">
+                    <LayoutList className="w-3 h-3" /> {myAreaAlloc?.areaName || userData.areaName}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex-shrink-0 text-right">
+            <p className="text-[10px] uppercase tracking-wide text-gray-400">Target</p>
+            <p className="text-2xl sm:text-3xl font-bold text-[#002349] leading-tight">{target.targetCount.toLocaleString()}</p>
           </div>
         </div>
       </div>
 
+      {/* Rollup summary — same tile language as the dashboard stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+        <RollupTile icon={Send} label="Submitted" tone="bg-emerald-100 text-emerald-600"
+          value={rollup.totalSubmitted.toLocaleString()} />
+        <RollupTile icon={Users} label="Allocated to units" tone="bg-blue-100 text-blue-600"
+          value={rollup.totalAllocatedToUnits.toLocaleString()} />
+        <RollupTile icon={CheckCircle2} label="Status" tone="bg-[#002349]/10 text-[#002349]" wide
+          value={<RollupBadge status={rollup.status} diff={rollup.difference} />} />
+      </div>
+
       {/* Role-specific action panel */}
       {role === 'district' && districtAlloc && (
-        <div className="bg-white rounded-2xl border p-5 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-[#002349] text-sm">Allocate to Areas</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-[#002349]"><LayoutList className="w-4 h-4" /> Allocate to Areas</h3>
             <button
               onClick={() => setActivePanel(activePanel === 'allocate-areas' ? null : 'allocate-areas')}
-              className="text-xs text-[#002349] hover:underline font-medium"
+              className="flex-shrink-0 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-[#002349] hover:bg-gray-50 transition-colors"
             >
               {activePanel === 'allocate-areas' ? 'Hide' : 'Open allocation panel'}
             </button>
@@ -715,10 +751,10 @@ function TargetDetailView({ targetId, role, onBack }) {
           {/* Show existing area allocations */}
           {areaRows.length > 0 && (
             <div className="mt-4 space-y-1.5">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Current Area Allocations</p>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">Current Area Allocations</p>
               {areaRows.map(a => (
-                <div key={a._id} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
-                  <span className="text-sm font-medium text-gray-800">{a.areaName || a.areaId}</span>
+                <div key={a._id} className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-2.5">
+                  <span className="min-w-0 flex-1 break-words text-sm font-medium text-gray-800">{a.areaName || a.areaId}</span>
                   <span className="text-sm font-semibold text-[#002349]">{a.allocatedCount.toLocaleString()}</span>
                 </div>
               ))}
@@ -728,17 +764,17 @@ function TargetDetailView({ targetId, role, onBack }) {
       )}
 
       {role === 'area' && (
-        <div className="bg-white rounded-2xl border p-5 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm">
           {myAreaAlloc ? (
             <>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-bold text-[#002349] text-sm">Allocate to Units</h3>
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-[#002349]"><Building2 className="w-4 h-4" /> Allocate to Units</h3>
                   <p className="text-xs text-gray-400 mt-0.5">Your allocation: <strong>{myAreaAlloc.allocatedCount.toLocaleString()}</strong></p>
                 </div>
                 <button
                   onClick={() => setActivePanel(activePanel === 'allocate-units' ? null : 'allocate-units')}
-                  className="text-xs text-[#002349] hover:underline font-medium"
+                  className="flex-shrink-0 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-[#002349] hover:bg-gray-50 transition-colors"
                 >
                   {activePanel === 'allocate-units' ? 'Hide' : 'Open allocation panel'}
                 </button>
@@ -752,11 +788,11 @@ function TargetDetailView({ targetId, role, onBack }) {
               )}
               {unitRows.length > 0 && (
                 <div className="mt-4 space-y-1.5">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Current Unit Allocations</p>
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">Current Unit Allocations</p>
                   {unitRows.map(u => (
-                    <div key={u._id} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
-                      <span className="text-sm font-medium text-gray-800">{u.unitName || u.unitId}</span>
-                      <div className="flex items-center gap-3">
+                    <div key={u._id} className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-2.5">
+                      <span className="min-w-0 flex-1 break-words text-sm font-medium text-gray-800">{u.unitName || u.unitId}</span>
+                      <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
                         <span className="text-xs text-gray-400">Allocated: {u.allocatedCount.toLocaleString()}</span>
                         {u.submittedCount !== null && u.submittedCount !== undefined && (
                           <span className="text-xs font-semibold text-green-700">Submitted: {u.submittedCount.toLocaleString()}</span>
@@ -768,14 +804,14 @@ function TargetDetailView({ targetId, role, onBack }) {
               )}
             </>
           ) : (
-            <p className="text-sm text-gray-400 text-center py-4">No allocation received yet. Waiting for district admin.</p>
+            <p className="py-6 text-center text-sm text-gray-400">No allocation received yet. Waiting for district admin.</p>
           )}
         </div>
       )}
 
       {role === 'unit' && (
-        <div className="bg-white rounded-2xl border p-5 shadow-sm">
-          <h3 className="font-bold text-[#002349] text-sm mb-4">Submit Your Count</h3>
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[#002349]"><Send className="w-4 h-4" /> Submit Your Count</h3>
           <UnitSubmitPanel
             target={target}
             unitAlloc={myUnitAlloc}
@@ -786,13 +822,13 @@ function TargetDetailView({ targetId, role, onBack }) {
 
       {/* Admin / all levels: show full allocation breakdown */}
       {(role === 'admin' || role === 'district') && unitRows.length > 0 && (
-        <div className="bg-white rounded-2xl border p-5 shadow-sm">
-          <h3 className="font-bold text-[#002349] text-sm mb-4">Unit Submissions</h3>
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[#002349]"><Building2 className="w-4 h-4" /> Unit Submissions</h3>
           <div className="space-y-1.5">
             {unitRows.map(u => (
-              <div key={u._id} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
-                <span className="text-sm font-medium text-gray-800">{u.unitName || u.unitId}</span>
-                <div className="flex items-center gap-3">
+              <div key={u._id} className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-2.5">
+                <span className="min-w-0 flex-1 break-words text-sm font-medium text-gray-800">{u.unitName || u.unitId}</span>
+                <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
                   <span className="text-xs text-gray-400">Target: {u.allocatedCount.toLocaleString()}</span>
                   {u.submittedCount !== null && u.submittedCount !== undefined ? (
                     <span className={`text-xs font-semibold ${u.submittedCount >= u.allocatedCount ? 'text-green-700' : 'text-amber-600'}`}>
@@ -875,12 +911,12 @@ const TargetsPage = ({ onLogout }) => {
   const sidebarProps = {
     isMobileOpen: isSidebarOpen,
     onMobileToggle: () => setIsSidebarOpen((prev) => !prev),
-    onNavigateToMembership: () => navigate('/membership'),
+    onNotifications: () => navigate('/notifications'),
     onLogout: () => setShowLogoutModal(true)
   };
 
   const SidebarComponent = role === 'admin'
-    ? <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => setShowLogoutModal(true)} adminData={adminData} />
+    ? <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => setShowLogoutModal(true)} onNavigateToNotifications={() => navigate('/notifications')} adminData={adminData} />
     : role === 'district'
       ? <DistrictAdminSidebar {...sidebarProps} districtName={userData.district || '—'} />
       : role === 'area'
@@ -888,18 +924,34 @@ const TargetsPage = ({ onLogout }) => {
         : <UnitAdminSidebar {...sidebarProps} unitName={userData.unitName || '—'} areaName={userData.areaName || userData.area || ''} districtName={userData.district || ''} />;
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       {SidebarComponent}
 
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center gap-3 flex-shrink-0 z-10 shadow-sm">
-          <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 hover:text-gray-700 lg:hidden"><Menu size={22} /></button>
+        <MobileTopBar
+          title="ടാർഗറ്റ്"
+          actions={
+            <>
+              {role === 'admin' && !selectedTargetId && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-1 rounded-lg bg-[#002349] px-2.5 py-1.5 text-xs font-semibold text-white"
+                >
+                  <Plus size={14} /> New
+                </button>
+              )}
+              <button onClick={() => loadTargets()} className="rounded-lg p-1.5 text-gray-400 hover:text-[#002349]" title="Refresh">
+                <RefreshCw size={16} />
+              </button>
+            </>
+          }
+        />
+
+        {/* Desktop header */}
+        <div className="hidden lg:flex bg-white border-b px-6 py-3 items-center gap-3 flex-shrink-0 z-10 shadow-sm">
           <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
-          <div className="flex-1" />
-          <div className="flex items-center gap-2">
-            <TargetIcon size={18} className="text-[#002349]" />
-            <span className="font-bold text-[#002349] text-sm hidden sm:block">Targets</span>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-bold text-[#002349] truncate">ടാർഗറ്റുകൾ</h1>
           </div>
           {role === 'admin' && !selectedTargetId && (
             <button
@@ -915,7 +967,7 @@ const TargetsPage = ({ onLogout }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 lg:pb-6 max-w-4xl mx-auto w-full">
-          {error && <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>}
+          {error && <div className="mb-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl text-sm">{error}</div>}
 
           {selectedTargetId ? (
             <TargetDetailView
@@ -925,57 +977,79 @@ const TargetsPage = ({ onLogout }) => {
             />
           ) : (
             <>
-              <div className="flex items-center justify-between mb-5">
-                <h1 className="text-2xl font-bold text-[#002349]">Targets</h1>
-                <span className="text-xs text-gray-400">{targets.length} total</span>
+              <div className="mb-4 lg:mb-6">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 sm:p-2 bg-[#002349]/10 rounded-lg flex-shrink-0">
+                    <TargetIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#002349]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h1 className="text-base sm:text-xl lg:text-3xl font-bold text-[#002349] leading-tight">ടാർഗറ്റുകൾ</h1>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                      {loading ? 'Loading...' : `${targets.length} target${targets.length === 1 ? '' : 's'}`}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {loading ? (
-                <div className="flex justify-center py-20">
-                  <div className="w-7 h-7 border-2 border-[#002349] border-t-transparent rounded-full animate-spin" />
+                <div className="flex items-center justify-center py-24">
+                  <div className="text-center">
+                    <div className="inline-block w-8 h-8 border-4 border-[#002349] border-t-transparent rounded-full animate-spin" />
+                    <p className="mt-4 text-gray-500 text-sm">Loading targets...</p>
+                  </div>
                 </div>
               ) : targets.length === 0 ? (
-                <div className="text-center py-20 text-gray-400">
-                  <TargetIcon size={36} className="mx-auto mb-3 opacity-40" />
-                  <p className="text-sm">No targets yet</p>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 sm:p-16 text-center">
+                  <TargetIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-600 font-medium text-base sm:text-lg">ടാർഗറ്റുകൾ ഒന്നും ലഭ്യമല്ല</p>
                   {role === 'admin' && (
                     <button
                       onClick={() => setShowCreateModal(true)}
-                      className="mt-3 text-sm text-[#002349] hover:underline font-medium"
+                      className="mt-4 px-6 py-2.5 bg-[#002349] text-white rounded-xl font-semibold text-sm hover:bg-[#1a3a5c] transition-colors"
                     >
                       Create the first target
                     </button>
                   )}
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5 sm:space-y-3">
                   {targets.map(t => (
                     <div
                       key={t._id}
-                      className="bg-white rounded-2xl border border-gray-200 hover:border-[#002349]/30 hover:shadow-md transition-all p-4 cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:border-[#002349]/30 hover:shadow-md transition-all p-3.5 sm:p-4 cursor-pointer"
                       onClick={() => setSelectedTargetId(t._id)}
+                      onKeyDown={e => { if (e.key === 'Enter') setSelectedTargetId(t._id); }}
                     >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-800 truncate">{t.title}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{t.districtId?.name || '—'}</p>
-                          {t.description && <p className="text-xs text-gray-500 mt-1 line-clamp-1">{t.description}</p>}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-[#002349] leading-snug break-words">{t.title}</p>
+                          <p className="mt-1 inline-flex items-center gap-1 text-xs text-gray-500">
+                            <MapPin className="w-3 h-3 flex-shrink-0" />
+                            <span className="break-words">{t.districtId?.name || '—'}</span>
+                          </p>
+                          {t.description && (
+                            <p className="mt-1 text-xs text-gray-500 line-clamp-2 break-words">{t.description}</p>
+                          )}
                         </div>
-                        <div className="flex items-center gap-4 flex-shrink-0">
+                        <div className="flex flex-shrink-0 items-center gap-1.5">
                           <div className="text-right">
-                            <p className="text-xs text-gray-400">Target</p>
-                            <p className="text-lg font-bold text-[#002349]">{t.targetCount.toLocaleString()}</p>
+                            <p className="text-[10px] uppercase tracking-wide text-gray-400">Target</p>
+                            <p className="text-lg font-bold text-[#002349] leading-tight">{t.targetCount.toLocaleString()}</p>
                           </div>
                           <ChevronRight size={16} className="text-gray-300" />
                         </div>
                       </div>
+                      {/* Destructive action gets its own row: side by side with the
+                          chevron it is one mis-tap away from opening the target. */}
                       {role === 'admin' && (
-                        <div className="flex justify-end mt-2">
+                        <div className="mt-3 flex justify-end border-t border-gray-100 pt-2.5">
                           <button
                             onClick={e => { e.stopPropagation(); setTargetToDelete(t); setShowDeleteModal(true); }}
-                            className="p-1 text-gray-300 hover:text-red-400 rounded"
+                            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={14} /> Delete
                           </button>
                         </div>
                       )}

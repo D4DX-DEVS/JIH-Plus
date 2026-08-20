@@ -276,6 +276,58 @@ const Layout = () => {
         ? 'Admin'
         : 'Member'
 
+  // Mobile app-bar title. Pages hide their own <h1> on phones, so the bar is the
+  // only thing that names the screen — longest matching prefix wins.
+  const PAGE_TITLES = {
+    '/ihthisabi/admin/submissions': 'All Submissions',
+    '/ihthisabi/admin/consolidation': 'Consolidation',
+    '/ihthisabi/admin/unit-reply': 'Unit Reply',
+    '/ihthisabi/admin/form-management': 'Form Management',
+    '/ihthisabi/admin/members': 'All Members',
+    '/ihthisabi/admin/unit-admins': 'Unit Admins',
+    '/ihthisabi/admin/district-admins': 'District Admins',
+    '/ihthisabi/admin/user-management': 'User Management',
+    '/ihthisabi/admin/archive': 'Archive',
+    '/ihthisabi/admin/abroad-countries': 'Abroad Countries',
+    '/ihthisabi/admin/abroad-members': 'Abroad Members',
+    '/ihthisabi/admin/master-data': 'Master Data',
+    '/ihthisabi/admin': 'Admin Dashboard',
+    '/ihthisabi/unitadmin/submissions': 'Unit Submissions',
+    '/ihthisabi/unitadmin/members': 'Unit Members',
+    '/ihthisabi/unitadmin/details': 'Unit Details',
+    '/ihthisabi/unitadmin/submit-form': 'Submit Report',
+    '/ihthisabi/unitadmin/submission-details': 'Submission',
+    '/ihthisabi/unitadmin': 'Unit Dashboard',
+    '/ihthisabi/districtadmin/submissions': 'District Submissions',
+    '/ihthisabi/districtadmin/members': 'District Members',
+    '/ihthisabi/districtadmin/areas': 'Area Details',
+    '/ihthisabi/districtadmin': 'District Dashboard',
+    '/ihthisabi/alternative-submissions': 'Alternative Submission',
+    '/ihthisabi/alternative-submission': 'Alternative Submission',
+    '/ihthisabi/submission-success': 'Submitted',
+    '/ihthisabi/submissions': 'Submission',
+    '/ihthisabi/submit': 'Submit Report',
+    '/ihthisabi/dashboard': 'Dashboard',
+    '/ihthisabi/profile': 'Profile',
+    '/ihthisabi/help-desk': 'Help Desk',
+  }
+
+  const pageTitle = (() => {
+    const current = location.pathname
+    let best = null
+    Object.keys(PAGE_TITLES).forEach(prefix => {
+      if (current === prefix || current.startsWith(prefix + '/')) {
+        if (!best || prefix.length > best.length) best = prefix
+      }
+    })
+    return best ? PAGE_TITLES[best] : 'IHTHISABI'
+  })()
+
+  // Secondary line: who/where the user is. `unit` is '-' for members without a unit.
+  const contextLabel =
+    (user?.unit && user.unit !== '-' ? user.unit : null) ||
+    user?.name || user?.username || roleLabel
+
   const renderNavItem = (item) => {
     if (item.type === 'group') {
       const Icon = item.icon
@@ -428,24 +480,29 @@ const Layout = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
         <div className="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur-xl backdrop-saturate-150 shadow-[0_1px_0_rgba(16,24,40,0.06)]">
-          <div className="flex items-center justify-between gap-2 px-3 py-1.5">
-            <div className="min-w-0 flex items-center gap-2">
-              <img src={LogoColor} alt="IHTHISABI" className="h-8 w-8 shrink-0 object-contain" />
-              <p className="truncate text-[11px] leading-tight text-gray-500">
-                {user?.unit || user?.username || roleLabel}
-              </p>
+          <div className="flex items-center justify-between gap-2.5 px-3.5 py-2.5">
+            <div className="min-w-0 flex items-center gap-2.5">
+              <img src={LogoColor} alt="IHTHISABI" className="h-9 w-9 shrink-0 object-contain" />
+              <div className="min-w-0">
+                <h1 className="truncate text-[15px] font-bold leading-tight tracking-tight text-gray-900">
+                  {pageTitle}
+                </h1>
+                <p className="truncate text-[10px] leading-tight text-gray-500">
+                  {contextLabel}
+                </p>
+              </div>
             </div>
             <div className="relative shrink-0">
               <button
                 onClick={() => setProfileMenuOpen((prev) => !prev)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
                 aria-label="Account menu"
               >
-                <User className="w-4 h-4" />
+                <User className="h-[18px] w-[18px]" />
               </button>
 
               {profileMenuOpen && (
-                <div className="absolute right-0 top-10 z-30 w-52 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
+                <div className="absolute right-0 top-11 z-30 w-52 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
                   <PoweredByD4DX />
                   {otherRoles.map((roleOption) => (
                     <button

@@ -9,9 +9,10 @@ import AreaPageE from '../components/forms/area/AreaPageE';
 import AreaPageF from '../components/forms/area/AreaPageF';
 import { useAreaForm } from '../contexts/AreaFormContext';
 import { getAuthToken } from '../utils/auth';
-import { CheckCircle, Menu } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
   const { currentStep } = useAreaForm();
@@ -217,16 +218,9 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
       {sidebarElement}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile toggle */}
-        <div className="lg:hidden px-4 pt-4">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-[#002349] shadow-md"
-          >
-            <Menu className="w-4 h-4" />
-            <span>Menu</span>
-          </button>
-        </div>
+        <MobileTopBar
+          title="ഏരിയ റിപ്പോർട്ട്"
+        />
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
           {/* Progress Bar */}

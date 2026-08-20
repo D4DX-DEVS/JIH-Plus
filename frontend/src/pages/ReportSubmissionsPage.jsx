@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, Menu, X } from 'lucide-react';
+import { ArrowLeft, Search, X, Filter, ChevronDown } from 'lucide-react';
 import axios from 'axios';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import RowColumnReadonly from '../components/reportRenderer/RowColumnReadonly';
 import jihLogo from '../assets/LogoColor.png';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const ReportSubmissionsPage = ({ onLogout }) => {
   const { id } = useParams();
@@ -31,6 +32,8 @@ const ReportSubmissionsPage = ({ onLogout }) => {
   const [typeFilter, setTypeFilter] = useState('');
   const [reportForFilter, setReportForFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  // Filters start collapsed on phones — expanded they cost most of the viewport.
+  const [showFilters, setShowFilters] = useState(false);
   const [reportList, setReportList] = useState([]); // for dropdown
   const [selectedReportId, setSelectedReportId] = useState('');
 
@@ -109,6 +112,8 @@ const ReportSubmissionsPage = ({ onLogout }) => {
       setIsLoading(false);
     }
   };
+
+  const activeFilterCount = [typeFilter, reportForFilter, selectedReportId, statusFilter].filter(Boolean).length;
 
   // Filter submissions based on search
   useEffect(() => {
@@ -438,15 +443,9 @@ const ReportSubmissionsPage = ({ onLogout }) => {
         />
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <div className="lg:hidden px-4 pt-4">
-            <button
-              onClick={() => setIsUnitSidebarOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-[#002349] shadow-md"
-            >
-              <Menu className="w-4 h-4" />
-              <span>Menu</span>
-            </button>
-          </div>
+          <MobileTopBar
+            title="സബ്മിഷനുകൾ"
+          />
           <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
             {content}
           </main>
@@ -475,21 +474,9 @@ const ReportSubmissionsPage = ({ onLogout }) => {
         />
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <header className="lg:hidden bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
-            <div className="flex items-center justify-between px-4 py-4">
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="text-[#002349] hover:bg-gray-100 rounded-lg p-2 transition-colors"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-              <div className="flex items-center space-x-2">
-                <img src={jihLogo} alt="JIH Logo" className="h-8 w-auto" />
-                <h1 className="text-lg font-bold text-[#002349]">Report Submissions</h1>
-              </div>
-              <div className="w-10" />
-            </div>
-          </header>
+          <MobileTopBar
+            title="സബ്മിഷനുകൾ"
+          />
           <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
             {content}
           </main>
@@ -539,7 +526,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                     <ArrowLeft className="w-5 h-5" />
                   </button>
                   <div>
-                    <h2 className="text-4xl font-bold text-[#002349]">റിപ്പോർട്ട് വിവരങ്ങൾ</h2>
+                    <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">റിപ്പോർട്ട് വിവരങ്ങൾ</h2>
                     {selectedSubmission?.userId && (
                       <p className="text-base font-bold text-[#002349] mt-2">
                         {getUserDisplayName(selectedSubmission.userId, report.reportFor)}
@@ -630,7 +617,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
-                  <h2 className="text-4xl font-bold text-[#002349]">
+                  <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
                     {isCrossReport ? 'All Submissions' : 'റിപ്പോർട്ട് സമർപ്പണങ്ങൾ'}
                   </h2>
                 </div>
@@ -646,13 +633,32 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                 </div>
               </div>
 
-              {/* ── Cross-report filter bar ── */}
+              {/* ── Cross-report filter bar — collapsed behind its toggle on phones ── */}
               {isCrossReport && (
-                <div className="mb-5 flex flex-wrap gap-3 bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                <div className="mb-4 lg:mb-5 bg-white border border-gray-200 rounded-2xl p-3 sm:p-4 shadow-sm">
+                <div className="flex items-center gap-2 lg:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowFilters(v => !v)}
+                    aria-expanded={showFilters}
+                    className="flex items-center gap-2 text-[#002349]"
+                  >
+                    <Filter className="w-4 h-4" />
+                    <span className="text-xs font-semibold uppercase tracking-wide">Filters</span>
+                    {activeFilterCount > 0 && (
+                      <span className="rounded-full bg-[#002349] px-1.5 py-0.5 text-[10px] font-bold text-white">{activeFilterCount}</span>
+                    )}
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                  </button>
+                  <span className="ml-auto text-xs font-semibold text-[#002349]">
+                    {filteredSubmissions.length} submission{filteredSubmissions.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className={`${showFilters ? 'flex' : 'hidden'} lg:flex flex-wrap gap-2 sm:gap-3 mt-3 lg:mt-0`}>
                   <select
                     value={typeFilter}
                     onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-                    className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                   >
                     <option value="">All Types</option>
                     <option value="monthly">Monthly</option>
@@ -662,7 +668,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                   <select
                     value={reportForFilter}
                     onChange={(e) => { setReportForFilter(e.target.value); setCurrentPage(1); }}
-                    className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                   >
                     <option value="">All Audiences</option>
                     <option value="district">District</option>
@@ -672,7 +678,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                   <select
                     value={selectedReportId}
                     onChange={(e) => { setSelectedReportId(e.target.value); setCurrentPage(1); }}
-                    className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349] min-w-[180px]"
+                    className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[180px] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                   >
                     <option value="">All Reports</option>
                     {reportList.map(r => (
@@ -682,7 +688,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                   <select
                     value={statusFilter}
                     onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                    className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                   >
                     <option value="">All Statuses</option>
                     <option value="submitted">Submitted</option>
@@ -696,7 +702,8 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                       Clear
                     </button>
                   )}
-                  <span className="ml-auto self-center text-sm text-gray-500 font-medium">{filteredSubmissions.length} submission{filteredSubmissions.length !== 1 ? 's' : ''}</span>
+                  <span className="ml-auto self-center hidden lg:block text-sm text-gray-500 font-medium">{filteredSubmissions.length} submission{filteredSubmissions.length !== 1 ? 's' : ''}</span>
+                </div>
                 </div>
               )}
 
@@ -716,7 +723,44 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                   </button>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <>
+                {/* Mobile list — title, user and action only, no sideways scrolling. */}
+                <div className="lg:hidden space-y-2.5">
+                  {paginatedSubmissions.map((submission) => {
+                    const user = submission.userId;
+                    const reportFor = isCrossReport
+                      ? (submission.reportId?.reportFor || 'unit')
+                      : report?.reportFor;
+                    return (
+                      <div key={submission._id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="min-w-0 flex-1 text-sm font-semibold text-[#002349] leading-snug break-words">
+                            {isCrossReport ? (submission.reportId?.title || '—') : (report?.title || 'Submission')}
+                          </p>
+                          {isCrossReport && (
+                            <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              submission.status === 'submitted' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {submission.status}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500 break-words">{getUserDisplayName(user, reportFor)}</p>
+                        <button
+                          onClick={() => isCrossReport
+                            ? navigate(`/report-submissions/${submission.reportId?._id || submission.reportId}`)
+                            : toggleSubmission(submission._id)}
+                          className="mt-2.5 w-full rounded-lg bg-[#002349]/10 px-3 py-2 text-xs font-semibold text-[#002349]"
+                        >
+                          {isCrossReport ? 'View Report' : 'View Details'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden lg:block bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white">
@@ -797,6 +841,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                     </table>
                   </div>
                 </div>
+                </>
               )}
 
               {/* ── Pagination ── */}

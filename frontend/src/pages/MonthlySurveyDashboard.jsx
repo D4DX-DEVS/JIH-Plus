@@ -1382,7 +1382,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-4xl font-bold text-[#002349] mb-2">ഏരിയ തലം റിപ്പോർട്ട്</h1>
+                <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349] mb-2">ഏരിയ തലം റിപ്പോർട്ട്</h1>
               </div>
               <button
                 onClick={() => {
@@ -1439,7 +1439,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
           <div className="max-w-5xl mx-auto ml-15 px-0 py-1">
             <div className="mb-2 flex items-start justify-between">
               <div>
-                <h1 className="text-4xl font-bold text-[#002349]">യൂണിറ്റ് റിപ്പോർട്ടുകളുടെ വിശദാംശങ്ങൾ</h1>
+                <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">യൂണിറ്റ് റിപ്പോർട്ടുകളുടെ വിശദാംശങ്ങൾ</h1>
                 <p className="text-sm text-gray-600 font-medium mt-1">
                   <span className="font-bold">{viewingSurvey.month}</span> {viewingSurvey.year} - {viewingSurvey.component || viewingSurvey.unitName}
                 </p>
@@ -1509,7 +1509,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-4xl font-bold text-[#002349] mb-2">ജില്ലാ തലം റിപ്പോർട്ട്</h1>
+              <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349] mb-2">ജില്ലാ തലം റിപ്പോർട്ട്</h1>
             </div>
             <button
               onClick={() => {
@@ -1562,7 +1562,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
       {/* Page Heading */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
         <div>
-          <h1 className="text-4xl font-bold text-[#002349]">
+          <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
             {getDashboardTitle()}
           </h1>
           <p className="text-sm text-gray-600">

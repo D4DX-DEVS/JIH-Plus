@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Save, Check, Menu, X } from 'lucide-react';
+import { ArrowLeft, Save, Check, X } from 'lucide-react';
 import UnitPageA from '../components/forms/unit/UnitPageA';
 import UnitPageB from '../components/forms/unit/UnitPageB';
 import axios from 'axios';
@@ -8,6 +8,7 @@ import jihLogo from '../assets/LogoColor.png';
 import { getAuthToken, isAdminUser } from '../utils/auth';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => {
   const { unitId } = useParams();
@@ -691,21 +692,14 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
       {sidebarElement}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile toggle */}
-        <div className="lg:hidden px-4 pt-4">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-[#002349] shadow-md"
-          >
-            <Menu className="w-4 h-4" />
-            <span>Menu</span>
-          </button>
-        </div>
+        <MobileTopBar
+          title="യൂണിറ്റ് റിപ്പോർട്ട്"
+        />
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
           {/* Header with Close Button on same horizontal level */}
           <div className="mb-6 flex items-start justify-between">
-            <h1 className="text-4xl font-bold text-[#002349]">
+            <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
               {editingSurvey ? 'യൂണിറ്റ് തലം പ്രതിമാസ റിപ്പോർട്ട് എഡിറ്റ്' : 'യൂണിറ്റ് തലം പ്രതിമാസ റിപ്പോർട്ട്'}
             </h1>
             {/* Close Button - Top Right */}

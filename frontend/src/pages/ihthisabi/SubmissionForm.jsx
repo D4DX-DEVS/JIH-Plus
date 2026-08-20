@@ -1106,40 +1106,40 @@ const SubmissionForm = ({ userRole }) => {
 
     return (
       <div key={qId} className="card bg-white border border-gray-200 rounded-3xl shadow-sm">
-        <div className="card-header bg-[#161F2F] px-6 py-4 rounded-t-3xl">
-          <h3 className="text-lg font-semibold text-white">
+        <div className="card-header rounded-t-2xl bg-[#161F2F] px-3 py-2.5 sm:rounded-t-3xl sm:px-6 sm:py-4">
+          <h3 className="text-[13px] font-semibold leading-snug text-white sm:text-lg">
             {qIndex + 1}. {label}
             {question.isRequired && <span className="text-red-400 ml-1">*</span>}
           </h3>
         </div>
-        <div className="card-body p-6">
+        <div className="card-body p-3 sm:p-6">
           {question.answerType === 'text' && (
             <input type="text" value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="form-input w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3"
               placeholder={question.placeholder || ''} maxLength={question.maxLength || 500} />
           )}
 
           {question.answerType === 'textarea' && (
             <textarea value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[100px]"
+              className="form-input min-h-[76px] w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:min-h-[100px] sm:rounded-xl sm:px-4 sm:py-3"
               placeholder={question.placeholder || ''} maxLength={question.maxLength || 1000} rows={4} />
           )}
 
           {question.answerType === 'number' && (
             <input type="number" value={value ?? ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-input w-full max-w-xs px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="form-input w-full max-w-[9rem] rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-xs sm:rounded-xl sm:px-4 sm:py-3"
               placeholder={question.placeholder || '0'}
               min={question.min ?? 0} max={question.max ?? 100000} />
           )}
 
           {question.answerType === 'radio' && (
-            <div className="space-y-3">
+            <div className="space-y-1.5 sm:space-y-3">
               {question.options?.map(opt => (
-                <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
+                <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5">
                   <input type="radio" name={qId} value={opt.value} checked={value === opt.value}
                     onChange={() => handleDynamicFieldChange(qId, opt.value)}
-                    className="w-5 h-5 text-primary border-gray-300 focus:ring-primary" />
-                  <span className="text-gray-700 group-hover:text-gray-900">{opt.labelMl || opt.label}</span>
+                    className="h-4 w-4 shrink-0 border-gray-300 text-primary focus:ring-primary sm:h-5 sm:w-5" />
+                  <span className="text-[13px] text-gray-700 group-hover:text-gray-900 sm:text-base">{opt.labelMl || opt.label}</span>
                 </label>
               ))}
             </div>
@@ -1147,7 +1147,7 @@ const SubmissionForm = ({ userRole }) => {
 
           {question.answerType === 'dropdown' && (
             <select value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-select w-full max-w-sm px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary">
+              className="form-select w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-sm sm:rounded-xl sm:px-4 sm:py-3">
               <option value="">Select...</option>
               {question.options?.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.labelMl || opt.label}</option>
@@ -1156,13 +1156,13 @@ const SubmissionForm = ({ userRole }) => {
           )}
 
           {question.answerType === 'checkbox' && (
-            <div className="space-y-3">
+            <div className="space-y-1.5 sm:space-y-3">
               {question.options?.map(opt => (
-                <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
+                <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5">
                   <input type="checkbox" checked={Array.isArray(value) && value.includes(opt.value)}
                     onChange={(e) => handleDynamicCheckboxChange(qId, opt.value, e.target.checked)}
-                    className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary" />
-                  <span className="text-gray-700 group-hover:text-gray-900">{opt.labelMl || opt.label}</span>
+                    className="h-4 w-4 shrink-0 rounded border-gray-300 text-primary focus:ring-primary sm:h-5 sm:w-5" />
+                  <span className="text-[13px] text-gray-700 group-hover:text-gray-900 sm:text-base">{opt.labelMl || opt.label}</span>
                 </label>
               ))}
             </div>
@@ -1173,7 +1173,7 @@ const SubmissionForm = ({ userRole }) => {
               {Array.from({ length: question.max || 5 }, (_, i) => i + 1).map(star => (
                 <button key={star} type="button" onClick={() => handleDynamicFieldChange(qId, star)}
                   className="focus:outline-none transition-colors">
-                  <Star className={`w-8 h-8 ${star <= (value || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                  <Star className={`h-7 w-7 sm:h-8 sm:w-8 ${star <= (value || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
                 </button>
               ))}
               {value > 0 && <span className="ml-2 text-sm text-gray-500">{value}/{question.max || 5}</span>}
@@ -1181,16 +1181,16 @@ const SubmissionForm = ({ userRole }) => {
           )}
 
           {question.answerType === 'group' && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
               {question.subFields?.map((sf, sfIdx) => {
                 const effectiveFieldId = sf.fieldId || `field_${sfIdx}`
                 return (
                   <div key={effectiveFieldId}>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">{sf.labelMl || sf.label}</label>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600 sm:text-sm">{sf.labelMl || sf.label}</label>
                     <input type={sf.type === 'number' ? 'number' : 'text'}
                       value={(value || {})[effectiveFieldId] ?? ''}
                       onChange={(e) => handleDynamicGroupFieldChange(qId, effectiveFieldId, e.target.value)}
-                      className="form-input w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      className="form-input w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3"
                       placeholder={sf.placeholder || (sf.type === 'number' ? '0' : '')}
                       min={sf.type === 'number' ? (sf.min ?? 0) : undefined}
                       max={sf.type === 'number' ? (sf.max ?? 100000) : undefined} />
@@ -1252,37 +1252,37 @@ const SubmissionForm = ({ userRole }) => {
     return (
       <>
         <button onClick={() => navigate(dashboardPath)}
-          className="fixed top-4 right-4 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+          className="fixed top-14 right-2.5 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
           title="Close">
           <X className="w-5 h-5" />
         </button>
 
-        <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
-          <div className="bg-white border border-gray-200 rounded-3xl shadow-lg px-8 py-8 space-y-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mx-auto max-w-5xl space-y-3 px-2.5 py-3 sm:space-y-6 sm:px-4 sm:py-10">
+          <div className="space-y-3 rounded-2xl border border-gray-200 bg-white px-3.5 py-3 shadow-sm sm:space-y-4 sm:rounded-3xl sm:px-8 sm:py-8 sm:shadow-lg">
+            <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
                   {dynamicForm.title || 'ത്രൈമാസ പ്രവർത്തന റിപ്പോർട്ട്'}
                 </h1>
-                <p className="text-sm text-gray-500 mt-1">{quarterDetail}</p>
+                <p className="mt-0.5 text-[11px] text-gray-500 sm:mt-1 sm:text-sm">{quarterDetail}</p>
               </div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
-                <Calendar className="w-5 h-5" />
+              <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-700 sm:bg-transparent sm:px-0 sm:py-0 sm:text-sm sm:text-gray-600">
+                <Calendar className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                 <span>{quarterLabel}</span>
               </div>
             </div>
           </div>
 
-          <form onSubmit={onDynamicSubmit} className="space-y-8 pb-12">
+          <form onSubmit={onDynamicSubmit} className="space-y-3 pb-6 sm:space-y-8 sm:pb-12">
             {/* Basic Information */}
-            <div className="card bg-white border border-gray-200 rounded-3xl shadow-sm">
-              <div className="card-header bg-[#161F2F] px-6 py-4 rounded-t-3xl">
-                <h3 className="text-lg font-semibold text-white">Basic Information</h3>
+            <div className="card rounded-2xl border border-gray-200 bg-white shadow-sm sm:rounded-3xl">
+              <div className="card-header rounded-t-2xl bg-[#161F2F] px-3 py-2.5 sm:rounded-t-3xl sm:px-6 sm:py-4">
+                <h3 className="text-[13px] font-semibold leading-snug text-white sm:text-lg">Basic Information</h3>
               </div>
-              <div className="card-body space-y-4">
+              <div className="card-body space-y-2.5 p-3 sm:space-y-4 sm:px-6 sm:py-4">
                 {isAbroadUser ? (
                   /* Abroad member: show Name + Country only */
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-2">
                     <div>
                       <label className="form-label">Name of Rukn</label>
                       <input {...register('ruknName', { required: 'Rukn name is required' })} type="text"
@@ -1305,7 +1305,7 @@ const SubmissionForm = ({ userRole }) => {
                   </div>
                 ) : (
                   /* Domestic member: show Name + District + Area + Unit */
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-2">
                     <div>
                       <label className="form-label">Name of Rukn</label>
                       <input {...register('ruknName', { required: 'Rukn name is required' })} type="text"
@@ -1358,7 +1358,7 @@ const SubmissionForm = ({ userRole }) => {
             {/* Submit Button */}
             <div className="flex justify-center pt-4">
               <button type="submit" disabled={loading}
-                className="flex items-center gap-2 bg-black text-white px-12 py-4 rounded-2xl font-semibold text-lg hover:bg-primary/90 disabled:opacity-50 shadow-lg transition-all">
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-8 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:bg-primary/90 disabled:opacity-50 sm:w-auto sm:rounded-2xl sm:px-12 sm:py-4 sm:text-lg">
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -1383,25 +1383,25 @@ const SubmissionForm = ({ userRole }) => {
       {/* Fixed Close Button - Top Right Corner */}
       <button
         onClick={() => navigate(dashboardPath)}
-        className="fixed top-4 right-4 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+        className="fixed top-14 right-2.5 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
         title="Close"
       >
         <X className="w-5 h-5" />
       </button>
 
-      <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
-        <div className="bg-white border border-gray-200 rounded-3xl shadow-lg px-8 py-8 space-y-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mx-auto max-w-5xl space-y-3 px-2.5 py-3 sm:space-y-6 sm:px-4 sm:py-10">
+        <div className="space-y-3 rounded-2xl border border-gray-200 bg-white px-3.5 py-3 shadow-sm sm:space-y-4 sm:rounded-3xl sm:px-8 sm:py-8 sm:shadow-lg">
+          <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
                 {editMode ? 'തിരുത്തുക' : 'ത്രൈമാസ പ്രവർത്തന റിപ്പോർട്ട്'}
               </h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="mt-0.5 text-[11px] text-gray-500 sm:mt-1 sm:text-sm">
                 {quarterDetail}
               </p>
             </div>
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
-              <Calendar className="w-5 h-5" />
+            <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-700 sm:bg-transparent sm:px-0 sm:py-0 sm:text-sm sm:text-gray-600">
+              <Calendar className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
               <span>{quarterLabel}</span>
             </div>
           </div>
@@ -1410,19 +1410,19 @@ const SubmissionForm = ({ userRole }) => {
         <form
           id="submissionForm"
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-8 pb-12"
+          className="space-y-3 pb-6 sm:space-y-8 sm:pb-12"
         >
         {/* Basic Information */}
-        <div className="card bg-white border border-gray-200 rounded-3xl shadow-sm">
-          <div className="card-header bg-[#161F2F] px-6 py-4 rounded-t-3xl">
-            <h3 className="text-lg font-semibold text-white">
+        <div className="card rounded-2xl border border-gray-200 bg-white shadow-sm sm:rounded-3xl">
+          <div className="card-header rounded-t-2xl bg-[#161F2F] px-3 py-2.5 sm:rounded-t-3xl sm:px-6 sm:py-4">
+            <h3 className="text-[13px] font-semibold leading-snug text-white sm:text-lg">
               Basic Information
             </h3>
           </div>
-          <div className="card-body space-y-4">
+          <div className="card-body space-y-2.5 p-3 sm:space-y-4 sm:px-6 sm:py-4">
             {isAbroadUser ? (
               /* Abroad member: show Name + Country only */
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-2">
                 <div>
                   <label className="form-label">Name of Rukn</label>
                   <input
@@ -1459,7 +1459,7 @@ const SubmissionForm = ({ userRole }) => {
             ) : (
               /* Domestic member: show Name + District + Area + Unit */
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-2">
                   <div>
                     <label className="form-label">Name of Rukn </label>
                     <input
@@ -1514,7 +1514,7 @@ const SubmissionForm = ({ userRole }) => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-2">
                   <div>
                     <label className="form-label">Area</label>
                     <Controller
@@ -1573,12 +1573,12 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Quran Study */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. ഖുർആൻ പഠനം : സൂറ അന്നിസാഅ് (87 ആയഹ്)- തഫ്സീർ മുന്നിൽ വെച്ചുള്ള പഠനം :
             </h3>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-4">
+            <div className="space-y-1.5 sm:space-y-3">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
                 <label className="flex items-center">
                   <input
                     type="radio"
@@ -1586,7 +1586,7 @@ const SubmissionForm = ({ userRole }) => {
                     {...register('form.quranStudy.status')}
                     className="form-radio"
                   />
-                  <span className="ml-2">പൂർണം</span>
+                  <span className="ml-2 text-[13px] sm:text-base">പൂർണം</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -1595,7 +1595,7 @@ const SubmissionForm = ({ userRole }) => {
                     {...register('form.quranStudy.status')}
                     className="form-radio"
                   />
-                  <span className="ml-2">ഭാഗികം</span>
+                  <span className="ml-2 text-[13px] sm:text-base">ഭാഗികം</span>
                 </label>
               </div>
               <div>
@@ -1613,8 +1613,8 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Hadith Study */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. ഹദീസ് പഠനം : (എണ്ണം)
             </h3>
             <input
@@ -1640,14 +1640,14 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Book Reading */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. പുസ്തക വായന
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-2.5 sm:space-y-4">
               <div>
                 <label className="form-label">A. മുസ്‌ലിം വനിതകളും ഇസ്‌ലാമിക പ്രബോധനവും</label>
-                <div className="flex space-x-4">
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5">
                   {FORM_OPTIONS.bookReading.map((option) => (
                     <label key={option.value} className="flex items-center">
                       <input
@@ -1656,7 +1656,7 @@ const SubmissionForm = ({ userRole }) => {
                         {...register('form.bookReading.islami', { required: 'Selection is required' })}
                         className="form-radio"
                       />
-                      <span className="ml-2">{option.label}</span>
+                      <span className="ml-2 text-[13px] sm:text-base">{option.label}</span>
                     </label>
                   ))}
                 </div>
@@ -1667,7 +1667,7 @@ const SubmissionForm = ({ userRole }) => {
 
               <div>
                 <label className="form-label">B. മദീനയിലെ ഏടുകളിൽ നിന്ന്</label>
-                <div className="flex space-x-4">
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5">
                   {FORM_OPTIONS.bookReading.map((option) => (
                     <label key={option.value} className="flex items-center">
                       <input
@@ -1676,7 +1676,7 @@ const SubmissionForm = ({ userRole }) => {
                         {...register('form.bookReading.atma', { required: 'Selection is required' })}
                         className="form-radio"
                       />
-                      <span className="ml-2">{option.label}</span>
+                      <span className="ml-2 text-[13px] sm:text-base">{option.label}</span>
                     </label>
                   ))}
                 </div>
@@ -1700,11 +1700,11 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Weekly Meeting */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. പ്രതിവാരയോഗം :
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-3">
               <div>
                 <label className="form-label">ഹാജർ : (എണ്ണം)</label>
                   <input
@@ -1774,11 +1774,11 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Jamaath Meeting */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. പ്രാദേശിക ജമാഅത്തെ യോഗം:
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-3">
               <div>
                 <label className="form-label">ഹാജർ : (എണ്ണം)</label>
                   <input
@@ -1848,11 +1848,11 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Griha Meetings */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. ഗൃഹയോഗങ്ങൾ :
             </h3>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {GRIHA_MEETINGS_OPTIONS.map((option) => (
                 <label key={option.value} className="flex items-center">
                   <input
@@ -1861,7 +1861,7 @@ const SubmissionForm = ({ userRole }) => {
                     {...register('form.grihameetings', { required: 'Selection is required' })}
                     className="form-radio"
                   />
-                  <span className="ml-2">{option.label}</span>
+                  <span className="ml-2 text-[13px] sm:text-base">{option.label}</span>
                 </label>
               ))}
             </div>
@@ -1873,11 +1873,11 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Thahreeki Meetings */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. തഹ്‌രീകീ യോഗം - പങ്കാളിത്തം
             </h3>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {THAHREEKI_MEETINGS_OPTIONS.map((option) => (
                 <label key={option.value} className="flex items-center">
                   <input
@@ -1886,7 +1886,7 @@ const SubmissionForm = ({ userRole }) => {
                     {...register('form.thahreekiMeetings', { required: 'Selection is required' })}
                     className="form-radio"
                   />
-                  <span className="ml-2">{option.label}</span>
+                  <span className="ml-2 text-[13px] sm:text-base">{option.label}</span>
                 </label>
               ))}
             </div>
@@ -1898,11 +1898,11 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Baithulmaal */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. ബൈതുല്‍മാല്‍ (2%) നല്‍കിയത്:
             </h3>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {FORM_OPTIONS.baithulmaal.map((option) => (
                 <label key={option.value} className="flex items-center">
                   <input
@@ -1911,7 +1911,7 @@ const SubmissionForm = ({ userRole }) => {
                     {...register('form.baithulmaal', { required: 'Selection is required' })}
                     className="form-radio"
                   />
-                  <span className="ml-2">{option.label}</span>
+                  <span className="ml-2 text-[13px] sm:text-base">{option.label}</span>
                 </label>
               ))}
             </div>
@@ -1923,11 +1923,11 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Zakat */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. സകാത്ത് ബൈതുല്‍മാലില്‍ അടച്ചോ?
             </h3>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {FORM_OPTIONS.zakatPaid.map((option) => (
                 <label key={option.value} className="flex items-center">
                   <input
@@ -1936,7 +1936,7 @@ const SubmissionForm = ({ userRole }) => {
                     {...register('form.zakatPaid', { required: 'Selection is required' })}
                     className="form-radio"
                   />
-                  <span className="ml-2">{option.label}</span>
+                  <span className="ml-2 text-[13px] sm:text-base">{option.label}</span>
                 </label>
               ))}
             </div>
@@ -1948,11 +1948,11 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: New Members */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. പുതുതായി സംഘടനയിലേക്ക് കൊണ്ടുവന്ന വ്യക്തികൾ: (എണ്ണം)
             </h3>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {[0, 1, 2, 3].map((value) => (
                 <label key={value} className="flex items-center">
                   <input
@@ -1963,7 +1963,7 @@ const SubmissionForm = ({ userRole }) => {
                     })}
                     className="form-radio"
                   />
-                  <span className="ml-2">{value}</span>
+                  <span className="ml-2 text-[13px] sm:text-base">{value}</span>
                 </label>
               ))}
             </div>
@@ -1975,8 +1975,8 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Muslim Relations */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. മുസ്‌ലിം വ്യക്തിബന്ധങ്ങൾ : (എണ്ണം)
             </h3>
             <input
@@ -2002,8 +2002,8 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Community Relations */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. സഹോദര സമുദായങ്ങളുമായുള്ള വ്യക്തിബന്ധം : (എണ്ണം)
             </h3>
             <input
@@ -2029,8 +2029,8 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Score Count */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. ഈ ത്രൈമാസത്തിൽ നടത്തിയ സ്കോഡുകൾ : (എണ്ണം)
             </h3>
             <input
@@ -2056,11 +2056,11 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Meqath Service */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. 100പേര്‍ക്ക് സേവനം ലഭ്യമാക്കുക എന്ന മീഖാത്തീ ടാര്‍ഗറ്റ് മുന്നില്‍ വെച്ച് ഈ ത്രൈമാസത്തിലെ സേവന പ്രവര്‍ത്തനം തൃപ്തികരമാണോ ?
             </h3>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {FORM_OPTIONS.meqathService.map((option) => (
                 <label key={option.value} className="flex items-center">
                   <input
@@ -2069,7 +2069,7 @@ const SubmissionForm = ({ userRole }) => {
                     {...register('form.meqathService', { required: 'Selection is required' })}
                     className="form-radio"
                   />
-                  <span className="ml-2">{option.label}</span>
+                  <span className="ml-2 text-[13px] sm:text-base">{option.label}</span>
                 </label>
               ))}
             </div>
@@ -2081,11 +2081,11 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Skill Usage */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. എഴുത്ത്, പ്രഭാഷണം, സംഭാഷണം തുടങ്ങിയ വ്യക്തിഗത കഴിവുകള്‍ ദീനീമാര്‍ഗത്തില്‍ സാധ്യമാകുന്ന അളവില്‍ ഉപയോഗപ്പെടുത്തിയിട്ടുണ്ടോ?
             </h3>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {FORM_OPTIONS.skillUsage.map((option) => (
                 <label key={option.value} className="flex items-center">
                   <input
@@ -2094,7 +2094,7 @@ const SubmissionForm = ({ userRole }) => {
                     {...register('form.skillUsage', { required: 'Selection is required' })}
                     className="form-radio"
                   />
-                  <span className="ml-2">{option.label}</span>
+                  <span className="ml-2 text-[13px] sm:text-base">{option.label}</span>
                 </label>
               ))}
             </div>
@@ -2106,8 +2106,8 @@ const SubmissionForm = ({ userRole }) => {
 
         {/* Question: Jamaath Influence */}
         <div className="card">
-          <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card-body p-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. പ്രാദേശിക ജമാഅത്തെ യോഗം താങ്കളിൽ സ്വാധീനം ചെലുത്താറുണ്ടോ?
             </h3>
             <div 

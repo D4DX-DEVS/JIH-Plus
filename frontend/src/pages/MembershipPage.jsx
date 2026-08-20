@@ -9,7 +9,6 @@ import {
   X,
   Trash2,
   Eye,
-  Menu,
   Clock
 } from 'lucide-react';
 import RejectionModal from '../components/modals/RejectionModal';
@@ -19,6 +18,7 @@ import AdminSidebar from '../components/sidebars/AdminSidebar';
 import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -629,22 +629,15 @@ const MembershipPage = () => {
       )}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile menu toggle */}
-        <div className="lg:hidden px-4 pt-4">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-[#002349] shadow-md"
-          >
-            <Menu className="w-4 h-4" />
-            <span>Menu</span>
-          </button>
-        </div>
+        <MobileTopBar
+          title="അംഗത്വ അപേക്ഷകൾ"
+        />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 space-y-5 min-w-0">
         {/* Page Heading with Filters */}
         <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#002349] mb-2 break-words">
+            <h1 className="text-lg sm:text-xl lg:text-3xl font-bold text-[#002349] mb-2 break-words">
               അംഗത്വ അപേക്ഷകൾ
             </h1>
             <p className="text-gray-600">

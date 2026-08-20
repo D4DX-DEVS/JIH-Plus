@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, FileText, Search, Edit, Trash2, Download, Bell, X, Eye, Plus, Menu, MapPin, Calendar, TrendingUp, Check, Clock, ArrowLeft, ChevronRight } from 'lucide-react';
+import { LogOut, FileText, Search, Edit, Trash2, Download, Bell, X, Eye, Plus, MapPin, Calendar, TrendingUp, Check, Clock, ArrowLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import FormDetailPage from './FormDetailPage';
 
@@ -23,6 +23,7 @@ import KarkunForm from '../components/forms/membership/KarkunForm.jsx';
 import RuknForm from '../components/forms/membership/RuknForm.jsx';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import ConsolidationTab from '../components/admin/ConsolidationTab';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const AdminDashboardPage = ({ onLogout }) => {
   const navigate = useNavigate();
@@ -974,22 +975,9 @@ const AdminDashboardPage = ({ onLogout }) => {
 
       {/* Main Content Area */}
       <div className="flex-1 relative z-10 box-border flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile Header with Menu Button */}
-        <header className="lg:hidden bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
-          <div className="flex items-center justify-between px-4 py-4">
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="text-[#002349] hover:bg-gray-100 rounded-lg p-2 transition-colors"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            <div className="flex items-center space-x-2">
-              <img src={jihLogo} alt="JIH Logo" className="h-8 w-auto" />
-              <h1 className="text-lg font-bold text-[#002349]">Admin Dashboard</h1>
-            </div>
-            <div className="w-10" /> {/* Spacer for centering */}
-          </div>
-        </header>
+        <MobileTopBar
+          title="Admin Dashboard"
+        />
 
       {/* Main Content */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6 relative z-0">
@@ -1019,7 +1007,7 @@ const AdminDashboardPage = ({ onLogout }) => {
             {/* Header with Title, Download Button, and Search */}
         {activeTab !== 'membership' && (
               <div className="mb-6 flex items-center justify-between gap-4">
-                <h2 className="text-4xl font-bold text-[#002349]">വാർഷിക റിപ്പോർട്ട്</h2>
+                <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">വാർഷിക റിപ്പോർട്ട്</h2>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleDownloadAllForms}
@@ -1151,7 +1139,7 @@ const AdminDashboardPage = ({ onLogout }) => {
           <>
             <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               <div>
-                <h2 className="text-4xl font-bold text-[#002349]">പ്രതിമാസ റിപ്പോർട്ട്</h2>
+                <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">പ്രതിമാസ റിപ്പോർട്ട്</h2>
                 <p className="text-sm text-gray-600">Browse monthly reports by district, area, and unit.</p>
               </div>
               <div className="relative w-full lg:w-80">
@@ -1562,7 +1550,7 @@ const AdminDashboardPage = ({ onLogout }) => {
           <div className="space-y-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               <div>
-                <h2 className="text-4xl font-bold text-[#002349]">അംഗത്വം</h2>
+                <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">അംഗത്വം</h2>
                 <p className="text-sm text-gray-600">Review and manage Karkun and Rukn applications.</p>
               </div>
               <div className="flex gap-2">

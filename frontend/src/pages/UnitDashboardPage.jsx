@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, FileText, Search, Filter, Edit, Trash2, Calendar, ArrowLeft, Eye, Save, Bell, Check, Menu, X, BookOpen, TrendingUp } from 'lucide-react';
+import { LogOut, FileText, Search, Filter, Edit, Trash2, Calendar, ArrowLeft, Eye, Save, Bell, Check, X, BookOpen, TrendingUp } from 'lucide-react';
 import axios from 'axios';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import FormDetailPage from './FormDetailPage';
@@ -17,6 +17,7 @@ import UnitMonthlyStatsTable from '../components/tables/UnitMonthlyStatsTable';
 import ActiveReportsCard from '../components/dashboard/ActiveReportsCard';
 import jihLogo from '../assets/LogoColor.png';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 // Authority persons options for display
 const authorityPersonsOptions = [
@@ -973,7 +974,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
         <div className="max-w-5xl mx-auto px-0 py-2">
           <div className="mb-2 flex items-start justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-[#002349]">യൂണിറ്റ് റിപ്പോർട്ടുകളുടെ വിശദാംശങ്ങൾ</h1>
+              <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">യൂണിറ്റ് റിപ്പോർട്ടുകളുടെ വിശദാംശങ്ങൾ</h1>
               <p className="text-sm text-gray-600 font-medium mt-1">
                 <span className="font-bold">{viewingSurvey.month}</span> {viewingSurvey.year} - {viewingSurvey.component}
               </p>
@@ -1427,15 +1428,9 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
           />
 
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <div className="lg:hidden px-4 pt-4">
-              <button
-                onClick={() => setIsUnitSidebarOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-[#002349] shadow-md"
-              >
-                <Menu className="w-4 h-4" />
-                <span>Menu</span>
-              </button>
-            </div>
+            <MobileTopBar
+              title="യൂണിറ്റ് ഡാഷ്ബോർഡ്"
+            />
             <div className="flex-1 overflow-y-auto overflow-x-hidden pb-24 lg:pb-0">
               {detailViewContent}
             </div>
@@ -1587,26 +1582,26 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
               ) : (
                 <>
                   <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                    <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2">
+                    <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-50 flex items-center justify-center">
                         <BookOpen className="w-5 h-5 text-green-600" />
                       </div>
                       <p className="text-2xl font-bold text-green-600">{d.activeReports ?? '—'}</p>
-                      <p className="text-xs text-gray-500 font-medium">ആക്ടീവ് റിപ്പോർട്ടുകൾ</p>
+                      <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">ആക്ടീവ് റിപ്പോർട്ടുകൾ</p>
                     </div>
-                    <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2">
+                    <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
                         <TrendingUp className="w-5 h-5 text-emerald-600" />
                       </div>
                       <p className="text-2xl font-bold text-emerald-600">{d.submitted ?? '—'}</p>
-                      <p className="text-xs text-gray-500 font-medium">സബ്മിറ്റ് ചെയ്തവ</p>
+                      <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">സബ്മിറ്റ് ചെയ്തവ</p>
                     </div>
-                    <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2">
+                    <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-50 flex items-center justify-center">
                         <FileText className="w-5 h-5 text-[#957C3D]" />
                       </div>
                       <p className="text-2xl font-bold text-[#957C3D]">{totalSurveys}</p>
-                      <p className="text-xs text-gray-500 font-medium">പ്രതിമാസ റിപ്പോർട്ടുകൾ</p>
+                      <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">പ്രതിമാസ റിപ്പോർട്ടുകൾ</p>
                     </div>
                   </div>
 
@@ -1640,7 +1635,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
             {/* Page Heading */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 -mx-4 sm:-mx-6 lg:-mx-8 px-2 sm:px-3 lg:px-4">
               <div>
-                <h1 className="text-4xl font-bold text-[#002349]">
+                <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
                   പ്രതിമാസ റിപ്പോർട്ട്
                 </h1>
                 <p className="text-sm text-gray-600 mt-1 font-medium">
@@ -2116,15 +2111,9 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
         />
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <div className="lg:hidden px-4 pt-4">
-            <button
-              onClick={() => setIsUnitSidebarOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-[#002349] shadow-md"
-            >
-              <Menu className="w-4 h-4" />
-              <span>Menu</span>
-            </button>
-          </div>
+          <MobileTopBar
+            title="യൂണിറ്റ് ഡാഷ്ബോർഡ്"
+          />
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {pageContent}
           </div>

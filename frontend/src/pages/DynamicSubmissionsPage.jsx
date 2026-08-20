@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Search,
-  Menu,
   X,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Calendar,
@@ -23,7 +23,7 @@ import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import SubmissionPreviewModal from '../components/reportRenderer/SubmissionPreviewModal';
 import { downloadDynamicReportPdf } from '../utils/dynamicReportPdfGenerator';
-import jihLogo from '../assets/LogoColor.png';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const TYPE_LABELS = {
   monthly: 'പ്രതിമാസം',
@@ -117,6 +117,9 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
   const [yearFilter, setYearFilter] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
+  // On phones the filter panel ate more than half the viewport, so it starts
+  // collapsed behind its own toggle. Desktop keeps it permanently open.
+  const [showFilters, setShowFilters] = useState(false);
 
   const validType = ['monthly', 'yearly', 'special', 'quarterly'].includes(type) ? type : 'monthly';
   const TypeIcon = TYPE_ICONS[validType] || ClipboardList;
@@ -328,6 +331,8 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
     }
   };
 
+  const activeFilterCount = [reportIdFilter, reportForFilter, statusFilter, districtFilter, areaFilter, unitFilter, monthFilter, yearFilter].filter(Boolean).length;
+
   const hasActiveFilters = reportIdFilter || reportForFilter || statusFilter || districtFilter || areaFilter || unitFilter || searchTerm || monthFilter || yearFilter || sortBy !== 'newest';
 
   const clearAllFilters = () => {
@@ -406,49 +411,41 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
       {renderSidebar()}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile header */}
-        <header className="lg:hidden bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
-          <div className="flex items-center justify-between px-4 py-3">
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="text-[#002349] hover:bg-gray-100 rounded-lg p-2 transition-colors"
-            >
-              <Menu className="w-6 h-6" />
+        <MobileTopBar
+          title={`${TYPE_LABELS[validType]} സബ്മിഷൻ`}
+          actions={
+            <button onClick={fetchSubmissions} className="rounded-lg p-1.5 text-gray-400 hover:text-[#002349]" title="Refresh">
+              <RefreshCw className="w-4 h-4" />
             </button>
-            <div className="flex items-center space-x-2">
-              <img src={jihLogo} alt="JIH Logo" className="h-7 w-auto" />
-              <h1 className="text-base font-bold text-[#002349]">{TYPE_LABELS[validType]} സബ്മിഷൻ</h1>
-            </div>
-            <div className="w-10" />
-          </div>
-        </header>
+          }
+        />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6">
           {/* Page header */}
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-1">
-              <div className="p-2 bg-[#002349]/10 rounded-lg">
-                <TypeIcon className="w-6 h-6 text-[#002349]" />
+          <div className="mb-4 lg:mb-6">
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="p-1.5 sm:p-2 bg-[#002349]/10 rounded-lg flex-shrink-0">
+                <TypeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#002349]" />
               </div>
-              <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-[#002349]">
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl lg:text-3xl font-bold text-[#002349] leading-tight">
                   സബ്മിഷനുകൾ — {TYPE_LABELS[validType]}
                 </h1>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
                   {isLoading ? 'Loading...' : `${filteredSubmissions.length} submissions`}
                 </p>
               </div>
             </div>
 
             {/* Type switcher tabs */}
-            <div className="flex flex-wrap gap-2 mt-4">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4">
               {(['monthly', 'yearly', 'quarterly', 'special']).map(t => {
                 const TIcon = TYPE_ICONS[t];
                 return (
                   <button
                     key={t}
                     onClick={() => navigate(`${config.basePath}/${t}`)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all ${
                       validType === t
                         ? 'bg-[#002349] text-white shadow-md'
                         : 'bg-white text-gray-600 border border-gray-200 hover:border-[#002349]/40 hover:text-[#002349]'
@@ -461,11 +458,11 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
               })}
               <button
                 onClick={fetchSubmissions}
-                className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-500 hover:bg-white border border-gray-200 hover:border-gray-300 transition-all"
+                className="ml-auto hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-500 hover:bg-white border border-gray-200 hover:border-gray-300 transition-all"
                 title="Refresh"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Refresh</span>
+                <span>Refresh</span>
               </button>
             </div>
           </div>
@@ -490,27 +487,43 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
             )}
           </div>
 
-          {/* Filter bar */}
-          <div className="mb-5 bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <Filter className="w-4 h-4 text-[#002349]" />
-              <span className="text-xs font-semibold text-[#002349] uppercase tracking-wide">ഫിൽട്ടർ</span>
+          {/* Filter bar — collapsed behind its toggle on phones */}
+          <div className="mb-4 lg:mb-5 bg-white border border-gray-200 rounded-2xl p-3 sm:p-4 shadow-sm">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowFilters(v => !v)}
+                aria-expanded={showFilters}
+                className="flex items-center gap-2 rounded-lg text-[#002349] lg:pointer-events-none"
+              >
+                <Filter className="w-4 h-4" />
+                <span className="text-xs font-semibold uppercase tracking-wide">ഫിൽട്ടർ</span>
+                {activeFilterCount > 0 && (
+                  <span className="rounded-full bg-[#002349] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {activeFilterCount}
+                  </span>
+                )}
+                <ChevronDown className={`w-4 h-4 lg:hidden transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+              </button>
+              <span className="ml-auto text-xs font-semibold text-[#002349] lg:hidden">
+                {filteredSubmissions.length} submissions
+              </span>
               {hasActiveFilters && (
                 <button
                   onClick={clearAllFilters}
-                  className="ml-auto text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  className="hidden lg:block ml-auto text-xs text-gray-400 hover:text-red-500 transition-colors"
                 >
                   Clear all
                 </button>
               )}
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className={`${showFilters ? 'flex' : 'hidden'} lg:flex flex-wrap gap-2 sm:gap-3 mt-3`}>
               {/* District (admin only) */}
               {config.showDistrictFilter && (
                 <select
                   value={districtFilter}
                   onChange={e => setDistrictFilter(e.target.value)}
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349] min-w-[160px]"
+                  className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[160px] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                 >
                   <option value="">എല്ലാ ജില്ലകളും</option>
                   {allDistricts.map(d => <option key={d} value={d}>{d}</option>)}
@@ -522,7 +535,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
                 <select
                   value={areaFilter}
                   onChange={e => { setAreaFilter(e.target.value); setUnitFilter(''); setCurrentPage(1); }}
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349] min-w-[150px]"
+                  className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[150px] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                 >
                   <option value="">എല്ലാ ഏരിയകളും</option>
                   {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
@@ -534,7 +547,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
                 <select
                   value={unitFilter}
                   onChange={e => { setUnitFilter(e.target.value); setCurrentPage(1); }}
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349] min-w-[150px]"
+                  className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[150px] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                 >
                   <option value="">എല്ലാ യൂണിറ്റുകളും</option>
                   {allUnits.map(u => <option key={u} value={u}>{u}</option>)}
@@ -546,7 +559,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
                 <select
                   value={reportForFilter}
                   onChange={e => { setReportForFilter(e.target.value); setCurrentPage(1); }}
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                  className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                 >
                   <option value="">എല്ലാ ലെവലുകളും</option>
                   <option value="district">ജില്ല</option>
@@ -559,7 +572,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
               <select
                 value={reportIdFilter}
                 onChange={e => { setReportIdFilter(e.target.value); setCurrentPage(1); }}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349] min-w-[180px]"
+                className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[180px] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
               >
                 <option value="">എല്ലാ റിപ്പോർട്ടുകളും</option>
                 {reportList.map(r => (
@@ -571,7 +584,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
               <select
                 value={statusFilter}
                 onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
               >
                 <option value="">എല്ലാ സ്റ്റാറ്റസും</option>
                 <option value="submitted">Submitted</option>
@@ -579,7 +592,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
               </select>
 
               {/* Sort */}
-              <div className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 bg-white">
+              <div className="flex flex-1 min-w-[45%] lg:flex-none items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 bg-white">
                 <ArrowDownUp className="w-3.5 h-3.5 text-gray-400" />
                 <select
                   value={sortBy}
@@ -593,7 +606,16 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
                 </select>
               </div>
 
-              <span className="ml-auto self-center text-sm font-semibold text-[#002349]">
+              {hasActiveFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className="lg:hidden px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-500 hover:text-red-500"
+                >
+                  Clear all
+                </button>
+              )}
+
+              <span className="ml-auto self-center hidden lg:block text-sm font-semibold text-[#002349]">
                 {filteredSubmissions.length} submissions
               </span>
             </div>
@@ -636,7 +658,49 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
             </div>
           ) : (
             <>
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              {/* Mobile list — title, user and actions only. No sideways scrolling. */}
+              <div className="lg:hidden space-y-2.5">
+                {paginatedSubmissions.map((sub) => {
+                  const isDownloading = downloadingId === sub._id;
+                  const canExport = sub.status === 'submitted' && typeof sub.reportId === 'object';
+                  return (
+                    <div key={sub._id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="min-w-0 flex-1 text-sm font-semibold text-[#002349] leading-snug break-words">
+                          {sub.reportId?.title || '—'}
+                        </p>
+                        <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[sub.status] || 'bg-gray-100 text-gray-700'}`}>
+                          {sub.status === 'submitted' ? 'Submitted' : sub.status === 'pending' ? 'Pending' : sub.status || '—'}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500 break-words">{getUserDisplay(sub)}</p>
+                      <div className="mt-2.5 flex items-center gap-2">
+                        <button
+                          onClick={() => setPreviewSub(sub)}
+                          className="flex-1 rounded-lg bg-[#002349]/10 px-3 py-2 text-xs font-semibold text-[#002349]"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => handleExport(sub)}
+                          disabled={!canExport || isDownloading}
+                          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 disabled:opacity-40"
+                        >
+                          {isDownloading ? (
+                            <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+                          ) : (
+                            <Download className="h-3.5 w-3.5" />
+                          )}
+                          Export
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white">

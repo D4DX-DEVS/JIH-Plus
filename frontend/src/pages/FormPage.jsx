@@ -135,7 +135,7 @@ const FormPage = ({ onBack, onSubmit, editingForm, isAdmin = false }) => {
       {/* Header with close button on same horizontal level */}
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-0">
+          <h2 className="text-lg sm:text-xl lg:text-3xl font-bold text-gray-900 mb-0">
             {getStepTitle()}
           </h2>
           <p className="text-sm text-gray-600 mt-0">

@@ -27,14 +27,17 @@ const SCOPE_ENDPOINT = {
   area: { url: '/api/user/report-submissions', tokenKey: 'userToken' },
 };
 
+// `w-full` on the text block is what keeps long Malayalam labels inside the
+// card: in a column flex the block would otherwise size to its content and
+// spill past the border, and Malayalam words offer no break opportunities.
 const StatCard = ({ icon: Icon, label, value, tone }) => (
-  <div className="bg-white rounded-2xl border border-gray-200 p-2.5 sm:p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-3">
+  <div className="bg-white rounded-2xl border border-gray-200 p-2.5 sm:p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-3 overflow-hidden">
     <div className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${tone}`}>
       <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
     </div>
-    <div className="min-w-0">
+    <div className="w-full min-w-0 sm:w-auto">
       <p className="text-lg sm:text-2xl font-bold text-[#002349] leading-none">{value}</p>
-      <p className="text-[10px] sm:text-xs text-gray-500 mt-1 font-medium leading-tight">{label}</p>
+      <p className="text-[10px] sm:text-xs text-gray-500 mt-1 font-medium leading-tight break-words [overflow-wrap:anywhere]">{label}</p>
     </div>
   </div>
 );

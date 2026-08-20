@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Pencil, Trash2, RefreshCw, Copy, Check, ChevronDown,
-  MapPin, Building2, Home, Layers, Menu, X, Eye, EyeOff, Download,
+  MapPin, Building2, Home, Layers, X, Eye, EyeOff, Download,
   ChevronLeft, ChevronRight, Scissors, GitMerge, ArrowRightLeft, Search
 } from 'lucide-react';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import * as svc from '../services/locationMasterService';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const PAGE_SIZE = 20;
 
@@ -1935,14 +1936,9 @@ export default function LocationMasterPage({ onLogout }) {
       />
 
       <main className="flex-1 overflow-y-auto overflow-x-hidden">
-        {/* Mobile header */}
-        <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b shadow-sm">
-          <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg text-gray-600 hover:bg-gray-100">
-            <Menu className="w-5 h-5" />
-          </button>
-          <h1 className="text-base font-semibold text-[#002349]">മാസ്റ്റർ ഡാറ്റ</h1>
-          <div />
-        </div>
+        <MobileTopBar
+          title="മാസ്റ്റർ ഡാറ്റ"
+        />
 
         <div className="p-4 pb-24 lg:p-6 lg:pb-6">
           {/* Page header */}
