@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, Users, Building, BookOpen, TrendingUp, BarChart3, MapPin, ChevronRight, ChevronDown, FileText } from 'lucide-react';
+import { Users, Building, BookOpen, TrendingUp, BarChart3, MapPin, ChevronRight, ChevronDown, FileText } from 'lucide-react';
 import axios from 'axios';
 import { validateUserToken } from '../utils/auth';
 import { Navigate } from 'react-router-dom';
@@ -19,6 +19,7 @@ import DistrictMonthlyStatsTable from '../components/tables/DistrictMonthlyStats
 import AreaMonthlyStatsTable from '../components/tables/AreaMonthlyStatsTable';
 import ActiveReportsCard from '../components/dashboard/ActiveReportsCard';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const DistrictDashboardPage = ({ onLogout }) => {
   const { districtId } = useParams();
@@ -590,33 +591,33 @@ const DistrictDashboardPage = ({ onLogout }) => {
 
         {/* Stat cards */}
         <div className="grid grid-cols-4 gap-2 sm:gap-4">
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2">
+          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-50 flex items-center justify-center">
               <MapPin className="w-5 h-5 text-[#002349]" />
             </div>
             <p className="text-2xl font-bold text-[#002349]">{d.areas ?? '—'}</p>
-            <p className="text-xs text-gray-500 font-medium">ആകെ ഏരിയകൾ</p>
+            <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">ആകെ ഏരിയകൾ</p>
           </div>
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2">
+          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-50 flex items-center justify-center">
               <Building className="w-5 h-5 text-[#957C3D]" />
             </div>
             <p className="text-2xl font-bold text-[#957C3D]">{d.units ?? '—'}</p>
-            <p className="text-xs text-gray-500 font-medium">ആകെ യൂണിറ്റുകൾ</p>
+            <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">ആകെ യൂണിറ്റുകൾ</p>
           </div>
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2">
+          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-50 flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-green-600" />
             </div>
             <p className="text-2xl font-bold text-green-600">{d.activeReports ?? '—'}</p>
-            <p className="text-xs text-gray-500 font-medium">ആക്ടീവ് റിപ്പോർട്ടുകൾ</p>
+            <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">ആക്ടീവ് റിപ്പോർട്ടുകൾ</p>
           </div>
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2">
+          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-emerald-600" />
             </div>
             <p className="text-2xl font-bold text-emerald-600">{d.submitted ?? '—'}</p>
-            <p className="text-xs text-gray-500 font-medium">സബ്മിറ്റ് ചെയ്തവ</p>
+            <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">സബ്മിറ്റ് ചെയ്തവ</p>
           </div>
         </div>
 
@@ -972,7 +973,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
                         {isExpanded ? <ChevronDown className="w-4 h-4 text-[#957C3D]" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
                         <span className="text-sm font-semibold text-[#002349]">{a.title || a.name || areaId}</span>
                       </div>
-                      <span className="text-xs text-gray-500 font-medium">View monthly data</span>
+                      <span className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">View monthly data</span>
                     </button>
 
                     {isExpanded && (
@@ -1204,16 +1205,9 @@ const DistrictDashboardPage = ({ onLogout }) => {
         />
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {/* Mobile toggle */}
-          <div className="lg:hidden px-4 pt-4">
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-[#002349] shadow-md"
-            >
-              <Menu className="w-4 h-4" />
-              <span>Menu</span>
-            </button>
-          </div>
+          <MobileTopBar
+            title="ജില്ലാ ഡാഷ്ബോർഡ്"
+          />
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 pt-4 pb-24 lg:pb-4">
             {currentViewContent}
           </div>

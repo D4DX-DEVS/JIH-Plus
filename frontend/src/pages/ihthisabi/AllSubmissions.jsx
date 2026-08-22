@@ -663,7 +663,7 @@ const AllSubmissions = () => {
         </div>
 
         {/* View switcher — one compact row instead of four stacked full-width buttons */}
-        <div className="ih-segment mb-2">
+        <div className="ih-segment mb-3">
           <button
             onClick={() => {
               setShowAlternativeSubmissions(false)
@@ -715,7 +715,7 @@ const AllSubmissions = () => {
 
         {/* Filters — only shown in regular submissions mode (not non-submitted) */}
         {!showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted && (
-        <div className="ih-surface mb-2 p-2 sm:p-3">
+        <div className="ih-surface mb-3 p-2.5 sm:p-3">
           {/* Search + filter toggle share one row */}
           <div className="flex items-center gap-2">
             <div className="relative min-w-0 flex-1">
@@ -841,7 +841,7 @@ const AllSubmissions = () => {
 
         {/* Alternative submissions filters — same controls as the regular view */}
         {showAlternativeSubmissions && (
-        <div className="ih-surface mb-2 p-2 sm:p-3">
+        <div className="ih-surface mb-3 p-2.5 sm:p-3">
           <div className="flex items-center gap-2">
             <div className="relative min-w-0 flex-1">
               <Search className="ih-filter-icon" />
@@ -1150,11 +1150,11 @@ const AllSubmissions = () => {
                   {nonSubmittedList.map((member, index) => {
                     const serial = (nonSubmittedPagination.current - 1) * 10 + index + 1
                     return (
-                      <div key={String(member.id)} className="ih-list-row">
-                        <div className="ih-avatar bg-red-100 text-red-600">{serial}</div>
+                      <div key={String(member.id)} className="ih-list-row ih-list-row-roomy">
+                        <div className="ih-avatar h-9 w-9 bg-red-100 text-red-600">{serial}</div>
                         <div className="min-w-0 flex-1">
                           <div className="ih-list-title">{member.name}</div>
-                          <div className="ih-list-meta flex items-center gap-1">
+                          <div className="ih-list-meta mt-1 flex items-center gap-1">
                             <MapPin className="w-3 h-3 shrink-0" />
                             <span className="truncate">
                               {[member.district, member.area, member.unit].filter(Boolean).join(' - ') || 'N/A'}
@@ -1295,10 +1295,10 @@ const AllSubmissions = () => {
                   {alternativeSubmissions.map((submission) => (
                     <div
                       key={submission._id || submission.id}
-                      className="ih-list-row cursor-pointer"
+                      className="ih-list-row ih-list-row-roomy cursor-pointer"
                       onClick={() => navigate(`/ihthisabi/alternative-submissions/${submission._id || submission.id}`)}
                     >
-                      <div className="ih-avatar bg-orange-100 text-orange-600">
+                      <div className="ih-avatar h-9 w-9 bg-orange-100 text-orange-600">
                         {(submission.ruknName || submission.userId?.name || 'U').charAt(0).toUpperCase()}
                       </div>
 
@@ -1306,13 +1306,13 @@ const AllSubmissions = () => {
                         <div className="ih-list-title">
                           {submission.ruknName || submission.userId?.name || 'Unknown User'}
                         </div>
-                        <div className="ih-list-meta flex items-center gap-1">
+                        <div className="ih-list-meta mt-1 flex items-center gap-1">
                           <MapPin className="w-3 h-3 shrink-0" />
                           <span className="truncate">
                             {[submission.district, submission.area, submission.unit].filter(Boolean).join(' - ') || 'N/A'}
                           </span>
                         </div>
-                        <div className="ih-list-meta">
+                        <div className="ih-list-meta mt-1">
                           {submission.type} · {submission.periodDisplay || 'N/A'} · {formatDate(submission.submittedAt || submission.createdAt)}
                         </div>
                       </div>
@@ -1461,28 +1461,28 @@ const AllSubmissions = () => {
                   return (
                     <div
                       key={submission.id}
-                      className="ih-list-row cursor-pointer"
+                      className="ih-list-row ih-list-row-roomy cursor-pointer"
                       onClick={() => handleViewSubmission(submission.id)}
                     >
-                      <span className="w-3.5 shrink-0 text-[10px] font-medium text-gray-300">{serialNumber}</span>
-                      <div className="ih-avatar bg-gradient-to-br from-primary to-primary-700 text-white shadow-sm">
+                      <span className="w-4 shrink-0 text-[11px] font-medium text-gray-300">{serialNumber}</span>
+                      <div className="ih-avatar h-9 w-9 bg-gradient-to-br from-primary to-primary-700 text-white shadow-sm">
                         {(submission.ruknName || 'U').charAt(0).toUpperCase()}
                       </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="ih-list-title">{submission.ruknName || 'Unknown User'}</div>
-                        <div className="ih-list-meta flex items-center gap-1">
+                        <div className="ih-list-meta mt-1 flex items-center gap-1">
                           <MapPin className="w-3 h-3 shrink-0 opacity-60" />
                           <span className="truncate" title={buildLocationDisplay(submission)}>
                             {buildLocationDisplay(submission)}
                           </span>
                         </div>
-                        <div className="ih-list-meta">
+                        <div className="ih-list-meta mt-1">
                           {submission.periodDisplay || 'N/A'} · {formatDate(submission.submittedAt || submission.createdAt)}
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <div className="flex shrink-0 flex-col items-end gap-2">
                         <span className={`ih-chip ih-chip-dot ${getStatusColor(submission.status)}`}>
                           <span className="capitalize">{submission.status}</span>
                         </span>

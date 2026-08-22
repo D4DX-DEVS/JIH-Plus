@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
-  ArrowLeft, Search, Edit, Trash2, Eye, Plus, Save, Menu,
+  ArrowLeft, Search, Edit, Trash2, Eye, Plus, Save,
   FileText, Globe, EyeOff, X, Settings, CheckCircle2, Copy,
 } from 'lucide-react';
 import axios from 'axios';
@@ -11,6 +11,7 @@ import FieldCanvas from '../components/reportBuilder/FieldCanvas';
 import FieldTypeSelector from '../components/reportBuilder/FieldTypeSelector';
 import DynamicFormRenderer from '../components/reportRenderer/DynamicFormRenderer';
 import jihLogo from '../assets/LogoColor.png';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
 const TYPE_LABELS = { monthly: 'Monthly', special: 'Special', yearly: 'Yearly', quarterly: 'Quarterly' };
@@ -121,8 +122,18 @@ function ReportListView({ onLogout }) {
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => setShowLogoutModal(true)} adminData={adminData} />
 
       <div className="flex-1 min-w-0 flex flex-col overflow-y-auto overflow-x-hidden">
-        <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center gap-3 sticky top-0 z-10 shadow-sm">
-          <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 hover:text-gray-700 lg:hidden"><Menu size={22} /></button>
+        <MobileTopBar
+          title="റിപ്പോർട്ടുകൾ"
+          actions={
+            <button
+              onClick={() => navigate('/create-report')}
+              className="flex items-center gap-1 rounded-lg bg-[#002349] px-2.5 py-1.5 text-xs font-semibold text-white">
+              <Plus size={14} /> New
+            </button>
+          }
+        />
+
+        <div className="hidden lg:flex bg-white border-b px-6 py-3 items-center gap-3 sticky top-0 z-10 shadow-sm">
           <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold text-[#002349] truncate">Reports</h1>
@@ -735,12 +746,6 @@ function ReportBuilderView({ reportId, onLogout }) {
       {/* ── Header ── */}
       <header className="bg-white border-b px-3 sm:px-4 py-2.5 flex items-center gap-2 sm:gap-3 z-20 shadow-sm flex-shrink-0">
         <button
-          onClick={() => setIsSidebarOpen(true)}
-          className="text-gray-500 hover:text-gray-700 lg:hidden p-1"
-        >
-          <Menu size={20} />
-        </button>
-        <button
           onClick={() => navigate('/view-reports')}
           className="text-gray-500 hover:text-gray-800 transition-colors p-1 flex-shrink-0"
         >
@@ -968,8 +973,21 @@ function ReportSingleView({ reportId, onLogout }) {
     <div className="h-screen bg-gray-50 flex overflow-hidden">
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => onLogout && onLogout()} adminData={adminData} />
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <div className="bg-white border-b px-4 sm:px-6 py-3 flex items-center gap-3 shadow-sm flex-shrink-0">
-          <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 lg:hidden"><Menu size={22} /></button>
+        <MobileTopBar
+          title={report?.title || 'Report'}
+          actions={
+            <>
+              <button onClick={() => navigate('/view-reports')} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"><ArrowLeft size={18} /></button>
+              {report && (
+                <button onClick={() => navigate(`/edit-report/${reportId}`)} className="flex items-center gap-1 rounded-lg bg-[#002349] px-2.5 py-1.5 text-xs font-semibold text-white">
+                  <Edit size={14} /> Edit
+                </button>
+              )}
+            </>
+          }
+        />
+
+        <div className="hidden lg:flex bg-white border-b px-6 py-3 items-center gap-3 shadow-sm flex-shrink-0">
           <button onClick={() => navigate('/view-reports')} className="text-gray-500 hover:text-gray-700"><ArrowLeft size={20} /></button>
           <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
           <div className="flex-1 min-w-0">

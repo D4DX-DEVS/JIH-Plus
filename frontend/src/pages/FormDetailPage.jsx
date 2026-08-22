@@ -649,7 +649,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
       {/* Page Header with Action Buttons */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-4xl font-bold text-[#002349]">ഫോം വിവരങ്ങൾ</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">ഫോം വിവരങ്ങൾ</h1>
           <p className="text-lg text-gray-600 font-normal mt-1">District: <span className="font-bold">{form.district}</span></p>
         </div>
         <div className="flex items-center gap-2">

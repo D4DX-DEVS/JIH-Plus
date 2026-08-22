@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 
 const QUARTER_NAMES = { 1: 'Q1 (Jan-Mar)', 2: 'Q2 (Apr-Jun)', 3: 'Q3 (Jul-Sep)', 4: 'Q4 (Oct-Dec)' }
+const QUARTER_PERIODS = { 1: 'Jan – Mar', 2: 'Apr – Jun', 3: 'Jul – Sep', 4: 'Oct – Dec' }
 
 const ANSWER_TYPES = [
   { value: 'text', label: 'Text Field' },
@@ -619,21 +620,30 @@ const FormManagement = () => {
             <p className="ih-page-subtitle">Create and manage quarterly submission forms</p>
           </div>
           <button onClick={handleCreateNew}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-black px-2.5 py-1.5 text-[11px] font-medium text-white shadow-sm transition-colors hover:bg-gray-800 sm:px-4 sm:py-2.5 sm:text-sm">
+            className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:px-4 sm:py-2.5 sm:text-sm">
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span className="sm:hidden">New</span>
+            <span className="sm:hidden">New form</span>
             <span className="hidden sm:inline">Create New Form</span>
           </button>
         </div>
 
         {nextQuarterInfo && (
-          <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-2">
-            <p className="text-[11px] leading-snug text-blue-700 sm:text-sm">
-              <strong>Current:</strong> Q{nextQuarterInfo.currentSubmissionQuarter?.quarter} {nextQuarterInfo.currentSubmissionQuarter?.year}
-              {' · '}
-              <strong>Next to assign:</strong> Q{nextQuarterInfo.nextQuarter?.quarter} {nextQuarterInfo.nextQuarter?.year}
-              {nextQuarterInfo.formExists && ' (exists)'}
-            </p>
+          <div className="ih-surface mb-3 grid grid-cols-2 divide-x divide-gray-100 overflow-hidden">
+            <div className="px-3 py-2.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Open for submission</p>
+              <p className="mt-0.5 text-[13px] font-bold text-gray-900 sm:text-sm">
+                Q{nextQuarterInfo.currentSubmissionQuarter?.quarter} {nextQuarterInfo.currentSubmissionQuarter?.year}
+              </p>
+            </div>
+            <div className="px-3 py-2.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Next to assign</p>
+              <p className="mt-0.5 flex items-center gap-1.5 text-[13px] font-bold text-gray-900 sm:text-sm">
+                Q{nextQuarterInfo.nextQuarter?.quarter} {nextQuarterInfo.nextQuarter?.year}
+                {nextQuarterInfo.formExists && (
+                  <span className="ih-chip bg-green-50 font-semibold text-green-700">Ready</span>
+                )}
+              </p>
+            </div>
           </div>
         )}
 
@@ -648,33 +658,42 @@ const FormManagement = () => {
             <h3 className="text-sm font-medium text-gray-900 mb-1">No forms created yet</h3>
             <p className="text-xs text-gray-500 mb-4">Create your first dynamic form to get started</p>
             <button onClick={handleCreateNew}
-              className="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-primary/90 transition-colors">
+              className="inline-flex items-center rounded-full bg-[#161F2F] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1a2538]">
               <Plus className="w-4 h-4 mr-2" /> Create Form
             </button>
           </div>
         ) : (
           <div className="ih-section-card ih-list overflow-hidden">
-            {forms.map(form => (
-              <div key={form._id} className="flex items-center gap-2 px-3 py-2.5 transition-colors hover:bg-gray-50 sm:px-4 sm:py-3">
+            {forms.map(form => {
+              const published = form.status === 'published'
+              return (
+              <div key={form._id} className="flex items-center gap-3 px-3 py-3 transition-colors hover:bg-gray-50 sm:px-4 sm:py-3.5">
+                <div className={`flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl ${
+                  published ? 'bg-[#161F2F] text-white' : 'bg-gray-100 text-gray-500'
+                }`}>
+                  <span className="text-[11px] font-bold leading-none">Q{form.quarter}</span>
+                  <span className="mt-0.5 text-[9px] font-medium leading-none opacity-70">{form.year}</span>
+                </div>
+
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <h3 className="truncate text-[13px] font-semibold text-gray-900 sm:text-sm">{form.title}</h3>
-                    <span className={`ih-chip ${
-                      form.status === 'published'
-                        ? 'border-green-200 bg-green-100 text-green-700'
-                        : 'border-yellow-200 bg-yellow-100 text-yellow-700'
+                    <span className={`ih-chip ih-chip-dot ${
+                      published ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
                     }`}>
-                      {form.status === 'published' ? 'Published' : 'Draft'}
+                      {published ? 'Published' : 'Draft'}
                     </span>
                   </div>
-                  <p className="ih-list-meta mt-0.5">
-                    {QUARTER_NAMES[form.quarter]} {form.year} · {form.questions?.length || 0} questions
+                  <p className="ih-list-meta mt-1">
+                    {QUARTER_PERIODS[form.quarter]} · {form.questions?.length || 0} questions
                     {form.clonedFrom && ' · Cloned'}
-                    {' · '}
-                    {new Date(form.updatedAt || form.createdAt).toLocaleDateString()}
+                  </p>
+                  <p className="ih-list-meta mt-0.5">
+                    Updated {new Date(form.updatedAt || form.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-0.5">
+
+                <div className="flex shrink-0 items-center gap-0.5 rounded-full bg-gray-50 p-0.5">
                   <button onClick={() => handleEdit(form._id)} title="Edit"
                     className="ih-icon-btn hover:bg-blue-50 hover:text-blue-600">
                     <Edit2 className="w-3.5 h-3.5" />
@@ -683,7 +702,7 @@ const FormManagement = () => {
                     className="ih-icon-btn hover:bg-purple-50 hover:text-purple-600">
                     <Copy className="w-3.5 h-3.5" />
                   </button>
-                  {form.status === 'draft' && (
+                  {!published && (
                     <button onClick={() => handlePublish(form._id)} title="Publish"
                       className="ih-icon-btn hover:bg-green-50 hover:text-green-600">
                       <Send className="w-3.5 h-3.5" />
@@ -695,7 +714,8 @@ const FormManagement = () => {
                   </button>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

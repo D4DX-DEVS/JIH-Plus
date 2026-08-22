@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Download, Edit, Trash2, FileText, Calendar, User, Menu } from 'lucide-react';
+import { ArrowLeft, Download, Edit, Trash2, FileText, Calendar, User } from 'lucide-react';
 import { downloadMonthlyDetailPDF } from '../utils/monthlyPdfGenerator.jsx';
 import axios from 'axios';
 import DistrictSurveyView from '../components/forms/district/DistrictSurveyView';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const DistrictMonthlyDetailPage = () => {
   const navigate = useNavigate();
@@ -172,15 +173,9 @@ const DistrictMonthlyDetailPage = () => {
       />
 
       <div className="flex-1 relative z-10 box-border flex flex-col min-w-0 overflow-hidden">
-        <div className="lg:hidden px-4 pt-4">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-[#002349] shadow-md"
-          >
-            <Menu className="w-4 h-4" />
-            <span>Menu</span>
-          </button>
-        </div>
+        <MobileTopBar
+          title="പ്രതിമാസ റിപ്പോർട്ട്"
+        />
         <div className="flex-1 overflow-y-auto pb-24 lg:pb-0">
           <DistrictSurveyView 
             survey={survey} 

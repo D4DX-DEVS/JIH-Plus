@@ -431,7 +431,8 @@ const UnitAdminDashboard = () => {
       <div className="ih-page-shell">
         {/* Header */}
         <div className="mb-2 sm:mb-4">
-          <h1 className="ih-page-title">Unit Admin Dashboard</h1>
+          {/* The mobile app bar already names the page, so the title is desktop-only. */}
+          <h1 className="ih-page-title hidden sm:block">Unit Admin Dashboard</h1>
           <p className="ih-page-subtitle">
             Welcome back, <span className="font-medium text-gray-900">{user?.name || 'Unit Admin'}</span>
           </p>
@@ -798,78 +799,61 @@ const UnitAdminDashboard = () => {
 
             {/* Members Tab */}
             {activeTab === 'members' && (
-              <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-                <div className="relative bg-white border border-gray-200 rounded-3xl shadow-sm p-5 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="space-y-2.5 md:space-y-4 md:rounded-3xl md:border md:border-gray-200 md:bg-white md:p-5 md:shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Unit Members</h3>
-                      <p className="text-sm text-gray-500">{membersPagination.total} members</p>
+                      <h3 className="text-sm font-semibold text-gray-900 sm:text-lg">Unit Members</h3>
+                      <p className="text-[11px] text-gray-500 sm:text-sm">{membersPagination.total} members</p>
                     </div>
                   </div>
 
-                  <div className="space-y-3 md:hidden">
+                  <div className="ih-list md:hidden">
                     {paginatedMembers.map((member) => {
                       const isSelected = selectedMember?._id === member._id
 
                       return (
-                        <div
-                          key={member._id}
-                          className={`rounded-2xl border p-4 shadow-sm transition-all duration-200 ${
-                            isSelected ? 'border-blue-300 bg-blue-50/80' : 'border-gray-200 bg-white'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <h4 className="text-sm font-semibold text-gray-900 break-words">{member.name}</h4>
-                              <p className="mt-1 text-xs text-gray-500">RUKN ID: {member.ruknId || 'N/A'}</p>
+                        <div key={member._id} className={isSelected ? 'bg-blue-50/50' : ''}>
+                          <div className="ih-list-row">
+                            <div className="ih-avatar bg-[#161F2F]/10 text-[#161F2F]">
+                              {(member.name || 'U').charAt(0).toUpperCase()}
                             </div>
-                            <span className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold ${member.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                            <div className="min-w-0 flex-1">
+                              <div className="ih-list-title">{member.name}</div>
+                              <div className="ih-list-meta">
+                                {member.ruknId || 'N/A'} · {member.role || member.position || 'Member'}
+                              </div>
+                            </div>
+                            <span className={`ih-chip ${member.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                               {member.status || 'Active'}
                             </span>
-                          </div>
-
-                          <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-                            <div className="rounded-xl bg-gray-50 px-3 py-2">
-                              <p className="text-gray-500">Role</p>
-                              <p className="mt-1 font-medium text-gray-900">{member.role || member.position || 'Member'}</p>
-                            </div>
-                            <div className="rounded-xl bg-gray-50 px-3 py-2">
-                              <p className="text-gray-500">Unit</p>
-                              <p className="mt-1 font-medium text-gray-900">{member.unit || '-'}</p>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 flex items-center justify-between gap-3">
-                            <button
-                              onClick={() => handleMemberClick(member)}
-                              className="inline-flex items-center gap-1 rounded-full bg-[#161F2F] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538]"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              {isSelected ? 'Refresh Details' : 'View Details'}
-                            </button>
                             <button
                               onClick={() => {
-                                setSelectedMember(null)
-                                setMemberDetails(null)
+                                if (isSelected) {
+                                  setSelectedMember(null)
+                                  setMemberDetails(null)
+                                } else {
+                                  handleMemberClick(member)
+                                }
                               }}
-                              className={`text-xs font-semibold transition-colors ${isSelected ? 'text-gray-700' : 'text-gray-300 pointer-events-none'}`}
+                              title={isSelected ? 'Hide details' : 'View details'}
+                              className={`ih-icon-btn ${isSelected ? 'bg-blue-100 text-blue-600' : 'hover:bg-blue-50 hover:text-blue-600'}`}
                             >
-                              Close
+                              <Eye className="w-4 h-4" />
                             </button>
                           </div>
 
-                          {isSelected && memberDetails && (
-                            <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-xs text-gray-700 space-y-2">
-                              <div className="flex items-center justify-between gap-3">
-                                <h5 className="font-semibold text-gray-900">Detailed Information</h5>
-                                {memberDetailsLoading && <span className="text-[11px] text-gray-500">Loading...</span>}
-                              </div>
-                              <div className="grid gap-2">
-                                <p><span className="font-semibold text-gray-900">Email:</span> {memberDetails?.emailId || memberDetails?.email || memberDetails?.emailAddress || '-'}</p>
-                                <p><span className="font-semibold text-gray-900">Phone:</span> {memberDetails?.contactNo || memberDetails?.mobile || memberDetails?.phone || memberDetails?.phoneNumber || '-'}</p>
-                                <p><span className="font-semibold text-gray-900">District:</span> {memberDetails?.district || memberDetails?.districtName || '-'}</p>
-                                <p><span className="font-semibold text-gray-900">Unit:</span> {memberDetails?.unit || memberDetails?.unitName || '-'}</p>
-                              </div>
+                          {isSelected && (
+                            <div className="bg-blue-50/50 px-3 pb-3 text-[11px] text-gray-700">
+                              {memberDetailsLoading ? (
+                                <p className="text-[11px] text-gray-500">Loading details…</p>
+                              ) : memberDetails ? (
+                                <div className="grid gap-1">
+                                  <p><span className="font-semibold text-gray-900">Email:</span> {memberDetails?.emailId || memberDetails?.email || memberDetails?.emailAddress || '-'}</p>
+                                  <p><span className="font-semibold text-gray-900">Phone:</span> {memberDetails?.contactNo || memberDetails?.mobile || memberDetails?.phone || memberDetails?.phoneNumber || '-'}</p>
+                                  <p><span className="font-semibold text-gray-900">Unit:</span> {memberDetails?.unit || memberDetails?.unitName || '-'}</p>
+                                  <p><span className="font-semibold text-gray-900">District:</span> {memberDetails?.district || memberDetails?.districtName || '-'}</p>
+                                </div>
+                              ) : null}
                             </div>
                           )}
                         </div>
@@ -956,8 +940,6 @@ const UnitAdminDashboard = () => {
                     </table>
                   </div>
                   <Pagination pagination={membersPagination} onPageChange={fetchMembers} loading={membersLoading} itemLabel="members" />
-                </div>
-
               </div>
             )}
 
@@ -1016,40 +998,34 @@ const UnitAdminDashboard = () => {
                   </div>
                 ) : filteredUnitSubmissions.length > 0 ? (
                   <>
-                    <div className="space-y-3 md:hidden">
+                    <div className="ih-list md:hidden">
                       {paginatedUnitSubmissions.map((submission) => {
                         const submissionId = submission.submissionId || submission._id
+                        const period = getSubmissionPeriod(submission)
 
                         return (
-                          <div key={submissionId} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <h4 className="text-sm font-semibold text-gray-900 break-words">
-                                  {submission.ruknName || 'Unknown Member'}
-                                </h4>
-                                <p className="mt-1 text-xs text-gray-500">RUKN ID: {submission.ruknId || 'N/A'}</p>
-                              </div>
-                              <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
-                                {getSubmissionPeriod(submission).quarter ? `Q${getSubmissionPeriod(submission).quarter}` : 'Form'}
-                              </span>
+                          <div key={submissionId} className="ih-list-row">
+                            <div className="ih-avatar bg-[#161F2F]/10 text-[#161F2F]">
+                              {(submission.ruknName || 'U').charAt(0).toUpperCase()}
                             </div>
-
-                            <div className="mt-4 grid grid-cols-1 gap-3 text-xs">
-                              <div className="rounded-xl bg-gray-50 px-3 py-2">
-                                <p className="text-gray-500">Submission Period</p>
-                                <p className="mt-1 font-medium text-gray-900">{submission.quarter || submission.periodDisplay || 'N/A'}</p>
+                            <div className="min-w-0 flex-1">
+                              <div className="ih-list-title">
+                                {submission.ruknName || 'Unknown Member'}
+                              </div>
+                              <div className="ih-list-meta">
+                                {submission.ruknId || 'N/A'} · {submission.quarter || submission.periodDisplay || 'N/A'}
                               </div>
                             </div>
-
-                            <div className="mt-4 flex justify-end">
-                              <button
-                                onClick={() => handleSubmissionClick(submission)}
-                                className="inline-flex items-center gap-1 rounded-full bg-[#161F2F] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538]"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                                View Details
-                              </button>
-                            </div>
+                            <span className="ih-chip bg-blue-50 font-semibold text-blue-700">
+                              {period.quarter ? `Q${period.quarter}` : 'Form'}
+                            </span>
+                            <button
+                              onClick={() => handleSubmissionClick(submission)}
+                              title="View details"
+                              className="ih-icon-btn hover:bg-blue-50 hover:text-blue-600"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                           </div>
                         )
                       })}

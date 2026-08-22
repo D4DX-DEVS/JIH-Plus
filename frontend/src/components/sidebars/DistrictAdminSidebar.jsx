@@ -12,7 +12,6 @@ import {
   LogOut,
   Menu,
   X,
-  Users,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -74,8 +73,8 @@ const DistrictAdminSidebar = ({
       onClick: () => goView('locations') },
     { key: 'reports', label: 'Reports', icon: FileText, active: location.pathname.startsWith('/user-reports'),
       onClick: () => navigate('/user-reports') },
-    { key: 'members', label: 'Members', icon: Users, active: location.pathname.startsWith('/membership'),
-      onClick: () => { if (onNavigateToMembership) onNavigateToMembership(); } },
+    { key: 'notifications', label: 'Alerts', icon: Bell, active: location.pathname.startsWith('/notifications'),
+      onClick: () => { if (onNotifications) onNotifications(); else navigate('/notifications'); } },
     { key: 'more', label: 'More', icon: Menu, active: false,
       onClick: () => { if (onMobileToggle) onMobileToggle(); } },
   ];
@@ -84,7 +83,6 @@ const DistrictAdminSidebar = ({
     { id: 'dashboard', label: 'ഡാഷ്ബോർഡ്', icon: LayoutDashboard },
     { id: 'locations', label: 'ഏരിയകളും യൂണിറ്റുകളും', icon: MapPin },
     { id: 'stats', label: 'സ്ഥിതിവിവരക്കണക്കുകൾ', icon: BarChart3 },
-    { id: 'membership', label: 'അംഗത്വം', icon: Users, onClick: onNavigateToMembership },
     {
       id: 'submissions',
       type: 'group',
@@ -109,7 +107,7 @@ const DistrictAdminSidebar = ({
         { id: 'special-report-type', reportType: 'special', icon: Star, onClick: () => handleReportType('special'), count: reportCounts?.special },
       ]
     },
-    { id: 'notifications', label: 'നോട്ടിഫിക്കേഷൻ', icon: Bell, onClick: onNotifications },
+    { id: 'notifications', label: 'നോട്ടിഫിക്കേഷൻ', icon: Bell, onClick: onNotifications || (() => navigate('/notifications')) },
     { id: 'targets', label: 'ടാർഗറ്റ്', icon: TargetIcon, onClick: () => navigate('/targets') }
   ];
 

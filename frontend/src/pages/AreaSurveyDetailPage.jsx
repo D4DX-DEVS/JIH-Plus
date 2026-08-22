@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, Calendar, User, MapPin, CheckCircle, Users, TrendingUp, Activity, Menu } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Calendar, User, MapPin, CheckCircle, Users, TrendingUp, Activity } from 'lucide-react';
 import axios from 'axios';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import jihLogo from '../assets/LogoColor.png';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
+import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete }) => {
   const { surveyId: paramSurveyId } = useParams();
@@ -574,15 +575,9 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <div className="lg:hidden px-4 pt-4">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-[#002349] shadow-md"
-          >
-            <Menu className="w-4 h-4" />
-            <span>Menu</span>
-          </button>
-        </div>
+        <MobileTopBar
+          title="ഏരിയ റിപ്പോർട്ട്"
+        />
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6">
           {content}
         </div>
@@ -652,16 +647,9 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile toggle */}
-        <div className="lg:hidden px-4 pt-4">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/80 backdrop-blur px-4 py-2 text-sm font-semibold text-[#002349] shadow-md"
-          >
-            <Menu className="w-4 h-4" />
-            <span>Menu</span>
-          </button>
-        </div>
+        <MobileTopBar
+          title="ഏരിയ റിപ്പോർട്ട്"
+        />
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
           {/* Header - No container */}
@@ -675,7 +663,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
                 <ArrowLeft className="w-4 h-4" />
               </button>
               <div>
-                <h1 className="text-4xl font-bold text-[#002349] mb-2">ഏരിയ തലം റിപ്പോർട്ട്</h1>
+                <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349] mb-2">ഏരിയ തലം റിപ്പോർട്ട്</h1>
                 <p className="text-base text-gray-700">
                   <span className="px-2.5 py-1 rounded-full text-sm font-semibold bg-[#957C3D] text-white shadow-sm">{survey.month}</span>
                   <span className="mx-2">•</span>
