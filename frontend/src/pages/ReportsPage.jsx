@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, Search, Edit, Trash2, Eye, Plus, Save,
-  FileText, Globe, EyeOff, X, Settings, CheckCircle2, Copy,
+  FileText, Globe, EyeOff, X, Settings, CheckCircle2, Copy, FileStack,
 } from 'lucide-react';
 import axios from 'axios';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
@@ -318,6 +318,9 @@ function ReportBuilderView({ reportId, onLogout }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewScope, setPreviewScope] = useState('all'); // 'page' | 'all'
+  const [clipboard, setClipboard] = useState(null);        // copied field, survives page switches
+  const [copiedFieldId, setCopiedFieldId] = useState(null);
   const [adminData, setAdminData] = useState(null);
   const [isPublished, setIsPublished] = useState(false);
 
@@ -378,6 +381,34 @@ function ReportBuilderView({ reportId, onLogout }) {
   const handleAddField = (type) => {
     const newField = makeNewField(type);
     setPages(prev => prev.map((p, pi) => pi !== activePage ? p : { ...p, fields: [...(p.fields || []), newField] }));
+  };
+
+  // ── Field clipboard: copy a field once, paste it on this or any other page ──
+  const cloneField = (field) => ({ ...JSON.parse(JSON.stringify(field)), id: nextId() });
+
+  const insertField = (pageIdx, insertIndex, field) => {
+    setPages(prev => prev.map((p, pi) => {
+      if (pi !== pageIdx) return p;
+      const fields = [...(p.fields || [])];
+      fields.splice(insertIndex, 0, field);
+      return { ...p, fields };
+    }));
+  };
+
+  const handleCopyField = (field) => {
+    setClipboard(JSON.parse(JSON.stringify(field)));
+    setCopiedFieldId(field.id);
+  };
+
+  const handleDuplicateField = (fieldIndex) => {
+    const source = (pages[activePage]?.fields || [])[fieldIndex];
+    if (!source) return;
+    insertField(activePage, fieldIndex + 1, cloneField(source));
+  };
+
+  const handlePasteField = (insertIndex) => {
+    if (!clipboard) return;
+    insertField(activePage, insertIndex, cloneField(clipboard));
   };
 
   const handleAddPage = () => {
@@ -778,14 +809,26 @@ function ReportBuilderView({ reportId, onLogout }) {
           </button>
         </div>
 
-        {/* Preview */}
-        <button
-          onClick={() => setShowPreview(true)}
-          className="flex items-center gap-1.5 border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex-shrink-0"
-        >
-          <Eye size={14} />
-          <span className="hidden sm:inline">Preview</span>
-        </button>
+        {/* Preview — current page / whole report */}
+        <div className="flex items-stretch rounded-lg border border-gray-300 overflow-hidden flex-shrink-0">
+          <button
+            onClick={() => { setPreviewScope('page'); setShowPreview(true); }}
+            title={`Preview this page only (${pages[activePage]?.title || `Page ${activePage + 1}`})`}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <Eye size={14} />
+            <span className="hidden sm:inline">Preview Page</span>
+          </button>
+          <span className="w-px bg-gray-300" />
+          <button
+            onClick={() => { setPreviewScope('all'); setShowPreview(true); }}
+            title={`Preview the full report (${pages.length} page${pages.length !== 1 ? 's' : ''})`}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <FileStack size={14} />
+            <span className="hidden sm:inline">Preview All</span>
+          </button>
+        </div>
 
         {/* Save Draft */}
         <button
@@ -887,6 +930,12 @@ function ReportBuilderView({ reportId, onLogout }) {
             allFields={allFields}
             onPagesChange={setPages}
             onAddField={() => setShowFieldSelector(true)}
+            clipboard={clipboard}
+            copiedFieldId={copiedFieldId}
+            onCopyField={handleCopyField}
+            onDuplicateField={handleDuplicateField}
+            onPasteField={handlePasteField}
+            onClearClipboard={() => { setClipboard(null); setCopiedFieldId(null); }}
           />
         </main>
       </div>
@@ -903,15 +952,36 @@ function ReportBuilderView({ reportId, onLogout }) {
       {showPreview && (
         <div className="fixed inset-0 z-50 flex flex-col bg-gray-100">
           {/* Preview header */}
-          <div className="bg-white border-b px-4 py-3 flex items-center gap-3 shadow-sm flex-shrink-0">
+          <div className="bg-white border-b px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3 shadow-sm flex-shrink-0">
             <button
               onClick={() => setShowPreview(false)}
-              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 transition-colors"
+              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 transition-colors flex-shrink-0"
             >
-              <X size={18} /> <span className="text-sm font-medium">Close Preview</span>
+              <X size={18} /> <span className="text-sm font-medium hidden sm:inline">Close Preview</span>
             </button>
-            <div className="flex-1" />
-            <div className="flex items-center gap-2">
+
+            {/* Scope switch — stay in the preview while flipping between the
+                current page and the complete report. */}
+            <div className="flex items-stretch rounded-lg border border-gray-200 bg-gray-50 p-0.5 flex-shrink-0">
+              {[
+                ['page', 'This Page'],
+                ['all', `Full Report (${pages.length})`],
+              ].map(([val, lbl]) => (
+                <button
+                  key={val}
+                  onClick={() => setPreviewScope(val)}
+                  className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                    previewScope === val ? 'bg-white text-[#002349] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {val === 'page' ? <Eye size={13} /> : <FileStack size={13} />}
+                  <span className="hidden sm:inline">{lbl}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1 min-w-0" />
+            <div className="hidden md:flex items-center gap-2">
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                 reportMeta.type === 'monthly' ? 'bg-blue-100 text-blue-700' :
                 reportMeta.type === 'quarterly' ? 'bg-green-100 text-green-700' :
@@ -922,18 +992,27 @@ function ReportBuilderView({ reportId, onLogout }) {
                 {reportMeta.reportFor} view
               </span>
             </div>
-            <span className="text-xs text-gray-400 border border-dashed border-gray-300 px-2 py-1 rounded-lg">Preview only — not submitted</span>
+            <span className="hidden lg:inline text-xs text-gray-400 border border-dashed border-gray-300 px-2 py-1 rounded-lg flex-shrink-0">Preview only — not submitted</span>
           </div>
+
           {/* Render exactly as user would see it */}
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-2xl mx-auto py-8 px-4">
+              {previewScope === 'page' && (
+                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                  Page {activePage + 1} of {pages.length}
+                  {pages[activePage]?.title ? ` — ${pages[activePage].title}` : ''}
+                </p>
+              )}
               <DynamicFormRenderer
-                report={{ ...reportMeta, pages, _id: reportId || 'preview' }}
-                existingSubmission={null}
-                isReadOnly={false}
+                key={previewScope === 'page' ? `page-${activePage}` : 'all'}
+                report={{
+                  ...reportMeta,
+                  pages: previewScope === 'page' ? [pages[activePage]].filter(Boolean) : pages,
+                  _id: reportId || 'preview',
+                }}
                 onSaveDraft={() => {}}
                 onSubmit={() => {}}
-                previewMode={true}
               />
             </div>
           </div>

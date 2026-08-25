@@ -79,7 +79,7 @@ export default function ConditionalLogicEditor({ logic, allFields, currentFieldI
               className="w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-yellow-400"
             >
               {ACTIONS.map(a => (
-                <option key={a.value} value={a.value}>{a.action}</option>
+                <option key={a.value} value={a.value}>{a.label}</option>
               ))}
             </select>
           </div>

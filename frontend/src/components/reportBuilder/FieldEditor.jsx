@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Trash2, GripVertical, Settings } from 'lucide-react';
+import { Trash2, GripVertical, Settings, Copy, CopyPlus, Check } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import OptionsEditor from './OptionsEditor';
 import RowColumnEditor from './RowColumnEditor';
 import ValidationEditor from './ValidationEditor';
 import ConditionalLogicEditor from './ConditionalLogicEditor';
+import { FIELD_WIDTHS, fieldWidth } from '../../utils/fieldWidth';
 
 const TYPES_WITH_OPTIONS = ['select', 'dropdown', 'radio', 'checkbox', 'multiselect'];
 
-export default function FieldEditor({ field, allFields, onChange, onRemove, pageIndex, fieldIndex }) {
+export default function FieldEditor({ field, allFields, onChange, onRemove, onCopy, onDuplicate, pageIndex, fieldIndex, isCopied }) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState('basic');
 
@@ -31,7 +32,9 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, page
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white border rounded-lg ${isDragging ? 'border-blue-400 shadow-lg' : 'border-gray-200'}`}
+      className={`bg-white border rounded-lg transition-colors ${
+        isDragging ? 'border-blue-400 shadow-lg' : isCopied ? 'border-blue-300 ring-1 ring-blue-200' : 'border-gray-200'
+      }`}
     >
       <div className="flex items-center gap-2 px-3 py-2">
         <button
@@ -55,6 +58,18 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, page
           />
         </div>
         {!isLayout && (
+          <select
+            value={fieldWidth(field)}
+            onChange={e => update('width', e.target.value)}
+            title="How many fields share this line. Give each field on the line the same setting."
+            className="flex-shrink-0 text-xs text-gray-500 border border-gray-200 rounded px-1 py-0.5 bg-white outline-none focus:ring-1 focus:ring-blue-400"
+          >
+            {FIELD_WIDTHS.map(w => (
+              <option key={w.value} value={w.value}>{w.perLine}/line</option>
+            ))}
+          </select>
+        )}
+        {!isLayout && (
           <label className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
             <input
               type="checkbox"
@@ -65,9 +80,30 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, page
             Req
           </label>
         )}
+        {onCopy && (
+          <button
+            type="button"
+            onClick={onCopy}
+            title={isCopied ? 'Copied — paste it on any page' : 'Copy field (paste on any page)'}
+            className={`flex-shrink-0 transition-colors ${isCopied ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'}`}
+          >
+            {isCopied ? <Check size={15} /> : <Copy size={15} />}
+          </button>
+        )}
+        {onDuplicate && (
+          <button
+            type="button"
+            onClick={onDuplicate}
+            title="Duplicate below"
+            className="text-gray-400 hover:text-blue-600 flex-shrink-0"
+          >
+            <CopyPlus size={15} />
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setExpanded(v => !v)}
+          title="Field settings"
           className="text-gray-400 hover:text-gray-600 flex-shrink-0"
         >
           <Settings size={15} />
@@ -75,6 +111,7 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, page
         <button
           type="button"
           onClick={onRemove}
+          title="Delete field"
           className="text-red-300 hover:text-red-500 flex-shrink-0"
         >
           <Trash2 size={15} />

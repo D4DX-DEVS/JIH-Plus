@@ -968,6 +968,17 @@ router.get('/admin/report-submissions', adminAuth, async (req, res) => {
       };
     }
 
+    // Optional list of active reports (newest first) so the dashboard can offer
+    // a per-level "which report" filter on the submitted/pending breakdown.
+    let reports;
+    if (req.query.includeReports) {
+      reports = await Report.find({ isActive: true })
+        .select('title type reportFor month year createdAt')
+        .sort({ createdAt: -1 })
+        .limit(200)
+        .lean();
+    }
+
     res.json({
       success: true,
       count: submissions.length,
@@ -977,7 +988,8 @@ router.get('/admin/report-submissions', adminAuth, async (req, res) => {
       hasNextPage: pageNum < Math.ceil(totalCount / limitNum),
       hasPrevPage: pageNum > 1,
       data: submissions,
-      ...(roster && { roster })
+      ...(roster && { roster }),
+      ...(reports && { reports })
     });
   } catch (error) {
     console.error('Error fetching submissions:', error);
@@ -1053,7 +1065,21 @@ router.get('/user/report-submissions', userAuth, async (req, res) => {
 
     const submissions = await resolveSubmissionUsers(rawSubmissions);
 
-    res.json({ success: true, count: submissions.length, data: submissions, roster });
+    // Active reports for every level this user can see, newest first, so the
+    // dashboard can filter the submitted/pending breakdown by report.
+    let reports;
+    if (req.query.includeReports) {
+      const levels = role === 'unit' ? ['unit']
+        : role === 'area' ? ['unit', 'area']
+        : ['unit', 'area', 'district'];
+      reports = await Report.find({ isActive: true, reportFor: { $in: levels } })
+        .select('title type reportFor month year createdAt')
+        .sort({ createdAt: -1 })
+        .limit(200)
+        .lean();
+    }
+
+    res.json({ success: true, count: submissions.length, data: submissions, roster, ...(reports && { reports }) });
   } catch (error) {
     console.error('Error fetching scoped submissions:', error);
     res.status(500).json({ success: false, message: 'Error fetching submissions', error: error.message });

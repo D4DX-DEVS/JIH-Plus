@@ -44,11 +44,11 @@ const StatCard = ({ icon: Icon, label, value, tone }) => (
 
 const normalizeName = (s) => String(s || '').trim().toLowerCase();
 
-// One entity type's submitted-vs-pending status. Names are chips, optionally
-// hidden until the parent "show names" toggle is on.
-const EntityRow = ({ label, breakdown, showNames, namePrompt }) => (
+// One entity type's submitted-vs-pending status for a single report. Names are
+// chips, optionally hidden until the parent "show names" toggle is on.
+const EntityRow = ({ label, breakdown, showNames, namePrompt, reports = [], reportValue, onReportChange }) => (
   <div>
-    <div className="flex items-center gap-3 mb-2">
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
       <span className="text-sm font-semibold text-[#002349]">{label}</span>
       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
         {breakdown.submitted.length} സമർപ്പിച്ചു
@@ -56,6 +56,19 @@ const EntityRow = ({ label, breakdown, showNames, namePrompt }) => (
       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
         {breakdown.pending.length} പെൻഡിംഗ്
       </span>
+      {reports.length > 0 && (
+        <select
+          value={reportValue || ''}
+          onChange={e => onReportChange(e.target.value)}
+          title={reports.find(r => String(r._id) === String(reportValue))?.title || ''}
+          className="w-full sm:w-auto sm:ml-auto sm:max-w-[20rem] min-w-0 truncate border border-gray-200 rounded-lg px-2 py-1 text-xs text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+        >
+          <option value="">എല്ലാ റിപ്പോർട്ടുകളും</option>
+          {reports.map(r => (
+            <option key={r._id} value={r._id}>{r.title}</option>
+          ))}
+        </select>
+      )}
     </div>
     {showNames && namePrompt && (
       <div className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
@@ -97,6 +110,10 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
   const cfg = SCOPE_ENDPOINT[scope] || SCOPE_ENDPOINT.area;
   const [submissions, setSubmissions] = useState([]);
   const [roster, setRoster] = useState(null);
+  const [reports, setReports] = useState([]);
+  // Which report each level's submitted/pending breakdown is measured against.
+  // Defaults to the most recently added report for that level ('' = all).
+  const [reportByLevel, setReportByLevel] = useState({ unit: '', area: '', district: '' });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [districtFilter, setDistrictFilter] = useState('');
@@ -112,12 +129,22 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
         const token = localStorage.getItem(cfg.tokenKey);
         const rosterParam = scope === 'admin' ? '&includeRoster=1' : '';
         const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}${cfg.url}?limit=2000${rosterParam}`,
+          `${import.meta.env.VITE_API_URL}${cfg.url}?limit=2000&includeReports=1${rosterParam}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (active && res.data?.success) {
           setSubmissions(res.data.data || []);
           if (res.data.roster) setRoster(res.data.roster);
+          const reportList = res.data.reports || [];
+          setReports(reportList);
+          // Backend sorts newest first, so the first match per level is the
+          // most recently added report — the initial selection.
+          const initial = { unit: '', area: '', district: '' };
+          reportList.forEach(r => {
+            const lvl = r.reportFor || 'district';
+            if (initial[lvl] === '') initial[lvl] = String(r._id);
+          });
+          setReportByLevel(initial);
         }
       } catch (err) {
         if (active) setError(err.response?.data?.message || 'Failed to load analytics.');
@@ -202,33 +229,59 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
       .slice(0, 6);
   }, [filtered]);
 
-  // Names of units that have submitted at least one report (submitted status).
+  // Reports selectable per level, newest first (the backend already sorts).
+  const reportsByLevel = useMemo(() => {
+    const grouped = { unit: [], area: [], district: [] };
+    reports.forEach(r => {
+      const lvl = r.reportFor || 'district';
+      if (grouped[lvl]) grouped[lvl].push(r);
+    });
+    return grouped;
+  }, [reports]);
+
+  const setLevelReport = (level, value) => setReportByLevel(prev => ({ ...prev, [level]: value }));
+
+  // A submission counts towards a level's breakdown only when it belongs to the
+  // report picked in that level's dropdown ('' = every report).
+  const matchesLevelReport = (s, level) => {
+    const selected = reportByLevel[level];
+    if (!selected) return true;
+    return String(s.reportId?._id || s.reportId || '') === String(selected);
+  };
+
+  // Names of units that submitted the report selected for the unit level.
   const submittedUnitNames = useMemo(() => {
     const set = new Set();
     filtered.forEach(s => {
-      if (s.status === 'submitted' && s.userId?.unitName) set.add(normalizeName(s.userId.unitName));
+      if (s.status === 'submitted' && s.userId?.unitName && matchesLevelReport(s, 'unit')) {
+        set.add(normalizeName(s.userId.unitName));
+      }
     });
     return set;
-  }, [filtered]);
+  }, [filtered, reportByLevel]);
 
   // Names of areas / districts whose own report was submitted.
   const submittedAreaNames = useMemo(() => {
     const set = new Set();
     filtered.forEach(s => {
       const lvl = s.userId?.type || s.reportId?.reportFor;
-      if (lvl === 'area' && s.status === 'submitted' && s.userId?.areaName) set.add(normalizeName(s.userId.areaName));
+      if (lvl === 'area' && s.status === 'submitted' && s.userId?.areaName && matchesLevelReport(s, 'area')) {
+        set.add(normalizeName(s.userId.areaName));
+      }
     });
     return set;
-  }, [filtered]);
+  }, [filtered, reportByLevel]);
 
   const submittedDistrictNames = useMemo(() => {
     const set = new Set();
     filtered.forEach(s => {
       const lvl = s.userId?.type || s.reportId?.reportFor;
-      if (lvl === 'district' && s.status === 'submitted' && s.userId?.districtName) set.add(normalizeName(s.userId.districtName));
+      if (lvl === 'district' && s.status === 'submitted' && s.userId?.districtName && matchesLevelReport(s, 'district')) {
+        set.add(normalizeName(s.userId.districtName));
+      }
     });
     return set;
-  }, [filtered]);
+  }, [filtered, reportByLevel]);
 
   // Split a roster into submitted vs pending (pending = no submitted report),
   // honouring the active district/area filters via each item's parent names.
@@ -376,17 +429,40 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
           <div className="space-y-4 divide-y divide-gray-100">
             {unitBreakdown && (
               <div className="pt-0">
-                <EntityRow label="യൂണിറ്റുകൾ" breakdown={unitBreakdown} showNames={showNames || !namesCollapsible} namePrompt={unitNamePrompt} />
+                <EntityRow
+                  label="യൂണിറ്റുകൾ"
+                  breakdown={unitBreakdown}
+                  showNames={showNames || !namesCollapsible}
+                  namePrompt={unitNamePrompt}
+                  reports={reportsByLevel.unit}
+                  reportValue={reportByLevel.unit}
+                  onReportChange={v => setLevelReport('unit', v)}
+                />
               </div>
             )}
             {areaBreakdown && (
               <div className="pt-4">
-                <EntityRow label="ഏരിയകൾ" breakdown={areaBreakdown} showNames={showNames || !namesCollapsible} namePrompt={areaNamePrompt} />
+                <EntityRow
+                  label="ഏരിയകൾ"
+                  breakdown={areaBreakdown}
+                  showNames={showNames || !namesCollapsible}
+                  namePrompt={areaNamePrompt}
+                  reports={reportsByLevel.area}
+                  reportValue={reportByLevel.area}
+                  onReportChange={v => setLevelReport('area', v)}
+                />
               </div>
             )}
             {districtBreakdown && (
               <div className="pt-4">
-                <EntityRow label="ജില്ലകൾ" breakdown={districtBreakdown} showNames={showNames || !namesCollapsible} />
+                <EntityRow
+                  label="ജില്ലകൾ"
+                  breakdown={districtBreakdown}
+                  showNames={showNames || !namesCollapsible}
+                  reports={reportsByLevel.district}
+                  reportValue={reportByLevel.district}
+                  onReportChange={v => setLevelReport('district', v)}
+                />
               </div>
             )}
           </div>

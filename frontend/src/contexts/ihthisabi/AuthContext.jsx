@@ -365,7 +365,13 @@ export const AuthProvider = ({ children }) => {
         payload: { user, token }
       })
 
-      toast.success(`Switched to ${user.role === 'districtAdmin' ? 'District Admin' : user.role === 'unitAdmin' ? 'Unit Admin' : 'Member'}`)
+      const roleLabels = {
+        districtAdmin: 'District Admin',
+        unitAdmin: 'Unit Admin',
+        mekhalaNazim: 'Mekhala Nazim',
+        rukn: 'Member'
+      }
+      toast.success(`Switched to ${roleLabels[user.role] || 'Member'}`)
       return { success: true, user }
     } catch (error) {
       const message = error.response?.data?.message || 'Role switch failed'

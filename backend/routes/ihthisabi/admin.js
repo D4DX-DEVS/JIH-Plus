@@ -13,6 +13,8 @@ const AbroadCountry = require('../../models/ihthisabi/AbroadCountry');
 const AbroadArea = require('../../models/ihthisabi/AbroadArea');
 const AbroadUnit = require('../../models/ihthisabi/AbroadUnit');
 const LocationMaster = require('../../models/ihthisabi/LocationMaster');
+const Mekhala = require('../../models/ihthisabi/Mekhala');
+const MekhalaNazim = require('../../models/ihthisabi/MekhalaNazim');
 const { protect, authorize } = require('../../middlewares/ihthisabi/auth');
 const upload = require('../../middlewares/ihthisabi/upload');
 const { parseExcelFile, parseMembersExcelFile, parseUnitAdminExcelFile, buildMemberTemplateWorkbook } = require('../../utils/excelParser');
@@ -4338,6 +4340,204 @@ router.delete('/district-admins/:id', requireSuperAdmin, async (req, res) => {
     res.json({ success: true, message: 'District admin deleted successfully' });
   } catch (error) {
     console.error('Delete district admin error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// ==================== MEKHALA NAZIM MANAGEMENT ====================
+
+// @desc    Get all mekhala nazims
+// @route   GET /api/ihthisabi/admin/mekhala-nazims
+// @access  Private (Admin only)
+router.get('/mekhala-nazims', async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search } = req.query;
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { ruknId: { $regex: search, $options: 'i' } },
+        { emailId: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const nazims = await MekhalaNazim.find(query)
+      .populate('mekhala', 'name districts')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await MekhalaNazim.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: {
+        mekhalaNazims: nazims,
+        pagination: buildPaginationMeta(total, parseInt(page), parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Get mekhala nazims error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Mekhalas that do not have a nazim yet (for the create form)
+// @route   GET /api/ihthisabi/admin/mekhala-nazims/available-mekhalas
+// @access  Private (Admin only)
+router.get('/mekhala-nazims/available-mekhalas', async (req, res) => {
+  try {
+    const { includeId } = req.query;
+
+    const [mekhalas, taken] = await Promise.all([
+      Mekhala.find({}).select('name districts').sort({ name: 1 }).lean(),
+      MekhalaNazim.find({}).select('mekhala').lean()
+    ]);
+
+    const takenIds = new Set(taken.map((n) => String(n.mekhala)));
+    const data = mekhalas.filter(
+      (m) => !takenIds.has(String(m._id)) || String(m._id) === String(includeId)
+    );
+
+    res.json({ success: true, data: { mekhalas: data } });
+  } catch (error) {
+    console.error('Get available mekhalas error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Get single mekhala nazim by ID
+// @route   GET /api/ihthisabi/admin/mekhala-nazims/:id
+// @access  Private (Admin only)
+router.get('/mekhala-nazims/:id', async (req, res) => {
+  try {
+    const nazim = await MekhalaNazim.findById(req.params.id)
+      .populate('mekhala', 'name districts');
+    if (!nazim) {
+      return res.status(404).json({ success: false, message: 'Mekhala nazim not found' });
+    }
+    res.json({ success: true, data: { mekhalaNazim: nazim } });
+  } catch (error) {
+    console.error('Get mekhala nazim error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Create mekhala nazim
+// @route   POST /api/ihthisabi/admin/mekhala-nazims
+// @access  Private (Super Admin only)
+router.post('/mekhala-nazims', requireSuperAdmin, async (req, res) => {
+  try {
+    const { ruknId, name, mekhala, contactNo, emailId } = req.body;
+
+    if (!ruknId || !name || !mekhala) {
+      return res.status(400).json({ success: false, message: 'ruknId, name, and mekhala are required' });
+    }
+
+    const mekhalaDoc = await Mekhala.findById(mekhala);
+    if (!mekhalaDoc) return res.status(404).json({ success: false, message: 'Mekhala not found' });
+
+    // A nazim is always promoted from an existing member, never created fresh.
+    const member = await User.findOne({ ruknId: ruknId.trim(), role: 'rukn' }).select('_id').lean();
+    if (!member) {
+      return res.status(400).json({
+        success: false,
+        message: `No member found with Rukn ID ${ruknId.trim()}. A mekhala nazim must be an existing member.`
+      });
+    }
+
+    const existingId = await MekhalaNazim.findOne({ ruknId: ruknId.trim() });
+    if (existingId) {
+      return res.status(409).json({ success: false, message: 'A mekhala nazim with this Rukn ID already exists' });
+    }
+
+    const existingMekhala = await MekhalaNazim.findOne({ mekhala });
+    if (existingMekhala) {
+      return res.status(409).json({ success: false, message: `"${mekhalaDoc.name}" already has a nazim assigned` });
+    }
+
+    const nazim = await MekhalaNazim.create({
+      ruknId: ruknId.trim(),
+      name: name.trim(),
+      mekhala,
+      contactNo: contactNo?.trim() || '',
+      emailId: emailId?.trim() || '',
+      isActive: true
+    });
+
+    const created = await MekhalaNazim.findById(nazim._id).populate('mekhala', 'name districts');
+    res.status(201).json({ success: true, message: 'Mekhala nazim created successfully', data: { mekhalaNazim: created } });
+  } catch (error) {
+    console.error('Create mekhala nazim error:', error);
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'Rukn ID or mekhala is already in use' });
+    }
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Full update for a mekhala nazim
+// @route   PUT /api/ihthisabi/admin/mekhala-nazims/:id/profile
+// @access  Private (Super Admin only)
+router.put('/mekhala-nazims/:id/profile', requireSuperAdmin, async (req, res) => {
+  try {
+    const { ruknId, name, mekhala, contactNo, emailId, isActive } = req.body;
+
+    const nazim = await MekhalaNazim.findById(req.params.id);
+    if (!nazim) return res.status(404).json({ success: false, message: 'Mekhala nazim not found' });
+
+    if (ruknId && ruknId.trim() !== nazim.ruknId) {
+      const member = await User.findOne({ ruknId: ruknId.trim(), role: 'rukn' }).select('_id').lean();
+      if (!member) {
+        return res.status(400).json({
+          success: false,
+          message: `No member found with Rukn ID ${ruknId.trim()}. A mekhala nazim must be an existing member.`
+        });
+      }
+
+      const duplicate = await MekhalaNazim.findOne({ ruknId: ruknId.trim(), _id: { $ne: nazim._id } });
+      if (duplicate) return res.status(409).json({ success: false, message: 'Rukn ID is already in use' });
+      nazim.ruknId = ruknId.trim();
+    }
+
+    if (mekhala && String(mekhala) !== String(nazim.mekhala)) {
+      const mekhalaDoc = await Mekhala.findById(mekhala);
+      if (!mekhalaDoc) return res.status(404).json({ success: false, message: 'Mekhala not found' });
+
+      const duplicate = await MekhalaNazim.findOne({ mekhala, _id: { $ne: nazim._id } });
+      if (duplicate) return res.status(409).json({ success: false, message: `"${mekhalaDoc.name}" already has a nazim assigned` });
+      nazim.mekhala = mekhala;
+    }
+
+    if (name !== undefined) nazim.name = name.trim();
+    if (contactNo !== undefined) nazim.contactNo = contactNo.trim();
+    if (emailId !== undefined) nazim.emailId = emailId.trim();
+    if (typeof isActive === 'boolean') nazim.isActive = isActive;
+
+    await nazim.save();
+    const updated = await MekhalaNazim.findById(nazim._id).populate('mekhala', 'name districts');
+    res.json({ success: true, message: 'Mekhala nazim updated successfully', data: { mekhalaNazim: updated } });
+  } catch (error) {
+    console.error('Update mekhala nazim error:', error);
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'Rukn ID or mekhala is already in use' });
+    }
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Delete a mekhala nazim
+// @route   DELETE /api/ihthisabi/admin/mekhala-nazims/:id
+// @access  Private (Super Admin only)
+router.delete('/mekhala-nazims/:id', requireSuperAdmin, async (req, res) => {
+  try {
+    const nazim = await MekhalaNazim.findByIdAndDelete(req.params.id);
+    if (!nazim) return res.status(404).json({ success: false, message: 'Mekhala nazim not found' });
+
+    res.json({ success: true, message: 'Mekhala nazim deleted successfully' });
+  } catch (error) {
+    console.error('Delete mekhala nazim error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 });

@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../../models/ihthisabi/User');
 const UnitAdmin = require('../../models/ihthisabi/UnitAdmin');
 const DistrictAdmin = require('../../models/ihthisabi/DistrictAdmin');
+const MekhalaNazim = require('../../models/ihthisabi/MekhalaNazim');
 
 
 // Generate JWT token
@@ -117,6 +118,39 @@ const protect = async (req, res, next) => {
           isActive: districtAdmin.isActive
         };
         console.log('District admin token validated successfully:', req.user);
+        return next();
+      }
+
+      // Check if this is a mekhala nazim token
+      if (decoded.role === 'mekhalaNazim' && decoded.userId) {
+        console.log('Processing mekhala nazim token for userId:', decoded.userId);
+        const nazim = await MekhalaNazim.findById(decoded.userId)
+          .populate('mekhala', 'name districts');
+
+        if (!nazim) {
+          return res.status(401).json({
+            success: false,
+            message: 'No mekhala nazim found with this token'
+          });
+        }
+
+        if (!nazim.isActive) {
+          return res.status(401).json({
+            success: false,
+            message: 'Mekhala nazim account is deactivated'
+          });
+        }
+
+        req.user = {
+          userId: nazim._id,
+          role: 'mekhalaNazim',
+          mekhala: nazim.mekhala?._id,
+          mekhalaName: nazim.mekhala?.name || '',
+          ruknId: nazim.ruknId,
+          name: nazim.name,
+          isActive: nazim.isActive
+        };
+        console.log('Mekhala nazim token validated successfully:', req.user);
         return next();
       }
 

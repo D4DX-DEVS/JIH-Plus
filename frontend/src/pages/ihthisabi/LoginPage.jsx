@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
-import { User, Shield, Home, AlertCircle, Users, Building2, ArrowLeft } from 'lucide-react'
+import { User, Shield, Home, AlertCircle, Users, Building2, ArrowLeft, Landmark } from 'lucide-react'
 import logoColor from '../../assets/LogoColor.png'
 
 const LoginPage = () => {
@@ -43,6 +43,8 @@ const LoginPage = () => {
           redirectPath = '/ihthisabi/unitadmin'
         } else if (user?.role === 'districtAdmin') {
           redirectPath = '/ihthisabi/districtadmin'
+        } else if (user?.role === 'mekhalaNazim') {
+          redirectPath = '/ihthisabi/mekhalanazim'
         } else if (user?.role === 'rukn') {
           redirectPath = '/ihthisabi/dashboard'
         }
@@ -119,6 +121,8 @@ const LoginPage = () => {
             redirectPath = '/ihthisabi/unitadmin'
           } else if (result.user.role === 'districtAdmin') {
             redirectPath = '/ihthisabi/districtadmin'
+          } else if (result.user.role === 'mekhalaNazim') {
+            redirectPath = '/ihthisabi/mekhalanazim'
           } else if (result.user.role === 'rukn') {
             redirectPath = '/ihthisabi/dashboard'
           }
@@ -167,6 +171,8 @@ const LoginPage = () => {
             redirectPath = '/ihthisabi/unitadmin'
           } else if (result.user.role === 'districtAdmin') {
             redirectPath = '/ihthisabi/districtadmin'
+          } else if (result.user.role === 'mekhalaNazim') {
+            redirectPath = '/ihthisabi/mekhalanazim'
           } else if (result.user.role === 'rukn') {
             redirectPath = '/ihthisabi/dashboard'
           }
@@ -318,11 +324,13 @@ const LoginPage = () => {
 
               <div className="space-y-3">
                 {roleSelection.availableRoles.map((roleOption) => {
-                  const Icon = roleOption.role === 'districtAdmin'
-                    ? Building2
-                    : roleOption.role === 'unitAdmin'
-                      ? Users
-                      : User
+                  const Icon = roleOption.role === 'mekhalaNazim'
+                    ? Landmark
+                    : roleOption.role === 'districtAdmin'
+                      ? Building2
+                      : roleOption.role === 'unitAdmin'
+                        ? Users
+                        : User
                   return (
                     <button
                       key={roleOption.role}

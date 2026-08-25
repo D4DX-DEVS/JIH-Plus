@@ -3,25 +3,35 @@ const jwt = require('jsonwebtoken');
 const User = require('../../models/ihthisabi/User');
 const UnitAdmin = require('../../models/ihthisabi/UnitAdmin');
 const DistrictAdmin = require('../../models/ihthisabi/DistrictAdmin');
+const MekhalaNazim = require('../../models/ihthisabi/MekhalaNazim');
 const { generateToken, protect } = require('../../middlewares/ihthisabi/auth');
 const { validate, schemas } = require('../../middlewares/ihthisabi/validation');
 const ihthisabiConnection = require('../../config/ihthisabiConnection');
 
 const router = express.Router();
 
-// Look up every role account a RUKN ID holds across the three role collections.
+// Look up every role account a RUKN ID holds across the role collections.
 const findRoleAccounts = async (ruknId) => {
-  const [districtAdmin, unitAdmin, rukn] = await Promise.all([
+  const [mekhalaNazim, districtAdmin, unitAdmin, rukn] = await Promise.all([
+    MekhalaNazim.findOne({ ruknId }).populate('mekhala', 'name districts'),
     DistrictAdmin.findOne({ ruknId }),
     UnitAdmin.findOne({ ruknId }),
     User.findOne({ ruknId, role: 'rukn' }).populate('abroadCountry')
   ]);
-  return { districtAdmin, unitAdmin, rukn };
+  return { mekhalaNazim, districtAdmin, unitAdmin, rukn };
 };
 
-// Active roles only, ordered by privilege (district > unit > member).
+// Active roles only, ordered by privilege (mekhala > district > unit > member).
 const buildAvailableRoles = (accounts) => {
   const roles = [];
+  if (accounts.mekhalaNazim && accounts.mekhalaNazim.isActive) {
+    roles.push({
+      role: 'mekhalaNazim',
+      label: 'Mekhala Nazim',
+      name: accounts.mekhalaNazim.name,
+      scope: accounts.mekhalaNazim.mekhala?.name || ''
+    });
+  }
   if (accounts.districtAdmin && accounts.districtAdmin.isActive) {
     roles.push({
       role: 'districtAdmin',
@@ -52,6 +62,40 @@ const buildAvailableRoles = (accounts) => {
 // Issue a token + user payload for one of the accounts. Response shapes are kept
 // identical to the original single-role login branches.
 const issueLoginForRole = async (role, accounts) => {
+  if (role === 'mekhalaNazim') {
+    const nazim = accounts.mekhalaNazim;
+    nazim.lastLogin = new Date();
+    await nazim.save();
+
+    const token = jwt.sign(
+      {
+        userId: nazim._id,
+        role: 'mekhalaNazim',
+        mekhala: nazim.mekhala?._id,
+        ruknId: nazim.ruknId,
+        name: nazim.name
+      },
+      process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
+      { expiresIn: process.env.JWT_EXPIRE || '30d' }
+    );
+
+    return {
+      message: 'Mekhala Nazim login successful',
+      token,
+      user: {
+        id: nazim._id,
+        role: 'mekhalaNazim',
+        ruknId: nazim.ruknId,
+        name: nazim.name,
+        mekhala: nazim.mekhala?._id || null,
+        mekhalaName: nazim.mekhala?.name || '',
+        districts: nazim.mekhala?.districts || [],
+        contactNo: nazim.contactNo,
+        emailId: nazim.emailId
+      }
+    };
+  }
+
   if (role === 'districtAdmin') {
     const districtAdmin = accounts.districtAdmin;
     districtAdmin.lastLogin = new Date();
@@ -413,6 +457,39 @@ router.get('/me', protect, async (req, res) => {
             name: 'Administrator',
             isAdmin: true,
             lastLogin: lastLogin
+          }
+        }
+      });
+    }
+
+    // Check if it's a mekhalaNazim
+    if (req.user.role === 'mekhalaNazim' && req.user.userId) {
+      const nazim = await MekhalaNazim.findById(req.user.userId).populate('mekhala', 'name districts');
+
+      if (!nazim) {
+        return res.status(404).json({
+          success: false,
+          message: 'Mekhala nazim not found'
+        });
+      }
+
+      const availableRoles = buildAvailableRoles(await findRoleAccounts(nazim.ruknId));
+
+      return res.json({
+        success: true,
+        data: {
+          user: {
+            id: nazim._id,
+            role: 'mekhalaNazim',
+            ruknId: nazim.ruknId,
+            name: nazim.name,
+            mekhala: nazim.mekhala?._id || null,
+            mekhalaName: nazim.mekhala?.name || '',
+            districts: nazim.mekhala?.districts || [],
+            contactNo: nazim.contactNo,
+            emailId: nazim.emailId,
+            lastLogin: nazim.lastLogin,
+            availableRoles
           }
         }
       });

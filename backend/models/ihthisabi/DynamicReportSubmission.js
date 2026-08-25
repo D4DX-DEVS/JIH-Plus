@@ -12,7 +12,7 @@ const answerSchema = new mongoose.Schema(
       enum: ['text', 'number', 'radio', 'dropdown', 'textarea', 'date', 'checkbox'],
       required: true
     },
-    value: { type: mongoose.Schema.Types.Mixed, required: true }
+    value: { type: mongoose.Schema.Types.Mixed }
   },
   { _id: false }
 );
@@ -44,13 +44,42 @@ const dynamicReportSubmissionSchema = new mongoose.Schema(
     },
     submittedRole: {
       type: String,
-      enum: ['unitAdmin', 'rukn'],
+      enum: ['unitAdmin', 'rukn', 'mekhalaNazim'],
       required: true
     },
+    // Values for pages/fields reports, keyed "field_<id>" by the shared renderer.
+    // Legacy parts/questions reports keep using `answers` below.
+    formData: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
+    },
+    // Page the submitter last saved on, so a draft resumes where they left off.
+    lastPage: {
+      type: Number,
+      default: 0
+    },
+    // 'draft' rows are private work-in-progress; only 'submitted' rows reach the admin.
+    status: {
+      type: String,
+      enum: ['draft', 'submitted'],
+      default: 'submitted',
+      index: true
+    },
+    submittedAt: { type: Date },
     answers: {
       type: [answerSchema],
-      required: true,
-      validate: v => Array.isArray(v) && v.length > 0
+      default: [],
+      validate: {
+        validator: function (v) {
+          if (!Array.isArray(v)) return false;
+          // Drafts may be empty, and pages/fields reports carry their values in
+          // `formData` instead — only a legacy submission must have answers.
+          if (this.status === 'draft') return true;
+          if (this.formData && Object.keys(this.formData).length > 0) return true;
+          return v.length > 0;
+        },
+        message: 'Answers are required'
+      }
     },
     reply: {
       message: { type: String, trim: true, maxlength: 2000 },
@@ -61,7 +90,7 @@ const dynamicReportSubmissionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// One submission per report per user
+// One submission (draft or submitted) per report per user
 dynamicReportSubmissionSchema.index({ reportId: 1, submittedBy: 1 }, { unique: true });
 dynamicReportSubmissionSchema.index({ submittedBy: 1, submittedRole: 1 });
 dynamicReportSubmissionSchema.index({ month: 1, year: 1, reportType: 1 });

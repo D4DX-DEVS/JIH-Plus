@@ -18,6 +18,8 @@ const fieldSchema = new mongoose.Schema({
     enabled: { type: Boolean, default: true },
     placeholder: { type: String, default: '', maxlength: 500 },
     helpText: { type: String, default: '', maxlength: 1000 },
+    // Layout width on the 12-column form grid; narrower fields share a line.
+    width: { type: String, enum: ['full', 'three-quarters', 'two-thirds', 'half', 'third', 'quarter'], default: 'full' },
     options: [{ type: String, maxlength: 200 }],
     validation: {
         pattern: { type: String, default: '' },

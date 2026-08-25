@@ -24,7 +24,8 @@ import {
   MapPin,
   ChevronDown,
   ChevronRight,
-  ArrowLeftRight
+  ArrowLeftRight,
+  UserCog
 } from 'lucide-react'
 
 const Layout = () => {
@@ -44,6 +45,7 @@ const Layout = () => {
     admin: '/ihthisabi/admin',
     districtAdmin: '/ihthisabi/districtadmin',
     unitAdmin: '/ihthisabi/unitadmin',
+    mekhalaNazim: '/ihthisabi/mekhalanazim',
     rukn: '/ihthisabi/dashboard'
   }
 
@@ -110,6 +112,7 @@ const Layout = () => {
     user?.role === 'admin' ? '/ihthisabi/admin'
     : user?.role === 'unitAdmin' ? '/ihthisabi/unitadmin'
     : user?.role === 'districtAdmin' ? '/ihthisabi/districtadmin'
+    : user?.role === 'mekhalaNazim' ? '/ihthisabi/mekhalanazim'
     : '/ihthisabi/dashboard'
 
   const buildNavigation = () => {
@@ -142,6 +145,16 @@ const Layout = () => {
       ]
     }
 
+    // Mekhala Nazim sees only their own assigned reports — no region submissions,
+    // member lists or consolidation.
+    if (user?.role === 'mekhalaNazim') {
+      return [
+        { name: 'My Reports', mobileName: 'Reports', href: dashboardHref, icon: FileText },
+        { name: 'Profile', mobileName: 'Profile', href: '/ihthisabi/profile', icon: User },
+        { name: 'Help Desk', mobileName: 'Help', href: '/ihthisabi/help-desk', icon: LifeBuoy },
+      ]
+    }
+
     if (user?.role === 'admin') {
       return [
         { name: 'Dashboard', mobileName: 'Home', href: '/ihthisabi/admin', icon: Home },
@@ -157,6 +170,8 @@ const Layout = () => {
           ]
         },
         { name: 'Form Management', mobileName: 'Forms', href: '/ihthisabi/admin/form-management', icon: ClipboardList },
+        { name: 'Report Management', mobileName: 'Reports', href: '/ihthisabi/admin/dynamic-forms', icon: FileText },
+        { name: 'Mekhala Nazim', mobileName: 'Nazim', href: '/ihthisabi/admin/mekhala-nazims', icon: UserCog },
         {
           name: 'User Management',
           mobileName: 'Users',
@@ -234,6 +249,13 @@ const Layout = () => {
         { name: 'More', icon: Menu, action: 'menu' },
       ]
     }
+    if (user?.role === 'mekhalaNazim') {
+      return [
+        { name: 'Reports', href: dashboardHref, icon: FileText },
+        { name: 'Profile', href: '/ihthisabi/profile', icon: User },
+        { name: 'Help', href: '/ihthisabi/help-desk', icon: LifeBuoy },
+      ]
+    }
     if (user?.role === 'admin') {
       return [
         { name: 'Home', href: '/ihthisabi/admin', icon: Home, match: ['/ihthisabi/admin'] },
@@ -272,9 +294,11 @@ const Layout = () => {
     ? 'Unit Admin'
     : user?.role === 'districtAdmin'
       ? 'District Admin'
-      : user?.role === 'admin'
-        ? 'Admin'
-        : 'Member'
+      : user?.role === 'mekhalaNazim'
+        ? 'Mekhala Nazim'
+        : user?.role === 'admin'
+          ? 'Admin'
+          : 'Member'
 
   // Mobile app-bar title. Pages hide their own <h1> on phones, so the bar is the
   // only thing that names the screen — longest matching prefix wins.
@@ -291,7 +315,12 @@ const Layout = () => {
     '/ihthisabi/admin/abroad-countries': 'Abroad Countries',
     '/ihthisabi/admin/abroad-members': 'Abroad Members',
     '/ihthisabi/admin/master-data': 'Master Data',
+    '/ihthisabi/admin/mekhala-nazims': 'Mekhala Nazim',
+    '/ihthisabi/admin/dynamic-forms': 'Report Management',
     '/ihthisabi/admin': 'Admin Dashboard',
+    '/ihthisabi/mekhalanazim/reports': 'Submit Report',
+    '/ihthisabi/mekhalanazim/submissions': 'Submission',
+    '/ihthisabi/mekhalanazim': 'My Reports',
     '/ihthisabi/unitadmin/submissions': 'Unit Submissions',
     '/ihthisabi/unitadmin/members': 'Unit Members',
     '/ihthisabi/unitadmin/details': 'Unit Details',
@@ -326,6 +355,7 @@ const Layout = () => {
   // Secondary line: who/where the user is. `unit` is '-' for members without a unit.
   const contextLabel =
     (user?.unit && user.unit !== '-' ? user.unit : null) ||
+    user?.mekhalaName ||
     user?.name || user?.username || roleLabel
 
   const renderNavItem = (item) => {

@@ -57,10 +57,249 @@ function ErrorMsg({ msg }) {
 }
 
 const TABS = [
+  { id: 'mekhalas', label: 'മേഖല' },
   { id: 'districts', label: 'ഡിസ്ട്രിക്റ്റ്' },
   { id: 'areas', label: 'ഏരിയ' },
   { id: 'units', label: 'യൂണിറ്റ്' }
 ];
+
+// ── Mekhalas Tab ──────────────────────────────────────────────────────────────
+// A mekhala groups districts and sits above District. The district picker greys
+// out anything another mekhala already owns, so overlaps cannot be created here;
+// the server re-checks on write.
+
+function MekhalaForm({ value, onChange, districts, error }) {
+  const toggle = (name) => {
+    const next = value.districts.includes(name)
+      ? value.districts.filter((d) => d !== name)
+      : [...value.districts, name];
+    onChange({ ...value, districts: next });
+  };
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Mekhala Name</label>
+        <input
+          value={value.name}
+          onChange={(e) => onChange({ ...value, name: e.target.value })}
+          placeholder="e.g. North Mekhala"
+          autoFocus
+          className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Districts ({value.districts.length} selected)
+        </label>
+        <div className="max-h-56 overflow-y-auto border rounded-lg divide-y text-sm">
+          {districts.map((d) => {
+            const disabled = Boolean(d.takenBy);
+            return (
+              <label
+                key={d.name}
+                className={`flex items-center gap-2 px-3 py-2 ${
+                  disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  disabled={disabled}
+                  checked={value.districts.includes(d.name)}
+                  onChange={() => toggle(d.name)}
+                />
+                <span className="flex-1">{d.name}</span>
+                {disabled && <span className="text-xs italic">in {d.takenBy}</span>}
+              </label>
+            );
+          })}
+          {districts.length === 0 && (
+            <p className="px-3 py-4 text-center text-gray-400">No districts available</p>
+          )}
+        </div>
+        <p className="text-xs text-gray-400 mt-1">A district can belong to only one mekhala.</p>
+      </div>
+      <ErrorMsg msg={error} />
+    </div>
+  );
+}
+
+function MekhalasTab() {
+  const [mekhalas, setMekhalas] = useState([]);
+  const [pagination, setPagination] = useState({ current: 1, pages: 1, total: 0 });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const search = useDebounced(searchInput);
+
+  const [districtOptions, setDistrictOptions] = useState([]);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [form, setForm] = useState({ name: '', districts: [] });
+  const [working, setWorking] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [deleteItem, setDeleteItem] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
+
+  const load = useCallback(async (page = 1) => {
+    setLoading(true); setError('');
+    try {
+      const params = { page, limit: 10 };
+      if (search) params.search = search;
+      const res = await api.get(`${BASE}/mekhalas`, { params });
+      setMekhalas(res.data.data);
+      setPagination({
+        current: res.data.page || 1,
+        pages: res.data.totalPages || 1,
+        total: res.data.total ?? res.data.data.length,
+        limit: 10
+      });
+    } catch { setError('Failed to load mekhalas'); }
+    setLoading(false);
+  }, [search]);
+
+  useEffect(() => { load(1); }, [load]);
+
+  const openForm = async (item) => {
+    setFormError('');
+    setEditItem(item || null);
+    setForm(item ? { name: item.name, districts: [...item.districts] } : { name: '', districts: [] });
+    setFormOpen(true);
+    try {
+      const res = await api.get(`${BASE}/mekhalas/available-districts`, {
+        params: item ? { excludeId: item._id } : {}
+      });
+      setDistrictOptions(res.data.data);
+    } catch { setDistrictOptions([]); }
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return setFormError('Name is required');
+    if (form.districts.length === 0) return setFormError('Select at least one district');
+    setWorking(true); setFormError('');
+    try {
+      if (editItem) {
+        await api.put(`${BASE}/mekhalas/${editItem._id}`, { name: form.name.trim(), districts: form.districts });
+      } else {
+        await api.post(`${BASE}/mekhalas`, { name: form.name.trim(), districts: form.districts });
+      }
+      setFormOpen(false); setEditItem(null); load(pagination.current);
+    } catch (e) { setFormError(e.response?.data?.message || 'Save failed'); }
+    setWorking(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setWorking(true); setDeleteError('');
+    try {
+      await api.delete(`${BASE}/mekhalas/${deleteItem._id}`);
+      setDeleteItem(null); load(pagination.current);
+    } catch (e) { setDeleteError(e.response?.data?.message || 'Delete failed'); }
+    setWorking(false);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <SearchBox value={searchInput} onChange={setSearchInput} placeholder="Search mekhalas…" />
+        <button
+          onClick={() => openForm(null)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#002349] text-white text-sm rounded-lg hover:bg-[#002349]/90">
+          <Plus className="w-4 h-4" /> Add Mekhala
+        </button>
+      </div>
+      {loading ? <p className="text-center py-8 text-gray-400">Loading…</p> : error ? (
+        <p className="text-red-500 text-sm">{error}</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-gray-50 text-gray-600">
+              <th className="text-left px-4 py-2 font-medium">#</th>
+              <th className="text-left px-4 py-2 font-medium">Mekhala</th>
+              <th className="text-left px-4 py-2 font-medium">Districts</th>
+              <th className="text-left px-4 py-2 font-medium">Nazim</th>
+              <th className="text-right px-4 py-2 font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {mekhalas.map((m, i) => (
+              <tr key={m._id} className="border-t hover:bg-gray-50 align-top">
+                <td className="px-4 py-3 text-gray-400">{i + 1}</td>
+                <td className="px-4 py-3 font-medium text-gray-800">{m.name}</td>
+                <td className="px-4 py-3 text-gray-600">
+                  <span className="text-xs text-gray-400">{m.districtCount} district(s)</span>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {m.districts.map((d) => (
+                      <span key={d} className="px-2 py-0.5 bg-gray-100 rounded text-xs">{d}</span>
+                    ))}
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-gray-600">
+                  {m.nazim ? (
+                    <span className={m.nazim.isActive ? '' : 'text-gray-400 line-through'}>
+                      {m.nazim.name} <span className="text-xs text-gray-400">({m.nazim.ruknId})</span>
+                    </span>
+                  ) : (
+                    <span className="text-xs text-amber-600">Not assigned</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right space-x-1 whitespace-nowrap">
+                  <button title="Edit mekhala" onClick={() => openForm(m)}
+                    className="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">
+                    <Pencil className="w-3.5 h-3.5" /></button>
+                  <button
+                    title={m.nazim ? 'Cannot delete: a nazim is assigned' : 'Delete mekhala'}
+                    onClick={() => { setDeleteError(''); setDeleteItem(m); }}
+                    className="inline-flex items-center px-2 py-1 text-red-600 hover:bg-red-50 rounded">
+                    <Trash2 className="w-3.5 h-3.5" /></button>
+                </td>
+              </tr>
+            ))}
+            {mekhalas.length === 0 && (
+              <tr><td colSpan={5} className="text-center py-8 text-gray-400">No mekhalas found</td></tr>
+            )}
+          </tbody>
+        </table>
+      )}
+      <Pagination pagination={pagination} onPageChange={load} loading={loading} itemLabel="mekhalas" />
+
+      {formOpen && (
+        <Modal title={editItem ? `Edit Mekhala: ${editItem.name}` : 'Add Mekhala'} onClose={() => setFormOpen(false)}>
+          <MekhalaForm value={form} onChange={setForm} districts={districtOptions} error={formError} />
+          <div className="flex gap-3 justify-end mt-4">
+            <button onClick={() => setFormOpen(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={handleSave} disabled={working}
+              className="flex items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
+              {working ? <Spinner /> : null} {editItem ? 'Save' : 'Add'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {deleteItem && (
+        <Modal title={`Delete Mekhala: "${deleteItem.name}"`} onClose={() => setDeleteItem(null)}>
+          {deleteItem.nazim ? (
+            <p className="text-sm text-red-600">
+              Cannot delete — "{deleteItem.nazim.name}" is assigned as nazim. Remove the nazim first.
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600">
+              This removes "{deleteItem.name}" and frees its {deleteItem.districtCount} district(s) for another mekhala.
+              Districts themselves are not affected.
+            </p>
+          )}
+          <ErrorMsg msg={deleteError} />
+          <div className="flex gap-3 justify-end mt-4">
+            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={handleDeleteConfirm} disabled={working || Boolean(deleteItem.nazim)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              {working ? <Spinner /> : null} Delete
+            </button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
 
 // ── Districts Tab ─────────────────────────────────────────────────────────────
 
@@ -1241,6 +1480,7 @@ export default function MasterDataManagement() {
       </div>
 
       <div className="overflow-x-auto">
+        {activeTab === 'mekhalas' && <MekhalasTab />}
         {activeTab === 'districts' && <DistrictsTab />}
         {activeTab === 'areas' && <AreasTab />}
         {activeTab === 'units' && <UnitsTab />}

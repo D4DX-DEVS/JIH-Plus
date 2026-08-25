@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Download, Loader2, CheckCircle2, Clock } from 'lucide-react';
 import RowColumnReadonly from './RowColumnReadonly';
+import { fieldWidthClass, fieldWidth } from '../../utils/fieldWidth';
 
 // Mirrors DynamicFormRenderer's layout rule: simple value fields show
 // label + value on one row, everything else stays stacked.
@@ -134,17 +135,17 @@ export default function SubmissionPreviewModal({ open, loading, data, onClose, o
                   report.pages.map((page, pageIdx) => (
                     <div key={pageIdx} className="bg-gray-50 rounded-xl border border-gray-200 p-4">
                       {page.title && <h4 className="text-sm font-bold text-[#002349] mb-3 border-b border-gray-200 pb-2">{page.title}</h4>}
-                      <div className="space-y-3">
+                      <div className="grid grid-cols-12 gap-x-4 gap-y-3">
                         {(page.fields || [])
                           .filter(f => !['title', 'html'].includes(f.type))
                           .map(field => (
-                            INLINE_FIELD_TYPES.has(field.type) ? (
-                              <div key={field.id} className="border-l-4 border-[#002349]/60 pl-3 py-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                            INLINE_FIELD_TYPES.has(field.type) && fieldWidth(field) === 'full' ? (
+                              <div key={field.id} className={`${fieldWidthClass(field)} border-l-4 border-[#002349]/60 pl-3 py-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3`}>
                                 <div className="text-xs font-semibold text-gray-600 sm:w-1/3 sm:flex-shrink-0">{field.label}</div>
                                 <div className="sm:flex-1 min-w-0">{renderFieldValue(field, submission.formData?.[`field_${field.id}`])}</div>
                               </div>
                             ) : (
-                              <div key={field.id} className="border-l-4 border-[#002349]/60 pl-3 py-1">
+                              <div key={field.id} className={`${fieldWidthClass(field)} border-l-4 border-[#002349]/60 pl-3 py-1`}>
                                 <div className="text-xs font-semibold text-gray-600 mb-1">{field.label}</div>
                                 {renderFieldValue(field, submission.formData?.[`field_${field.id}`])}
                               </div>

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const ihthisabiConnection = require('../../config/ihthisabiConnection');
+const { pageSchema } = require('./dynamicReportSchemas');
 
 const dynamicReportSchema = new mongoose.Schema({
     title: {
@@ -13,6 +14,20 @@ const dynamicReportSchema = new mongoose.Schema({
     description: {
         type: String,
         default: ''
+    },
+    // Pages/fields structure driven by the shared report builder. New reports use
+    // this; `parts` below stays readable for reports authored before the builder.
+    pages: [pageSchema],
+    // Draft reports are invisible to submitters until published. Deliberately no
+    // default: mongoose would otherwise hydrate reports authored before this flag
+    // existed as `false` and hide them. The create route always sets it explicitly,
+    // so only pre-existing documents stay undefined — and those count as visible.
+    isPublished: {
+        type: Boolean
+    },
+    publishedAt: {
+        type: Date,
+        default: null
     },
     parts: [{
         partName: {
@@ -51,6 +66,12 @@ const dynamicReportSchema = new mongoose.Schema({
                 default: ''
             }
         }]
+    }],
+    // Who is expected to submit this report. Legacy reports have no value here and
+    // are treated as targeted at rukn + unitAdmin (their behaviour before targeting).
+    targetRoles: [{
+        type: String,
+        enum: ['rukn', 'unitAdmin', 'mekhalaNazim']
     }],
     isActive: {
         type: Boolean,
@@ -98,7 +119,8 @@ dynamicReportSchema.pre('validate', function(next) {
     next();
 });
 
-// Validate that options are provided for radio, dropdown, and checkbox answer types
+// Validate that options are provided for radio, dropdown, and checkbox answer types.
+// Only applies to the legacy parts structure; pages/fields validate in the routes.
 dynamicReportSchema.pre('validate', function(next) {
     if (this.parts && Array.isArray(this.parts)) {
         for (const part of this.parts) {
@@ -122,5 +144,7 @@ dynamicReportSchema.index({ createdAt: -1 });
 dynamicReportSchema.index({ month: 1, year: 1 });
 dynamicReportSchema.index({ templateRootId: 1, month: 1, year: 1 });
 dynamicReportSchema.index({ recurringMonthly: 1, isActive: 1 });
+dynamicReportSchema.index({ targetRoles: 1, isActive: 1 });
+dynamicReportSchema.index({ isPublished: 1, isActive: 1 });
 
 module.exports = ihthisabiConnection.model('DynamicReport', dynamicReportSchema);

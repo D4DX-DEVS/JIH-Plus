@@ -1,10 +1,22 @@
 import React from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
-import { Plus } from 'lucide-react';
+import { Plus, ClipboardPaste, X } from 'lucide-react';
 import FieldEditor from './FieldEditor';
 
-export default function FieldCanvas({ pages, pageIndex, allFields, onPagesChange, onAddField }) {
+export default function FieldCanvas({
+  pages,
+  pageIndex,
+  allFields,
+  onPagesChange,
+  onAddField,
+  clipboard,
+  copiedFieldId,
+  onCopyField,
+  onDuplicateField,
+  onPasteField,
+  onClearClipboard,
+}) {
   const page = pages[pageIndex];
   const fields = page.fields || [];
 
@@ -34,6 +46,21 @@ export default function FieldCanvas({ pages, pageIndex, allFields, onPagesChange
     const newPages = pages.map((p, pi) => pi === pageIndex ? { ...p, fields: newFields } : p);
     onPagesChange(newPages);
   };
+
+  // Thin drop-zone shown between fields while a field is on the clipboard, so
+  // a copied field can be pasted at any position — like pasting text.
+  const PasteSlot = ({ index }) => (
+    <div className="group relative h-2 -my-1 flex items-center justify-center">
+      <span className="absolute inset-x-0 top-1/2 h-px bg-blue-200 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <button
+        type="button"
+        onClick={() => onPasteField(index)}
+        className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 rounded-full border border-dashed border-blue-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-blue-600 shadow-sm hover:bg-blue-50"
+      >
+        <ClipboardPaste size={11} /> Paste here
+      </button>
+    </div>
+  );
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -72,26 +99,71 @@ export default function FieldCanvas({ pages, pageIndex, allFields, onPagesChange
           strategy={verticalListSortingStrategy}
         >
           {fields.map((field, fieldIndex) => (
-            <FieldEditor
-              key={field.id}
-              field={field}
-              allFields={allFields}
-              pageIndex={pageIndex}
-              fieldIndex={fieldIndex}
-              onChange={newField => updateField(fieldIndex, newField)}
-              onRemove={() => removeField(fieldIndex)}
-            />
+            <React.Fragment key={field.id}>
+              {clipboard && <PasteSlot index={fieldIndex} />}
+              <FieldEditor
+                field={field}
+                allFields={allFields}
+                pageIndex={pageIndex}
+                fieldIndex={fieldIndex}
+                isCopied={copiedFieldId === field.id}
+                onChange={newField => updateField(fieldIndex, newField)}
+                onRemove={() => removeField(fieldIndex)}
+                onCopy={onCopyField ? () => onCopyField(field) : undefined}
+                onDuplicate={onDuplicateField ? () => onDuplicateField(fieldIndex) : undefined}
+              />
+            </React.Fragment>
           ))}
+          {clipboard && fields.length > 0 && <PasteSlot index={fields.length} />}
         </SortableContext>
       </DndContext>
 
-      <button
-        type="button"
-        onClick={onAddField}
-        className="w-full border-2 border-dashed border-blue-200 text-blue-500 hover:bg-blue-50 rounded-lg py-2 text-sm flex items-center justify-center gap-1 mt-2"
-      >
-        <Plus size={16} /> Add Field
-      </button>
+      <div className="flex gap-2 mt-2">
+        <button
+          type="button"
+          onClick={onAddField}
+          className="flex-1 border-2 border-dashed border-blue-200 text-blue-500 hover:bg-blue-50 rounded-lg py-2 text-sm flex items-center justify-center gap-1"
+        >
+          <Plus size={16} /> Add Field
+        </button>
+        {clipboard && (
+          <button
+            type="button"
+            onClick={() => onPasteField(fields.length)}
+            className="flex-1 border-2 border-dashed border-emerald-300 text-emerald-600 hover:bg-emerald-50 rounded-lg py-2 text-sm flex items-center justify-center gap-1"
+          >
+            <ClipboardPaste size={16} /> Paste Field
+          </button>
+        )}
+      </div>
+
+      {/* Clipboard bar — stays visible while switching pages */}
+      {clipboard && (
+        <div className="sticky bottom-0 pt-2">
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/95 backdrop-blur px-3 py-2 shadow-sm">
+            <ClipboardPaste size={15} className="text-emerald-600 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-emerald-800 truncate">
+                Copied: {clipboard.label?.trim() || `Untitled ${clipboard.type} field`}
+              </p>
+              <p className="text-[11px] text-emerald-600/80">
+                Switch to any page, then click a “Paste here” slot or “Paste Field”.
+              </p>
+            </div>
+            <span className="hidden sm:inline text-[10px] font-mono uppercase tracking-wide bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded flex-shrink-0">
+              {clipboard.type}
+            </span>
+            <button
+              type="button"
+              onClick={onClearClipboard}
+              title="Clear clipboard"
+              className="text-emerald-500 hover:text-emerald-700 flex-shrink-0 p-1"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

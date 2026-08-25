@@ -50,6 +50,9 @@ import DistrictAdminDashboard from './pages/ihthisabi/DistrictAdminDashboard';
 import DistrictAreaDetails from './pages/ihthisabi/DistrictAreaDetails';
 import AlternativeSubmissionForm from './pages/ihthisabi/AlternativeSubmissionForm';
 import FormManagement from './pages/ihthisabi/FormManagement';
+import DynamicFormsAdmin from './pages/ihthisabi/DynamicFormsAdmin';
+import MekhalaNazimManagement from './pages/ihthisabi/MekhalaNazimManagement';
+import MekhalaNazimReports from './pages/ihthisabi/MekhalaNazimReports';
 import IhthisabiHelpDeskPage from './pages/ihthisabi/HelpDeskPage';
 import ExpansionPortalLoginPage from './pages/ExpansionPortalLoginPage';
 import ExpansionPortalDashboardPage from './pages/ExpansionPortalDashboardPage';
@@ -535,6 +538,7 @@ const IhthisabiRoutes = () => {
               user?.role === 'admin' ? '/ihthisabi/admin' :
               user?.role === 'unitAdmin' ? '/ihthisabi/unitadmin' :
               user?.role === 'districtAdmin' ? '/ihthisabi/districtadmin' :
+              user?.role === 'mekhalaNazim' ? '/ihthisabi/mekhalanazim' :
               '/ihthisabi/dashboard'
             } replace />
           ) : (
@@ -784,6 +788,88 @@ const IhthisabiRoutes = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/mekhala-nazims"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <MekhalaNazimManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dynamic-forms"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <DynamicFormsAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dynamic-forms/create"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <DynamicFormsAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dynamic-forms/submissions/:submissionId"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <DynamicFormsAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dynamic-forms/:formId"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <DynamicFormsAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dynamic-forms/:formId/edit"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <DynamicFormsAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dynamic-forms/:formId/submissions"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <DynamicFormsAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Mekhala Nazim Routes — assigned reports only */}
+        <Route
+          path="/mekhalanazim"
+          element={
+            <ProtectedRoute allowedRoles={['mekhalaNazim']}>
+              <MekhalaNazimReports view="list" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mekhalanazim/reports/:reportId"
+          element={
+            <ProtectedRoute allowedRoles={['mekhalaNazim']}>
+              <MekhalaNazimReports view="form" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mekhalanazim/submissions/:submissionId"
+          element={
+            <ProtectedRoute allowedRoles={['mekhalaNazim']}>
+              <MekhalaNazimReports view="submission" />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Common Routes */}
         <Route 
@@ -797,7 +883,7 @@ const IhthisabiRoutes = () => {
         <Route
           path="/help-desk"
           element={
-            <ProtectedRoute allowedRoles={['rukn', 'unitAdmin', 'admin', 'districtAdmin']}>
+            <ProtectedRoute allowedRoles={['rukn', 'unitAdmin', 'admin', 'districtAdmin', 'mekhalaNazim']}>
               <IhthisabiHelpDeskPage />
             </ProtectedRoute>
           }
@@ -813,6 +899,7 @@ const IhthisabiRoutes = () => {
                   user?.role === 'admin' ? '/ihthisabi/admin' :
                   user?.role === 'unitAdmin' ? '/ihthisabi/unitadmin' :
                   user?.role === 'districtAdmin' ? '/ihthisabi/districtadmin' :
+                  user?.role === 'mekhalaNazim' ? '/ihthisabi/mekhalanazim' :
                   '/ihthisabi/dashboard'
                 ) : '/ihthisabi/login'
               }

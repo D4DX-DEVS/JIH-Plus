@@ -4,6 +4,7 @@ const DynamicReport = require('../../models/ihthisabi/dynamicReport');
 const DynamicReportSubmission = require('../../models/ihthisabi/DynamicReportSubmission');
 const User = require('../../models/ihthisabi/User');
 const UnitAdmin = require('../../models/ihthisabi/UnitAdmin');
+const MekhalaNazim = require('../../models/ihthisabi/MekhalaNazim');
 const { protect, authorize } = require('../../middlewares/ihthisabi/auth');
 
 const router = express.Router();
@@ -20,6 +21,93 @@ const getCreatorId = (user = {}) => {
   return userId;
 };
 
+const SUBMITTER_ROLES = ['rukn', 'unitAdmin', 'mekhalaNazim'];
+
+// Reports created before targeting existed carry no targetRoles; they stay visible
+// to rukn and unitAdmin exactly as they were, and never to mekhalaNazim.
+const LEGACY_TARGET_ROLES = ['rukn', 'unitAdmin'];
+
+const normalizeTargetRoles = (value) => {
+  if (value === undefined) return undefined;
+  const list = Array.isArray(value) ? value : [value];
+  const cleaned = [...new Set(list.filter((r) => SUBMITTER_ROLES.includes(r)))];
+  return cleaned;
+};
+
+const reportTargets = (report, role) => {
+  const targets = report?.targetRoles?.length ? report.targetRoles : LEGACY_TARGET_ROLES;
+  return targets.includes(role);
+};
+
+// Resolve the submitter's name/scope from whichever collection owns that role.
+const loadSubmitter = async (submittedBy, submittedRole) => {
+  if (!submittedBy) return null;
+
+  if (submittedRole === 'unitAdmin') {
+    const unitAdmin = await UnitAdmin.findById(submittedBy).select('name unit ruknId').lean();
+    return unitAdmin ? { ...unitAdmin, role: 'unitAdmin' } : null;
+  }
+
+  if (submittedRole === 'mekhalaNazim') {
+    const nazim = await MekhalaNazim.findById(submittedBy)
+      .select('name ruknId mekhala')
+      .populate('mekhala', 'name')
+      .lean();
+    if (!nazim) return null;
+    return {
+      _id: nazim._id,
+      name: nazim.name,
+      ruknId: nazim.ruknId,
+      mekhala: nazim.mekhala?.name || '',
+      role: 'mekhalaNazim'
+    };
+  }
+
+  if (submittedRole === 'rukn') {
+    return await User.findById(submittedBy).select('name unit ruknId role').lean();
+  }
+
+  return null;
+};
+
+const CHOICE_FIELD_TYPES = ['select', 'dropdown', 'radio', 'checkbox', 'multiselect'];
+const LAYOUT_FIELD_TYPES = ['title', 'html'];
+
+// Pages-based payload. Drafts may be sparse; publishing demands a usable form.
+const validatePagesPayload = (body, { publishing }) => {
+  const { title, pages } = body;
+  if (!title || !String(title).trim()) return 'Report title is required';
+  if (!Array.isArray(pages)) return 'pages must be an array';
+
+  const seenIds = new Set();
+  let fieldCount = 0;
+
+  for (const page of pages) {
+    if (!Number.isInteger(page.id)) return 'Each page needs a numeric id';
+    for (const field of page.fields || []) {
+      if (!Number.isInteger(field.id)) return 'Each field needs a numeric id';
+      if (seenIds.has(field.id)) return `Duplicate field id ${field.id}`;
+      seenIds.add(field.id);
+      if (!field.type) return 'Each field must have a type';
+      fieldCount += 1;
+
+      if (publishing) {
+        if (!LAYOUT_FIELD_TYPES.includes(field.type) && !String(field.label || '').trim()) {
+          return `Field #${field.id} needs a label before publishing`;
+        }
+        if (CHOICE_FIELD_TYPES.includes(field.type)) {
+          const options = (field.options || []).filter((o) => String(o).trim());
+          if (options.length === 0) return `Field "${field.label || field.id}" needs at least one option`;
+        }
+      }
+    }
+  }
+
+  if (publishing && fieldCount === 0) return 'Add at least one field before publishing';
+  return null;
+};
+
+// Legacy parts-based payload, kept for any caller still posting that shape.
 const validateReportPayload = (body) => {
   const { title, parts } = body;
   if (!title || !parts || !Array.isArray(parts) || parts.length === 0) {
@@ -53,22 +141,35 @@ router.use(protect);
 // ===== Admin: Create report =====
 router.post('/', authorize('admin'), async (req, res) => {
   try {
-    const validationError = validateReportPayload(req.body);
+    const { title, titleBase, description, parts, pages } = req.body;
+    const usesPages = Array.isArray(pages);
+    const isPublished = req.body.isPublished === true;
+
+    const validationError = usesPages
+      ? validatePagesPayload(req.body, { publishing: isPublished })
+      : validateReportPayload(req.body);
     if (validationError) {
       return res.status(400).json({ success: false, message: validationError });
     }
 
-    const { title, titleBase, description, parts } = req.body;
     const now = new Date();
     const creatorId = getCreatorId(req.user);
+
+    const targetRoles = normalizeTargetRoles(req.body.targetRoles);
+    if (!targetRoles || targetRoles.length === 0) {
+      return res.status(400).json({ success: false, message: 'Select at least one target user role' });
+    }
 
     const report = await DynamicReport.create({
       title,
       titleBase: titleBase || title,
       description: description || '',
-      parts,
+      ...(usesPages ? { pages } : { parts }),
+      targetRoles,
       createdBy: creatorId,
-      isActive: true,
+      isActive: req.body.isActive !== false,
+      isPublished,
+      publishedAt: isPublished ? now : null,
       recurringMonthly: false,
       scheduledFor: req.body.scheduledFor || now
     });
@@ -92,19 +193,44 @@ router.put('/:id', authorize('admin'), async (req, res) => {
     const hasSubmissions = await DynamicReportSubmission.exists({ reportId: id });
 
     // If submissions exist, block structural changes
-    if (hasSubmissions && (req.body.parts || req.body.type)) {
+    if (hasSubmissions && (req.body.parts || req.body.pages || req.body.type)) {
       return res.status(400).json({
         success: false,
         message: 'This report already has submissions; structure cannot be edited'
       });
     }
 
-    const allowedFields = ['title', 'titleBase', 'description', 'isActive', 'scheduledFor', 'recurringMonthly', 'month', 'year', 'parts'];
+    const willPublish = req.body.isPublished === true;
+    if (req.body.pages !== undefined) {
+      const validationError = validatePagesPayload(
+        { title: req.body.title ?? report.title, pages: req.body.pages },
+        { publishing: willPublish }
+      );
+      if (validationError) {
+        return res.status(400).json({ success: false, message: validationError });
+      }
+    }
+
+    const allowedFields = ['title', 'titleBase', 'description', 'isActive', 'scheduledFor', 'recurringMonthly', 'month', 'year', 'parts', 'pages'];
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         report[field] = req.body[field];
       }
     });
+
+    if (req.body.isPublished !== undefined) {
+      report.isPublished = willPublish;
+      if (willPublish && !report.publishedAt) report.publishedAt = new Date();
+      if (!willPublish) report.publishedAt = null;
+    }
+
+    if (req.body.targetRoles !== undefined) {
+      const targetRoles = normalizeTargetRoles(req.body.targetRoles);
+      if (!targetRoles.length) {
+        return res.status(400).json({ success: false, message: 'Select at least one target user role' });
+      }
+      report.targetRoles = targetRoles;
+    }
 
     await report.save();
     return res.json({ success: true, data: report });
@@ -140,10 +266,10 @@ router.delete('/:id', authorize('admin'), async (req, res) => {
 });
 
 // ===== User/Admin: List available forms =====
-router.get('/', authorize('admin', 'unitAdmin', 'rukn'), async (req, res) => {
+router.get('/', authorize('admin', 'unitAdmin', 'rukn', 'mekhalaNazim'), async (req, res) => {
   try {
     const now = new Date();
-    const { includeTemplates } = req.query;
+    const { includeTemplates, targetRole } = req.query;
 
     const query = { isActive: true };
 
@@ -153,11 +279,29 @@ router.get('/', authorize('admin', 'unitAdmin', 'rukn'), async (req, res) => {
       query.scheduledFor = { $lte: now };
     }
 
+    if (req.user.role !== 'admin') {
+      // Unpublished drafts are admin-only. Reports authored before the publish
+      // flag existed have no value stored and stay visible.
+      query.isPublished = { $ne: false };
+    }
+
+    if (req.user.role === 'admin') {
+      if (targetRole) query.targetRoles = targetRole;
+    } else if (LEGACY_TARGET_ROLES.includes(req.user.role)) {
+      // Legacy reports (no targetRoles) stay visible to rukn / unitAdmin
+      query.$or = [
+        { targetRoles: req.user.role },
+        { targetRoles: { $in: [null, []] } }
+      ];
+    } else {
+      query.targetRoles = req.user.role;
+    }
+
     const reports = await DynamicReport.find(query)
-      .select('-parts')
+      .select('-parts -pages')
       .sort({ createdAt: -1 })
-      .limit(10);
-    
+      .limit(req.user.role === 'admin' ? 50 : 10);
+
     return res.json({ success: true, data: reports });
   } catch (error) {
     console.error('[DynamicReports] List forms error:', error);
@@ -169,7 +313,8 @@ router.get('/', authorize('admin', 'unitAdmin', 'rukn'), async (req, res) => {
 router.get('/submissions', authorize('admin'), async (req, res) => {
   try {
     const { reportId, month, year, role, page = 1, limit = 50 } = req.query;
-    const query = {};
+    // Drafts are private work-in-progress and never surface to the admin.
+    const query = { status: { $ne: 'draft' } };
     if (reportId) query.reportId = reportId;
     if (month) query.month = Number(month);
     if (year) query.year = Number(year);
@@ -185,31 +330,14 @@ router.get('/submissions', authorize('admin'), async (req, res) => {
       .limit(limitNum)
       .lean();
 
-    // Manually populate submittedBy based on role (unitAdmin vs rukn)
+    // Manually populate submittedBy — the id points at whichever collection owns the role
     const populatedSubmissions = await Promise.all(
       submissions.map(async (submission) => {
-        let submittedByData = null;
-        
-        if (submission.submittedBy) {
-          if (submission.submittedRole === 'unitAdmin') {
-            const unitAdmin = await UnitAdmin.findById(submission.submittedBy).select('name unit ruknId').lean();
-            if (unitAdmin) {
-              submittedByData = {
-                ...unitAdmin,
-                role: 'unitAdmin'
-              };
-            }
-          } else if (submission.submittedRole === 'rukn') {
-            const user = await User.findById(submission.submittedBy).select('name unit ruknId role').lean();
-            if (user) {
-              submittedByData = user;
-            }
-          }
-        }
-        
+        const submittedByData = await loadSubmitter(submission.submittedBy, submission.submittedRole);
+
         // Exclude answers from list view
         const { answers, ...submissionWithoutAnswers } = submission;
-        
+
         return {
           ...submissionWithoutAnswers,
           submittedBy: submittedByData
@@ -245,24 +373,12 @@ router.get('/submissions/:id', authorize('admin'), async (req, res) => {
       return res.status(404).json({ success: false, message: 'Submission not found' });
     }
 
-    // Manually populate submittedBy based on role
-    let submittedByData = null;
-    if (submission.submittedBy) {
-      if (submission.submittedRole === 'unitAdmin') {
-        const unitAdmin = await UnitAdmin.findById(submission.submittedBy).select('name unit ruknId').lean();
-        if (unitAdmin) {
-          submittedByData = {
-            ...unitAdmin,
-            role: 'unitAdmin'
-          };
-        }
-      } else if (submission.submittedRole === 'rukn') {
-        const user = await User.findById(submission.submittedBy).select('name unit ruknId role').lean();
-        if (user) {
-          submittedByData = user;
-        }
-      }
+    if (submission.status === 'draft') {
+      return res.status(404).json({ success: false, message: 'Submission not found' });
     }
+
+    // Manually populate submittedBy — the id points at whichever collection owns the role
+    const submittedByData = await loadSubmitter(submission.submittedBy, submission.submittedRole);
 
     // Populate reply.repliedBy if exists
     let replyData = submission.reply || null;
@@ -276,11 +392,16 @@ router.get('/submissions/:id', authorize('admin'), async (req, res) => {
       }
     }
 
-    // Exclude reportId from response
+    // The report's pages travel with the submission so the admin view can label
+    // formData values without a second round trip.
     const { reportId, ...submissionWithoutReportId } = submission;
+    const report = await DynamicReport.findById(reportId)
+      .select('title description pages')
+      .lean();
 
     const submissionWithDetails = {
       ...submissionWithoutReportId,
+      report: report || null,
       submittedBy: submittedByData,
       reply: replyData
     };
@@ -296,12 +417,23 @@ router.get('/submissions/:id', authorize('admin'), async (req, res) => {
 });
 
 // ===== User/Admin: Get form details =====
-router.get('/:id', authorize('admin', 'unitAdmin', 'rukn'), async (req, res) => {
+router.get('/:id', authorize('admin', 'unitAdmin', 'rukn', 'mekhalaNazim'), async (req, res) => {
   try {
     const report = await DynamicReport.findById(req.params.id);
     if (!report || !report.isActive) {
       return res.status(404).json({ success: false, message: 'Report not found' });
     }
+    if (req.user.role !== 'admin' && (!reportTargets(report, req.user.role) || report.isPublished === false)) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    // The admin editor needs to know whether the structure is still editable.
+    // Drafts count: rewriting questions under a saved draft would orphan its answers.
+    if (req.user.role === 'admin') {
+      const hasSubmissions = Boolean(await DynamicReportSubmission.exists({ reportId: report._id }));
+      return res.json({ success: true, data: { ...report.toObject(), hasSubmissions } });
+    }
+
     return res.json({ success: true, data: report });
   } catch (error) {
     console.error('[DynamicReports] Get form error:', error);
@@ -454,7 +586,7 @@ router.delete('/submissions/:id/reply', authorize('admin'), async (req, res) => 
 });
 
 // ===== User: My submissions =====
-router.get('/my/submissions', authorize('unitAdmin', 'rukn'), async (req, res) => {
+router.get('/my/submissions', authorize('unitAdmin', 'rukn', 'mekhalaNazim'), async (req, res) => {
   try {
     const userId = getUserId(req.user);
     const submissions = await DynamicReportSubmission.find({ submittedBy: userId })
@@ -476,13 +608,13 @@ router.get('/my/submissions', authorize('unitAdmin', 'rukn'), async (req, res) =
 });
 
 // ===== User: Get own single submission with answers (for edit pre-fill) =====
-router.get('/my/submissions/:id', authorize('unitAdmin', 'rukn'), async (req, res) => {
+router.get('/my/submissions/:id', authorize('unitAdmin', 'rukn', 'mekhalaNazim'), async (req, res) => {
   try {
     const { id } = req.params;
     const userId = getUserId(req.user);
 
     const submission = await DynamicReportSubmission.findById(id)
-      .populate('reportId', 'title month year parts')
+      .populate('reportId', 'title description month year parts pages')
       .lean();
 
     if (!submission) {
@@ -501,13 +633,22 @@ router.get('/my/submissions/:id', authorize('unitAdmin', 'rukn'), async (req, re
 });
 
 // ===== User: Edit own submission =====
-router.put('/my/submissions/:id', authorize('unitAdmin', 'rukn'), async (req, res) => {
+router.put('/my/submissions/:id', authorize('unitAdmin', 'rukn', 'mekhalaNazim'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { answers } = req.body;
+    const { answers, formData, lastPage, status } = req.body;
     const userId = getUserId(req.user);
+    const usesFormData = formData !== undefined && formData !== null;
 
-    if (!answers || !Array.isArray(answers) || answers.length === 0) {
+    if (status !== undefined && !['draft', 'submitted'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'status must be draft or submitted' });
+    }
+
+    if (usesFormData) {
+      if (typeof formData !== 'object' || Array.isArray(formData)) {
+        return res.status(400).json({ success: false, message: 'formData must be an object' });
+      }
+    } else if (!answers || !Array.isArray(answers)) {
       return res.status(400).json({ success: false, message: 'Answers are required' });
     }
 
@@ -529,13 +670,27 @@ router.put('/my/submissions/:id', authorize('unitAdmin', 'rukn'), async (req, re
       });
     }
 
-    // Update answers
-    submission.answers = answers;
+    // A submitted report can be re-edited but never demoted back to a draft.
+    const nextStatus = submission.status === 'submitted' ? 'submitted' : (status || submission.status);
+    if (nextStatus === 'submitted') {
+      const empty = usesFormData ? Object.keys(formData).length === 0 : answers.length === 0;
+      if (empty) {
+        return res.status(400).json({ success: false, message: 'Fill in the report before submitting' });
+      }
+    }
+
+    if (usesFormData) submission.formData = formData;
+    else submission.answers = answers;
+    if (lastPage !== undefined) submission.lastPage = lastPage;
+    submission.status = nextStatus;
+    if (nextStatus === 'submitted' && !submission.submittedAt) {
+      submission.submittedAt = new Date();
+    }
     await submission.save();
 
     return res.json({
       success: true,
-      message: 'Submission updated successfully',
+      message: nextStatus === 'draft' ? 'Draft saved' : 'Submission updated successfully',
       data: submission
     });
   } catch (error) {
@@ -545,7 +700,7 @@ router.put('/my/submissions/:id', authorize('unitAdmin', 'rukn'), async (req, re
 });
 
 // ===== User: Delete own submission =====
-router.delete('/my/submissions/:id', authorize('unitAdmin', 'rukn'), async (req, res) => {
+router.delete('/my/submissions/:id', authorize('unitAdmin', 'rukn', 'mekhalaNazim'), async (req, res) => {
   try {
     const { id } = req.params;
     const userId = getUserId(req.user);
@@ -581,35 +736,71 @@ router.delete('/my/submissions/:id', authorize('unitAdmin', 'rukn'), async (req,
 });
 
 // ===== User: Submit a report =====
-router.post('/:id/submit', authorize('unitAdmin', 'rukn'), async (req, res) => {
+router.post('/:id/submit', authorize('unitAdmin', 'rukn', 'mekhalaNazim'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { answers } = req.body;
+    const { answers, formData, lastPage, status } = req.body;
     const userId = getUserId(req.user);
     const submittedRole = req.user.role;
+    const nextStatus = status === 'draft' ? 'draft' : 'submitted';
+    const usesFormData = formData !== undefined && formData !== null;
 
-    if (!answers || !Array.isArray(answers) || answers.length === 0) {
-      return res.status(400).json({ success: false, message: 'Answers are required' });
+    if (usesFormData) {
+      if (typeof formData !== 'object' || Array.isArray(formData)) {
+        return res.status(400).json({ success: false, message: 'formData must be an object' });
+      }
+      if (nextStatus === 'submitted' && Object.keys(formData).length === 0) {
+        return res.status(400).json({ success: false, message: 'Fill in the report before submitting' });
+      }
+    } else {
+      if (!answers || !Array.isArray(answers)) {
+        return res.status(400).json({ success: false, message: 'Answers are required' });
+      }
+      if (nextStatus === 'submitted' && answers.length === 0) {
+        return res.status(400).json({ success: false, message: 'Answers are required' });
+      }
     }
 
     const report = await DynamicReport.findById(id);
     if (!report || !report.isActive) {
       return res.status(404).json({ success: false, message: 'Report not found or inactive' });
     }
+    if (report.isPublished === false) {
+      return res.status(403).json({ success: false, message: 'This report is not published yet' });
+    }
+    if (!reportTargets(report, submittedRole)) {
+      return res.status(403).json({ success: false, message: 'This report is not assigned to your role' });
+    }
 
     const existing = await DynamicReportSubmission.findOne({ reportId: id, submittedBy: userId });
     if (existing) {
-      return res.status(409).json({ success: false, message: 'You have already submitted this report' });
+      // A saved draft is picked back up here; an already-submitted report is edited
+      // through PUT /my/submissions/:id instead.
+      if (existing.status === 'submitted') {
+        return res.status(409).json({ success: false, message: 'You have already submitted this report' });
+      }
+      if (usesFormData) existing.formData = formData;
+      else existing.answers = answers;
+      if (lastPage !== undefined) existing.lastPage = lastPage;
+      existing.status = nextStatus;
+      if (nextStatus === 'submitted') existing.submittedAt = new Date();
+      await existing.save();
+      return res.json({ success: true, data: existing });
     }
 
     const submission = await DynamicReportSubmission.create({
       reportId: id,
       templateRootId: report.templateRootId || report._id,
+      // Monthly instances carry month/year; ad-hoc reports are 'special'.
+      reportType: report.month && report.year ? 'monthly' : 'special',
       month: report.month,
       year: report.year,
       submittedBy: userId,
       submittedRole,
-      answers
+      status: nextStatus,
+      submittedAt: nextStatus === 'submitted' ? new Date() : undefined,
+      lastPage: lastPage || 0,
+      ...(usesFormData ? { formData, answers: [] } : { answers })
     });
 
     return res.status(201).json({ success: true, data: submission });
