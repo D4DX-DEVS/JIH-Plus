@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Send, Save } from 'lucide-react';
 import FieldRenderer from './FieldRenderer';
+import { fieldWidthClass, fieldWidth } from '../../utils/fieldWidth';
 
 // Simple value fields read better with the label and input on the same
 // row; everything else (textarea, html, row/column, choice fields, etc.)
@@ -138,15 +139,17 @@ export default function DynamicFormRenderer({
         <p className="text-sm text-gray-600 mb-4">{page.description}</p>
       )}
 
-      <div className="space-y-5">
+      <div className="grid grid-cols-12 gap-x-4 gap-y-5">
         {(page.fields || []).map(field => {
           if (!isFieldVisible(field)) return null;
           const required = isFieldRequired(field);
           const errorKey = `field_${field.id}`;
 
+          const widthClass = fieldWidthClass(field);
+
           if (field.type === 'title' || field.type === 'html') {
             return (
-              <div key={field.id}>
+              <div key={field.id} className={widthClass}>
                 <FieldRenderer
                   field={field}
                   value={formData[errorKey]}
@@ -157,9 +160,11 @@ export default function DynamicFormRenderer({
             );
           }
 
-          if (INLINE_FIELD_TYPES.has(field.type)) {
+          // Side-by-side fields have no room for a label column, so only
+          // full-width simple fields keep the label-beside-input layout.
+          if (INLINE_FIELD_TYPES.has(field.type) && fieldWidth(field) === 'full') {
             return (
-              <div key={field.id} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+              <div key={field.id} className={`${widthClass} flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4`}>
                 <label className="text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0">
                   {field.label}
                   {required && <span className="text-red-500 ml-0.5">*</span>}
@@ -183,7 +188,7 @@ export default function DynamicFormRenderer({
           }
 
           return (
-            <div key={field.id}>
+            <div key={field.id} className={widthClass}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {field.label}
                 {required && <span className="text-red-500 ml-0.5">*</span>}

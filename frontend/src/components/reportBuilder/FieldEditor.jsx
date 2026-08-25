@@ -6,6 +6,7 @@ import OptionsEditor from './OptionsEditor';
 import RowColumnEditor from './RowColumnEditor';
 import ValidationEditor from './ValidationEditor';
 import ConditionalLogicEditor from './ConditionalLogicEditor';
+import { FIELD_WIDTHS, fieldWidth } from '../../utils/fieldWidth';
 
 const TYPES_WITH_OPTIONS = ['select', 'dropdown', 'radio', 'checkbox', 'multiselect'];
 
@@ -56,6 +57,18 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, onCo
             className="w-full text-sm border-0 bg-transparent outline-none text-gray-700 placeholder-gray-300"
           />
         </div>
+        {!isLayout && (
+          <select
+            value={fieldWidth(field)}
+            onChange={e => update('width', e.target.value)}
+            title="How many fields share this line. Give each field on the line the same setting."
+            className="flex-shrink-0 text-xs text-gray-500 border border-gray-200 rounded px-1 py-0.5 bg-white outline-none focus:ring-1 focus:ring-blue-400"
+          >
+            {FIELD_WIDTHS.map(w => (
+              <option key={w.value} value={w.value}>{w.perLine}/line</option>
+            ))}
+          </select>
+        )}
         {!isLayout && (
           <label className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
             <input
