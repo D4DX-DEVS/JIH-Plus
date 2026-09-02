@@ -45,7 +45,7 @@ const NotificationDetailModal = ({ isOpen, onClose, notification }) => {
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 p-2"
             >
               <X className="w-5 h-5" />
             </button>
@@ -123,7 +123,7 @@ const NotificationDetailModal = ({ isOpen, onClose, notification }) => {
           <div className="flex items-center justify-end px-6 py-4 border-t border-gray-100 flex-shrink-0">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-300 font-semibold text-sm"
+              className="px-4 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-300 font-semibold text-sm"
             >
               Close
             </button>

@@ -76,7 +76,7 @@ const ConfirmationModal = ({
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-2"
             >
               <X className="w-5 h-5" />
             </button>
@@ -91,13 +91,13 @@ const ConfirmationModal = ({
           <div className="flex items-center justify-end space-x-3 px-6 pb-6">
             <button
               onClick={onClose}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${styles.cancelButton}`}
+              className={`px-4 py-2.5 rounded-lg font-medium transition-colors ${styles.cancelButton}`}
             >
               {cancelText}
             </button>
             <button
               onClick={handleConfirm}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${styles.confirmButton}`}
+              className={`px-4 py-2.5 rounded-lg font-medium transition-colors ${styles.confirmButton}`}
             >
               {confirmText}
             </button>

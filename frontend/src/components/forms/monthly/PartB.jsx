@@ -93,7 +93,7 @@ const PartB = () => {
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.totalAreas ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'totalAreas', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                       style={numberInputStyles}
                       disabled={org.key === 'malarvadi' || org.key === 'teenIndia'}
                     />
@@ -110,7 +110,7 @@ const PartB = () => {
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.components ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'components', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                       style={numberInputStyles}
                       // disabled={org.key === 'malarvadi' || org.key === 'teenIndia'}
                     />
@@ -127,7 +127,7 @@ const PartB = () => {
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.workers2023 ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'workers2023', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                       style={numberInputStyles}
                     />
                   </td>
@@ -143,7 +143,7 @@ const PartB = () => {
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.workers2025 ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'workers2025', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                       style={numberInputStyles}
                     />
                   </td>
@@ -159,7 +159,7 @@ const PartB = () => {
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.components2023 ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'components2023', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                       style={numberInputStyles}
                     />
                   </td>
@@ -175,7 +175,7 @@ const PartB = () => {
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.components2025 ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'components2025', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                       style={numberInputStyles}
                     />
                   </td>
@@ -198,7 +198,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.thawheedMaraa?.existing ?? ''}
               onChange={(e) => handleOtherChange('thawheedMaraa', 'existing', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="നിലവിലുള്ളത്"
             />
@@ -209,7 +209,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.thawheedMaraa?.students ?? ''}
               onChange={(e) => handleOtherChange('thawheedMaraa', 'students', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="എണ്ണം"
             />
@@ -220,7 +220,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.thawheedMaraa?.nonWorkers ?? ''}
               onChange={(e) => handleOtherChange('thawheedMaraa', 'nonWorkers', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="എണ്ണം"
             />
@@ -235,7 +235,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.qscMen?.existing ?? ''}
               onChange={(e) => handleOtherChange('qscMen', 'existing', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="നിലവിലുള്ളത്"
             />
@@ -246,7 +246,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.qscMen?.students ?? ''}
               onChange={(e) => handleOtherChange('qscMen', 'students', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="എണ്ണം"
             />
@@ -257,7 +257,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.qscMen?.nonWorkers ?? ''}
               onChange={(e) => handleOtherChange('qscMen', 'nonWorkers', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="എണ്ണം"
             />
@@ -272,7 +272,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.qscWomen?.existing ?? ''}
               onChange={(e) => handleOtherChange('qscWomen', 'existing', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="നിലവിലുള്ളത്"
             />
@@ -283,7 +283,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.qscWomen?.students ?? ''}
               onChange={(e) => handleOtherChange('qscWomen', 'students', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="എണ്ണം"
             />
@@ -294,7 +294,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.qscWomen?.nonWorkers ?? ''}
               onChange={(e) => handleOtherChange('qscWomen', 'nonWorkers', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="എണ്ണം"
             />
@@ -309,7 +309,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.jumaMosques?.count ?? ''}
               onChange={(e) => handleOtherChange('jumaMosques', 'count', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="എണ്ണം"
             />
@@ -320,7 +320,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.jumaMosques?.averageAttendees ?? ''}
               onChange={(e) => handleOtherChange('jumaMosques', 'averageAttendees', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="ശരാശരി"
             />
@@ -331,7 +331,7 @@ const PartB = () => {
               type="number"
               value={formData.partB?.jumaMosques?.nonWorkersApprox ?? ''}
               onChange={(e) => handleOtherChange('jumaMosques', 'nonWorkersApprox', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-[16px] sm:text-sm min-w-[150px]"
               style={numberInputStyles}
               placeholder="ഏകദേശം"
             />
@@ -372,7 +372,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'count', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -381,7 +381,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'studentsCount', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -390,7 +390,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.staffWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'staffWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -399,7 +399,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.staffOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'staffOthers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -408,7 +408,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.nonTeachingWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'nonTeachingWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -417,7 +417,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.nonTeachingOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'nonTeachingOthers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -431,7 +431,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.schools?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'count', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -440,7 +440,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.schools?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'studentsCount', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -449,7 +449,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.schools?.staffWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'staffWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -458,7 +458,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.schools?.staffOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'staffOthers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -467,7 +467,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.schools?.nonTeachingWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'nonTeachingWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -476,7 +476,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.schools?.nonTeachingOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'nonTeachingOthers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -490,7 +490,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.heavens?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'count', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -499,7 +499,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.heavens?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'studentsCount', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -508,7 +508,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.heavens?.staffWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'staffWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -517,7 +517,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.heavens?.staffOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'staffOthers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -526,7 +526,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.heavens?.nonTeachingWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'nonTeachingWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -535,7 +535,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.heavens?.nonTeachingOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'nonTeachingOthers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -549,7 +549,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'count', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -558,7 +558,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'studentsCount', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -567,7 +567,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.staffWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'staffWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -576,7 +576,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.staffOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'staffOthers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -585,7 +585,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.nonTeachingWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'nonTeachingWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -594,7 +594,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.nonTeachingOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'nonTeachingOthers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -608,7 +608,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.artsColleges?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'count', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -617,7 +617,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.artsColleges?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'studentsCount', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -626,7 +626,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.artsColleges?.staffWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'staffWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -635,7 +635,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.artsColleges?.staffOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'staffOthers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -644,7 +644,7 @@ const PartB = () => {
                     type="number"
                     value={formData.partB?.institutions?.artsColleges?.nonTeachingWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'nonTeachingWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -653,7 +653,7 @@ const PartB = () => {
               type="number"
                     value={formData.partB?.institutions?.artsColleges?.nonTeachingOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'nonTeachingOthers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -667,7 +667,7 @@ const PartB = () => {
               type="number"
                     value={formData.partB?.institutions?.mainCampuses?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('mainCampuses', 'count', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -676,7 +676,7 @@ const PartB = () => {
               type="number"
                     value={formData.partB?.institutions?.mainCampuses?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('mainCampuses', 'studentsCount', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>

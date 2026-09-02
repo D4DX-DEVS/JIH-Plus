@@ -178,7 +178,7 @@ const ProfilePage = () => {
                 </div>
                 <button
                   onClick={() => handleCopy(user?.ruknId || user?.id, isAdmin ? 'Admin ID' : 'RUKN ID')}
-                  className="p-1.5 hover:bg-white rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center -my-2 -mr-1 p-1.5 hover:bg-white rounded-lg transition-colors lg:min-h-0 lg:min-w-0 lg:my-0 lg:mr-0 lg:opacity-0 lg:group-hover:opacity-100"
                   title={`Copy ${isAdmin ? 'Admin ID' : 'RUKN ID'}`}
                 >
                   {copied ? (
@@ -258,7 +258,7 @@ const ProfilePage = () => {
                 </div>
                 <button
                   onClick={() => handleCopy(user?.contactNo, 'Contact Number')}
-                  className="p-1.5 hover:bg-white rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center -my-2 -mr-1 p-1.5 hover:bg-white rounded-lg transition-colors lg:min-h-0 lg:min-w-0 lg:my-0 lg:mr-0 lg:opacity-0 lg:group-hover:opacity-100"
                   title="Copy Contact Number"
                 >
                   {copied ? (
@@ -284,7 +284,7 @@ const ProfilePage = () => {
                 </div>
                 <button
                   onClick={() => handleCopy(user?.email || user?.emailId, 'Email')}
-                  className="p-1.5 hover:bg-white rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center -my-2 -mr-1 p-1.5 hover:bg-white rounded-lg transition-colors lg:min-h-0 lg:min-w-0 lg:my-0 lg:mr-0 lg:opacity-0 lg:group-hover:opacity-100"
                   title="Copy Email"
                 >
                   {copied ? (

@@ -86,9 +86,9 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
       setIsSubmitting(false);
     }
   };  return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-8">
+    <div className="p-4 sm:p-8">
+      {/* Header: hidden on mobile, the parent step header (MonthlySurveyPage) already names this screen there. */}
+      <div className="hidden lg:block mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           PART-E (അധിക വിവരങ്ങൾ) - പ്രതിമാസ  റിപ്പോർട്ട്
         </h2>
@@ -105,7 +105,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
         <select
           value={formData.month || ''}
           onChange={(e) => handleMonthChange(e.target.value)}
-          className="w-full px-4 py-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+          className="w-full px-4 py-3 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-[16px] sm:text-base"
           required
         >
           <option value="">മാസം തിരഞ്ഞെടുക്കുക...</option>
@@ -126,7 +126,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
           <textarea
             value={formData.partE.areasWithoutPresence.description}
             onChange={(e) => handleNestedChange('areasWithoutPresence', 'description', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-[16px] sm:text-base"
             rows="3"
             placeholder="പ്രദേശങ്ങളുടെ വിവരങ്ങൾ നൽകുക..."
           />
@@ -135,7 +135,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
             <select
               value={formData.partE.areasWithoutPresence.type}
               onChange={(e) => handleNestedChange('areasWithoutPresence', 'type', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-[16px] sm:text-base"
             >
               <option value="urban">അർബൻ</option>
               <option value="rural">റൂറൽ</option>
@@ -154,7 +154,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
         <textarea
           value={formData.partE.panchayatsWithoutPresence}
           onChange={(e) => handleChange('panchayatsWithoutPresence', e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-[16px] sm:text-base"
           rows="3"
           placeholder="പഞ്ചായത്തുകൾ/ മുനിസിപ്പാലിറ്റികളുടെ പേരുകൾ നൽകുക..."
         />
@@ -170,7 +170,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
             type="number"
             value={formData.partE.newComponentsLast5Years.count !== null && formData.partE.newComponentsLast5Years.count !== undefined ? formData.partE.newComponentsLast5Years.count : ''}
             onChange={(e) => handleNestedChange('newComponentsLast5Years', 'count', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-[16px] sm:text-base"
             placeholder="എണ്ണം"
           />
           <div>
@@ -178,7 +178,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
             <select
               value={formData.partE.newComponentsLast5Years.type}
               onChange={(e) => handleNestedChange('newComponentsLast5Years', 'type', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-[16px] sm:text-base"
             >
               <option value="urban">അർബൻ</option>
               <option value="rural">റൂറൽ</option>
@@ -189,7 +189,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
           <textarea
             value={formData.partE.newComponentsLast5Years.details}
             onChange={(e) => handleNestedChange('newComponentsLast5Years', 'details', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-[16px] sm:text-base"
             rows="3"
             placeholder="വിശദ വിവരങ്ങൾ..."
           />
@@ -206,7 +206,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
             type="number"
             value={formData.partE.workersGrowthInLast5Years.count !== null && formData.partE.workersGrowthInLast5Years.count !== undefined ? formData.partE.workersGrowthInLast5Years.count : ''}
             onChange={(e) => handleNestedChange('workersGrowthInLast5Years', 'count', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-[16px] sm:text-base"
             placeholder="വർധനവ് എണ്ണം"
           />
           <div>
@@ -214,7 +214,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
             <select
               value={formData.partE.workersGrowthInLast5Years.type}
               onChange={(e) => handleNestedChange('workersGrowthInLast5Years', 'type', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-[16px] sm:text-base"
             >
               <option value="personalConnections">വ്യക്തിബന്ധം</option>
               <option value="traditional">പരമ്പരാഗതം</option>
@@ -256,7 +256,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
                       type="number"
                       value={formData.partE.componentsToFormIn6Months[org] !== null && formData.partE.componentsToFormIn6Months[org] !== undefined ? formData.partE.componentsToFormIn6Months[org] : ''}
                       onChange={(e) => handleComponentsChange(org, e.target.value)}
-                      className="w-full px-2 py-1 border border-gray-300 rounded text-center"
+                      className="w-full px-2 py-1 border border-gray-300 rounded text-center text-[16px] sm:text-base"
                       placeholder="0"
                     />
                   </td>
@@ -277,10 +277,10 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
       )}
 
       {/* Navigation */}
-      <div className="mt-12 flex justify-between">
+      <div className="mt-12 flex flex-wrap gap-3 justify-between">
         <button
           onClick={prevStep}
-          className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-colors"
+          className="bg-gray-500 hover:bg-gray-600 text-white px-4 sm:px-8 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>മുൻപത്തെ</span>
@@ -288,7 +288,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !formData.month}
-          className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-colors"
+          className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 sm:px-8 py-3 rounded-lg font-semibold flex items-center space-x-2 transition-colors"
         >
           {isSubmitting ? (
             <>

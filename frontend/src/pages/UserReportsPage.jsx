@@ -101,8 +101,7 @@ const UserReportsPage = ({ onBack, userData }) => {
   const areaTabStateMap = {
     monthly: { initialTab: 'monthly' },
     units: { initialTab: 'units' },
-    stats: { initialTab: 'stats' },
-    membership: { initialTab: 'membership' }
+    stats: { initialTab: 'stats' }
   };
 
   const goToAreaDashboard = (tabId) => {
@@ -134,10 +133,6 @@ const UserReportsPage = ({ onBack, userData }) => {
       navigate('/notifications', { replace: true });
       return;
     }
-    if (viewId === 'membership') {
-      navigate('/membership', { state: { roleHint: 'area' } });
-      return;
-    }
     goToAreaDashboard(viewId);
   };
 
@@ -147,10 +142,6 @@ const UserReportsPage = ({ onBack, userData }) => {
     navigate('/notifications', { replace: true });
   };
 
-  const handleAreaNavigateToMembership = () => {
-    setIsAreaSidebarOpen(false);
-    navigate('/membership', { state: { roleHint: 'area' } });
-  };
 
   const handleAreaLogout = () => {
     setShowLogoutModal(true);
@@ -164,10 +155,6 @@ const UserReportsPage = ({ onBack, userData }) => {
 
   const handleDistrictSidebarNavigate = (viewId) => {
     setIsDistrictSidebarOpen(false);
-    if (viewId === 'membership') {
-      navigate('/membership', { state: { roleHint: 'district' } });
-      return;
-    }
     if (viewId === 'notifications') {
       navigate('/notifications', { replace: true });
       return;
@@ -190,10 +177,6 @@ const UserReportsPage = ({ onBack, userData }) => {
     }
     if (viewId === 'notifications') {
       navigate('/notifications', { replace: true });
-      return;
-    }
-    if (viewId === 'membership') {
-      navigate('/membership', { state: { roleHint: 'unit' } });
       return;
     }
     goToUnitDashboard(viewId);
@@ -573,7 +556,7 @@ const UserReportsPage = ({ onBack, userData }) => {
       monthly: reports.filter(r => r.type === 'monthly').length,
       quarterly: reports.filter(r => r.type === 'quarterly').length,
       yearly: reports.filter(r => r.type === 'yearly').length,
-      special: reports.filter(r => r.type === 'special').length,
+      special: reports.filter(r => r.type === 'special').length
     };
   }, [reports, listLoading]);
 
@@ -587,6 +570,12 @@ const UserReportsPage = ({ onBack, userData }) => {
         statusFilter ? (statusFilter === 'submitted' ? report.status === 'submitted' : report.status !== 'submitted') : true
       );
   }, [reports, searchTerm, activeType, statusFilter]);
+
+  // Role-based renders below all show MobileTopBar with a "Reports" title;
+  // the in-content h1 would duplicate it on mobile, so it's hidden there and
+  // only surfaces on the plain (no-sidebar) fallback render, which has no
+  // MobileTopBar of its own.
+  const hasMobileTopBar = isDistrictUser || isAreaUser || isUnitUser;
 
   // The report's "reportFor" field only tells us the target user type
   // (unit/area/district). Show the viewer's own entity name instead.
@@ -618,7 +607,7 @@ const UserReportsPage = ({ onBack, userData }) => {
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <h1 className="text-xl sm:text-2xl font-bold text-[#002349] break-words">റിപ്പോർട്ട് ശേഖരണം</h1>
+          <h1 className={`text-xl sm:text-2xl font-bold text-[#002349] break-words ${hasMobileTopBar ? 'hidden lg:block' : ''}`}>റിപ്പോർട്ട് ശേഖരണം</h1>
         </div>
         <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full sm:w-auto">
           <div className="flex items-center gap-2 sm:gap-2.5 rounded-xl sm:rounded-2xl border border-gray-200 bg-white p-2 sm:p-3 shadow-sm">
@@ -627,7 +616,7 @@ const UserReportsPage = ({ onBack, userData }) => {
             </span>
             <div className="min-w-0">
               <p className="text-base sm:text-xl font-bold text-[#002349] leading-none">{reports.length}</p>
-              <p className="text-[9px] sm:text-[11px] leading-tight text-gray-500 mt-0.5">ആകെ</p>
+              <p className="text-[11px] sm:text-xs leading-tight text-gray-500 mt-0.5">ആകെ</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-2.5 rounded-xl sm:rounded-2xl border border-green-200 bg-green-50 p-2 sm:p-3 shadow-sm">
@@ -638,7 +627,7 @@ const UserReportsPage = ({ onBack, userData }) => {
               <p className="text-base sm:text-xl font-bold text-green-700 leading-none">
                 {reports.filter((r) => r.status === 'submitted').length}
               </p>
-              <p className="text-[9px] sm:text-[11px] leading-tight text-green-700/70 mt-0.5">സമർപ്പിച്ചത്</p>
+              <p className="text-[11px] sm:text-xs leading-tight text-green-700/70 mt-0.5">സമർപ്പിച്ചത്</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-2.5 rounded-xl sm:rounded-2xl border border-amber-200 bg-amber-50 p-2 sm:p-3 shadow-sm">
@@ -649,7 +638,7 @@ const UserReportsPage = ({ onBack, userData }) => {
               <p className="text-base sm:text-xl font-bold text-amber-700 leading-none">
                 {reports.filter((r) => r.status !== 'submitted').length}
               </p>
-              <p className="text-[9px] sm:text-[11px] leading-tight text-amber-700/70 mt-0.5">ബാക്കിയായത്</p>
+              <p className="text-[11px] sm:text-xs leading-tight text-amber-700/70 mt-0.5">ബാക്കിയായത്</p>
             </div>
           </div>
         </div>
@@ -682,13 +671,13 @@ const UserReportsPage = ({ onBack, userData }) => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by title or type..."
-                className="w-full h-10 pl-10 pr-4 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 bg-white shadow-sm"
+                className="w-full h-11 pl-10 pr-4 text-base sm:text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 bg-white shadow-sm"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 border border-gray-300 rounded-xl px-3 text-sm focus:ring-2 focus:ring-[#002349] focus:border-[#002349] bg-white shadow-sm w-full sm:w-auto"
+              className="h-11 border border-gray-300 rounded-xl px-3 text-[13px] sm:text-sm focus:ring-2 focus:ring-[#002349] focus:border-[#002349] bg-white shadow-sm w-full sm:w-auto"
             >
               <option value="">All Status</option>
               <option value="submitted">Submitted</option>
@@ -717,7 +706,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                       <p className="flex-1 min-w-0 text-sm font-semibold text-[#002349] break-words">{report.title}</p>
                       <button
                         onClick={() => handleSelectReport(report._id)}
-                        className="flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#002349] text-white font-semibold text-xs shadow-sm hover:bg-[#1a3a5c] transition-colors"
+                        className="flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg bg-[#002349] text-white font-semibold text-xs shadow-sm hover:bg-[#1a3a5c] transition-colors"
                       >
                         Open Report
                       </button>
@@ -921,10 +910,10 @@ const UserReportsPage = ({ onBack, userData }) => {
                       </div>
                     </div>
                     <div className="flex gap-3 flex-wrap">
-                      <button onClick={() => setIsEditing(true)} className="px-4 py-2 rounded-xl border border-blue-200 text-sm font-semibold text-blue-700 hover:bg-blue-50 flex items-center gap-2">
+                      <button onClick={() => setIsEditing(true)} className="px-4 py-2.5 rounded-xl border border-blue-200 text-sm font-semibold text-blue-700 hover:bg-blue-50 flex items-center gap-2">
                         <Pencil className="w-4 h-4" /> Edit Submission
                       </button>
-                      <button onClick={() => openDeleteModal(selectedReport._id, selectedReport.title)} disabled={submitLoading} className="px-4 py-2 rounded-xl border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-2 disabled:opacity-60">
+                      <button onClick={() => openDeleteModal(selectedReport._id, selectedReport.title)} disabled={submitLoading} className="px-4 py-2.5 rounded-xl border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-2 disabled:opacity-60">
                         <Trash2 className="w-4 h-4" /> Delete Submission
                       </button>
                     </div>
@@ -995,7 +984,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                                 question.answerType === 'radio' ? (
                                   <div className="space-y-2">
                                     {question.options?.map((option, idx) => (
-                                      <label key={idx} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                      <label key={idx} className="flex items-center gap-2 min-h-[44px] text-sm text-gray-700 cursor-pointer">
                                         <input type="radio" name={key} value={option} checked={value === option} onChange={() => handleAnswerChange(key, option)} disabled={isReadOnly} className="text-blue-600 focus:ring-blue-500" />
                                         {option}
                                       </label>
@@ -1011,7 +1000,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                               {question.answerType === 'checkbox' && (
                                 <div className="space-y-2">
                                   {question.options?.map((option, idx) => (
-                                    <label key={idx} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                    <label key={idx} className="flex items-center gap-2 min-h-[44px] text-sm text-gray-700 cursor-pointer">
                                       <input type="checkbox" value={option} checked={Array.isArray(value) && value.includes(option)} onChange={() => toggleCheckboxValue(key, option)} disabled={isReadOnly} className="text-blue-600 focus:ring-blue-500" />
                                       {option}
                                     </label>
@@ -1134,7 +1123,6 @@ const UserReportsPage = ({ onBack, userData }) => {
             onLogout={() => setShowLogoutModal(true)}
             onNotifications={handleAreaNotificationsShortcut}
             onDynamicReports={handleAreaDynamicShortcut}
-            onNavigateToMembership={handleAreaNavigateToMembership}
             onReportTypeSelect={handleReportTypeSelect}
             reportCounts={reportCounts}
             areaName={areaName}
@@ -1186,7 +1174,6 @@ const UserReportsPage = ({ onBack, userData }) => {
             onLogout={() => setShowLogoutModal(true)}
             onNotifications={() => navigate('/notifications', { replace: true })}
             onDynamicReports={() => handleDistrictSidebarNavigate('reports')}
-            onNavigateToMembership={() => handleDistrictSidebarNavigate('membership')}
             onReportTypeSelect={handleReportTypeSelect}
             reportCounts={reportCounts}
             districtName={districtName}
@@ -1237,7 +1224,6 @@ const UserReportsPage = ({ onBack, userData }) => {
             onLogout={() => setShowLogoutModal(true)}
             onNotifications={handleUnitNotificationsShortcut}
             onDynamicReports={handleUnitDynamicShortcut}
-            onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'unit' } })}
             onReportTypeSelect={handleReportTypeSelect}
             reportCounts={reportCounts}
             unitName={unitName}

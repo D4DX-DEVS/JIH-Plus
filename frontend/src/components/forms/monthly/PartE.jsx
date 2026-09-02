@@ -54,7 +54,7 @@ const PartE = () => {
           <textarea
             value={formData.partE?.areasWithoutPresence?.description ?? ''}
             onChange={(e) => handleNestedChange('areasWithoutPresence', 'description', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-base"
             rows="3"
             placeholder="പ്രദേശങ്ങളുടെ വിവരങ്ങൾ നൽകുക..."
           />
@@ -63,7 +63,7 @@ const PartE = () => {
             <select
               value={formData.partE?.areasWithoutPresence?.type ?? 'urban'}
               onChange={(e) => handleNestedChange('areasWithoutPresence', 'type', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-base"
             >
               <option value="urban">അർബൻ</option>
               <option value="rural">റൂറൽ</option>
@@ -82,7 +82,7 @@ const PartE = () => {
         <textarea
           value={formData.partE?.panchayatsWithoutPresence ?? ''}
           onChange={(e) => handleChange('panchayatsWithoutPresence', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-base"
           rows="3"
           placeholder="പഞ്ചായത്തുകൾ/ മുനിസിപ്പാലിറ്റികളുടെ പേരുകൾ നൽകുക..."
         />
@@ -98,7 +98,7 @@ const PartE = () => {
             type="number"
             value={formData.partE?.newComponentsLast5Years?.count ?? ''}
             onChange={(e) => handleNestedChange('newComponentsLast5Years', 'count', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-base"
             placeholder="എണ്ണം"
           />
           <div>
@@ -106,7 +106,7 @@ const PartE = () => {
             <select
               value={formData.partE?.newComponentsLast5Years?.type ?? 'urban'}
               onChange={(e) => handleNestedChange('newComponentsLast5Years', 'type', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-base"
             >
               <option value="urban">അർബൻ</option>
               <option value="rural">റൂറൽ</option>
@@ -117,7 +117,7 @@ const PartE = () => {
           <textarea
             value={formData.partE?.newComponentsLast5Years?.details ?? ''}
             onChange={(e) => handleNestedChange('newComponentsLast5Years', 'details', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-base"
             rows="3"
             placeholder="വിശദ വിവരങ്ങൾ..."
           />
@@ -134,7 +134,7 @@ const PartE = () => {
             type="number"
             value={formData.partE?.workersGrowthInLast5Years?.count ?? ''}
             onChange={(e) => handleNestedChange('workersGrowthInLast5Years', 'count', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-base"
             placeholder="വർധനവ് എണ്ണം"
           />
           <div>
@@ -142,7 +142,7 @@ const PartE = () => {
             <select
               value={formData.partE?.workersGrowthInLast5Years?.type ?? 'personalConnections'}
               onChange={(e) => handleNestedChange('workersGrowthInLast5Years', 'type', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-base"
             >
               <option value="personalConnections">വ്യക്തിബന്ധം</option>
               <option value="traditional">പരമ്പരാഗതം</option>
@@ -183,7 +183,7 @@ const PartE = () => {
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.jih ?? ''}
                     onChange={(e) => handleComponentsChange('jih', e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-center"
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-center text-[16px] sm:text-base"
                     placeholder="0"
                   />
                 </td>
@@ -192,7 +192,7 @@ const PartE = () => {
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.vanitha ?? ''}
                     onChange={(e) => handleComponentsChange('vanitha', e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-center"
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-center text-[16px] sm:text-base"
                     placeholder="0"
                   />
                 </td>
@@ -201,7 +201,7 @@ const PartE = () => {
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.solidarity ?? ''}
                     onChange={(e) => handleComponentsChange('solidarity', e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-center"
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-center text-[16px] sm:text-base"
                     placeholder="0"
                   />
                 </td>
@@ -210,7 +210,7 @@ const PartE = () => {
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.sio ?? ''}
                     onChange={(e) => handleComponentsChange('sio', e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-center"
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-center text-[16px] sm:text-base"
                     placeholder="0"
                   />
                 </td>
@@ -219,7 +219,7 @@ const PartE = () => {
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.gio ?? ''}
                     onChange={(e) => handleComponentsChange('gio', e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-center"
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-center text-[16px] sm:text-base"
                     placeholder="0"
                   />
                 </td>
@@ -228,7 +228,7 @@ const PartE = () => {
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.teenIndia ?? ''}
                     onChange={(e) => handleComponentsChange('teenIndia', e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-center"
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-center text-[16px] sm:text-base"
                     placeholder="0"
                   />
                 </td>
@@ -237,7 +237,7 @@ const PartE = () => {
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.malarvadi ?? ''}
                     onChange={(e) => handleComponentsChange('malarvadi', e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-center"
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-center text-[16px] sm:text-base"
                     placeholder="0"
                   />
                 </td>

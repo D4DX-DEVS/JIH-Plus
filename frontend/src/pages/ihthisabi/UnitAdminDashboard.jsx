@@ -99,13 +99,13 @@ const UnitAdminDashboard = () => {
     }
   }, [location.pathname])
 
-  // Fetch (from page 1) when the submissions tab becomes active or its filters change
+  // Fetch (from page 1) on mount and when the filters change. The overview tab's
+  // "Recent Submissions" reads this same list, so it must not wait for the
+  // submissions tab to be opened.
   useEffect(() => {
-    if (activeTab === 'submissions') {
-      fetchSubmissions(1)
-    }
+    fetchSubmissions(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, submissionsQuarterFilter, submissionsYearFilter])
+  }, [submissionsQuarterFilter, submissionsYearFilter])
 
   // Refetch my-submissions (from page 1) when its filters change
   useEffect(() => {
@@ -430,9 +430,9 @@ const UnitAdminDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="ih-page-shell">
         {/* Header */}
-        <div className="mb-2 sm:mb-4">
-          {/* The mobile app bar already names the page, so the title is desktop-only. */}
-          <h1 className="ih-page-title hidden sm:block">Unit Admin Dashboard</h1>
+        <div className="mb-2 sm:mb-4 hidden lg:block">
+          {/* The mobile app bar already names the page and shows the unit, so this header is desktop-only. */}
+          <h1 className="ih-page-title">Unit Admin Dashboard</h1>
           <p className="ih-page-subtitle">
             Welcome back, <span className="font-medium text-gray-900">{user?.name || 'Unit Admin'}</span>
           </p>
@@ -534,7 +534,7 @@ const UnitAdminDashboard = () => {
             <nav className="ih-mobile-tabs -mb-px px-3 sm:px-6 text-white/80">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`shrink-0 py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
+                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
                   activeTab === 'overview'
                     ? 'border-white text-white'
                     : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
@@ -545,7 +545,7 @@ const UnitAdminDashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab('my-submissions')}
-                className={`shrink-0 py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
+                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
                   activeTab === 'my-submissions'
                     ? 'border-white text-white'
                     : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
@@ -556,7 +556,7 @@ const UnitAdminDashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab('members')}
-                className={`shrink-0 py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
+                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
                   activeTab === 'members'
                     ? 'border-white text-white'
                     : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
@@ -567,7 +567,7 @@ const UnitAdminDashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab('submissions')}
-                className={`shrink-0 py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
+                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
                   activeTab === 'submissions'
                     ? 'border-white text-white'
                     : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
@@ -578,7 +578,7 @@ const UnitAdminDashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab('admin-replies')}
-                className={`shrink-0 py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
+                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
                   activeTab === 'admin-replies'
                     ? 'border-white text-white'
                     : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
@@ -591,7 +591,7 @@ const UnitAdminDashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab('unit-replies')}
-                className={`shrink-0 py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
+                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
                   activeTab === 'unit-replies'
                     ? 'border-white text-white'
                     : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
@@ -604,7 +604,7 @@ const UnitAdminDashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab('alternative-submissions')}
-                className={`shrink-0 py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
+                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
                   activeTab === 'alternative-submissions'
                     ? 'border-white text-white'
                     : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
@@ -683,7 +683,7 @@ const UnitAdminDashboard = () => {
                     <select
                       value={mySubmissionsYearFilter}
                       onChange={(e) => setMySubmissionsYearFilter(e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                     >
                       <option value="all">All Years</option>
                       {mySubmissionYears.map(y => (
@@ -693,7 +693,7 @@ const UnitAdminDashboard = () => {
                     <select
                       value={mySubmissionsQuarterFilter}
                       onChange={(e) => setMySubmissionsQuarterFilter(e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                     >
                       <option value="all">All Quarters</option>
                       <option value="1">Q1 (Jan–Mar)</option>
@@ -704,7 +704,7 @@ const UnitAdminDashboard = () => {
                     {(mySubmissionsQuarterFilter !== 'all' || mySubmissionsYearFilter !== 'all') && (
                       <button
                         onClick={() => { setMySubmissionsQuarterFilter('all'); setMySubmissionsYearFilter('all') }}
-                        className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1.5 border border-gray-200 rounded-lg flex items-center gap-1"
+                        className="text-xs text-gray-500 hover:text-gray-700 px-2 py-2.5 lg:py-1.5 border border-gray-200 rounded-lg flex items-center gap-1"
                       >
                         <CloseIcon className="w-3 h-3" />
                         Clear
@@ -712,7 +712,7 @@ const UnitAdminDashboard = () => {
                     )}
                     <button
                       onClick={handleNewSubmission}
-                      className="px-4 py-2 text-sm font-semibold text-white bg-[#161F2F] hover:bg-[#1a2538] rounded-lg transition-colors duration-200 flex items-center w-full justify-center sm:w-auto"
+                      className="px-4 py-2.5 lg:py-2 text-sm font-semibold text-white bg-[#161F2F] hover:bg-[#1a2538] rounded-lg transition-colors duration-200 flex items-center w-full justify-center sm:w-auto"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       New Submission
@@ -749,14 +749,14 @@ const UnitAdminDashboard = () => {
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => navigate(`/ihthisabi/unitadmin/submission-details/${submission._id}`)}
-                              className="p-1 text-gray-400 hover:text-blue-600 transition-colors duration-200"
+                              className="p-2 text-gray-400 hover:text-blue-600 transition-colors duration-200"
                               title="View Details"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => navigate(`/ihthisabi/unitadmin/submit-form?edit=${submission._id}`)}
-                              className="p-1 text-gray-400 hover:text-green-600 transition-colors duration-200"
+                              className="p-2 text-gray-400 hover:text-green-600 transition-colors duration-200"
                               title="Edit Submission"
                             >
                               <Edit className="w-4 h-4" />
@@ -843,7 +843,7 @@ const UnitAdminDashboard = () => {
                           </div>
 
                           {isSelected && (
-                            <div className="bg-blue-50/50 px-3 pb-3 text-[11px] text-gray-700">
+                            <div className="bg-blue-50/50 px-3 pb-3 text-[11px] text-gray-700 break-words">
                               {memberDetailsLoading ? (
                                 <p className="text-[11px] text-gray-500">Loading details…</p>
                               ) : memberDetails ? (
@@ -961,7 +961,7 @@ const UnitAdminDashboard = () => {
                     <select
                       value={submissionsYearFilter}
                       onChange={(e) => setSubmissionsYearFilter(e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                     >
                       <option value="all">All Years</option>
                       {submissionYears.map(y => (
@@ -971,7 +971,7 @@ const UnitAdminDashboard = () => {
                     <select
                       value={submissionsQuarterFilter}
                       onChange={(e) => setSubmissionsQuarterFilter(e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                     >
                       <option value="all">All Quarters</option>
                       <option value="1">Q1 (Jan–Mar)</option>
@@ -982,7 +982,7 @@ const UnitAdminDashboard = () => {
                     {(submissionsQuarterFilter !== 'all' || submissionsYearFilter !== 'all') && (
                       <button
                         onClick={() => { setSubmissionsQuarterFilter('all'); setSubmissionsYearFilter('all') }}
-                        className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1.5 border border-gray-200 rounded-lg flex items-center gap-1"
+                        className="text-xs text-gray-500 hover:text-gray-700 px-2 py-2.5 lg:py-1.5 border border-gray-200 rounded-lg flex items-center gap-1"
                       >
                         <CloseIcon className="w-3 h-3" />
                         Clear
@@ -1314,8 +1314,8 @@ const UnitAdminDashboard = () => {
                         className="border border-purple-200 rounded-lg p-3 cursor-pointer hover:bg-purple-50 transition-colors duration-200 bg-purple-50/30"
                         onClick={() => handleAlternativeSubmissionClick(submission)}
                       >
-                        <div className="flex items-center justify-between mb-2.5">
-                          <div className="flex items-center space-x-3">
+                        <div className="flex items-center justify-between gap-2 mb-2.5">
+                          <div className="flex items-center space-x-3 min-w-0 flex-1">
                             <div className="flex-shrink-0 h-8 w-8">
                               <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
                                 <span className="text-xs font-medium text-purple-600">
@@ -1323,8 +1323,8 @@ const UnitAdminDashboard = () => {
                                 </span>
                               </div>
                             </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900">
+                            <div className="min-w-0">
+                              <h4 className="text-sm font-medium text-gray-900 truncate">
                                 {submission.ruknName || submission.userId?.name || 'Unknown Member'}
                               </h4>
                               <p className="text-xs text-gray-500">
@@ -1332,7 +1332,7 @@ const UnitAdminDashboard = () => {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-3 shrink-0">
                             <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
                               {submission.type || 'N/A'}
                             </span>
@@ -1523,7 +1523,7 @@ const UnitAdminDashboard = () => {
                           }
                           return (
                             <div key={qId} className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">{index + 1}. {label}</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">{index + 1}. {label}</h4>
                               {displayElement}
                             </div>
                           );
@@ -1541,7 +1541,7 @@ const UnitAdminDashboard = () => {
                         }
                         return (
                           <div key={key} className="pb-3 border-b border-gray-200">
-                            <h4 className="text-xs font-semibold text-gray-900 mb-2">{index + 1}. {key}</h4>
+                            <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">{index + 1}. {key}</h4>
                             <div className="bg-gray-50 rounded px-3 py-2">
                               <span className="text-xs font-semibold text-gray-900">{String(display)}</span>
                             </div>
@@ -1557,11 +1557,11 @@ const UnitAdminDashboard = () => {
                           <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-medium">
                             {(sub.ruknName || 'U').charAt(0).toUpperCase()}
                           </div>
-                          <div>
-                            <div className="text-sm font-semibold text-gray-900">{sub.ruknName || 'Unknown Member'}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-semibold text-gray-900 break-words">{sub.ruknName || 'Unknown Member'}</div>
                             <div className="text-xs text-gray-500 flex items-center">
-                              <MapPin className="w-3.5 h-3.5 mr-1" />
-                              <span>{sub.district} - {sub.area} - {sub.unit}</span>
+                              <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
+                              <span className="min-w-0 break-words">{sub.district} - {sub.area} - {sub.unit}</span>
                             </div>
                           </div>
                         </div>
@@ -1587,7 +1587,7 @@ const UnitAdminDashboard = () => {
                           <>
                             {/* Question 1: Quran Study */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">ഖുർആൻ പഠനം : സൂറ അന്നിസാഅ് (87 ആയഹ്)- തഫ്സീർ മുന്നിൽ വെച്ചുള്ള പഠനം :</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">ഖുർആൻ പഠനം : സൂറ അന്നിസാഅ് (87 ആയഹ്)- തഫ്സീർ മുന്നിൽ വെച്ചുള്ള പഠനം :</h4>
                               <div className="bg-gray-50 rounded px-3 py-2">
                                 <span className="text-xs font-medium text-gray-900">{getLabel(form.quranStudy?.status)}</span>
                               </div>
@@ -1601,19 +1601,19 @@ const UnitAdminDashboard = () => {
 
                             {/* Question 2: Hadith Count */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">ഹദീസ് പഠനം</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">ഹദീസ് പഠനം</h4>
                               <p className="text-2xl font-bold text-primary">{form.hadithCount || 0}</p>
                             </div>
 
                             {/* Question 3: Book Reading */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">പുസ്തക വായന</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">പുസ്തക വായന</h4>
                               <div className="space-y-1.5">
-                                <div className="flex items-center justify-between bg-gray-50 rounded px-3 py-1.5 text-xs">
+                                <div className="flex items-center justify-between gap-2 bg-gray-50 rounded px-3 py-1.5 text-xs">
                                   <span className="text-gray-700">A. മുസ്‌ലിം വനിതകളും ഇസ്‌ലാമിക പ്രബോധനവും</span>
                                   <span className="font-semibold text-gray-900">{getLabel(form.bookReading?.islami)}</span>
                                 </div>
-                                <div className="flex items-center justify-between bg-gray-50 rounded px-3 py-1.5 text-xs">
+                                <div className="flex items-center justify-between gap-2 bg-gray-50 rounded px-3 py-1.5 text-xs">
                                   <span className="text-gray-700">B. മദീനയിലെ ഏടുകളിൽ നിന്ന്</span>
                                   <span className="font-semibold text-gray-900">{getLabel(form.bookReading?.atma)}</span>
                                 </div>
@@ -1628,7 +1628,7 @@ const UnitAdminDashboard = () => {
 
                             {/* Question 4: Weekly Meeting */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">പ്രതിവാര യോഗം</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">പ്രതിവാര യോഗം</h4>
                               <div className="grid grid-cols-3 gap-2">
                                 <div className="bg-gray-50 rounded px-2 py-2 text-center">
                                   <p className="text-[10px] text-gray-600 mb-0.5">ഹാജർ</p>
@@ -1647,7 +1647,7 @@ const UnitAdminDashboard = () => {
 
                             {/* Question 5: Jamaath Meeting */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">പ്രാദേശിക ജമാഅത്തെ യോഗം</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">പ്രാദേശിക ജമാഅത്തെ യോഗം</h4>
                               <div className="grid grid-cols-3 gap-2">
                                 <div className="bg-gray-50 rounded px-2 py-2 text-center">
                                   <p className="text-[10px] text-gray-600 mb-0.5">ഹാജർ</p>
@@ -1666,67 +1666,67 @@ const UnitAdminDashboard = () => {
 
                             {/* Question 6: Griha Meetings */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">ഗൃഹയോഗങ്ങൾ</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">ഗൃഹയോഗങ്ങൾ</h4>
                               <p className="text-xl font-bold text-gray-900">{form.grihameetings || 0}</p>
                             </div>
 
                             {/* Question 7: Thahreeki Meetings */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">തഹ്രീകീ യോഗം - പങ്കാളിത്തം</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">തഹ്രീകീ യോഗം - പങ്കാളിത്തം</h4>
                               <p className="text-xl font-bold text-gray-900">{form.thahreekiMeetings || 0}</p>
                             </div>
 
                             {/* Question 8: Baithulmaal */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">ബൈതുല്മാല് (2%)</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">ബൈതുല്മാല് (2%)</h4>
                               <p className="text-sm font-semibold text-gray-900">{getLabel(form.baithulmaal)}</p>
                             </div>
 
                             {/* Question 9: Zakat */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">സകാത്ത് ബൈതുല്മാലിൽ അടച്ചോ?</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">സകാത്ത് ബൈതുല്മാലിൽ അടച്ചോ?</h4>
                               <p className="text-sm font-semibold text-gray-900">{getLabel(form.zakatPaid)}</p>
                             </div>
 
                             {/* Question 10: New Members */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">പുതുതായി സംഘടനയിലേക്ക് കൊണ്ടുവന്ന വ്യക്തികൾ: (എണ്ണം)</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">പുതുതായി സംഘടനയിലേക്ക് കൊണ്ടുവന്ന വ്യക്തികൾ: (എണ്ണം)</h4>
                               <p className="text-xl font-bold text-gray-900">{form.newMembers || 0}</p>
                             </div>
 
                             {/* Question 11: Muslim Relations */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">മുസ്‌ലിം വ്യക്തിബന്ധങ്ങൾ : (എണ്ണം)</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">മുസ്‌ലിം വ്യക്തിബന്ധങ്ങൾ : (എണ്ണം)</h4>
                               <p className="text-xl font-bold text-gray-900">{form.muslimRelations || 0}</p>
                             </div>
 
                             {/* Question 12: Community Relations */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">സഹോദര സമുദായങ്ങളുമായുള്ള വ്യക്തിബന്ധം : (എണ്ണം)</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">സഹോദര സമുദായങ്ങളുമായുള്ള വ്യക്തിബന്ധം : (എണ്ണം)</h4>
                               <p className="text-xl font-bold text-gray-900">{form.communityRelations || 0}</p>
                             </div>
 
                             {/* Question 13: Score Count */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">ഈ ത്രൈമാസത്തിൽ നടത്തിയ സ്കോഡുകൾ : (എണ്ണം)</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">ഈ ത്രൈമാസത്തിൽ നടത്തിയ സ്കോഡുകൾ : (എണ്ണം)</h4>
                               <p className="text-xl font-bold text-gray-900">{form.scoreCount || 0}</p>
                             </div>
 
                             {/* Question 14: Meqath Service */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">100പേർക്ക് സേവനം ലഭ്യമാക്കുക എന്ന മീഖാത്തീ ടാർഗറ്റ് മുന്നിൽ വെച്ച് ഈ ത്രൈമാസത്തിലെ സേവന പ്രവർത്തനം തൃപ്തികരമാണോ?</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">100പേർക്ക് സേവനം ലഭ്യമാക്കുക എന്ന മീഖാത്തീ ടാർഗറ്റ് മുന്നിൽ വെച്ച് ഈ ത്രൈമാസത്തിലെ സേവന പ്രവർത്തനം തൃപ്തികരമാണോ?</h4>
                               <p className="text-sm font-semibold text-gray-900">{getLabel(form.meqathService)}</p>
                             </div>
 
                             {/* Question 15: Skill Usage */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">എഴുത്ത്, പ്രഭാഷണം, സംഭാഷണം തുടങ്ങിയ വ്യക്തിഗത കഴിവുകൾ ദീനീമാർഗത്തിൽ സാധ്യമാകുന്ന അളവിൽ ഉപയോഗപ്പെടുത്തിയിട്ടുണ്ടോ?</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">എഴുത്ത്, പ്രഭാഷണം, സംഭാഷണം തുടങ്ങിയ വ്യക്തിഗത കഴിവുകൾ ദീനീമാർഗത്തിൽ സാധ്യമാകുന്ന അളവിൽ ഉപയോഗപ്പെടുത്തിയിട്ടുണ്ടോ?</h4>
                               <p className="text-sm font-semibold text-gray-900">{getLabel(form.skillUsage)}</p>
                             </div>
 
                             {/* Question 16: Jamaath Influence */}
                             <div className="pb-3 border-b border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-900 mb-2">പ്രാദേശിക ജമാഅത്തെ യോഗം താങ്കളിൽ സ്വാധീനം ചെലുത്താറുണ്ടോ?</h4>
+                              <h4 className="text-xs font-semibold text-gray-900 mb-2 break-words leading-relaxed">പ്രാദേശിക ജമാഅത്തെ യോഗം താങ്കളിൽ സ്വാധീനം ചെലുത്താറുണ്ടോ?</h4>
                               <div className="flex items-center space-x-2 mt-2">
                                 {form.jamaathInfluence && (
                                   <div className="flex items-center">
@@ -1792,7 +1792,7 @@ const UnitAdminDashboard = () => {
                 </div>
                 <button
                   onClick={closeReplyModal}
-                  className="p-1.5 sm:p-2 rounded-md hover:bg-gray-100 text-gray-500 flex-shrink-0"
+                  className="p-2 rounded-md hover:bg-gray-100 text-gray-500 flex-shrink-0"
                   aria-label="Close"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1853,7 +1853,7 @@ const UnitAdminDashboard = () => {
                 </div>
                 <button
                   onClick={closeAlternativeSubmissionModal}
-                  className="p-1.5 sm:p-2 rounded-md hover:bg-gray-100 text-gray-500 flex-shrink-0"
+                  className="p-2 rounded-md hover:bg-gray-100 text-gray-500 flex-shrink-0"
                   aria-label="Close"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -450,7 +450,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
       {/* Header */}
-      <div className="mb-8">
+      <div className="hidden lg:block mb-8">
         <h2 className="text-xl font-bold text-[#002349] mb-1.5">
           UNIT PAGE B
         </h2>
@@ -490,7 +490,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                 }}
                 onKeyDown={handleNumericKeyDown}
                 onPaste={(e) => handleNumericPaste(e, (value) => handlePartBInputChange('newJIHMembers.male', value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
                 placeholder="0"
               />
             </div>
@@ -508,7 +508,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                 }}
                 onKeyDown={handleNumericKeyDown}
                 onPaste={(e) => handleNumericPaste(e, (value) => handlePartBInputChange('newJIHMembers.female', value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
                 placeholder="0"
               />
             </div>
@@ -549,7 +549,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                           }}
                           onKeyDown={handleNumericKeyDown}
                           onPaste={(e) => handleNumericPaste(e, (value) => handlePartBInputChange(`memberCategoriesCounts.${option.key}.male`, value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300"
                           placeholder="എണ്ണം"
                         />
                       )}
@@ -576,7 +576,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                           }}
                           onKeyDown={handleNumericKeyDown}
                           onPaste={(e) => handleNumericPaste(e, (value) => handlePartBInputChange(`memberCategoriesCounts.${option.key}.female`, value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300"
                           placeholder="എണ്ണം"
                         />
                       )}
@@ -628,7 +628,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                 }}
                 onKeyDown={handleNumericKeyDown}
                 onPaste={(e) => handleNumericPaste(e, (value) => handlePartCInputChange('publicMeetingAttendees.male', value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
                 placeholder="0"
               />
             </div>
@@ -643,7 +643,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                 }}
                 onKeyDown={handleNumericKeyDown}
                 onPaste={(e) => handleNumericPaste(e, (value) => handlePartCInputChange('publicMeetingAttendees.female', value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
                 placeholder="0"
               />
             </div>
@@ -667,7 +667,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                     type="number" 
                     value={partDData.growthAcceleration.rukkun?.male || 0} 
                     onChange={(e) => handlePartDInputChange('growthAcceleration.rukkun.male', Math.max(0, parseInt(e.target.value) || 0))} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50" 
                     placeholder="എണ്ണം നൽകുക" 
                     min="0" 
                   />
@@ -678,7 +678,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                     type="number" 
                     value={partDData.growthAcceleration.rukkun?.female || 0} 
                     onChange={(e) => handlePartDInputChange('growthAcceleration.rukkun.female', Math.max(0, parseInt(e.target.value) || 0))} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50" 
                     placeholder="എണ്ണം നൽകുക" 
                     min="0" 
                   />
@@ -696,7 +696,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                     type="number" 
                     value={partDData.growthAcceleration.karkun?.male || 0} 
                     onChange={(e) => handlePartDInputChange('growthAcceleration.karkun.male', Math.max(0, parseInt(e.target.value) || 0))} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50" 
                     placeholder="എണ്ണം നൽകുക" 
                     min="0" 
                   />
@@ -707,7 +707,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                     type="number" 
                     value={partDData.growthAcceleration.karkun?.female || 0} 
                     onChange={(e) => handlePartDInputChange('growthAcceleration.karkun.female', Math.max(0, parseInt(e.target.value) || 0))} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50" 
                     placeholder="എണ്ണം നൽകുക" 
                     min="0" 
                   />
@@ -730,7 +730,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                     }} 
                     onKeyDown={handleNumericKeyDown} 
                     onPaste={(e) => handleNumericPaste(e, (value) => handlePartDInputChange('growthAcceleration.solidarity.male', value))} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50" 
                     placeholder="0" 
                   />
                 </div>
@@ -752,7 +752,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                     }} 
                     onKeyDown={handleNumericKeyDown} 
                     onPaste={(e) => handleNumericPaste(e, (value) => handlePartDInputChange('growthAcceleration.sio.male', value))} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50" 
                     placeholder="0" 
                   />
                 </div>
@@ -774,7 +774,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                     }} 
                     onKeyDown={handleNumericKeyDown} 
                     onPaste={(e) => handleNumericPaste(e, (value) => handlePartDInputChange('growthAcceleration.gio.male', value))} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50" 
                     placeholder="0" 
                   />
                 </div>

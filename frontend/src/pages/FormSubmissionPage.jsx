@@ -148,7 +148,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-[60vh] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#002349] mx-auto mb-4"></div>
           <p className="text-gray-600 font-medium">Loading your dashboard...</p>
@@ -172,7 +172,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
         {onCreateNew && (
           <button
             onClick={handleCreateForm}
-            className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all duration-300 hover:shadow-md"
+            className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-4 py-2 min-h-[44px] rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all duration-300 hover:shadow-md"
           >
             <Plus className="w-4 h-4" />
             <span>Create New Form</span>
@@ -201,57 +201,104 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-[#002349] border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Submission Date</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {forms.map((form) => (
-                <tr 
-                  key={form._id} 
-                  className="hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => handleViewForm(form)}
-                >
-                  <td className="px-4 py-3 text-sm font-semibold text-[#002349]">
-                    {form.district || 'Unnamed District'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
-                    {new Date(form.submittedAt).toLocaleDateString()} at {new Date(form.submittedAt).toLocaleTimeString()}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditForm(form);
-                        }}
-                        className="p-2 text-gray-400 hover:text-[#002349] hover:bg-gray-100 rounded-lg transition-all duration-300"
-                        title="Edit Form"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteForm(form);
-                        }}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
-                        title="Delete Form"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        <>
+          {/* Mobile card list */}
+          <div className="lg:hidden space-y-2.5">
+            {forms.map((form) => (
+              <div
+                key={form._id}
+                onClick={() => handleViewForm(form)}
+                className="bg-white rounded-lg border border-gray-200 p-3.5 active:bg-gray-50 transition-colors cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-[#002349] break-words">
+                      {form.district || 'Unnamed District'}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {new Date(form.submittedAt).toLocaleDateString()} at {new Date(form.submittedAt).toLocaleTimeString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditForm(form);
+                      }}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-[#002349] hover:bg-gray-100 rounded-lg transition-all duration-300"
+                      title="Edit Form"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteForm(form);
+                      }}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
+                      title="Delete Form"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden lg:block bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-[#002349] border-b border-gray-200">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Submission Date</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {forms.map((form) => (
+                  <tr
+                    key={form._id}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => handleViewForm(form)}
+                  >
+                    <td className="px-4 py-3 text-sm font-semibold text-[#002349]">
+                      {form.district || 'Unnamed District'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {new Date(form.submittedAt).toLocaleDateString()} at {new Date(form.submittedAt).toLocaleTimeString()}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditForm(form);
+                          }}
+                          className="p-2 text-gray-400 hover:text-[#002349] hover:bg-gray-100 rounded-lg transition-all duration-300"
+                          title="Edit Form"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteForm(form);
+                          }}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
+                          title="Delete Form"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Confirmation Modals */}

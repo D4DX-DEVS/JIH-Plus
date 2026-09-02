@@ -168,9 +168,9 @@ const DynamicFormsUser = () => {
         );
       case 'radio':
         return (
-          <div className="space-y-2">
+          <div className="space-y-1">
             {opts.map((opt, idx) => (
-              <label key={idx} className="flex items-center gap-2 text-sm text-gray-700">
+              <label key={idx} className="flex items-center gap-2 py-2 text-sm text-gray-700">
                 <input
                   type="radio"
                   name={q.questionText}
@@ -200,11 +200,11 @@ const DynamicFormsUser = () => {
         );
       case 'checkbox':
         return (
-          <div className="space-y-2">
+          <div className="space-y-1">
             {opts.map((opt, idx) => {
               const checked = Array.isArray(q.value) && q.value.includes(opt);
               return (
-                <label key={idx} className="flex items-center gap-2 text-sm text-gray-700">
+                <label key={idx} className="flex items-center gap-2 py-2 text-sm text-gray-700">
                   <input
                     type="checkbox"
                     checked={checked}
@@ -230,70 +230,114 @@ const DynamicFormsUser = () => {
   // Renderers
   const renderList = () => (
     <div className="p-4 space-y-4">
-      <h1 className="text-xl font-semibold">Dynamic Forms</h1>
+      {/* Title hidden on mobile — the sticky app bar already names the page. */}
+      <h1 className="hidden text-xl font-semibold lg:block">Dynamic Forms</h1>
       {listLoading ? (
         <div className="text-gray-600">Loading...</div>
       ) : (
-        <div className="overflow-x-hidden sm:overflow-x-auto bg-white shadow rounded-lg">
-          <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Form</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Submitted</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {forms.map((f) => {
-                const mine = mySubmissionFor(f._id);
-                return (
-                  <tr key={f._id}>
-                    <td className="px-4 py-3 text-sm text-gray-900">{f.title}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {mine ? new Date(mine.createdAt).toLocaleString() : 'No'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          onClick={() => navigate(`/ihthisabi/dynamic-forms/${f._id}/submit`)}
-                          className="inline-flex items-center px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
-                        >
-                          <Send className="w-4 h-4 mr-1" /> {mine ? 'Edit' : 'Submit'}
-                        </button>
+        <>
+          {/* Mobile card list */}
+          <div className="lg:hidden">
+            {forms.length === 0 ? (
+              <div className="ih-surface px-4 py-8 text-center text-sm text-gray-500">No forms available.</div>
+            ) : (
+              <div className="ih-section-card ih-list overflow-hidden">
+                {forms.map((f) => {
+                  const mine = mySubmissionFor(f._id);
+                  return (
+                    <div key={f._id} className="ih-list-row flex-wrap gap-y-2">
+                      <div className="min-w-0 flex-1 basis-full sm:basis-auto">
+                        <h3 className="ih-list-title min-w-0">{f.title}</h3>
+                        <p className="ih-list-meta mt-1">
+                          {mine ? `Submitted ${new Date(mine.createdAt).toLocaleString()}` : 'Not submitted yet'}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
                         {mine && (
                           <button
                             onClick={() => navigate(`/ihthisabi/dynamic-forms/submissions/${mine._id}`)}
-                            className="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-gray-800 hover:bg-gray-100 transition"
+                            className="inline-flex min-h-[44px] items-center rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
                           >
-                            <Eye className="w-4 h-4 mr-1" /> View
+                            <Eye className="w-4 h-4" />
                           </button>
                         )}
+                        <button
+                          onClick={() => navigate(`/ihthisabi/dynamic-forms/${f._id}/submit`)}
+                          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-sm font-medium text-white transition hover:bg-blue-700"
+                        >
+                          <Send className="w-4 h-4" /> {mine ? 'Edit' : 'Submit'}
+                        </button>
                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto rounded-lg bg-white shadow lg:block">
+            <table className="w-full min-w-full table-auto divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Form</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Submitted</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {forms.map((f) => {
+                  const mine = mySubmissionFor(f._id);
+                  return (
+                    <tr key={f._id}>
+                      <td className="px-4 py-3 text-sm text-gray-900">{f.title}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {mine ? new Date(mine.createdAt).toLocaleString() : 'No'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            onClick={() => navigate(`/ihthisabi/dynamic-forms/${f._id}/submit`)}
+                            className="inline-flex items-center px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+                          >
+                            <Send className="w-4 h-4 mr-1" /> {mine ? 'Edit' : 'Submit'}
+                          </button>
+                          {mine && (
+                            <button
+                              onClick={() => navigate(`/ihthisabi/dynamic-forms/submissions/${mine._id}`)}
+                              className="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-gray-800 hover:bg-gray-100 transition"
+                            >
+                              <Eye className="w-4 h-4 mr-1" /> View
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {forms.length === 0 && (
+                  <tr>
+                    <td colSpan="3" className="px-4 py-6 text-center text-sm text-gray-500">
+                      No forms available.
                     </td>
                   </tr>
-                );
-              })}
-              {forms.length === 0 && (
-                <tr>
-                  <td colSpan="3" className="px-4 py-6 text-center text-sm text-gray-500">
-                    No forms available.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
 
   const renderSubmit = () => (
     <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Fill Form</h1>
+      <div className="flex items-center justify-end gap-2 lg:justify-between">
+        {/* Title hidden on mobile — the sticky app bar already names the page. */}
+        <h1 className="hidden text-xl font-semibold lg:block">Fill Form</h1>
         <button
           onClick={() => navigate('/ihthisabi/dynamic-forms')}
-          className="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm"
+          className="px-3 py-2.5 bg-gray-100 rounded hover:bg-gray-200 text-sm"
         >
           Back
         </button>
@@ -329,7 +373,7 @@ const DynamicFormsUser = () => {
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="px-4 py-2 bg-black text-white rounded hover:bg-primary-600 disabled:opacity-50"
+            className="w-full px-4 py-3 bg-black text-white rounded hover:bg-primary-600 disabled:opacity-50 sm:w-auto"
           >
             {saving ? 'Submitting...' : 'Submit'}
           </button>
@@ -342,11 +386,12 @@ const DynamicFormsUser = () => {
     const answersList = submission?.answers || [];
     return (
       <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">My Submission</h1>
+        <div className="flex items-center justify-end gap-2 lg:justify-between">
+          {/* Title hidden on mobile — the sticky app bar already names the page. */}
+          <h1 className="hidden text-xl font-semibold lg:block">My Submission</h1>
           <button
             onClick={() => navigate('/ihthisabi/dynamic-forms')}
-            className="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm"
+            className="px-3 py-2.5 bg-gray-100 rounded hover:bg-gray-200 text-sm"
           >
             Back
           </button>

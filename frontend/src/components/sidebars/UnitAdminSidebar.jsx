@@ -11,7 +11,6 @@ import {
   FileText,
   LogOut,
   Menu,
-  X,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -33,7 +32,6 @@ const UnitAdminSidebar = ({
   onLogout,
   onNotifications,
   onDynamicReports,
-  onNavigateToMembership,
   onReportTypeSelect,
   reportCounts = null,
   unitName = '—',
@@ -114,24 +112,45 @@ const UnitAdminSidebar = ({
       onClick: () => navigate('/user-reports') },
     { key: 'notifications', label: 'Alerts', icon: Bell, active: location.pathname.startsWith('/notifications'),
       onClick: () => { if (onNotifications) onNotifications(); else navigate('/notifications'); } },
-    { key: 'more', label: 'More', icon: Menu, active: false,
-      onClick: () => { if (onMobileToggle) onMobileToggle(); } },
+    { key: 'more', label: 'More', icon: Menu, action: 'more' },
   ];
+
+  // "More" sheet lists only what the bottom bar doesn't already carry —
+  // dashboard, stats and notifications are one tap away via the bar itself.
+  const barIds = new Set(['dashboard', 'stats', 'notifications']);
+  const moreItems = [];
+  navItems.forEach((item) => {
+    if (item.type === 'group') {
+      item.children.forEach((child) => {
+        const meta = DYNAMIC_REPORT_META[child.reportType];
+        moreItems.push({
+          key: child.id,
+          label: `${item.label} · ${meta.label}`,
+          icon: child.icon,
+          active: activeTab === child.id,
+          count: child.count,
+          onClick: child.onClick,
+        });
+      });
+    } else if (!barIds.has(item.id)) {
+      moreItems.push({
+        key: item.id,
+        label: item.label,
+        icon: item.icon,
+        active:
+          item.id === 'targets' ? location.pathname.startsWith('/targets') :
+          false,
+        onClick: item.onClick || (() => goTab(item.id)),
+      });
+    }
+  });
 
   return (
     <>
-      {isMobileOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-gray-900/50 backdrop-blur-sm lg:hidden"
-          onClick={onMobileToggle}
-        />
-      )}
-
+      {/* Sidebar — desktop only; phones navigate via the bottom bar and its
+          "More" sheet, so this never slides in on mobile. */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-[min(18rem,85vw)] sm:w-72 ${SIDEBAR_THEME.bg} shadow-2xl border-r ${SIDEBAR_THEME.border} transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:translate-x-0 lg:flex-shrink-0 ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72'} ${
-          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        style={{ willChange: 'transform' }}
+        className={`hidden lg:block fixed inset-y-0 left-0 z-40 w-[min(18rem,85vw)] sm:w-72 ${SIDEBAR_THEME.bg} shadow-2xl border-r ${SIDEBAR_THEME.border} transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:translate-x-0 lg:flex-shrink-0 ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72'}`}
       >
         <div className="flex flex-col h-full overflow-hidden">
           {/* Sidebar Header */}
@@ -147,12 +166,6 @@ const UnitAdminSidebar = ({
                 </h2>
               </div>
             </div>
-            <button
-              onClick={onMobileToggle}
-              className="lg:hidden text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors flex-shrink-0"
-            >
-              {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
           </div>
 
           {/* Hierarchical location info: District -> Area -> Unit */}
@@ -182,7 +195,7 @@ const UnitAdminSidebar = ({
 
           {/* Navigation */}
           <nav className="flex-1 px-3 py-4 overflow-y-auto">
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
 
@@ -204,7 +217,7 @@ const UnitAdminSidebar = ({
                         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} text-white/40 ${isDesktopCollapsed ? 'lg:hidden' : ''}`} />
                       </button>
                       {isOpen && !isDesktopCollapsed && (
-                        <div className="mt-1 ml-3 space-y-1">
+                        <div className="mt-1 ml-3 space-y-2">
                           {(item.children || []).map(child => {
                             const isChildActive = activeTab === child.id;
                             const meta = DYNAMIC_REPORT_META[child.reportType];
@@ -213,7 +226,7 @@ const UnitAdminSidebar = ({
                               <button
                                 key={child.id}
                                 onClick={() => { child.onClick?.(); if (onMobileToggle) onMobileToggle(); }}
-                                className={`w-full flex items-center justify-between pl-3 pr-2 py-2 text-xs font-medium rounded-lg transition-colors ${
+                                className={`w-full flex items-center justify-between pl-3 pr-2 py-3 text-xs font-medium rounded-lg transition-colors ${
                                   isChildActive ? style.active : style.base
                                 }`}
                               >
@@ -254,7 +267,7 @@ const UnitAdminSidebar = ({
           </nav>
 
           {/* Logout */}
-          <div className="p-3 border-t border-white/10">
+          <div className="p-3 border-t border-white/10 ih-mobile-nav-safe">
             <PoweredByD4DX collapsed={isDesktopCollapsed} dark />
             <button
               onClick={() => {
@@ -280,7 +293,7 @@ const UnitAdminSidebar = ({
         </button>
       </aside>
 
-      <MobileBottomNav items={bottomNavItems} hidden={isMobileOpen} />
+      <MobileBottomNav items={bottomNavItems} hidden={isMobileOpen} moreItems={moreItems} onLogout={onLogout} />
     </>
   );
 };

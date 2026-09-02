@@ -444,7 +444,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
                             type="number"
                             value={maleCount || 0}
                             readOnly
-                            className="w-full px-2 py-1.5 border border-blue-300 rounded-lg bg-blue-50 text-xs"
+                            className="w-full px-2 py-1.5 border border-blue-300 rounded-lg bg-blue-50 text-base"
                             placeholder="എണ്ണം"
                           />
                         )}
@@ -466,7 +466,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
                             type="number"
                             value={femaleCount || 0}
                             readOnly
-                            className="w-full px-2 py-1.5 border border-pink-300 rounded-lg bg-pink-50 text-xs"
+                            className="w-full px-2 py-1.5 border border-pink-300 rounded-lg bg-pink-50 text-base"
                             placeholder="എണ്ണം"
                           />
                         )}
@@ -568,7 +568,6 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
         onLogout={handleLogout}
         onNotifications={() => navigate('/notifications')}
         onDynamicReports={() => navigate('/user-reports')}
-        onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'area' } })}
         areaName={areaName}
         isMobileOpen={isSidebarOpen}
         onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
@@ -640,7 +639,6 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
         onLogout={handleLogout}
         onNotifications={() => navigate('/notifications')}
         onDynamicReports={() => navigate('/user-reports')}
-        onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'area' } })}
         areaName={area?.name || survey?.area || '—'}
         isMobileOpen={isSidebarOpen}
         onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
@@ -653,18 +651,18 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
           {/* Header - No container */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-between mb-6 gap-2">
+            <div className="flex items-center space-x-3 min-w-0">
               <button
                 onClick={handleBack}
-                className="text-gray-600 hover:text-[#002349] transition-all duration-300 flex items-center justify-center w-7 h-7 border border-gray-300 hover:border-[#002349] rounded-xl hover:shadow-md"
+                className="text-gray-600 hover:text-[#002349] transition-all duration-300 flex items-center justify-center w-11 h-11 lg:w-7 lg:h-7 border border-gray-300 hover:border-[#002349] rounded-xl hover:shadow-md shrink-0"
                 title="Go back"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <div>
-                <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349] mb-2">ഏരിയ തലം റിപ്പോർട്ട്</h1>
-                <p className="text-base text-gray-700">
+              <div className="min-w-0 flex-1">
+                <h1 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349] mb-2">ഏരിയ തലം റിപ്പോർട്ട്</h1>
+                <p className="text-base text-gray-700 break-words">
                   <span className="px-2.5 py-1 rounded-full text-sm font-semibold bg-[#957C3D] text-white shadow-sm">{survey.month}</span>
                   <span className="mx-2">•</span>
                   <span className="font-medium">{survey.district}</span>
@@ -673,17 +671,17 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 shrink-0">
               <button
                 onClick={handleEdit}
-                className="bg-[#957C3D] hover:bg-[#8A6F35] text-white px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center space-x-1.5 text-xs font-semibold hover:shadow-md"
+                className="bg-[#957C3D] hover:bg-[#8A6F35] text-white px-3 py-2.5 lg:py-1.5 rounded-xl transition-all duration-300 flex items-center space-x-1.5 text-xs font-semibold hover:shadow-md"
               >
                 <Edit className="w-3.5 h-3.5" />
                 <span>തിരുത്തുക</span>
               </button>
               <button
                 onClick={handleDelete}
-                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl transition-all duration-300 flex items-center space-x-1.5 text-xs font-semibold hover:shadow-md"
+                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2.5 lg:py-1.5 rounded-xl transition-all duration-300 flex items-center space-x-1.5 text-xs font-semibold hover:shadow-md"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>ഇല്ലാതാക്കുക</span>

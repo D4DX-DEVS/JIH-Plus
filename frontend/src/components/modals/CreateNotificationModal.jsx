@@ -427,7 +427,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                           placeholder="Search districts..."
                           value={filters.district}
                           onChange={(e) => handleFilterChange('district', e.target.value)}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                         />
                       </div>
                       {filters.district && (
@@ -460,7 +460,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                           return (
                             <div key={district.id} className="border border-gray-100 rounded-lg p-3">
                               <div className="flex items-center justify-between">
-                                <label className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                                <label className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded">
                                   <input
                                     type="checkbox"
                                     checked={formData.recipients.district?.districtId === district.id}
@@ -501,7 +501,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                                       setExpandedDistricts(prev => prev.filter(id => id !== district.id));
                                     }
                                   }}
-                                  className="text-sm text-blue-600 hover:text-blue-800"
+                                  className="text-sm text-blue-600 hover:text-blue-800 py-2 px-1"
                                 >
                                   {loadingAreas[district.id]
                                     ? 'Loading...'
@@ -528,7 +528,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                                       return (
                                         <div key={area.id} className="border border-gray-100 rounded p-2">
                                           <div className="flex items-center justify-between">
-                                            <label className="flex items-center space-x-2">
+                                            <label className="flex items-center space-x-2 p-2">
                                               <input
                                                 type="checkbox"
                                                 checked={formData.recipients.areas.some(a => a.areaId === area.id)}
@@ -547,7 +547,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                                                   setExpandedAreas(prev => prev.filter(id => id !== area.id));
                                                 }
                                               }}
-                                              className="text-xs text-blue-600 hover:text-blue-800"
+                                              className="text-xs text-blue-600 hover:text-blue-800 py-1.5 px-1"
                                             >
                                               {loadingUnits[area.id]
                                                 ? 'Loading...'
@@ -570,7 +570,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                                                     return unit.name?.toLowerCase().includes(filters.district.toLowerCase());
                                                   })
                                                   .map(unit => (
-                                                    <label key={unit.id} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                                                    <label key={unit.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded">
                                                       <input
                                                         type="checkbox"
                                                         checked={formData.recipients.units.some(u => u.unitId === unit.id)}
@@ -618,7 +618,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                             placeholder="Search areas..."
                             value={filters.area}
                             onChange={(e) => handleFilterChange('area', e.target.value)}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                           />
                         </div>
                         {filters.area && (
@@ -633,7 +633,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-72 overflow-y-auto">
                       {(areasByDistrict[userData?.districtId] || [])
                         .filter(area => {
                           if (!filters.area) return true;
@@ -645,7 +645,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                           return (
                             <div key={area.id} className="border border-gray-100 rounded p-2">
                               <div className="flex items-center justify-between">
-                                <label className="flex items-center space-x-2">
+                                <label className="flex items-center space-x-2 p-2">
                                   <input
                                     type="checkbox"
                                     checked={formData.recipients.areas.some(r => r.areaId === area.id)}
@@ -664,7 +664,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                                       setExpandedAreas(prev => prev.filter(id => id !== area.id));
                                     }
                                   }}
-                                  className="text-xs text-blue-600 hover:text-blue-800"
+                                  className="text-xs text-blue-600 hover:text-blue-800 py-1.5 px-1"
                                 >
                                   {loadingUnits[area.id] ? 'Loading...' : areaExpanded ? 'Hide units' : 'Show units'}
                                 </button>
@@ -683,7 +683,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                                         return unit.name?.toLowerCase().includes(filters.unit.toLowerCase());
                                       })
                                       .map(unit => (
-                                        <label key={unit.id} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                                        <label key={unit.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded">
                                           <input
                                             type="checkbox"
                                             checked={formData.recipients.units.some(r => r.unitId === unit.id)}
@@ -726,7 +726,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                           placeholder="Search units..."
                           value={filters.unit}
                           onChange={(e) => handleFilterChange('unit', e.target.value)}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                         />
                       </div>
                       {filters.unit && (
@@ -750,7 +750,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                         return unit.name?.toLowerCase().includes(filters.unit.toLowerCase());
                       })
                       .map(unit => (
-                        <label key={unit.id} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                        <label key={unit.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded">
                           <input
                             type="checkbox"
                             checked={formData.recipients.units.some(r => r.unitId === unit.id)}
@@ -771,14 +771,14 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-all duration-300 font-semibold"
+            className="px-4 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-all duration-300 font-semibold"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting || !formData.title || !formData.description || getTotalRecipients() === 0}
-            className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-[#002349] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#002349] disabled:from-gray-400 disabled:to-gray-400 text-white rounded-2xl transition-all duration-500 font-semibold hover:shadow-lg transform hover:scale-105 ease-out hover:shadow-[#002349]/50 disabled:transform-none"
+            className="flex items-center space-x-2 px-6 py-2.5 bg-gradient-to-r from-[#002349] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#002349] disabled:from-gray-400 disabled:to-gray-400 text-white rounded-2xl transition-all duration-500 font-semibold hover:shadow-lg transform hover:scale-105 ease-out hover:shadow-[#002349]/50 disabled:transform-none"
           >
             {submitting ? (
               <>

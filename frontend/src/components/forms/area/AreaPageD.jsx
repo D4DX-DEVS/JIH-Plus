@@ -46,7 +46,7 @@ const AreaPageD = () => {
 
   return (
     <div className="p-5 bg-white rounded-2xl shadow-lg border border-gray-200 max-w-4xl mx-auto hover:shadow-xl transition-all duration-500">
-      <div className="mb-5">
+      <div className="hidden lg:block mb-5">
         <h2 className="text-xl font-bold text-[#002349] mb-1.5">ഏരിയ തലം റിപ്പോർട്ട് - PART D</h2>
         <p className="text-sm text-gray-600">ഏരിയ ടീം നടത്തിയ പ്രവര്‍ത്തനങ്ങള്‍</p>
       </div>
@@ -74,7 +74,7 @@ const AreaPageD = () => {
                       onChange={(e) => setActivity(w.key, 'componentVisits', e.target.value)}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => setActivity(w.key, 'componentVisits', value))}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-[16px] sm:text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>

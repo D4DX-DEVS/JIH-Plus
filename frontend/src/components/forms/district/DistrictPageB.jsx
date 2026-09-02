@@ -238,9 +238,9 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
   ];
 
   return (
-    <div className="p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
-      {/* Header */}
-      <div className="mb-8">
+    <div className="p-4 sm:p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
+      {/* Header: hidden on mobile, the page header / MobileTopBar already names this screen there. */}
+      <div className="hidden lg:block mb-8">
         <h2 className="text-2xl font-bold text-[#002349] mb-2">
           ജില്ലാ തലം റിപ്പോർട്ട് - PART B
         </h2>
@@ -270,7 +270,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
               }}
               onKeyDown={handleNumericKeyDown}
               onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('male', value))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-lg transition-all duration-300 hover:border-[#002349]/50"
+              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-lg transition-all duration-300 hover:border-[#002349]/50"
               placeholder="എണ്ണം നൽകുക"
             />
           </div>
@@ -288,7 +288,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
               }}
               onKeyDown={handleNumericKeyDown}
               onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('female', value))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-lg transition-all duration-300 hover:border-[#002349]/50"
+              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-lg transition-all duration-300 hover:border-[#002349]/50"
               placeholder="എണ്ണം നൽകുക"
             />
           </div>
@@ -331,7 +331,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
               onChange={(e) =>
                 handleCountChange(category.key, "male", e.target.value)
               }
-              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="എണ്ണം"
               min="0"
             />
@@ -363,7 +363,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
               onChange={(e) =>
                 handleCountChange(category.key, "female", e.target.value)
               }
-              className="w-full px-3 py-2 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="എണ്ണം"
               min="0"
             />
@@ -400,7 +400,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
                       type="text"
                       value={formData.partE.wingGrowth[wing.key].newComponents || ''}
                       onChange={(e) => handleInputChange('newComponents', e.target.value, wing.key)}
-                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center text-[16px] sm:text-base focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -410,7 +410,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
                       value={formData.partE.wingGrowth[wing.key].newMembers || ''}
                       onChange={(e) => handleInputChange('newMembers', e.target.value, wing.key)}
                       disabled={wing.key === 'teenIndia' || wing.key === 'malarvadi'}
-                      className={`w-full px-2 py-1 border border-gray-300 rounded-xl text-center focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 ${
+                      className={`w-full px-2 py-1 border border-gray-300 rounded-xl text-center text-[16px] sm:text-base focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 ${
                         wing.key === 'teenIndia' || wing.key === 'malarvadi' ? 'bg-gray-100 cursor-not-allowed' : ''
                       }`}
                       placeholder="0"

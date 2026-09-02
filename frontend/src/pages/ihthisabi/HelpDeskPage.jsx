@@ -62,17 +62,19 @@ const HelpDeskPage = () => {
       <section className="mb-4 overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:rounded-[2rem] sm:p-8">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary sm:mb-4 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+            {/* App bar already says "Help Desk" on mobile — badge is lg+ only */}
+            <div className="mb-2 hidden items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary sm:mb-4 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm lg:inline-flex">
               <LifeBuoy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span>Ihthisabi Help Desk</span>
             </div>
             <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-3xl">Get Support Quickly</h1>
             <p className="mt-1.5 text-xs leading-5 text-gray-600 sm:mt-3 sm:text-base sm:leading-6">
-              This page covers common Ihthisabi support contacts. Membership application support is intentionally excluded here.
+              This page covers common Ihthisabi support contacts. Member application support is intentionally excluded here.
             </p>
           </div>
+          {/* Unit already shows in the mobile app bar context line */}
           {user?.role === 'rukn' && user?.unit && (
-            <div className="rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 text-xs text-gray-700 sm:rounded-2xl sm:px-5 sm:py-4 sm:text-sm">
+            <div className="hidden rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 text-xs text-gray-700 sm:rounded-2xl sm:px-5 sm:py-4 sm:text-sm lg:block">
               Logged in as a member from <span className="font-semibold text-gray-900">{user.unit}</span>.
             </div>
           )}

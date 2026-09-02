@@ -354,21 +354,21 @@ const FormManagement = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <button onClick={() => { setView('list'); setEditingForm(null) }}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+              className="flex items-center py-2 text-gray-600 hover:text-gray-900 transition-colors">
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Forms
             </button>
             <div className="flex gap-2">
-              <button onClick={handleSave} disabled={savingForm}
-                className="flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors">
-                <Save className="w-4 h-4 mr-2" />
-                {savingForm ? 'Saving...' : 'Save Form'}
+              <button onClick={handleSave} disabled={savingForm} title="Save Form"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-black text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors">
+                <Save className="w-4 h-4" />
+                <span className="hidden sm:inline">{savingForm ? 'Saving...' : 'Save Form'}</span>
               </button>
               {editingForm._id && editingForm.status === 'draft' && (
-                <button onClick={() => handlePublish(editingForm._id)}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                  <Send className="w-4 h-4 mr-2" />
-                  Publish
+                <button onClick={() => handlePublish(editingForm._id)} title="Publish"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                  <Send className="w-4 h-4" />
+                  <span className="hidden sm:inline">Publish</span>
                 </button>
               )}
             </div>
@@ -424,21 +424,21 @@ const FormManagement = () => {
                   onClick={() => setExpandedQuestion(expandedQuestion === qIndex ? null : qIndex)}>
                   <GripVertical className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
                   <span className="text-sm font-medium text-gray-500 mr-3 flex-shrink-0">#{qIndex + 1}</span>
-                  <span className="text-sm font-medium text-gray-900 truncate flex-1">
+                  <span className="text-sm font-medium text-gray-900 truncate flex-1 min-w-0">
                     {question.questionText || 'Untitled Question'}
                   </span>
                   <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full mr-2 flex-shrink-0">
                     {ANSWER_TYPES.find(t => t.value === question.answerType)?.label || question.answerType}
                   </span>
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <button onClick={(e) => { e.stopPropagation(); moveQuestion(qIndex, -1) }} disabled={qIndex === 0}
-                      className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
+                      className="p-1.5 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
                     <button onClick={(e) => { e.stopPropagation(); moveQuestion(qIndex, 1) }} disabled={qIndex === editingForm.questions.length - 1}
-                      className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
+                      className="p-1.5 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
                     <button onClick={(e) => { e.stopPropagation(); duplicateQuestion(qIndex) }}
-                      className="p-1 text-gray-400 hover:text-blue-600"><Copy className="w-4 h-4" /></button>
+                      className="p-1.5 text-gray-400 hover:text-blue-600"><Copy className="w-4 h-4" /></button>
                     <button onClick={(e) => { e.stopPropagation(); removeQuestion(qIndex) }}
-                      className="p-1 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                     {expandedQuestion === qIndex ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                   </div>
                 </div>
@@ -518,23 +518,23 @@ const FormManagement = () => {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <label className="block text-sm font-medium text-gray-700">Options</label>
-                          <button onClick={() => addOption(qIndex)} className="flex items-center text-sm text-primary hover:text-primary/80">
+                          <button onClick={() => addOption(qIndex)} className="flex items-center py-1.5 text-sm text-primary hover:text-primary/80">
                             <Plus className="w-3 h-3 mr-1" /> Add Option
                           </button>
                         </div>
                         <div className="space-y-2">
                           {question.options?.map((opt, oIndex) => (
-                            <div key={oIndex} className="flex items-center gap-2">
+                            <div key={oIndex} className="flex flex-wrap items-center gap-2">
                               <input type="text" value={opt.label} onChange={(e) => updateOption(qIndex, oIndex, 'label', e.target.value)}
-                                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="w-full sm:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Option label" />
                               <input type="text" value={opt.value} onChange={(e) => updateOption(qIndex, oIndex, 'value', e.target.value)}
-                                className="w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="w-24 sm:w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Value" />
                               <input type="text" value={opt.labelMl || ''} onChange={(e) => updateOption(qIndex, oIndex, 'labelMl', e.target.value)}
-                                className="w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="w-32 sm:w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Malayalam" />
-                              <button onClick={() => removeOption(qIndex, oIndex)} className="p-1 text-gray-400 hover:text-red-600">
+                              <button onClick={() => removeOption(qIndex, oIndex)} className="shrink-0 p-1.5 text-gray-400 hover:text-red-600">
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
@@ -551,28 +551,28 @@ const FormManagement = () => {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <label className="block text-sm font-medium text-gray-700">Sub-Fields</label>
-                          <button onClick={() => addSubField(qIndex)} className="flex items-center text-sm text-primary hover:text-primary/80">
+                          <button onClick={() => addSubField(qIndex)} className="flex items-center py-1.5 text-sm text-primary hover:text-primary/80">
                             <Plus className="w-3 h-3 mr-1" /> Add Sub-Field
                           </button>
                         </div>
                         <div className="space-y-2">
                           {question.subFields?.map((sf, sfIndex) => (
-                            <div key={sfIndex} className="flex items-center gap-2">
+                            <div key={sfIndex} className="flex flex-wrap items-center gap-2">
                               <input type="text" value={sf.label} onChange={(e) => updateSubField(qIndex, sfIndex, 'label', e.target.value)}
-                                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="w-full sm:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Field label" />
                               <input type="text" value={sf.fieldId} onChange={(e) => updateSubField(qIndex, sfIndex, 'fieldId', e.target.value)}
-                                className="w-28 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="w-full sm:w-28 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Field ID" />
                               <select value={sf.type} onChange={(e) => updateSubField(qIndex, sfIndex, 'type', e.target.value)}
-                                className="w-24 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                                className="w-full sm:w-24 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary">
                                 <option value="number">Number</option>
                                 <option value="text">Text</option>
                               </select>
                               <input type="text" value={sf.labelMl || ''} onChange={(e) => updateSubField(qIndex, sfIndex, 'labelMl', e.target.value)}
-                                className="w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="flex-1 sm:w-32 sm:flex-none px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Malayalam" />
-                              <button onClick={() => removeSubField(qIndex, sfIndex)} className="p-1 text-gray-400 hover:text-red-600">
+                              <button onClick={() => removeSubField(qIndex, sfIndex)} className="shrink-0 p-1.5 text-gray-400 hover:text-red-600">
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
@@ -615,7 +615,7 @@ const FormManagement = () => {
         {/* Header */}
         {/* Title is hidden on mobile — the sticky app bar already names the page. */}
         <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
-          <div className="hidden min-w-0 sm:block">
+          <div className="hidden min-w-0 lg:block">
             <h1 className="ih-page-title">Form Management</h1>
             <p className="ih-page-subtitle">Create and manage quarterly submission forms</p>
           </div>
@@ -677,7 +677,7 @@ const FormManagement = () => {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <h3 className="truncate text-[13px] font-semibold text-gray-900 sm:text-sm">{form.title}</h3>
+                    <h3 className="min-w-0 truncate text-[13px] font-semibold text-gray-900 sm:text-sm">{form.title}</h3>
                     <span className={`ih-chip ih-chip-dot ${
                       published ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
                     }`}>

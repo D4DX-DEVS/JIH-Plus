@@ -100,7 +100,9 @@ const DistrictSurveyContent = ({ editingSurvey, isAdmin }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-[#002349]">
+              {/* When wrapped by the admin layout, MobileTopBar already names this
+                  screen on mobile — avoid showing the title twice below lg. */}
+              <h1 className={`text-2xl font-bold text-[#002349] ${isAdmin ? 'hidden lg:block' : ''}`}>
                 ജില്ലാ തലം പ്രതിമാസ റിപ്പോർട്ട്
               </h1>
               <div className="text-sm text-gray-600 font-medium">
@@ -192,8 +194,6 @@ const DistrictSurveyPage = () => {
       navigate('/notifications');
     } else if (tabId === 'view-reports') {
       navigate('/view-reports');
-    } else if (tabId === 'membership') {
-      navigate('/membership', { state: { roleHint: 'admin' } });
     }
   };
   
@@ -444,7 +444,6 @@ const DistrictSurveyPage = () => {
           onNavigateToReports={() => navigate('/view-reports')}
           onDownloadCSV={() => {}}
           onNavigateToNotifications={() => navigate('/notifications')}
-          onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'admin' } })}
           onLogout={() => {
             localStorage.removeItem('adminToken');
             localStorage.removeItem('adminData');

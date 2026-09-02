@@ -30,7 +30,7 @@ const HelpDeskPage = () => {
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Support Contacts</h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                Use the contacts below for portal help, membership application support, and Ihthisabi reporting queries. Each contact includes direct call and message actions.
+                Use the contacts below for portal help, member application support, and Ihthisabi reporting queries. Each contact includes direct call and message actions.
               </p>
             </div>
             <div className="rounded-2xl border border-[#957C3D]/20 bg-[#957C3D]/10 px-5 py-4 text-sm text-[#6f5a2a]">

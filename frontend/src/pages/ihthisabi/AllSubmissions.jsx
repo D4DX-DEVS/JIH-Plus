@@ -30,8 +30,6 @@ import toast from 'react-hot-toast'
 import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
 import AbroadSubmissions from './AbroadSubmissions'
 import Pagination from '../../components/ihthisabi/Pagination'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
 
 const AllSubmissions = () => {
   const navigate = useNavigate()
@@ -340,6 +338,13 @@ const AllSubmissions = () => {
       toast.error('No records to export')
       return
     }
+    // jspdf + autotable are ~350KB and only this one button needs them, so they are
+    // pulled in on click instead of shipping with the page's initial bundle.
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable')
+    ])
+
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
     doc.setFontSize(14)
     doc.text('Non-Submitted Members', 14, 16)
@@ -652,7 +657,7 @@ const AllSubmissions = () => {
       <div className="ih-page-shell">
         {/* Header — desktop only. On mobile the app bar already names the page and
             Export moves into the search row, so no row is spent on a title. */}
-        <div className="mb-2 hidden items-center justify-between gap-2 sm:flex">
+        <div className="mb-2 hidden items-center justify-between gap-2 lg:flex">
           <h1 className="ih-page-title">All Submissions</h1>
           {!showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted && (
             <button onClick={handleExport} className="btn-primary shrink-0 gap-1.5">
@@ -670,13 +675,13 @@ const AllSubmissions = () => {
               setShowAbroadSubmissions(false)
               setShowNonSubmitted(false)
             }}
-            className={`ih-segment-btn ${
+            className={`ih-segment-btn py-2.5 sm:py-1.5 ${
               !showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted
                 ? 'ih-segment-btn-active' : ''
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Regular</span>
+            <span>Regular</span>
           </button>
           <button
             onClick={() => {
@@ -684,10 +689,10 @@ const AllSubmissions = () => {
               setShowAbroadSubmissions(false)
               setShowNonSubmitted(false)
             }}
-            className={`ih-segment-btn ${showAlternativeSubmissions ? 'ih-segment-btn-active text-orange-700' : ''}`}
+            className={`ih-segment-btn py-2.5 sm:py-1.5 ${showAlternativeSubmissions ? 'ih-segment-btn-active text-orange-700' : ''}`}
           >
             <FileText className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Alt</span>
+            <span>Alt</span>
           </button>
           <button
             onClick={() => {
@@ -695,10 +700,10 @@ const AllSubmissions = () => {
               setShowAlternativeSubmissions(false)
               setShowNonSubmitted(false)
             }}
-            className={`ih-segment-btn ${showAbroadSubmissions ? 'ih-segment-btn-active text-blue-700' : ''}`}
+            className={`ih-segment-btn py-2.5 sm:py-1.5 ${showAbroadSubmissions ? 'ih-segment-btn-active text-blue-700' : ''}`}
           >
             <Globe className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Abroad</span>
+            <span>Abroad</span>
           </button>
           <button
             onClick={() => {
@@ -706,10 +711,10 @@ const AllSubmissions = () => {
               setShowAlternativeSubmissions(false)
               setShowAbroadSubmissions(false)
             }}
-            className={`ih-segment-btn ${showNonSubmitted ? 'ih-segment-btn-active text-red-700' : ''}`}
+            className={`ih-segment-btn py-2.5 sm:py-1.5 ${showNonSubmitted ? 'ih-segment-btn-active text-red-700' : ''}`}
           >
             <UserX className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Pending</span>
+            <span>Pending</span>
           </button>
         </div>
 
@@ -725,12 +730,12 @@ const AllSubmissions = () => {
                 placeholder="Search name or Rukn ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="ih-field pr-3"
+                className="ih-field h-[44px] pr-3 text-base sm:h-9 sm:text-sm"
               />
             </div>
             <button
               onClick={() => setFiltersOpen(o => !o)}
-              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-[7px] text-[11px] font-medium transition-colors sm:hidden ${
+              className={`inline-flex h-[44px] shrink-0 items-center gap-1 rounded-full px-3 text-[11px] font-medium transition-colors sm:hidden ${
                 activeFilterCount > 0
                   ? 'bg-primary/10 text-primary'
                   : 'text-gray-500'
@@ -738,16 +743,16 @@ const AllSubmissions = () => {
               style={activeFilterCount > 0 ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
               aria-expanded={filtersOpen}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <SlidersHorizontal className="w-4 h-4" />
               {activeFilterCount > 0 && <span>{activeFilterCount}</span>}
               <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${filtersOpen ? 'rotate-180' : ''}`} />
             </button>
             <button
               onClick={handleExport}
               title="Export"
-              className="btn-primary shrink-0 px-2.5 py-[7px] sm:hidden"
+              className="btn-primary h-[44px] w-[44px] min-h-0 shrink-0 p-0 sm:h-9 sm:w-9 lg:hidden"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-4 h-4" />
             </button>
           </div>
 
@@ -755,7 +760,7 @@ const AllSubmissions = () => {
           <div className={`${filtersOpen ? 'grid' : 'hidden'} mt-2 grid-cols-2 gap-2 sm:mt-2 sm:!grid sm:grid-cols-3 lg:grid-cols-6`}>
             <div className="relative">
               <Filter className="ih-filter-icon" />
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="ih-filter-select">
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                 <option value="all">All Status</option>
                 <option value="submitted">Submitted</option>
                 <option value="reviewed">Reviewed</option>
@@ -768,7 +773,7 @@ const AllSubmissions = () => {
               <select
                 value={districtFilter}
                 onChange={(e) => { setDistrictFilter(e.target.value); setAreaFilter('all'); setUnitFilter('all') }}
-                className="ih-filter-select"
+                className="ih-filter-select truncate text-[13px] sm:text-sm"
               >
                 <option value="all">All Districts</option>
                 {uniqueDistricts.map(district => (
@@ -782,7 +787,7 @@ const AllSubmissions = () => {
               <select
                 value={areaFilter}
                 onChange={(e) => { setAreaFilter(e.target.value); setUnitFilter('all') }}
-                className="ih-filter-select"
+                className="ih-filter-select truncate text-[13px] sm:text-sm"
               >
                 <option value="all">All Areas</option>
                 {uniqueAreas.map(area => (
@@ -793,7 +798,7 @@ const AllSubmissions = () => {
 
             <div className="relative">
               <MapPin className="ih-filter-icon" />
-              <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="ih-filter-select">
+              <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                 <option value="all">All Units</option>
                 {uniqueUnits.map(unit => (
                   <option key={unit} value={unit}>{unit}</option>
@@ -803,7 +808,7 @@ const AllSubmissions = () => {
 
             <div className="relative">
               <Calendar className="ih-filter-icon" />
-              <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)} className="ih-filter-select">
+              <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                 <option value="all">All Years</option>
                 {submissionYears.map(y => (
                   <option key={y} value={String(y)}>{y}</option>
@@ -813,7 +818,7 @@ const AllSubmissions = () => {
 
             <div className="relative">
               <Calendar className="ih-filter-icon" />
-              <select value={quarterFilter} onChange={(e) => setQuarterFilter(e.target.value)} className="ih-filter-select">
+              <select value={quarterFilter} onChange={(e) => setQuarterFilter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                 <option value="all">All Quarters</option>
                 <option value="1">Q1 (Jan–Mar)</option>
                 <option value="2">Q2 (Apr–Jun)</option>
@@ -850,12 +855,12 @@ const AllSubmissions = () => {
                 placeholder="Search name or Rukn ID..."
                 value={altSearchTerm}
                 onChange={(e) => setAltSearchTerm(e.target.value)}
-                className="ih-field pr-3"
+                className="ih-field h-[44px] pr-3 text-base sm:h-9 sm:text-sm"
               />
             </div>
             <button
               onClick={() => setAltFiltersOpen(o => !o)}
-              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-[7px] text-[11px] font-medium transition-colors sm:hidden ${
+              className={`inline-flex h-[44px] shrink-0 items-center gap-1 rounded-full px-3 text-[11px] font-medium transition-colors sm:hidden ${
                 altActiveFilterCount > 0
                   ? 'bg-primary/10 text-primary'
                   : 'text-gray-500'
@@ -863,7 +868,7 @@ const AllSubmissions = () => {
               style={altActiveFilterCount > 0 ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
               aria-expanded={altFiltersOpen}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <SlidersHorizontal className="w-4 h-4" />
               {altActiveFilterCount > 0 && <span>{altActiveFilterCount}</span>}
               <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${altFiltersOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -872,7 +877,7 @@ const AllSubmissions = () => {
           <div className={`${altFiltersOpen ? 'grid' : 'hidden'} mt-2 grid-cols-2 gap-2 sm:mt-2 sm:!grid sm:grid-cols-3 lg:grid-cols-6`}>
             <div className="relative">
               <Filter className="ih-filter-icon" />
-              <select value={altStatusFilter} onChange={(e) => setAltStatusFilter(e.target.value)} className="ih-filter-select">
+              <select value={altStatusFilter} onChange={(e) => setAltStatusFilter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                 <option value="all">All Status</option>
                 <option value="submitted">Submitted</option>
                 <option value="replied">Replied</option>
@@ -884,7 +889,7 @@ const AllSubmissions = () => {
               <select
                 value={altDistrictFilter}
                 onChange={(e) => { setAltDistrictFilter(e.target.value); setAltAreaFilter('all'); setAltUnitFilter('all') }}
-                className="ih-filter-select"
+                className="ih-filter-select truncate text-[13px] sm:text-sm"
               >
                 <option value="all">All Districts</option>
                 {uniqueDistricts.map(district => (
@@ -898,7 +903,7 @@ const AllSubmissions = () => {
               <select
                 value={altAreaFilter}
                 onChange={(e) => { setAltAreaFilter(e.target.value); setAltUnitFilter('all') }}
-                className="ih-filter-select"
+                className="ih-filter-select truncate text-[13px] sm:text-sm"
               >
                 <option value="all">All Areas</option>
                 {altUniqueAreas.map(area => (
@@ -909,7 +914,7 @@ const AllSubmissions = () => {
 
             <div className="relative">
               <MapPin className="ih-filter-icon" />
-              <select value={altUnitFilter} onChange={(e) => setAltUnitFilter(e.target.value)} className="ih-filter-select">
+              <select value={altUnitFilter} onChange={(e) => setAltUnitFilter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                 <option value="all">All Units</option>
                 {altUniqueUnits.map(unit => (
                   <option key={unit} value={unit}>{unit}</option>
@@ -919,7 +924,7 @@ const AllSubmissions = () => {
 
             <div className="relative">
               <Calendar className="ih-filter-icon" />
-              <select value={altYearFilter} onChange={(e) => setAltYearFilter(e.target.value)} className="ih-filter-select">
+              <select value={altYearFilter} onChange={(e) => setAltYearFilter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                 <option value="all">All Years</option>
                 {submissionYears.map(y => (
                   <option key={y} value={String(y)}>{y}</option>
@@ -929,7 +934,7 @@ const AllSubmissions = () => {
 
             <div className="relative">
               <Calendar className="ih-filter-icon" />
-              <select value={altQuarterFilter} onChange={(e) => setAltQuarterFilter(e.target.value)} className="ih-filter-select">
+              <select value={altQuarterFilter} onChange={(e) => setAltQuarterFilter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                 <option value="all">All Quarters</option>
                 <option value="1">Q1 (Jan–Mar)</option>
                 <option value="2">Q2 (Apr–Jun)</option>
@@ -968,13 +973,13 @@ const AllSubmissions = () => {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && nsQuarter && nsYear && !nonSubmittedLoading) fetchNonSubmitted(1)
                 }}
-                className="ih-field pr-3"
+                className="ih-field pr-3 text-base sm:text-sm"
               />
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
               <div className="relative">
                 <Calendar className="ih-filter-icon" />
-                <select value={nsYear} onChange={e => setNsYear(e.target.value)} className="ih-filter-select">
+                <select value={nsYear} onChange={e => setNsYear(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                   <option value="">Year *</option>
                   {nsYearOptions.map(y => (
                     <option key={y} value={String(y)}>{y}</option>
@@ -984,7 +989,7 @@ const AllSubmissions = () => {
 
               <div className="relative">
                 <Calendar className="ih-filter-icon" />
-                <select value={nsQuarter} onChange={e => setNsQuarter(e.target.value)} className="ih-filter-select">
+                <select value={nsQuarter} onChange={e => setNsQuarter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                   <option value="">Quarter *</option>
                   <option value="1">Q1 (Jan–Mar)</option>
                   <option value="2">Q2 (Apr–Jun)</option>
@@ -998,7 +1003,7 @@ const AllSubmissions = () => {
                 <select
                   value={nsDistrict}
                   onChange={e => { setNsDistrict(e.target.value); setNsArea('all'); setNsUnit('all') }}
-                  className="ih-filter-select"
+                  className="ih-filter-select truncate text-[13px] sm:text-sm"
                 >
                   <option value="all">All Districts</option>
                   {uniqueDistricts.map(d => (
@@ -1012,7 +1017,7 @@ const AllSubmissions = () => {
                 <select
                   value={nsArea}
                   onChange={e => { setNsArea(e.target.value); setNsUnit('all') }}
-                  className="ih-filter-select"
+                  className="ih-filter-select truncate text-[13px] sm:text-sm"
                 >
                   <option value="all">All Areas</option>
                   {nsUniqueAreas.map(a => (
@@ -1023,7 +1028,7 @@ const AllSubmissions = () => {
 
               <div className="relative">
                 <MapPin className="ih-filter-icon" />
-                <select value={nsUnit} onChange={e => setNsUnit(e.target.value)} className="ih-filter-select">
+                <select value={nsUnit} onChange={e => setNsUnit(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                   <option value="all">All Units</option>
                   {nsUniqueUnits.map(u => (
                     <option key={u} value={u}>{u}</option>
@@ -1868,7 +1873,10 @@ const AllSubmissions = () => {
 
             {/* Footer - Fixed Reply Section */}
             {details && !detailsLoading && (
-              <div className="border-t border-gray-200 bg-white p-5 flex-shrink-0">
+              <div
+                className="border-t border-gray-200 bg-white p-5 flex-shrink-0"
+                style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
+              >
                 <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Admin Reply
@@ -1894,7 +1902,7 @@ const AllSubmissions = () => {
                     onChange={(e) => setReplyMessage(e.target.value)}
                     placeholder="Enter your reply message..."
                     rows={4}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                    className="w-full px-3 py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                   />
                   
                   {whatsappStatus !== null && (

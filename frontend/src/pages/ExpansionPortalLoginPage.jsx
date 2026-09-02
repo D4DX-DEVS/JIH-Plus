@@ -110,18 +110,18 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
         }
         .animate-fade-in { animation: fade-in 0.3s ease-out; }
       `}</style>
-      <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
         {/* Home Icon */}
         <button
           onClick={() => navigate('/')}
-          className="fixed top-6 right-6 z-50 text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
+          className="fixed top-3.5 right-3.5 z-50 p-2.5 text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
           aria-label="Back to Home"
         >
           <Home className="w-6 h-6" />
         </button>
 
         {/* Main Content */}
-        <div className="h-full overflow-hidden flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
+        <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-md w-full space-y-6">
             {/* Header */}
             <div className="text-center mb-8">
@@ -140,7 +140,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
             <div className="flex justify-center gap-4 mb-6">
               <button
                 onClick={() => handleTabChange('user')}
-                className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center space-x-2 ${
+                className={`min-h-[44px] px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center space-x-2 ${
                   activeTab === 'user'
                     ? 'bg-[#002349] text-white shadow-md'
                     : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
@@ -151,7 +151,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
               </button>
               <button
                 onClick={() => handleTabChange('admin')}
-                className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center space-x-2 ${
+                className={`min-h-[44px] px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center space-x-2 ${
                   activeTab === 'admin'
                     ? 'bg-[#002349] text-white shadow-md'
                     : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
@@ -176,7 +176,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                       value={username}
                       onChange={(e) => { setUsername(e.target.value); if (userError) setUserError(''); }}
                       placeholder="Enter username"
-                      className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-sm transition-all duration-200 bg-gray-50 hover:bg-white"
+                      className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                       disabled={userLoading}
                       autoComplete="username"
                       autoFocus
@@ -193,7 +193,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                         value={password}
                         onChange={(e) => { setPassword(e.target.value); if (userError) setUserError(''); }}
                         placeholder="Enter password"
-                        className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-sm transition-all duration-200 bg-gray-50 hover:bg-white"
+                        className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                         disabled={userLoading}
                         autoComplete="current-password"
                       />
@@ -219,7 +219,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                     <button
                       type="button"
                       onClick={() => { setUsername(''); setPassword(''); setUserError(''); }}
-                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-3 rounded-lg transition-all duration-200 text-xs shadow-sm hover:shadow-md"
+                      className="flex-1 min-h-[44px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-3 rounded-lg transition-all duration-200 text-xs shadow-sm hover:shadow-md"
                       disabled={userLoading}
                     >
                       Clear
@@ -227,7 +227,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                     <button
                       type="submit"
                       disabled={userLoading || !username.trim() || !password.trim()}
-                      className="flex-1 bg-[#957C3D] hover:bg-[#c9a854] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 text-xs shadow-md hover:shadow-lg"
+                      className="flex-1 min-h-[44px] bg-[#957C3D] hover:bg-[#c9a854] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 text-xs shadow-md hover:shadow-lg"
                     >
                       {userLoading ? (
                         <>
@@ -260,7 +260,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                       value={adminEmail}
                       onChange={(e) => { setAdminEmail(e.target.value); if (adminError) setAdminError(''); }}
                       placeholder="admin@example.com"
-                      className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-sm transition-all duration-200 bg-gray-50 hover:bg-white"
+                      className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                       disabled={adminLoading}
                       autoFocus
                     />
@@ -276,7 +276,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                         value={adminPassword}
                         onChange={(e) => { setAdminPassword(e.target.value); if (adminError) setAdminError(''); }}
                         placeholder="••••••••"
-                        className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-sm transition-all duration-200 bg-gray-50 hover:bg-white"
+                        className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                         disabled={adminLoading}
                         autoComplete="current-password"
                       />
@@ -302,7 +302,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                     <button
                       type="submit"
                       disabled={adminLoading || !adminEmail.trim() || !adminPassword.trim()}
-                      className="w-full bg-[#002349] hover:bg-[#1a3a5c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 text-sm shadow-md hover:shadow-lg"
+                      className="w-full min-h-[44px] bg-[#002349] hover:bg-[#1a3a5c] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 text-sm shadow-md hover:shadow-lg"
                     >
                       {adminLoading ? (
                         <>

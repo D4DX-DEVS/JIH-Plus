@@ -100,7 +100,7 @@ const AreaPageF = ({ onSave, isSaving, isEditing = false }) => {
   return (
     <div className="p-5 bg-white rounded-2xl shadow-lg border border-gray-200 max-w-4xl mx-auto hover:shadow-xl transition-all duration-500">
       {/* Header */}
-      <div className="mb-5">
+      <div className="hidden lg:block mb-5">
         <h2 className="text-xl font-bold text-[#002349] mb-1.5">
           ഏരിയ തലം റിപ്പോർട്ട് - PART F
         </h2>
@@ -135,7 +135,7 @@ const AreaPageF = ({ onSave, isSaving, isEditing = false }) => {
                       onChange={(e) => handleWingGrowthChange(wing.key, 'newComponents', e.target.value)}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleWingGrowthChange(wing.key, 'newComponents', value))}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-[16px] sm:text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -147,7 +147,7 @@ const AreaPageF = ({ onSave, isSaving, isEditing = false }) => {
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleWingGrowthChange(wing.key, 'newMembers', value))}
                       disabled={wing.key === 'teenIndia' || wing.key === 'malarvadi'}
-                      className={`w-full px-2 py-1.5 border border-gray-300 rounded-lg text-center text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 ${
+                      className={`w-full px-2 py-1.5 border border-gray-300 rounded-lg text-center text-[16px] sm:text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 ${
                         wing.key === 'teenIndia' || wing.key === 'malarvadi' ? 'bg-gray-100 cursor-not-allowed' : ''
                       }`}
                       placeholder="0"

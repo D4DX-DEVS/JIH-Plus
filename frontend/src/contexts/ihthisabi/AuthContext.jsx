@@ -4,13 +4,16 @@ import toast from 'react-hot-toast'
 
 const AuthContext = createContext()
 
-const initialState = {
+// Built fresh on every provider mount. Must NOT be a module-level constant:
+// the token would then be frozen at page load, so remounting the provider
+// (leaving /ihthisabi and coming back) would resurrect a logged-out token.
+const createInitialState = () => ({
   user: null,
   token: localStorage.getItem('token'),
   isAuthenticated: false,
   loading: true,
   error: null
-}
+})
 
 const authReducer = (state, action) => {
   switch (action.type) {
@@ -63,7 +66,7 @@ const authReducer = (state, action) => {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, initialState)
+  const [state, dispatch] = useReducer(authReducer, undefined, createInitialState)
   // True only while the one-time stored-token check on app boot is running.
   // Kept separate from state.loading, which also toggles on every login()
   // call — routing must not unmount the login page mid-request just

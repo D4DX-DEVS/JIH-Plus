@@ -8,6 +8,7 @@ import ConfirmationModal from '../components/modals/ConfirmationModal';
 import RowColumnReadonly from '../components/reportRenderer/RowColumnReadonly';
 import jihLogo from '../assets/LogoColor.png';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import { fieldWidthClass } from '../utils/fieldWidth';
 
 const ReportSubmissionsPage = ({ onLogout }) => {
   const { id } = useParams();
@@ -210,7 +211,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
       return (
         <div className="flex flex-wrap gap-2">
           {answer.map((item, idx) => (
-            <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+            <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm break-words max-w-full">
               {String(item)}
             </span>
           ))}
@@ -264,7 +265,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
       return (
         <div className="flex flex-wrap gap-1 mt-1">
           {selected.map((v, i) => (
-            <span key={i} className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+            <span key={i} className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium break-words max-w-full">
               {String(v)}
             </span>
           ))}
@@ -285,7 +286,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
     // ── Select / Radio / Dropdown ──
     if (['select', 'dropdown', 'radio'].includes(field.type)) {
       return (
-        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-800 rounded text-sm font-medium border border-indigo-200">
+        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-800 rounded text-sm font-medium border border-indigo-200 break-words">
           {String(rawValue)}
         </span>
       );
@@ -329,10 +330,6 @@ const ReportSubmissionsPage = ({ onLogout }) => {
 
   // Sidebar handlers
   const handleTabChange = (tabId) => {
-    if (tabId === 'membership') {
-      navigate('/membership', { state: { roleHint: 'admin' } });
-      return;
-    }
     if (tabId === 'yearly' || tabId === 'monthly' || tabId === 'stats') {
       navigate('/admin-dashboard', { 
         state: { activeTab: tabId } 
@@ -462,7 +459,6 @@ const ReportSubmissionsPage = ({ onLogout }) => {
           activeTab=""
           onTabChange={handleTabChange}
           onNavigateToReports={handleNavigateToReports}
-          onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'admin' } })}
           onDownloadCSV={handleDownloadCSV}
           onNavigateToNotifications={handleNavigateToNotifications}
           onLogout={handleLogout}
@@ -520,15 +516,15 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => toggleSubmission(null)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
+                    className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
                     title="Back to list"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
-                  <div>
-                    <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">റിപ്പോർട്ട് വിവരങ്ങൾ</h2>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">റിപ്പോർട്ട് വിവരങ്ങൾ</h2>
                     {selectedSubmission?.userId && (
-                      <p className="text-base font-bold text-[#002349] mt-2">
+                      <p className="text-base font-bold text-[#002349] mt-2 break-words leading-relaxed">
                         {getUserDisplayName(selectedSubmission.userId, report.reportFor)}
                       </p>
                     )}
@@ -545,14 +541,14 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                           <h3 className="text-lg font-bold text-[#002349] mb-4 border-b pb-2">{page.title}</h3>
                         )}
                         {page.fields && page.fields.length > 0 ? (
-                          <div className="space-y-4">
+                          <div className="grid grid-cols-12 gap-x-4 gap-y-4">
                             {page.fields
                               .filter(f => !['title', 'html'].includes(f.type))
                               .map((field) => {
                                 const rawValue = selectedSubmission.formData?.[`field_${field.id}`];
                                 return (
-                                  <div key={field.id} className="border-l-4 border-[#002349] pl-4 py-2">
-                                    <div className="text-sm font-semibold text-gray-700 mb-1">
+                                  <div key={field.id} className={`${fieldWidthClass(field)} border-l-4 border-[#002349] pl-4 py-2`}>
+                                    <div className="text-sm font-semibold text-gray-700 mb-1 break-words">
                                       {field.label}
                                       {field.required && <span className="ml-1 text-red-500 text-xs">*</span>}
                                     </div>
@@ -580,7 +576,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                                 <div key={questionIndex} className="border-l-4 border-[#002349] pl-4 py-3">
                                   <div className="flex items-start gap-2 mb-2">
                                     <span className="text-sm font-bold text-[#002349]">Q{questionIndex + 1}:</span>
-                                    <span className="text-gray-900 font-semibold flex-1">{question.questionText}</span>
+                                    <span className="text-gray-900 font-semibold flex-1 min-w-0 break-words">{question.questionText}</span>
                                     {question.isRequired && (
                                       <span className="text-xs text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded">*Required</span>
                                     )}
@@ -613,11 +609,11 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => navigate(isUnitUser ? '/user-reports' : '/view-reports')}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
+                    className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
-                  <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
+                  <h2 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
                     {isCrossReport ? 'All Submissions' : 'റിപ്പോർട്ട് സമർപ്പണങ്ങൾ'}
                   </h2>
                 </div>
@@ -628,7 +624,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                     placeholder="Search by district, area, unit..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent bg-white shadow-sm"
+                    className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent bg-white shadow-sm"
                   />
                 </div>
               </div>
@@ -641,7 +637,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                     type="button"
                     onClick={() => setShowFilters(v => !v)}
                     aria-expanded={showFilters}
-                    className="flex items-center gap-2 text-[#002349]"
+                    className="flex min-h-[40px] items-center gap-2 py-2 text-[#002349]"
                   >
                     <Filter className="w-4 h-4" />
                     <span className="text-xs font-semibold uppercase tracking-wide">Filters</span>
@@ -658,7 +654,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                   <select
                     value={typeFilter}
                     onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-[13px] sm:text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                   >
                     <option value="">All Types</option>
                     <option value="monthly">Monthly</option>
@@ -668,7 +664,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                   <select
                     value={reportForFilter}
                     onChange={(e) => { setReportForFilter(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-[13px] sm:text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                   >
                     <option value="">All Audiences</option>
                     <option value="district">District</option>
@@ -678,7 +674,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                   <select
                     value={selectedReportId}
                     onChange={(e) => { setSelectedReportId(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[180px] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                    className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[180px] border border-gray-200 rounded-xl px-3 py-2 text-[13px] sm:text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                   >
                     <option value="">All Reports</option>
                     {reportList.map(r => (
@@ -688,7 +684,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                   <select
                     value={statusFilter}
                     onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-[13px] sm:text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
                   >
                     <option value="">All Statuses</option>
                     <option value="submitted">Submitted</option>
@@ -750,7 +746,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                           onClick={() => isCrossReport
                             ? navigate(`/report-submissions/${submission.reportId?._id || submission.reportId}`)
                             : toggleSubmission(submission._id)}
-                          className="mt-2.5 w-full rounded-lg bg-[#002349]/10 px-3 py-2 text-xs font-semibold text-[#002349]"
+                          className="mt-2.5 flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#002349]/10 px-3 py-2 text-xs font-semibold text-[#002349]"
                         >
                           {isCrossReport ? 'View Report' : 'View Details'}
                         </button>
@@ -851,9 +847,9 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                     Showing {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, filteredSubmissions.length)} of {filteredSubmissions.length}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Prev</button>
+                    <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-2 lg:py-1 border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Prev</button>
                     <span className="font-semibold text-[#002349]">Page {currentPage} of {totalPages}</span>
-                    <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Next</button>
+                    <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-2 lg:py-1 border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Next</button>
                   </div>
                 </div>
               )}

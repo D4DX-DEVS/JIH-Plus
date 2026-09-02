@@ -116,7 +116,7 @@ export default function SubmissionPreviewModal({ open, loading, data, onClose, o
                   {submission.status === 'submitted' ? 'Submitted' : 'Pending'}
                 </span>
               )}
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1">
+              <button onClick={onClose} className="flex items-center justify-center p-3 text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -183,14 +183,14 @@ export default function SubmissionPreviewModal({ open, loading, data, onClose, o
           </div>
 
           <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100">
-            <button onClick={onClose} className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+            <button onClick={onClose} className="min-h-[44px] inline-flex items-center justify-center px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50">
               Close
             </button>
             {submission && onDownload && (
               <button
                 onClick={onDownload}
                 disabled={downloading}
-                className="px-4 py-2 rounded-xl bg-[#002349] text-white text-sm font-semibold hover:bg-[#1a3a5c] disabled:opacity-60 flex items-center gap-2"
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-[#002349] text-white text-sm font-semibold hover:bg-[#1a3a5c] disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 Download PDF

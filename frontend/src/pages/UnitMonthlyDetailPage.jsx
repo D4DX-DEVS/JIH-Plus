@@ -67,9 +67,6 @@ const UnitMonthlyDetailPage = () => {
     navigate('/notifications');
   };
 
-  const handleNavigateToMembership = () => {
-    navigate('/membership', { state: { roleHint: 'admin' } });
-  };
 
   const handleDownloadCSV = async () => {
     try {
@@ -118,7 +115,6 @@ const UnitMonthlyDetailPage = () => {
           onNavigateToReports={handleNavigateToReports}
           onDownloadCSV={handleDownloadCSV}
           onNavigateToNotifications={handleNavigateToNotifications}
-          onNavigateToMembership={handleNavigateToMembership}
           onLogout={handleLogout}
           adminEmail={adminData?.email || 'Admin'}
           totalForms={totalForms}
@@ -127,12 +123,15 @@ const UnitMonthlyDetailPage = () => {
           onMobileToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
         <div className="flex-1 relative z-10 box-border flex flex-col min-w-0 overflow-hidden">
-          <div className="flex-1 bg-white flex items-center justify-center">
+          <MobileTopBar
+            title="പ്രതിമാസ റിപ്പോർട്ട്"
+          />
+          <div className="flex-1 bg-white flex items-center justify-center pb-24 lg:pb-0">
             <div className="text-center">
               <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-8 max-w-md shadow-lg animate-fade-in">
                 <p className="text-yellow-700 mb-6 font-semibold">No report data passed. Go back and open from admin dashboard.</p>
-                <button 
-                  onClick={handleBack} 
+                <button
+                  onClick={handleBack}
                   className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#002349] text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out hover:shadow-[#002349]/50"
                 >
                   Back to Admin
@@ -162,7 +161,6 @@ const UnitMonthlyDetailPage = () => {
         onNavigateToReports={handleNavigateToReports}
         onDownloadCSV={handleDownloadCSV}
         onNavigateToNotifications={handleNavigateToNotifications}
-        onNavigateToMembership={handleNavigateToMembership}
         onLogout={handleLogout}
         adminEmail={adminData?.email || 'Admin'}
         totalForms={totalForms}

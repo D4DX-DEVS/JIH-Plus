@@ -51,7 +51,7 @@ export default function RowColumnField({ field, value, onChange, disabled }) {
                     value={getCellValue(ri, ci)}
                     onChange={e => setCellValue(ri, ci, e.target.value)}
                     disabled={disabled}
-                    className="w-20 flex-shrink-0 px-2 py-1.5 text-sm text-center border border-gray-200 rounded-lg outline-none focus:bg-blue-50 focus:border-blue-300 disabled:bg-gray-50"
+                    className="w-20 flex-shrink-0 px-2 py-1.5 text-base text-center border border-gray-200 rounded-lg outline-none focus:bg-blue-50 focus:border-blue-300 disabled:bg-gray-50"
                   />
                 ) : (
                   <span className={`${cellValue} text-gray-700`}>{staticCellValue(field, ri, ci)}</span>

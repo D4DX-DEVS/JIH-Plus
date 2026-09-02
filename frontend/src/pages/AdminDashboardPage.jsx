@@ -12,15 +12,12 @@ console.log('API_BASE_URL:', API_BASE_URL);
 import FormPage from './FormPage';
 import { FormProvider } from '../contexts/FormContext';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
-import RejectionModal from '../components/modals/RejectionModal';
 import jihLogo from '../assets/LogoColor.png';
 import SurveyBarChart from '../components/charts/SurveyBarChart';
 import SurveyPieChart from '../components/charts/SurveyPieChart';
 import StatisticsCard from '../components/charts/StatisticsCard';
 import DistrictMonthlyStatsTable from '../components/tables/DistrictMonthlyStatsTable';
 import { downloadAllFormsPDF } from '../utils/newPdfGenerator.jsx';
-import KarkunForm from '../components/forms/membership/KarkunForm.jsx';
-import RuknForm from '../components/forms/membership/RuknForm.jsx';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import ConsolidationTab from '../components/admin/ConsolidationTab';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
@@ -45,7 +42,7 @@ const AdminDashboardPage = ({ onLogout }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showMonthlyDetail, setShowMonthlyDetail] = useState(false);
   const [viewingMonthlySurvey, setViewingMonthlySurvey] = useState(null);
-  const [activeTab, setActiveTab] = useState('stats'); // 'membership', 'stats' (legacy 'yearly'/'monthly' pages removed)
+  const [activeTab, setActiveTab] = useState('stats'); // 'stats' (legacy 'yearly'/'monthly' pages removed)
   const DISTRICT_PAGE_SIZE = 10;
   const [districtPage, setDistrictPage] = useState(1);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
@@ -67,21 +64,6 @@ const AdminDashboardPage = ({ onLogout }) => {
   const [totalForms, setTotalForms] = useState(0);
   const [totalSurveys, setTotalSurveys] = useState(0);
 
-  // Membership (State-level verification)
-  const [membershipTab, setMembershipTab] = useState('karkun'); // 'karkun' | 'rukn'
-  const [membershipData, setMembershipData] = useState({ karkun: [], rukn: [] });
-  const [showRejectionModal, setShowRejectionModal] = useState(false);
-  const [rejectionData, setRejectionData] = useState(null);
-  // Membership deletion modals
-  const [showDeleteKarkunModal, setShowDeleteKarkunModal] = useState(false);
-  const [showDeleteRuknModal, setShowDeleteRuknModal] = useState(false);
-  const [memberToDelete, setMemberToDelete] = useState(null); // { id, name }
-  
-  // Membership search and filter
-  const [membershipSearchTerm, setMembershipSearchTerm] = useState('');
-  const [membershipDistrictFilter, setMembershipDistrictFilter] = useState('');
-  const [membershipStatusFilter, setMembershipStatusFilter] = useState('');
-
   // Statistics tab state
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -89,95 +71,6 @@ const AdminDashboardPage = ({ onLogout }) => {
   const [summary, setSummary] = useState('');
   const [activeSubTab, setActiveSubTab] = useState('summary'); // 'summary' | 'table' | 'consolidation'
   const [districtMonthlySurveys, setDistrictMonthlySurveys] = useState([]);
-
-  // ===== Membership filtering functions =====
-  const getFilteredMembershipData = (data, type) => {
-    if (!data || data.length === 0) return [];
-    
-    return data.filter(form => {
-      // Search term filter (name, mobile, district)
-      const searchMatch = !membershipSearchTerm || 
-        form.name?.toLowerCase().includes(membershipSearchTerm.toLowerCase()) ||
-        form.mobile?.toLowerCase().includes(membershipSearchTerm.toLowerCase()) ||
-        form.district?.toLowerCase().includes(membershipSearchTerm.toLowerCase());
-      
-      // District filter
-      const districtMatch = !membershipDistrictFilter || 
-        form.district?.toLowerCase().includes(membershipDistrictFilter.toLowerCase());
-      
-      // Status filter
-      const statusMatch = !membershipStatusFilter || 
-        form.status?.toLowerCase() === membershipStatusFilter.toLowerCase() ||
-        (membershipStatusFilter === 'pending' && form.status === 'state_review') ||
-        (membershipStatusFilter === 'approved' && form.status === 'approved') ||
-        (membershipStatusFilter === 'rejected' && form.status === 'rejected');
-      
-      return searchMatch && districtMatch && statusMatch;
-    });
-  };
-
-  const clearMembershipFilters = () => {
-    setMembershipSearchTerm('');
-    setMembershipDistrictFilter('');
-    setMembershipStatusFilter('');
-  };
-
-  // ===== Membership delete functions =====
-  const handleDeleteKarkun = (formIdOrForm) => {
-    const id = typeof formIdOrForm === 'object' ? formIdOrForm._id : formIdOrForm;
-    const name = typeof formIdOrForm === 'object' ? formIdOrForm.name : '';
-    setMemberToDelete({ id, name, type: 'karkun' });
-    setShowDeleteKarkunModal(true);
-  };
-
-  const confirmDeleteKarkun = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      if (!memberToDelete?.id) return;
-      const response = await axios.delete(`${API_BASE_URL}/api/karkun/${memberToDelete.id}/admin`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data.success) {
-        setMembershipData(prev => ({
-          ...prev,
-          karkun: prev.karkun.filter(form => form._id !== memberToDelete.id)
-        }));
-      }
-    } catch (error) {
-      console.error('Frontend: Delete Karkun error:', error);
-    } finally {
-      setShowDeleteKarkunModal(false);
-      setMemberToDelete(null);
-    }
-  };
-
-  const handleDeleteRukn = (formIdOrForm) => {
-    const id = typeof formIdOrForm === 'object' ? formIdOrForm._id : formIdOrForm;
-    const name = typeof formIdOrForm === 'object' ? formIdOrForm.name : '';
-    setMemberToDelete({ id, name, type: 'rukn' });
-    setShowDeleteRuknModal(true);
-  };
-
-  const confirmDeleteRukn = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      if (!memberToDelete?.id) return;
-      const response = await axios.delete(`${API_BASE_URL}/api/rukn/${memberToDelete.id}/admin`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data.success) {
-        setMembershipData(prev => ({
-          ...prev,
-          rukn: prev.rukn.filter(form => form._id !== memberToDelete.id)
-        }));
-      }
-    } catch (error) {
-      console.error('Frontend: Delete Rukn error:', error);
-    } finally {
-      setShowDeleteRuknModal(false);
-      setMemberToDelete(null);
-    }
-  };
 
   // ===== Helpers for monthly detail rendering =====
   const formatLabel = (key) => {
@@ -272,14 +165,6 @@ const AdminDashboardPage = ({ onLogout }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [districtFilter, userFilter, monthFilter, activeTab]);
 
-  // Load membership data whenever the Membership tab is opened
-  useEffect(() => {
-    if (activeTab === 'membership') {
-      loadMembershipData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
   // Separate effect for yearly forms pagination
   useEffect(() => {
     if (activeTab === 'yearly') {
@@ -313,82 +198,6 @@ const AdminDashboardPage = ({ onLogout }) => {
       setError('Failed to load forms');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // ===== Membership loaders and actions =====
-  const loadMembershipData = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const [karkunRes, ruknRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/api/karkun/state/mine`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/rukn/state/mine`, { headers: { Authorization: `Bearer ${token}` } })
-      ]);
-      setMembershipData({
-        karkun: karkunRes.data?.data || [],
-        rukn: ruknRes.data?.data || []
-      });
-    } catch (e) {
-      console.error('Load membership (state) failed', e);
-    }
-  };
-
-  const handleViewKarkunForm = (form) => { 
-    navigate(`/karkun/${form._id || form.id}`);
-  };
-  const handleViewRuknForm = (form) => { 
-    navigate(`/rukn/${form._id || form.id}`);
-  };
-
-  const handleVerifyKarkunState = async (formId, status) => {
-    if (status === 'rejected') {
-      setRejectionData({ formId, type: 'karkun' });
-      setShowRejectionModal(true);
-      return;
-    }
-    
-    try {
-      const token = localStorage.getItem('adminToken');
-      await axios.put(`${API_BASE_URL}/api/karkun/${formId}/verify/state`, { status }, { headers: { Authorization: `Bearer ${token}` } });
-      await loadMembershipData();
-    } catch (e) {
-      console.error('Karkun state verify failed', e);
-      alert('Failed to update status');
-    }
-  };
-
-  const handleVerifyRuknState = async (formId, status) => {
-    if (status === 'rejected') {
-      setRejectionData({ formId, type: 'rukn' });
-      setShowRejectionModal(true);
-      return;
-    }
-    
-    try {
-      const token = localStorage.getItem('adminToken');
-      await axios.put(`${API_BASE_URL}/api/rukn/${formId}/verify/state`, { status }, { headers: { Authorization: `Bearer ${token}` } });
-      await loadMembershipData();
-    } catch (e) {
-      console.error('Rukn state verify failed', e);
-      alert('Failed to update status');
-    }
-  };
-
-  const handleConfirmRejection = async (comments) => {
-    if (!rejectionData) return;
-    
-    try {
-      const token = localStorage.getItem('adminToken');
-      
-      const endpoint = rejectionData.type === 'karkun' 
-        ? `${API_BASE_URL}/api/karkun/${rejectionData.formId}/verify/state`
-        : `${API_BASE_URL}/api/rukn/${rejectionData.formId}/verify/state`;
-      
-      await axios.put(endpoint, { status: 'rejected', comments }, { headers: { Authorization: `Bearer ${token}` } });
-      await loadMembershipData();
-    } catch (e) {
-      console.error('Rejection error', e);
-      alert('Rejection failed');
     }
   };
 
@@ -534,9 +343,6 @@ const AdminDashboardPage = ({ onLogout }) => {
     navigate('/notifications');
   };
 
-  const handleNavigateToMembership = () => {
-    navigate('/membership', { state: { roleHint: 'admin' } });
-  };
 
   const handleViewForm = (form) => {
     setSelectedFormId(form._id);
@@ -954,6 +760,17 @@ const AdminDashboardPage = ({ onLogout }) => {
     return `${monthLabel} • ${submittedDate} • ${unitName} • ${areaName} • ${districtName}`;
   };
 
+  // Mobile top bar should name whichever tab is actually showing instead of a
+  // static label, since the tab-specific headings below are hidden on mobile.
+  // (showDetailView/showFormEdit render FormDetailPage/FormPage, which own
+  // their own in-page titles, so the bar keeps the generic label there.)
+  const mobileHeaderTitle = showDetailView || showFormEdit
+    ? 'Admin Dashboard'
+    : activeTab === 'yearly'
+    ? 'Yearly Report'
+    : activeTab === 'monthly'
+    ? 'Monthly Report'
+    : 'Statistics';
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
@@ -964,7 +781,6 @@ const AdminDashboardPage = ({ onLogout }) => {
         onNavigateToReports={() => navigate('/view-reports')}
         onDownloadCSV={handleDownloadCSV}
         onNavigateToNotifications={handleNavigateToNotifications}
-        onNavigateToMembership={handleNavigateToMembership}
         onLogout={handleLogout}
         adminEmail={adminData?.email || 'Admin'}
         totalForms={totalForms}
@@ -976,7 +792,7 @@ const AdminDashboardPage = ({ onLogout }) => {
       {/* Main Content Area */}
       <div className="flex-1 relative z-10 box-border flex flex-col min-w-0 overflow-hidden">
         <MobileTopBar
-          title="Admin Dashboard"
+          title={mobileHeaderTitle}
         />
 
       {/* Main Content */}
@@ -1005,10 +821,10 @@ const AdminDashboardPage = ({ onLogout }) => {
         {activeTab === 'yearly' && (
           <>
             {/* Header with Title, Download Button, and Search */}
-        {activeTab !== 'membership' && (
-              <div className="mb-6 flex items-center justify-between gap-4">
-                <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">വാർഷിക റിപ്പോർട്ട്</h2>
-                <div className="flex items-center gap-3">
+        {(
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                <h2 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">വാർഷിക റിപ്പോർട്ട്</h2>
+                <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
                   <button
                     onClick={handleDownloadAllForms}
                     disabled={isDownloading || forms.length === 0}
@@ -1017,7 +833,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                     <Download className="w-3.5 h-3.5" />
                     <span>{isDownloading ? 'Generating...' : 'Download All PDF'}</span>
                   </button>
-                  <div className="relative max-w-xs">
+                  <div className="relative flex-1 min-w-[160px] lg:flex-none lg:max-w-xs">
                 <input
                   type="text"
                   value={searchTerm}
@@ -1051,7 +867,7 @@ const AdminDashboardPage = ({ onLogout }) => {
             </div>
           ) : (
             <>
-              <div>
+              <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -1089,7 +905,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                           <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => handleDeleteForm(form)}
-                              className="text-red-600 hover:text-white p-1.5 hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 rounded-lg transition-all duration-500 transform hover:scale-110 hover:shadow-md"
+                              className="text-red-600 hover:text-white p-2.5 hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 rounded-lg transition-all duration-500 transform hover:scale-110 hover:shadow-md"
                               title="Delete"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1113,14 +929,14 @@ const AdminDashboardPage = ({ onLogout }) => {
                       <button
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className="px-3 py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
+                        className="px-3 py-1 min-h-[44px] border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
                       >
                         Previous
                       </button>
                       <button
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
+                        className="px-3 py-1 min-h-[44px] border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
                       >
                         Next
                       </button>
@@ -1139,7 +955,7 @@ const AdminDashboardPage = ({ onLogout }) => {
           <>
             <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               <div>
-                <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">പ്രതിമാസ റിപ്പോർട്ട്</h2>
+                <h2 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">പ്രതിമാസ റിപ്പോർട്ട്</h2>
                 <p className="text-sm text-gray-600">Browse monthly reports by district, area, and unit.</p>
               </div>
               <div className="relative w-full lg:w-80">
@@ -1260,7 +1076,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                                                 [district.district]: !prev[district.district]
                                               }));
                                             }}
-                                            className="text-gray-500 hover:text-[#002349] transition-colors"
+                                            className="text-gray-500 hover:text-[#002349] transition-colors p-2 -m-2"
                                             title="Toggle district reports"
                                           >
                                             <ChevronRight
@@ -1279,7 +1095,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                                       <div className="flex flex-wrap items-center gap-2">
                                         <button
                                           onClick={() => handleDistrictSelect(district.district)}
-                                          className="text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
+                                          className="text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold transition-colors"
                                         >
                                           View Areas
                                         </button>
@@ -1458,7 +1274,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                                                 [areaKey]: !prev[areaKey]
                                               }));
                                             }}
-                                            className="text-gray-500 hover:text-[#002349] transition-colors"
+                                            className="text-gray-500 hover:text-[#002349] transition-colors p-2 -m-2"
                                             title="Toggle area reports"
                                           >
                                             <ChevronRight
@@ -1479,7 +1295,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                                       <div className="flex flex-wrap items-center gap-2">
                                         <button
                                           onClick={() => handleAreaSelect(area.area)}
-                                          className="text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
+                                          className="text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold transition-colors"
                                         >
                                           View Units
                                         </button>
@@ -1525,14 +1341,14 @@ const AdminDashboardPage = ({ onLogout }) => {
                         <button
                           onClick={() => setDistrictPage((prev) => Math.max(1, prev - 1))}
                           disabled={districtPage === 1}
-                          className="px-3 py-1 border border-gray-300 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200"
+                          className="px-3 py-1 min-h-[44px] border border-gray-300 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200"
                         >
                           Previous
                         </button>
                         <button
                           onClick={() => setDistrictPage((prev) => Math.min(totalDistrictPages, prev + 1))}
                           disabled={districtPage === totalDistrictPages}
-                          className="px-3 py-1 border border-gray-300 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200"
+                          className="px-3 py-1 min-h-[44px] border border-gray-300 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200"
                         >
                           Next
                         </button>
@@ -1545,146 +1361,15 @@ const AdminDashboardPage = ({ onLogout }) => {
           </>
         )}
 
-        {/* Membership Tab */}
-        {activeTab === 'membership' && (
-          <div className="space-y-4">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-              <div>
-                <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">അംഗത്വം</h2>
-                <p className="text-sm text-gray-600">Review and manage Karkun and Rukn applications.</p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setMembershipTab('karkun')}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    membershipTab === 'karkun'
-                      ? 'bg-[#002349] text-white'
-                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  Karkun
-                </button>
-                <button
-                  onClick={() => setMembershipTab('rukn')}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    membershipTab === 'rukn'
-                      ? 'bg-[#002349] text-white'
-                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  Rukn
-                </button>
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">Search</label>
-                <input
-                  value={membershipSearchTerm}
-                  onChange={(e) => setMembershipSearchTerm(e.target.value)}
-                  placeholder="Name, mobile, district..."
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">District</label>
-                <input
-                  value={membershipDistrictFilter}
-                  onChange={(e) => setMembershipDistrictFilter(e.target.value)}
-                  placeholder="Filter by district"
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">Status</label>
-                <select
-                  value={membershipStatusFilter}
-                  onChange={(e) => setMembershipStatusFilter(e.target.value)}
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                >
-                  <option value="">All</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Membership list */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">District</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Mobile</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredMembershipData(membershipData[membershipTab] || [], membershipTab).map((form) => (
-                    <tr key={form._id || form.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-5 py-3 text-sm font-semibold text-[#002349]">{form.name || '—'}</td>
-                      <td className="px-5 py-3 text-sm text-gray-700">{form.district || '—'}</td>
-                      <td className="px-5 py-3 text-sm text-gray-700">{form.mobile || '—'}</td>
-                      <td className="px-5 py-3 whitespace-nowrap">
-                        <span
-                          className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                            form.status === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : form.status === 'rejected'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {form.status || 'pending'}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-sm font-medium space-x-2">
-                        <button
-                          onClick={() =>
-                            membershipTab === 'karkun' ? handleViewKarkunForm(form) : handleViewRuknForm(form)
-                          }
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={() =>
-                            membershipTab === 'karkun' ? handleDeleteKarkun(form) : handleDeleteRukn(form)
-                          }
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {getFilteredMembershipData(membershipData[membershipTab] || [], membershipTab).length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-5 py-6 text-center text-sm text-gray-500">
-                        No applications found for this filter.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
         {/* Statistics Tab */}
         {activeTab === 'stats' && (
           <div className="space-y-4">
             {/* Sub-tab bar — always visible */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-              <div className="flex space-x-1">
+              <div className="flex gap-1 overflow-x-auto">
                 <button
                   onClick={() => setActiveSubTab('summary')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[40px] rounded-lg text-sm font-medium transition-colors duration-200 ${
                     activeSubTab === 'summary'
                       ? 'bg-[#002349] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1694,7 +1379,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                 </button>
                 <button
                   onClick={() => setActiveSubTab('table')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[40px] rounded-lg text-sm font-medium transition-colors duration-200 ${
                     activeSubTab === 'table'
                       ? 'bg-[#002349] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1704,7 +1389,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                 </button>
                 <button
                   onClick={() => setActiveSubTab('consolidation')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[40px] rounded-lg text-sm font-medium transition-colors duration-200 ${
                     activeSubTab === 'consolidation'
                       ? 'bg-[#002349] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1752,7 +1437,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                 {activeSubTab === 'summary' && (
                   <>
                     {/* Overview Statistics Cards */}
-                    <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                       <StatisticsCard
                         title="Total Districts"
                         value={stats.overall?.totalDistricts || 0}
@@ -1952,44 +1637,6 @@ const AdminDashboardPage = ({ onLogout }) => {
         type="logout"
       />
 
-      <RejectionModal
-        isOpen={showRejectionModal}
-        onClose={() => {
-          setShowRejectionModal(false);
-          setRejectionData(null);
-        }}
-        onConfirm={handleConfirmRejection}
-        title="Reject Application"
-        message="Please enter the reason for rejection:"
-        confirmText="Reject"
-        cancelText="Cancel"
-      />
-
-      <ConfirmationModal
-        isOpen={showDeleteKarkunModal}
-        onClose={() => {
-          setShowDeleteKarkunModal(false);
-          setMemberToDelete(null);
-        }}
-        onConfirm={confirmDeleteKarkun}
-        title="Delete Karkun Application"
-        message={`Are you sure you want to delete the Karkun application${memberToDelete?.name ? ` for ${memberToDelete.name}` : ''}? This action cannot be undone.`}
-        confirmText="Delete"
-        confirmColor="red"
-      />
-
-      <ConfirmationModal
-        isOpen={showDeleteRuknModal}
-        onClose={() => {
-          setShowDeleteRuknModal(false);
-          setMemberToDelete(null);
-        }}
-        onConfirm={confirmDeleteRukn}
-        title="Delete Rukn Application"
-        message={`Are you sure you want to delete the Rukn application${memberToDelete?.name ? ` for ${memberToDelete.name}` : ''}? This action cannot be undone.`}
-        confirmText="Delete"
-        confirmColor="red"
-      />
     </div>
   );
 };

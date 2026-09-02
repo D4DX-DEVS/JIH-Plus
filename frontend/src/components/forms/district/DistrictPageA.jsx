@@ -180,9 +180,9 @@ const DistrictPageA = () => {
   ];
 
   return (
-    <div className="p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
-      {/* Header */}
-      <div className="mb-8">
+    <div className="p-4 sm:p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
+      {/* Header: hidden on mobile, the page header / MobileTopBar already names this screen there. */}
+      <div className="hidden lg:block mb-8">
         <h2 className="text-2xl font-bold text-[#002349] mb-2">
           ജില്ലാ തലം റിപ്പോർട്ട് - PART A
         </h2>
@@ -215,7 +215,7 @@ const DistrictPageA = () => {
         <select
           value={formData.month}
           onChange={(e) => updateFormData('month', e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-lg transition-all duration-300 hover:border-[#002349]/50"
+          className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-lg transition-all duration-300 hover:border-[#002349]/50"
         >
           <option value="">തിരഞ്ഞെടുക്കുക</option>
           <option value="January">ജനുവരി</option>
@@ -263,7 +263,7 @@ const DistrictPageA = () => {
                       }}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('present', value, wing.key))}
-                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center text-[16px] sm:text-base focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -278,7 +278,7 @@ const DistrictPageA = () => {
                       }}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('leave', value, wing.key))}
-                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center text-[16px] sm:text-base focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -293,7 +293,7 @@ const DistrictPageA = () => {
                       }}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('absent', value, wing.key))}
-                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center text-[16px] sm:text-base focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -331,7 +331,7 @@ const DistrictPageA = () => {
             <textarea
               value={formData.partB.focusAreas.otherFocusAreas || ''}
               onChange={(e) => handleTextInputChange('otherFocusAreas', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-lg transition-all duration-300 hover:border-[#002349]/50"
+              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-lg transition-all duration-300 hover:border-[#002349]/50"
               rows={3}
               placeholder="മറ്റ് ഫോകസ് ചെയ്ത മേഖലകൾ ഇവിടെ നൽകുക..."
             />
@@ -370,7 +370,7 @@ const DistrictPageA = () => {
                       }}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('componentVisits', value, wing.key))}
-                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center text-[16px] sm:text-base focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -384,7 +384,7 @@ const DistrictPageA = () => {
                       }}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('areaVisits', value, wing.key))}
-                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center text-[16px] sm:text-base focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -398,7 +398,7 @@ const DistrictPageA = () => {
                       }}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('newComponentFormationAttempts', value, wing.key))}
-                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center text-[16px] sm:text-base focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -412,7 +412,7 @@ const DistrictPageA = () => {
                       }}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('newPersonConnections', value, wing.key))}
-                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center text-[16px] sm:text-base focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>

@@ -38,29 +38,6 @@ const portalCards = [
     ],
   },
   {
-    id: 'member-applications',
-    title: 'Member Applications',
-    description: 'Apply as Rukn or Karkun through official forms',
-    icon: Users,
-    accent: 'purple',
-    illustration: 'members',
-    comingSoon: true,
-    actions: [
-      {
-        label: 'Rukn Application',
-        icon: Users,
-        className: 'from-[#7548e8] to-[#4f28cf] hover:from-[#8158ed] hover:to-[#5d35db]',
-        handler: 'rukn',
-      },
-      {
-        label: 'Karkun Application',
-        icon: Users,
-        className: 'from-[#c89315] to-[#9a6b0e] hover:from-[#d4a427] hover:to-[#aa7816]',
-        handler: 'karkun',
-      },
-    ],
-  },
-  {
     id: 'ihthisabi-report',
     title: 'IHTHISABI Report',
     description: 'Access reporting system for member management',
@@ -76,7 +53,29 @@ const portalCards = [
       },
     ],
   },
+  {
+    id: 'member-applications',
+    title: 'Member Applications',
+    description: 'Rukn and Karkun application processing',
+    icon: Users,
+    accent: 'purple',
+    illustration: 'members',
+    actions: [
+      {
+        label: 'Access Members Portal',
+        icon: null,
+        className: 'from-[#7548e8] to-[#4f28cf] hover:from-[#8158ed] hover:to-[#5d35db]',
+        path: '/members/login',
+      },
+    ],
+  },
 ];
+
+// Live portals always render before any "coming soon" card so working actions
+// are the first thing a phone user can reach.
+const orderedPortalCards = [...portalCards].sort(
+  (a, b) => Number(Boolean(a.comingSoon)) - Number(Boolean(b.comingSoon))
+);
 
 const trustItems = [
   {
@@ -124,39 +123,18 @@ const accentClasses = {
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const [activePortal, setActivePortal] = useState(null);
   const [showHelpDesk, setShowHelpDesk] = useState(false);
 
   useEffect(() => {
-    if (!activePortal && !showHelpDesk) {
-      document.body.style.overflow = '';
-      return undefined;
-    }
-
-    document.body.style.overflow = showHelpDesk || window.innerWidth < 768 ? 'hidden' : '';
+    document.body.style.overflow = showHelpDesk ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [activePortal, showHelpDesk]);
-
-  const handleRuknForm = () => navigate('/rukn-form');
-  const handleKarkunForm = () => navigate('/karkun-form');
+  }, [showHelpDesk]);
 
   const handleAction = (action) => {
-    setActivePortal(null);
-
-    if (action.handler === 'rukn') {
-      setTimeout(handleRuknForm, 180);
-      return;
-    }
-
-    if (action.handler === 'karkun') {
-      setTimeout(handleKarkunForm, 180);
-      return;
-    }
-
     if (action.path) {
-      setTimeout(() => navigate(action.path), 180);
+      navigate(action.path);
     }
   };
 
@@ -189,7 +167,7 @@ const LandingPage = () => {
           <button
             type="button"
             onClick={() => setShowHelpDesk(true)}
-            className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/80 px-4 py-2 text-xs font-semibold text-[#17325b] shadow-[0_12px_35px_rgba(85,91,144,0.14)] backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_16px_38px_rgba(85,91,144,0.18)] focus:outline-none focus:ring-2 focus:ring-[#7d5df1]/35 sm:text-sm"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/80 bg-white/80 px-4 py-2 text-xs font-semibold text-[#17325b] shadow-[0_12px_35px_rgba(85,91,144,0.14)] backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_16px_38px_rgba(85,91,144,0.18)] focus:outline-none focus:ring-2 focus:ring-[#7d5df1]/35 sm:text-sm"
           >
             <PhoneCall className="h-4 w-4 text-[#7548e8]" />
             <span>Help Desk</span>
@@ -212,13 +190,12 @@ const LandingPage = () => {
             <p className="mt-2 text-xs font-semibold text-[#71809d] sm:text-sm">One Portal. Many Possibilities.</p>
           </section>
 
-          <section className="mt-4 grid min-h-0 gap-4 md:grid-cols-3 lg:gap-5 xl:mt-5">
-            {portalCards.map((card, index) => (
+          <section className="mt-4 grid min-h-0 gap-3 md:grid-cols-3 md:gap-4 lg:gap-5 xl:mt-5">
+            {orderedPortalCards.map((card, index) => (
               <PortalCard
                 key={card.id}
                 card={card}
                 index={index}
-                onOpen={() => setActivePortal(card)}
                 onAction={handleAction}
               />
             ))}
@@ -243,27 +220,19 @@ const LandingPage = () => {
         </footer>
       </div>
 
-      {activePortal && (
-        <MobilePortalSheet
-          portal={activePortal}
-          onClose={() => setActivePortal(null)}
-          onAction={handleAction}
-        />
-      )}
-
       {showHelpDesk && <HelpDeskModal onClose={() => setShowHelpDesk(false)} />}
     </div>
   );
 };
 
-const PortalCard = ({ card, index, onOpen, onAction }) => {
+const PortalCard = ({ card, index, onAction }) => {
   const Icon = card.icon;
   const accent = accentClasses[card.accent];
   const disabled = Boolean(card.comingSoon);
 
   return (
     <article
-      className={`landing-fade-up group relative flex min-h-[235px] flex-col overflow-hidden rounded-2xl border border-white/80 bg-white/[0.82] p-4 text-center shadow-[0_18px_50px_rgba(87,91,145,0.16)] backdrop-blur transition duration-300 sm:min-h-[265px] sm:p-5 lg:min-h-[300px] lg:p-5 ${
+      className={`landing-fade-up group relative flex flex-col overflow-hidden rounded-2xl border border-white/80 bg-white/[0.82] p-4 text-center shadow-[0_18px_50px_rgba(87,91,145,0.16)] backdrop-blur transition duration-300 sm:min-h-[265px] sm:p-5 lg:min-h-[300px] lg:p-5 ${
         disabled ? 'opacity-80 grayscale-[0.35]' : 'hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(87,91,145,0.22)]'
       }`}
       style={{ animationDelay: `${index * 90}ms` }}
@@ -275,40 +244,36 @@ const PortalCard = ({ card, index, onOpen, onAction }) => {
         </span>
       )}
 
-      {!disabled && (
-        <button type="button" onClick={onOpen} className="absolute inset-0 z-20 md:hidden" aria-label={`Open ${card.title}`} />
-      )}
       <div className={`absolute left-1/2 top-5 h-20 w-20 -translate-x-1/2 rounded-full ${accent.glow} opacity-80 blur-2xl`} />
 
-      <button
-        type="button"
-        onClick={disabled ? undefined : onOpen}
-        disabled={disabled}
-        className={`relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/55 shadow-inner ring-1 ring-white/80 transition duration-300 lg:h-[4.5rem] lg:w-[4.5rem] ${
-          disabled ? 'cursor-not-allowed pointer-events-none' : 'group-hover:scale-105 md:pointer-events-none'
+      <div
+        className={`relative mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/55 shadow-inner ring-1 ring-white/80 transition duration-300 sm:h-16 sm:w-16 lg:h-[4.5rem] lg:w-[4.5rem] ${
+          disabled ? '' : 'group-hover:scale-105'
         }`}
-        aria-label={card.title}
+        aria-hidden="true"
       >
-        <span className={`flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-full ${accent.iconWrap} lg:h-[3.75rem] lg:w-[3.75rem]`}>
-          <Icon className={`h-7 w-7 ${accent.icon} lg:h-8 lg:w-8`} strokeWidth={2.3} />
+        <span className={`flex h-[2.9rem] w-[2.9rem] items-center justify-center rounded-full ${accent.iconWrap} sm:h-[3.25rem] sm:w-[3.25rem] lg:h-[3.75rem] lg:w-[3.75rem]`}>
+          <Icon className={`h-6 w-6 ${accent.icon} sm:h-7 sm:w-7 lg:h-8 lg:w-8`} strokeWidth={2.3} />
         </span>
-      </button>
+      </div>
 
-      <h2 className="relative mt-4 text-lg font-extrabold leading-tight text-[#14305c] lg:text-xl">{card.title}</h2>
-      <span className={`mx-auto mt-3 h-1 w-10 rounded-full ${accent.underline}`} />
-      <p className="mx-auto mt-3 max-w-[220px] text-xs font-medium leading-5 text-[#68758f] lg:text-sm">{card.description}</p>
+      <h2 className="relative mt-3 text-lg font-extrabold leading-tight text-[#14305c] sm:mt-4 lg:text-xl">{card.title}</h2>
+      <span className={`mx-auto mt-2 h-1 w-10 rounded-full ${accent.underline} sm:mt-3`} />
+      <p className="mx-auto mt-2 max-w-[220px] text-xs font-medium leading-5 text-[#68758f] sm:mt-3 lg:text-sm">{card.description}</p>
 
-      <DecorativeIllustration type={card.illustration} accent={card.accent} />
+      <div className="hidden md:block">
+        <DecorativeIllustration type={card.illustration} accent={card.accent} />
+      </div>
 
       {disabled ? (
-        <div className="relative z-10 mt-auto hidden md:block">
-          <div className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-[#d8dcec] bg-[#eef0f8] px-4 py-2.5 text-xs font-bold text-[#5c6787] lg:text-sm">
+        <div className="relative z-10 mt-4 md:mt-auto">
+          <div className="flex w-full min-h-[48px] cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-[#d8dcec] bg-[#eef0f8] px-4 py-2.5 text-xs font-bold text-[#5c6787] lg:text-sm">
             <Clock className="h-4 w-4" />
             <span>Coming Soon</span>
           </div>
         </div>
       ) : (
-        <div className="relative z-10 mt-auto hidden space-y-2.5 md:block">
+        <div className="relative z-10 mt-4 space-y-2.5 md:mt-auto">
           {card.actions.map((action) => (
             <PortalActionButton key={action.label} action={action} onClick={() => onAction(action)} />
           ))}
@@ -325,7 +290,7 @@ const PortalActionButton = ({ action, onClick }) => {
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r px-4 py-2.5 text-xs font-bold text-white shadow-[0_12px_25px_rgba(24,39,91,0.18)] transition duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#7d5df1]/35 lg:text-sm ${action.className}`}
+      className={`flex min-h-[48px] w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r px-4 py-2.5 text-xs font-bold text-white shadow-[0_12px_25px_rgba(24,39,91,0.18)] transition duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#7d5df1]/35 lg:text-sm ${action.className}`}
     >
       {ActionIcon && <ActionIcon className="h-4 w-4" />}
       <span>{action.label}</span>
@@ -406,44 +371,6 @@ const TrustStrip = () => (
   </section>
 );
 
-const MobilePortalSheet = ({ portal, onClose, onAction }) => {
-  const Icon = portal.icon;
-  const accent = accentClasses[portal.accent];
-
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-end bg-[#101936]/35 p-0 backdrop-blur-sm md:hidden" onClick={onClose}>
-      <div
-        className="landing-mobile-sheet w-full rounded-t-3xl border border-white/80 bg-[#fbfcff] p-6 shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="ml-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#eef1f9] text-[#263758] transition hover:bg-[#e3e7f4]"
-          aria-label="Close"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        <div className="mt-2 text-center">
-          <span className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full ${accent.iconWrap}`}>
-            <Icon className={`h-10 w-10 ${accent.icon}`} />
-          </span>
-          <h2 className="mt-5 text-2xl font-extrabold text-[#14305c]">{portal.title}</h2>
-          <p className="mx-auto mt-3 max-w-[260px] text-sm font-medium leading-6 text-[#68758f]">{portal.description}</p>
-        </div>
-
-        <div className="mt-7 space-y-3">
-          {portal.actions.map((action) => (
-            <PortalActionButton key={action.label} action={action} onClick={() => onAction(action)} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const HelpDeskModal = ({ onClose }) => (
   <div
     className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#101936]/45 p-4 backdrop-blur-sm"
@@ -484,22 +411,22 @@ const HelpDeskModal = ({ onClose }) => (
                     <p className="truncate text-[0.65rem] font-semibold uppercase tracking-wide text-[#8992ac]">{phone.label}</p>
                     <p className="text-sm font-bold text-[#14305c]">{phone.value}</p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
+                  <div className="flex shrink-0 items-center gap-2">
                     <a
                       href={getTelHref(phone.value)}
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-[#10274f] text-white transition hover:bg-[#17325b]"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-[#10274f] text-white transition hover:bg-[#17325b]"
                       aria-label={`Call ${contact.person}`}
                     >
-                      <PhoneCall className="h-3.5 w-3.5" />
+                      <PhoneCall className="h-4 w-4" />
                     </a>
                     <a
                       href={getWhatsAppHref(phone.value, contact.topic)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-[#957C3D]/40 bg-[#957C3D]/10 text-[#7b652f] transition hover:bg-[#957C3D]/20"
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-[#957C3D]/40 bg-[#957C3D]/10 text-[#7b652f] transition hover:bg-[#957C3D]/20"
                       aria-label={`Message ${contact.person}`}
                     >
-                      <MessageCircle className="h-3.5 w-3.5" />
+                      <MessageCircle className="h-4 w-4" />
                     </a>
                   </div>
                 </div>

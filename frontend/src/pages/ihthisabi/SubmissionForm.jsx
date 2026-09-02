@@ -1115,27 +1115,27 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card-body p-3 sm:p-6">
           {question.answerType === 'text' && (
             <input type="text" value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-input w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3"
+              className="form-input w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
               placeholder={question.placeholder || ''} maxLength={question.maxLength || 500} />
           )}
 
           {question.answerType === 'textarea' && (
             <textarea value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-input min-h-[76px] w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:min-h-[100px] sm:rounded-xl sm:px-4 sm:py-3"
+              className="form-input min-h-[76px] w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:min-h-[100px] sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
               placeholder={question.placeholder || ''} maxLength={question.maxLength || 1000} rows={4} />
           )}
 
           {question.answerType === 'number' && (
             <input type="number" value={value ?? ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-input w-full max-w-[9rem] rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-xs sm:rounded-xl sm:px-4 sm:py-3"
+              className="form-input w-full max-w-[9rem] rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-xs sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
               placeholder={question.placeholder || '0'}
               min={question.min ?? 0} max={question.max ?? 100000} />
           )}
 
           {question.answerType === 'radio' && (
-            <div className="space-y-1.5 sm:space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {question.options?.map(opt => (
-                <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5">
+                <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5 py-1 sm:py-0">
                   <input type="radio" name={qId} value={opt.value} checked={value === opt.value}
                     onChange={() => handleDynamicFieldChange(qId, opt.value)}
                     className="h-4 w-4 shrink-0 border-gray-300 text-primary focus:ring-primary sm:h-5 sm:w-5" />
@@ -1147,7 +1147,7 @@ const SubmissionForm = ({ userRole }) => {
 
           {question.answerType === 'dropdown' && (
             <select value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-select w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-sm sm:rounded-xl sm:px-4 sm:py-3">
+              className="form-select w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-sm sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm">
               <option value="">Select...</option>
               {question.options?.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.labelMl || opt.label}</option>
@@ -1156,9 +1156,9 @@ const SubmissionForm = ({ userRole }) => {
           )}
 
           {question.answerType === 'checkbox' && (
-            <div className="space-y-1.5 sm:space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {question.options?.map(opt => (
-                <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5">
+                <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5 py-1 sm:py-0">
                   <input type="checkbox" checked={Array.isArray(value) && value.includes(opt.value)}
                     onChange={(e) => handleDynamicCheckboxChange(qId, opt.value, e.target.checked)}
                     className="h-4 w-4 shrink-0 rounded border-gray-300 text-primary focus:ring-primary sm:h-5 sm:w-5" />
@@ -1169,10 +1169,10 @@ const SubmissionForm = ({ userRole }) => {
           )}
 
           {question.answerType === 'star' && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2 sm:gap-1">
               {Array.from({ length: question.max || 5 }, (_, i) => i + 1).map(star => (
                 <button key={star} type="button" onClick={() => handleDynamicFieldChange(qId, star)}
-                  className="focus:outline-none transition-colors">
+                  className="p-2 sm:p-0 focus:outline-none transition-colors">
                   <Star className={`h-7 w-7 sm:h-8 sm:w-8 ${star <= (value || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
                 </button>
               ))}
@@ -1190,7 +1190,7 @@ const SubmissionForm = ({ userRole }) => {
                     <input type={sf.type === 'number' ? 'number' : 'text'}
                       value={(value || {})[effectiveFieldId] ?? ''}
                       onChange={(e) => handleDynamicGroupFieldChange(qId, effectiveFieldId, e.target.value)}
-                      className="form-input w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3"
+                      className="form-input w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
                       placeholder={sf.placeholder || (sf.type === 'number' ? '0' : '')}
                       min={sf.type === 'number' ? (sf.min ?? 0) : undefined}
                       max={sf.type === 'number' ? (sf.max ?? 100000) : undefined} />
@@ -1252,7 +1252,7 @@ const SubmissionForm = ({ userRole }) => {
     return (
       <>
         <button onClick={() => navigate(dashboardPath)}
-          className="fixed top-14 right-2.5 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
+          className="fixed top-14 right-2.5 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
           title="Close">
           <X className="w-5 h-5" />
         </button>
@@ -1261,7 +1261,7 @@ const SubmissionForm = ({ userRole }) => {
           <div className="space-y-3 rounded-2xl border border-gray-200 bg-white px-3.5 py-3 shadow-sm sm:space-y-4 sm:rounded-3xl sm:px-8 sm:py-8 sm:shadow-lg">
             <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h1 className="text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
+                <h1 className="hidden lg:block text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
                   {dynamicForm.title || 'ത്രൈമാസ പ്രവർത്തന റിപ്പോർട്ട്'}
                 </h1>
                 <p className="mt-0.5 text-[11px] text-gray-500 sm:mt-1 sm:text-sm">{quarterDetail}</p>
@@ -1286,14 +1286,14 @@ const SubmissionForm = ({ userRole }) => {
                     <div>
                       <label className="form-label">Name of Rukn</label>
                       <input {...register('ruknName', { required: 'Rukn name is required' })} type="text"
-                        className="form-input" placeholder="Enter name in English" readOnly />
+                        className="form-input text-base py-2 sm:text-sm" placeholder="Enter name in English" readOnly />
                       {errors.ruknName && <p className="form-error">{errors.ruknName.message}</p>}
                     </div>
                     <div>
                       <label className="form-label">Country</label>
                       <input
                         type="text"
-                        className="form-input bg-gray-50"
+                        className="form-input bg-gray-50 text-base py-2 sm:text-sm"
                         value={user?.abroadCountry?.title || user?.country || ''}
                         readOnly
                       />
@@ -1309,14 +1309,14 @@ const SubmissionForm = ({ userRole }) => {
                     <div>
                       <label className="form-label">Name of Rukn</label>
                       <input {...register('ruknName', { required: 'Rukn name is required' })} type="text"
-                        className="form-input" placeholder="Enter name in English" />
+                        className="form-input text-base py-2 sm:text-sm" placeholder="Enter name in English" />
                       {errors.ruknName && <p className="form-error">{errors.ruknName.message}</p>}
                     </div>
                     <div>
                       <label className="form-label">District</label>
                       <Controller name="district" control={control} rules={{ required: 'District is required' }}
                         render={({ field }) => (
-                          <select {...field} value={field.value || ''} className="form-select" disabled={loadingDistricts}
+                          <select {...field} value={field.value || ''} className="form-select text-base py-2 sm:text-sm" disabled={loadingDistricts}
                             onChange={(e) => { field.onChange(e); setValue('area', '') }}>
                             <option value="">Select District</option>
                             {districts.map(d => (
@@ -1330,7 +1330,7 @@ const SubmissionForm = ({ userRole }) => {
                       <label className="form-label">Area</label>
                       <Controller name="area" control={control} rules={{ required: 'Area is required' }}
                         render={({ field }) => (
-                          <select {...field} value={field.value || ''} className="form-select" disabled={loadingAreas || !watch('district')}>
+                          <select {...field} value={field.value || ''} className="form-select text-base py-2 sm:text-sm" disabled={loadingAreas || !watch('district')}>
                             <option value="">Select Area</option>
                             {areas.map(a => (
                               <option key={a._id || a.id} value={a._id || a.id}>{a.title || a.name}</option>
@@ -1342,7 +1342,7 @@ const SubmissionForm = ({ userRole }) => {
                     <div>
                       <label className="form-label">Unit</label>
                       <input {...register('unit', { required: 'Unit is required' })} type="text"
-                        className="form-input" placeholder="Enter unit name" />
+                        className="form-input text-base py-2 sm:text-sm" placeholder="Enter unit name" />
                       {errors.unit && <p className="form-error">{errors.unit.message}</p>}
                     </div>
                   </div>
@@ -1383,7 +1383,7 @@ const SubmissionForm = ({ userRole }) => {
       {/* Fixed Close Button - Top Right Corner */}
       <button
         onClick={() => navigate(dashboardPath)}
-        className="fixed top-14 right-2.5 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
+        className="fixed top-14 right-2.5 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
         title="Close"
       >
         <X className="w-5 h-5" />
@@ -1393,7 +1393,7 @@ const SubmissionForm = ({ userRole }) => {
         <div className="space-y-3 rounded-2xl border border-gray-200 bg-white px-3.5 py-3 shadow-sm sm:space-y-4 sm:rounded-3xl sm:px-8 sm:py-8 sm:shadow-lg">
           <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
+              <h1 className="hidden lg:block text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
                 {editMode ? 'തിരുത്തുക' : 'ത്രൈമാസ പ്രവർത്തന റിപ്പോർട്ട്'}
               </h1>
               <p className="mt-0.5 text-[11px] text-gray-500 sm:mt-1 sm:text-sm">
@@ -1434,7 +1434,7 @@ const SubmissionForm = ({ userRole }) => {
                       }
                     })}
                     type="text"
-                    className="form-input"
+                    className="form-input text-base py-2 sm:text-sm"
                     placeholder="Enter name in English"
                     readOnly
                   />
@@ -1446,7 +1446,7 @@ const SubmissionForm = ({ userRole }) => {
                   <label className="form-label">Country</label>
                   <input
                     type="text"
-                    className="form-input bg-gray-50"
+                    className="form-input bg-gray-50 text-base py-2 sm:text-sm"
                     value={user?.abroadCountry?.title || user?.country || ''}
                     readOnly
                   />
@@ -1471,7 +1471,7 @@ const SubmissionForm = ({ userRole }) => {
                         }
                       })}
                       type="text"
-                      className="form-input"
+                      className="form-input text-base py-2 sm:text-sm"
                       placeholder="Enter name in English"
                     />
                     {errors.ruknName && (
@@ -1489,7 +1489,7 @@ const SubmissionForm = ({ userRole }) => {
                         <select 
                           {...field}
                           value={field.value || ''}
-                          className="form-select"
+                          className="form-select text-base py-2 sm:text-sm"
                           disabled={loadingDistricts}
                           onChange={(e) => {
                             console.log('District changed to:', e.target.value)
@@ -1525,7 +1525,7 @@ const SubmissionForm = ({ userRole }) => {
                         <select 
                           {...field}
                           value={field.value || ''}
-                          className="form-select"
+                          className="form-select text-base py-2 sm:text-sm"
                           disabled={!selectedDistrict || loadingAreas}
                           onChange={(e) => {
                             console.log('Area changed to:', e.target.value)
@@ -1558,7 +1558,7 @@ const SubmissionForm = ({ userRole }) => {
                     <input
                       {...register('unit', { required: 'Unit is required' })}
                       type="text"
-                      className="form-input"
+                      className="form-input text-base py-2 sm:text-sm"
                       placeholder="Enter unit"
                     />
                     {errors.unit && (
@@ -1578,8 +1578,8 @@ const SubmissionForm = ({ userRole }) => {
               {nextQuestionNumber()}. ഖുർആൻ പഠനം : സൂറ അന്നിസാഅ് (87 ആയഹ്)- തഫ്സീർ മുന്നിൽ വെച്ചുള്ള പഠനം :
             </h3>
             <div className="space-y-1.5 sm:space-y-3">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                <label className="flex items-center">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <label className="flex items-center py-1.5 sm:py-0">
                   <input
                     type="radio"
                     value="complete"
@@ -1588,7 +1588,7 @@ const SubmissionForm = ({ userRole }) => {
                   />
                   <span className="ml-2 text-[13px] sm:text-base">പൂർണം</span>
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center py-1.5 sm:py-0">
                   <input
                     type="radio"
                     value="partial"
@@ -1602,7 +1602,7 @@ const SubmissionForm = ({ userRole }) => {
                 <label className="form-label">മറ്റു ഭാഗങ്ങൾ : (സൂറത്ത്, ആയത്തുകൾ)</label>
                 <textarea
                   {...register('form.quranStudy.others')}
-                  className="form-textarea"
+                  className="form-textarea text-base py-2 sm:text-sm"
                   rows="2"
                   placeholder="Enter other chapters/verses studied"
                 />
@@ -1627,7 +1627,7 @@ const SubmissionForm = ({ userRole }) => {
               type="number"
               min="0"
              
-                className="form-input w-32"
+                className="form-input w-32 text-base py-2 sm:text-sm"
                 placeholder="0"
                 onInput={handleNumberInput}
               onPaste={handleNumberPaste}
@@ -1647,9 +1647,9 @@ const SubmissionForm = ({ userRole }) => {
             <div className="space-y-2.5 sm:space-y-4">
               <div>
                 <label className="form-label">A. മുസ്‌ലിം വനിതകളും ഇസ്‌ലാമിക പ്രബോധനവും</label>
-                <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
                   {FORM_OPTIONS.bookReading.map((option) => (
-                    <label key={option.value} className="flex items-center">
+                    <label key={option.value} className="flex items-center py-1.5 sm:py-0">
                       <input
                         type="radio"
                         value={option.value}
@@ -1667,9 +1667,9 @@ const SubmissionForm = ({ userRole }) => {
 
               <div>
                 <label className="form-label">B. മദീനയിലെ ഏടുകളിൽ നിന്ന്</label>
-                <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
                   {FORM_OPTIONS.bookReading.map((option) => (
-                    <label key={option.value} className="flex items-center">
+                    <label key={option.value} className="flex items-center py-1.5 sm:py-0">
                       <input
                         type="radio"
                         value={option.value}
@@ -1689,7 +1689,7 @@ const SubmissionForm = ({ userRole }) => {
                 <label className="form-label">മറ്റു സാഹിത്യങ്ങൾ (പേരെഴുതുക)</label>
                 <textarea
                   {...register('form.bookReading.others')}
-                  className="form-textarea"
+                  className="form-textarea text-base py-2 sm:text-sm"
                   rows="2"
                   placeholder="Enter other literature read"
                 />
@@ -1717,7 +1717,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1738,7 +1738,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1759,7 +1759,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1791,7 +1791,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1812,7 +1812,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1833,7 +1833,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1852,9 +1852,9 @@ const SubmissionForm = ({ userRole }) => {
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. ഗൃഹയോഗങ്ങൾ :
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {GRIHA_MEETINGS_OPTIONS.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex items-center py-1.5 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -1877,9 +1877,9 @@ const SubmissionForm = ({ userRole }) => {
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. തഹ്‌രീകീ യോഗം - പങ്കാളിത്തം
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {THAHREEKI_MEETINGS_OPTIONS.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex items-center py-1.5 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -1902,9 +1902,9 @@ const SubmissionForm = ({ userRole }) => {
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. ബൈതുല്‍മാല്‍ (2%) നല്‍കിയത്:
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {FORM_OPTIONS.baithulmaal.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex items-center py-1.5 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -1927,9 +1927,9 @@ const SubmissionForm = ({ userRole }) => {
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. സകാത്ത് ബൈതുല്‍മാലില്‍ അടച്ചോ?
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {FORM_OPTIONS.zakatPaid.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex items-center py-1.5 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -1952,9 +1952,9 @@ const SubmissionForm = ({ userRole }) => {
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. പുതുതായി സംഘടനയിലേക്ക് കൊണ്ടുവന്ന വ്യക്തികൾ: (എണ്ണം)
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {[0, 1, 2, 3].map((value) => (
-                <label key={value} className="flex items-center">
+                <label key={value} className="flex items-center py-1.5 sm:py-0">
                   <input
                     type="radio"
                     value={value.toString()}
@@ -1989,7 +1989,7 @@ const SubmissionForm = ({ userRole }) => {
               type="number"
               min="0"
               max="100"
-              className="form-input w-32"
+              className="form-input w-32 text-base py-2 sm:text-sm"
               placeholder="0"
               onInput={handleNumberInput}
               onPaste={handleNumberPaste}
@@ -2016,7 +2016,7 @@ const SubmissionForm = ({ userRole }) => {
               type="number"
               min="0"
               max="100"
-              className="form-input w-32"
+              className="form-input w-32 text-base py-2 sm:text-sm"
               placeholder="0"
               onInput={handleNumberInput}
               onPaste={handleNumberPaste}
@@ -2043,7 +2043,7 @@ const SubmissionForm = ({ userRole }) => {
               type="number"
               min="0"
               max="100"
-              className="form-input w-32"
+              className="form-input w-32 text-base py-2 sm:text-sm"
               placeholder="0"
               onInput={handleNumberInput}
               onPaste={handleNumberPaste}
@@ -2060,9 +2060,9 @@ const SubmissionForm = ({ userRole }) => {
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. 100പേര്‍ക്ക് സേവനം ലഭ്യമാക്കുക എന്ന മീഖാത്തീ ടാര്‍ഗറ്റ് മുന്നില്‍ വെച്ച് ഈ ത്രൈമാസത്തിലെ സേവന പ്രവര്‍ത്തനം തൃപ്തികരമാണോ ?
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {FORM_OPTIONS.meqathService.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex items-center py-1.5 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -2085,9 +2085,9 @@ const SubmissionForm = ({ userRole }) => {
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. എഴുത്ത്, പ്രഭാഷണം, സംഭാഷണം തുടങ്ങിയ വ്യക്തിഗത കഴിവുകള്‍ ദീനീമാര്‍ഗത്തില്‍ സാധ്യമാകുന്ന അളവില്‍ ഉപയോഗപ്പെടുത്തിയിട്ടുണ്ടോ?
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {FORM_OPTIONS.skillUsage.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex items-center py-1.5 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -2125,7 +2125,7 @@ const SubmissionForm = ({ userRole }) => {
                     type="button"
                     onClick={() => handleStarRatingChange(star)}
                     onMouseEnter={() => setHoveredStar(star)}
-                    className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded transition-all p-1"
+                    className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded transition-all p-1.5"
                     aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
                   >
                     <Star
@@ -2153,7 +2153,7 @@ const SubmissionForm = ({ userRole }) => {
           <button
             type="button"
             onClick={() => navigate('/ihthisabi/dashboard')}
-            className="px-5 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition"
+            className="px-5 py-3 sm:py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition"
           >
             Cancel
           </button>
@@ -2161,7 +2161,7 @@ const SubmissionForm = ({ userRole }) => {
             type="submit"
             form="submissionForm"
             disabled={loading}
-            className="inline-flex items-center px-6 py-2 text-sm font-semibold text-white bg-[#161F2F] rounded-lg shadow-lg hover:bg-[#1a2538] transition disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center px-6 py-3 sm:py-2 text-sm font-semibold text-white bg-[#161F2F] rounded-lg shadow-lg hover:bg-[#1a2538] transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? (
               <div className="flex items-center gap-2">

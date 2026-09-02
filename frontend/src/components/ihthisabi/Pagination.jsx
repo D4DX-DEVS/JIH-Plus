@@ -20,7 +20,7 @@ const Pagination = ({ pagination, onPageChange, loading = false, itemLabel = 'it
           <button
             onClick={() => onPageChange(current - 1)}
             disabled={loading || current <= 1}
-            className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-ghost py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
@@ -30,7 +30,7 @@ const Pagination = ({ pagination, onPageChange, loading = false, itemLabel = 'it
           <button
             onClick={() => onPageChange(current + 1)}
             disabled={loading || current >= pages}
-            className="btn-ghost text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-ghost py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
           </button>

@@ -61,7 +61,7 @@ const AreaPageB = () => {
   return (
     <div className="p-5 bg-white rounded-2xl shadow-lg border border-gray-200 max-w-4xl mx-auto hover:shadow-xl transition-all duration-500">
       {/* Header */}
-      <div className="mb-5">
+      <div className="hidden lg:block mb-5">
         <h2 className="text-xl font-bold text-[#002349] mb-1.5">
           ഏരിയ തലം റിപ്പോർട്ട് - PART B
         </h2>
@@ -108,7 +108,7 @@ const AreaPageB = () => {
               type="text"
               value={formData.partB.monthlyMeetingReason || ''}
               onChange={(e) => updateFormData('partB', { monthlyMeetingReason: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
               placeholder="കാരണം വ്യക്തമാക്കുക"
             />
           </div>
@@ -141,7 +141,7 @@ const AreaPageB = () => {
                       onChange={(e) => handleWingAttendanceChange(wing.key, 'present', e.target.value)}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleWingAttendanceChange(wing.key, 'present', value))}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-[16px] sm:text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -152,7 +152,7 @@ const AreaPageB = () => {
                       onChange={(e) => handleWingAttendanceChange(wing.key, 'leave', e.target.value)}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleWingAttendanceChange(wing.key, 'leave', value))}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-[16px] sm:text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -163,7 +163,7 @@ const AreaPageB = () => {
                       onChange={(e) => handleWingAttendanceChange(wing.key, 'absent', e.target.value)}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleWingAttendanceChange(wing.key, 'absent', value))}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-[16px] sm:text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -188,7 +188,7 @@ const AreaPageB = () => {
                 type="text"
                 value={decision}
                 onChange={(e) => handleMainDecisionChange(index, e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
                 placeholder="തീരുമാനം നൽകുക"
               />
               <button

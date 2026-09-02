@@ -42,12 +42,14 @@ const TOOLTIP = {
 const BRAND = '#7B4FF2'
 const PENDING_GRAY = '#CBD5E1'
 
+// shortLabel is what phones show — the full labels are far too wide for five
+// pills at 390px. "District"/"Submissions" are implied by the screen itself.
 const TABS = [
   { key: 'overview', label: 'Overview', icon: BarChart3 },
   { key: 'members', label: 'Members', icon: Users },
   { key: 'submissions', label: 'Submissions', icon: FileText },
-  { key: 'replies', label: 'District Replies', icon: MessageSquare },
-  { key: 'alternative', label: 'Alternative Submissions', icon: Repeat }
+  { key: 'replies', label: 'District Replies', shortLabel: 'Replies', icon: MessageSquare },
+  { key: 'alternative', label: 'Alternative Submissions', shortLabel: 'Alt', icon: Repeat }
 ]
 
 const STATUS_COLORS = {
@@ -434,16 +436,19 @@ const DistrictAdminDashboard = () => {
         }
       `}</style>
 
-      {/* Header */}
+      {/* Header — mobile app bar already shows "District Dashboard" + user, so the
+          h1 is desktop-only; the district name stays as a compact line (the app
+          bar doesn't show it). */}
       <div className="mb-2 sm:mb-4">
-        <h1 className="ih-page-title">District Admin Dashboard</h1>
+        <h1 className="ih-page-title hidden lg:block">District Admin Dashboard</h1>
         <p className="ih-page-subtitle flex items-center gap-1">
           <MapPin className="w-3 h-3 shrink-0 text-[#7B4FF2]" />
           <span className="truncate">{district || 'Loading district…'}</span>
         </p>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs — on phones the icon sits above a short label so all five pills fit
+          the screen whole; from sm: up they return to icon-beside-full-label. */}
       <div className="ih-segment mb-3 print:hidden">
         {TABS.map((tab) => {
           const Icon = tab.icon
@@ -452,10 +457,11 @@ const DistrictAdminDashboard = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`ih-segment-btn ${active ? 'bg-[#7B4FF2] text-white shadow-sm' : ''}`}
+              className={`ih-segment-btn flex-col gap-0.5 px-2.5 py-1.5 sm:flex-row sm:gap-1 sm:px-3 ${active ? 'bg-[#7B4FF2] text-white shadow-sm' : ''}`}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{tab.label}</span>
+              <span className="sm:hidden">{tab.shortLabel || tab.label}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           )
         })}
@@ -587,7 +593,7 @@ const DistrictAdminDashboard = () => {
                     <select
                       value={breakdownPeriod?.quarter || ''}
                       onChange={(e) => fetchDashboard({ quarter: Number(e.target.value), year: breakdownPeriod?.year || stats.currentYear })}
-                      className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+                      className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-[13px] sm:text-xs focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
                     >
                       {getAvailableQuarters().map((q) => (
                         <option key={q} value={q}>{getQuarterName(q)}</option>
@@ -596,7 +602,7 @@ const DistrictAdminDashboard = () => {
                     <select
                       value={breakdownPeriod?.year || ''}
                       onChange={(e) => fetchDashboard({ quarter: breakdownPeriod?.quarter || stats.currentQuarter, year: Number(e.target.value) })}
-                      className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+                      className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-[13px] sm:text-xs focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
                     >
                       {(availableYears.length ? availableYears : [stats.currentYear].filter(Boolean)).map((y) => (
                         <option key={y} value={y}>{y}</option>
@@ -635,7 +641,32 @@ const DistrictAdminDashboard = () => {
             </div>
 
             <div className="ih-surface p-3 sm:p-5">
-              <table className="w-full table-fixed text-[11px] sm:text-sm">
+              {/* Mobile: roomy tappable rows — one full-width target per area */}
+              <div className="lg:hidden">
+                {areaBreakdown.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-gray-400">No data available</p>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {areaBreakdown.map((row) => (
+                      <button
+                        key={row.area}
+                        onClick={() => navigate(`/ihthisabi/districtadmin/areas/${encodeURIComponent(row.area || 'Unspecified')}?quarter=${breakdownPeriod?.quarter || ''}&year=${breakdownPeriod?.year || ''}`)}
+                        className="w-full min-h-[56px] flex items-center gap-3 px-1 py-3 text-left active:bg-gray-50 transition-colors"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-semibold text-[#7B4FF2] break-words leading-snug">{row.area || 'Unspecified'}</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5">
+                            {row.memberCount} members · {row.submissionCount} submitted · {row.completionRate}%
+                          </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Desktop: table */}
+              <table className="hidden lg:table w-full table-fixed text-[11px] sm:text-sm">
                 <thead>
                   <tr className="text-left text-[9px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
                     <th className="py-2 pr-1 sm:pr-4 w-[32%]">Area</th>
@@ -671,12 +702,12 @@ const DistrictAdminDashboard = () => {
                 {recentSubmissions.length === 0 ? (
                   <p className="text-center text-gray-400 py-6">No recent submissions</p>
                 ) : recentSubmissions.map((s) => (
-                  <div key={s._id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{s.ruknName}</p>
-                      <p className="text-xs text-gray-500">{s.area} · {s.unit} · {s.periodDisplay}</p>
+                  <div key={s._id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">{s.ruknName}</p>
+                      <p className="text-xs text-gray-500 truncate">{s.area} · {s.unit} · {s.periodDisplay}</p>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[s.status] || 'bg-gray-100 text-gray-800'}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium shrink-0 ${STATUS_COLORS[s.status] || 'bg-gray-100 text-gray-800'}`}>
                       {s.status}
                     </span>
                   </div>
@@ -699,35 +730,64 @@ const DistrictAdminDashboard = () => {
                 value={membersSearch}
                 onChange={(e) => setMembersSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && fetchMembers(1)}
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
               />
             </div>
             <select
               value={membersArea}
               onChange={(e) => setMembersArea(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+              className="px-3 py-2 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
             >
               <option value="">All Areas</option>
               {areas.map((a) => <option key={a} value={a}>{a}</option>)}
             </select>
-            <button
-              onClick={() => fetchMembers(1)}
-              className="px-4 py-2 bg-[#7B4FF2] text-white rounded-lg text-sm font-medium hover:bg-[#6a3dd9]"
-            >
-              Apply
-            </button>
-            <button
-              onClick={handlePrintMembers}
-              disabled={printLoading}
-              className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              {printLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
-              {printLoading ? 'Preparing…' : 'Print'}
-            </button>
+            <div className="flex gap-3 sm:contents">
+              <button
+                onClick={() => fetchMembers(1)}
+                className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 bg-[#7B4FF2] text-white rounded-lg text-sm font-medium hover:bg-[#6a3dd9]"
+              >
+                Apply
+              </button>
+              <button
+                onClick={handlePrintMembers}
+                disabled={printLoading}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {printLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+                {printLoading ? 'Preparing…' : 'Print'}
+              </button>
+            </div>
           </div>
 
           <div className="ih-surface overflow-hidden">
-            <div className="overflow-x-hidden sm:overflow-x-auto">
+            {/* Mobile: roomy tappable rows — one full-width target per member */}
+            <div className="lg:hidden">
+              {membersLoading ? (
+                <p className="py-8 text-center text-sm text-gray-400">Loading members…</p>
+              ) : members.length === 0 ? (
+                <p className="py-8 text-center text-sm text-gray-400">No members found</p>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {members.map((m) => (
+                    <button
+                      key={m._id}
+                      onClick={() => openMemberDetails(m)}
+                      className="w-full min-h-[56px] flex items-center gap-3 px-3 py-3 text-left active:bg-gray-50 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-semibold text-[#7B4FF2] break-words leading-snug">{m.name}</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          {m.ruknId} · {m.area} · {m.unit} · {m.submissionCount} submissions
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Desktop: table */}
+            <div className="hidden lg:block lg:overflow-x-auto">
               <table className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
@@ -752,7 +812,7 @@ const DistrictAdminDashboard = () => {
                       <td className="hidden sm:table-cell px-4 py-3 text-gray-600">{m.unit}</td>
                       <td className="hidden sm:table-cell px-4 py-3 text-gray-600">{m.submissionCount}</td>
                       <td className="px-3 sm:px-4 py-3 print:hidden">
-                        <button onClick={() => openMemberDetails(m)} className="text-[#7B4FF2] hover:underline inline-flex items-center gap-1 text-xs font-medium">
+                        <button onClick={() => openMemberDetails(m)} className="text-[#7B4FF2] hover:underline inline-flex items-center gap-1 text-xs font-medium p-2 -m-2">
                           <Eye className="w-3.5 h-3.5" /> View
                         </button>
                       </td>
@@ -806,55 +866,86 @@ const DistrictAdminDashboard = () => {
                 value={submissionsSearch}
                 onChange={(e) => setSubmissionsSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && fetchSubmissions(1)}
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
               />
             </div>
             <select
               value={submissionsArea}
               onChange={(e) => setSubmissionsArea(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+              className="px-3 py-2 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
             >
               <option value="">All Areas</option>
               {areas.map((a) => <option key={a} value={a}>{a}</option>)}
             </select>
-            <select
-              value={submissionsQuarter}
-              onChange={(e) => setSubmissionsQuarter(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
-            >
-              <option value="">All Quarters</option>
-              {getAvailableQuarters().map((q) => (
-                <option key={q} value={q}>{getQuarterName(q)}</option>
-              ))}
-            </select>
-            <select
-              value={submissionsYear}
-              onChange={(e) => setSubmissionsYear(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
-            >
-              <option value="">All Years</option>
-              {(availableYears.length ? availableYears : [stats.currentYear].filter(Boolean)).map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <button
-              onClick={() => fetchSubmissions(1)}
-              className="px-4 py-2 bg-[#7B4FF2] text-white rounded-lg text-sm font-medium hover:bg-[#6a3dd9]"
-            >
-              Apply
-            </button>
-            <button
-              onClick={handlePrintSubmissions}
-              disabled={printLoading}
-              className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              {printLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
-              {printLoading ? 'Preparing…' : 'Print'}
-            </button>
+            <div className="flex gap-3 sm:contents">
+              <select
+                value={submissionsQuarter}
+                onChange={(e) => setSubmissionsQuarter(e.target.value)}
+                className="flex-1 min-w-0 sm:flex-none px-3 py-2 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+              >
+                <option value="">All Quarters</option>
+                {getAvailableQuarters().map((q) => (
+                  <option key={q} value={q}>{getQuarterName(q)}</option>
+                ))}
+              </select>
+              <select
+                value={submissionsYear}
+                onChange={(e) => setSubmissionsYear(e.target.value)}
+                className="flex-1 min-w-0 sm:flex-none px-3 py-2 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+              >
+                <option value="">All Years</option>
+                {(availableYears.length ? availableYears : [stats.currentYear].filter(Boolean)).map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-3 sm:contents">
+              <button
+                onClick={() => fetchSubmissions(1)}
+                className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 bg-[#7B4FF2] text-white rounded-lg text-sm font-medium hover:bg-[#6a3dd9]"
+              >
+                Apply
+              </button>
+              <button
+                onClick={handlePrintSubmissions}
+                disabled={printLoading}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {printLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+                {printLoading ? 'Preparing…' : 'Print'}
+              </button>
+            </div>
           </div>
 
           <div className="ih-surface overflow-hidden">
-            <div className="overflow-x-hidden sm:overflow-x-auto">
+            {/* Mobile: roomy tappable rows — one full-width target per submission */}
+            <div className="lg:hidden">
+              {submissionsLoading ? (
+                <p className="py-8 text-center text-sm text-gray-400">Loading submissions…</p>
+              ) : submissions.length === 0 ? (
+                <p className="py-8 text-center text-sm text-gray-400">No submissions found</p>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {submissions.map((s) => (
+                    <button
+                      key={s.submissionId}
+                      onClick={() => openSubmissionDetails(s.submissionId)}
+                      className="w-full min-h-[56px] flex items-center gap-3 px-3 py-3 text-left active:bg-gray-50 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-semibold text-[#7B4FF2] break-words leading-snug">{s.ruknName}</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          {s.ruknId} · {s.area} · {s.unit} · {s.quarter} · {s.status}
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Desktop: table */}
+            <div className="hidden lg:block lg:overflow-x-auto">
               <table className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
@@ -885,7 +976,7 @@ const DistrictAdminDashboard = () => {
                         </span>
                       </td>
                       <td className="px-3 sm:px-4 py-3 print:hidden">
-                        <button onClick={() => openSubmissionDetails(s.submissionId)} className="text-[#7B4FF2] hover:underline inline-flex items-center gap-1 text-xs font-medium">
+                        <button onClick={() => openSubmissionDetails(s.submissionId)} className="text-[#7B4FF2] hover:underline inline-flex items-center gap-1 text-xs font-medium p-2 -m-2">
                           <Eye className="w-3.5 h-3.5" /> View
                         </button>
                       </td>
@@ -946,9 +1037,9 @@ const DistrictAdminDashboard = () => {
                   onClick={() => setSelectedReply(reply)}
                   className="w-full text-left rounded-lg border border-gray-100 hover:border-[#7B4FF2]/40 hover:bg-gray-50 px-4 py-3 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-gray-900">{reply.unit}</p>
-                    <span className="text-xs text-gray-400">{formatDate(reply.repliedAt)}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-gray-900 truncate min-w-0">{reply.unit}</p>
+                    <span className="text-xs text-gray-400 shrink-0 whitespace-nowrap">{formatDate(reply.repliedAt)}</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">{reply.periodDisplay}</p>
                 </button>
@@ -967,41 +1058,68 @@ const DistrictAdminDashboard = () => {
               <Loader2 className="w-6 h-6 text-[#7B4FF2] animate-spin mr-2" /> Loading alternative submissions…
             </div>
           ) : (
-            <div className="overflow-x-hidden sm:overflow-x-auto">
-              <table className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left px-3 sm:px-4 py-3">Name</th>
-                    <th className="hidden sm:table-cell text-left px-4 py-3">Type</th>
-                    <th className="hidden sm:table-cell text-left px-4 py-3">Area</th>
-                    <th className="hidden sm:table-cell text-left px-4 py-3">Unit</th>
-                    <th className="hidden sm:table-cell text-left px-4 py-3">Quarter</th>
-                    <th className="text-right px-3 sm:px-4 py-3">Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {altSubmissions.length === 0 ? (
-                    <tr><td colSpan={6} className="text-center py-8 text-gray-400">No alternative submissions found</td></tr>
-                  ) : altSubmissions.map((s) => (
-                    <tr key={s._id} className="border-t border-gray-50 hover:bg-gray-50/60 transition-colors">
-                      <td className="px-3 sm:px-4 py-3 font-medium text-gray-900">{s.ruknName || s.userId?.name}</td>
-                      <td className="hidden sm:table-cell px-4 py-3 text-gray-600">{s.type}</td>
-                      <td className="hidden sm:table-cell px-4 py-3 text-gray-600">{s.area}</td>
-                      <td className="hidden sm:table-cell px-4 py-3 text-gray-600">{s.unit}</td>
-                      <td className="hidden sm:table-cell px-4 py-3 text-gray-600">{s.periodDisplay}</td>
-                      <td className="px-3 sm:px-4 py-3 text-right">
-                        <button
-                          onClick={() => setSelectedAltSubmission(s)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-[#7B4FF2]/40 hover:text-[#7B4FF2] hover:bg-[#7B4FF2]/5 transition-colors text-xs font-medium"
-                        >
-                          <Eye className="w-3.5 h-3.5" /> View
-                        </button>
-                      </td>
+            <>
+              {/* Mobile: roomy tappable rows — one full-width target per submission */}
+              <div className="lg:hidden">
+                {altSubmissions.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-gray-400">No alternative submissions found</p>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {altSubmissions.map((s) => (
+                      <button
+                        key={s._id}
+                        onClick={() => setSelectedAltSubmission(s)}
+                        className="w-full min-h-[56px] flex items-center gap-3 px-3 py-3 text-left active:bg-gray-50 transition-colors"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-semibold text-[#7B4FF2] break-words leading-snug">{s.ruknName || s.userId?.name}</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5">
+                            {s.type} · {s.area} · {s.unit} · {s.periodDisplay}
+                          </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Desktop: table */}
+              <div className="hidden lg:block lg:overflow-x-auto">
+                <table className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-3 sm:px-4 py-3">Name</th>
+                      <th className="hidden sm:table-cell text-left px-4 py-3">Type</th>
+                      <th className="hidden sm:table-cell text-left px-4 py-3">Area</th>
+                      <th className="hidden sm:table-cell text-left px-4 py-3">Unit</th>
+                      <th className="hidden sm:table-cell text-left px-4 py-3">Quarter</th>
+                      <th className="text-right px-3 sm:px-4 py-3">Details</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {altSubmissions.length === 0 ? (
+                      <tr><td colSpan={6} className="text-center py-8 text-gray-400">No alternative submissions found</td></tr>
+                    ) : altSubmissions.map((s) => (
+                      <tr key={s._id} className="border-t border-gray-50 hover:bg-gray-50/60 transition-colors">
+                        <td className="px-3 sm:px-4 py-3 font-medium text-gray-900">{s.ruknName || s.userId?.name}</td>
+                        <td className="hidden sm:table-cell px-4 py-3 text-gray-600">{s.type}</td>
+                        <td className="hidden sm:table-cell px-4 py-3 text-gray-600">{s.area}</td>
+                        <td className="hidden sm:table-cell px-4 py-3 text-gray-600">{s.unit}</td>
+                        <td className="hidden sm:table-cell px-4 py-3 text-gray-600">{s.periodDisplay}</td>
+                        <td className="px-3 sm:px-4 py-3 text-right">
+                          <button
+                            onClick={() => setSelectedAltSubmission(s)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-[#7B4FF2]/40 hover:text-[#7B4FF2] hover:bg-[#7B4FF2]/5 transition-colors text-xs font-medium"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
           <Pagination pagination={altPagination} onPageChange={fetchAlternativeSubmissions} loading={altLoading} itemLabel="submissions" />
         </div>
@@ -1013,7 +1131,7 @@ const DistrictAdminDashboard = () => {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900">Member Details</h3>
-              <button onClick={() => { setSelectedMember(null); setMemberDetails(null) }} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => { setSelectedMember(null); setMemberDetails(null) }} className="text-gray-400 hover:text-gray-600 p-2 -m-2 rounded-full">
                 <CloseIcon className="w-5 h-5" />
               </button>
             </div>
@@ -1032,7 +1150,7 @@ const DistrictAdminDashboard = () => {
                     <div><span className="text-gray-400">Area:</span> <span className="font-medium">{memberDetails.area}</span></div>
                     <div><span className="text-gray-400">Unit:</span> <span className="font-medium">{memberDetails.unit}</span></div>
                     <div className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-gray-400" /> {memberDetails.contactNo || 'N/A'}</div>
-                    <div className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-gray-400" /> {memberDetails.emailId || 'N/A'}</div>
+                    <div className="flex items-center gap-1.5 min-w-0"><Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" /> <span className="truncate">{memberDetails.emailId || 'N/A'}</span></div>
                     <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" /> Last login: {formatDate(memberDetails.lastLogin)}</div>
                   </div>
                   <div className="grid grid-cols-3 gap-3 text-center">
@@ -1064,7 +1182,7 @@ const DistrictAdminDashboard = () => {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900">Submission Details</h3>
-              <button onClick={() => { setSelectedSubmissionId(null); setSubmissionDetails(null); setSubmissionFormSchema(null) }} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => { setSelectedSubmissionId(null); setSubmissionDetails(null); setSubmissionFormSchema(null) }} className="text-gray-400 hover:text-gray-600 p-2 -m-2 rounded-full">
                 <CloseIcon className="w-5 h-5" />
               </button>
             </div>
@@ -1075,9 +1193,9 @@ const DistrictAdminDashboard = () => {
                 </div>
               ) : submissionDetails ? (
                 <div className="space-y-4 text-sm">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-bold text-gray-900">{submissionDetails.ruknName}</h4>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[submissionDetails.status] || 'bg-gray-100 text-gray-800'}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-lg font-bold text-gray-900 min-w-0 break-words">{submissionDetails.ruknName}</h4>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium shrink-0 ${STATUS_COLORS[submissionDetails.status] || 'bg-gray-100 text-gray-800'}`}>
                       {submissionDetails.status}
                     </span>
                   </div>
@@ -1107,9 +1225,9 @@ const DistrictAdminDashboard = () => {
       {selectedReply && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3">
           <div className="bg-white rounded-lg max-w-xl w-full max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900">{selectedReply.unit}</h3>
-              <button onClick={() => setSelectedReply(null)} className="text-gray-400 hover:text-gray-600">
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 min-w-0 truncate">{selectedReply.unit}</h3>
+              <button onClick={() => setSelectedReply(null)} className="text-gray-400 hover:text-gray-600 p-2 -m-2 rounded-full">
                 <CloseIcon className="w-5 h-5" />
               </button>
             </div>
@@ -1125,12 +1243,12 @@ const DistrictAdminDashboard = () => {
       {selectedAltSubmission && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3">
           <div className="bg-white rounded-lg max-w-xl w-full max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">{selectedAltSubmission.ruknName || selectedAltSubmission.userId?.name}</h3>
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
+              <div className="min-w-0">
+                <h3 className="text-lg font-semibold text-gray-900 truncate">{selectedAltSubmission.ruknName || selectedAltSubmission.userId?.name}</h3>
                 <p className="text-xs text-gray-500 mt-0.5">{selectedAltSubmission.type}</p>
               </div>
-              <button onClick={() => setSelectedAltSubmission(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setSelectedAltSubmission(null)} className="text-gray-400 hover:text-gray-600 p-2 -m-2 rounded-full">
                 <CloseIcon className="w-5 h-5" />
               </button>
             </div>

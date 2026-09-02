@@ -85,15 +85,18 @@ const DistrictSurveyView = ({ survey, onBack, onEdit }) => {
   ];
 
   return (
-    <div className="p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
+    <div className="p-4 sm:p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
       {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-[#002349] mb-2">
+            {/* Name hidden on mobile: the parent MobileTopBar already shows the screen title there. */}
+            <h2 className="hidden lg:block text-2xl font-bold text-[#002349] mb-2">
               ജില്ലാ തലം റിപ്പോർട്ട് - {survey.month}
             </h2>
             <p className="text-gray-600 font-medium">
+              {/* Month lives in the desktop-only h2 above, so surface it here on mobile. */}
+              <span className="lg:hidden">മാസം: {survey.month} | </span>
               ജില്ല: {survey.district} | സമർപ്പിച്ചത്: {survey.submittedByName || survey.submittedBy} | തിയ്യതി: {new Date(survey.submittedAt).toLocaleDateString()}
             </p>
           </div>

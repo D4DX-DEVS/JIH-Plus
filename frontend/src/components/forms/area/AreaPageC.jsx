@@ -17,7 +17,7 @@ const AreaPageC = () => {
   return (
     <div className="p-5 bg-white rounded-2xl shadow-lg border border-gray-200 max-w-4xl mx-auto hover:shadow-xl transition-all duration-500">
       {/* Header */}
-      <div className="mb-5">
+      <div className="hidden lg:block mb-5">
         <h2 className="text-xl font-bold text-[#002349] mb-1.5">
           ഏരിയ തലം റിപ്പോർട്ട് - PART C
         </h2>
@@ -68,7 +68,7 @@ const AreaPageC = () => {
             type="text"
             value={formData.partC.otherFocus || ''}
             onChange={(e) => updateFormData('partC', { otherFocus: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
             placeholder="മറ്റുള്ളവ എഴുതുക"
           />
         </div>

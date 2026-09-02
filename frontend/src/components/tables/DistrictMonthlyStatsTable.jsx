@@ -224,12 +224,12 @@ export default function DistrictMonthlyStatsTable({ surveys, onRowClick }) {
 		<div className="space-y-6">
 			{/* Part Selection Buttons */}
 			<div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-3">
-				<div className="flex flex-wrap gap-3">
+				<div className="flex gap-3 overflow-x-auto pb-1">
 					{partButtons.map((part) => (
 						<button
 							key={part.key}
 							onClick={() => setActivePart(part.key)}
-							className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
+							className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
 								activePart === part.key
 									? 'bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white shadow-md'
 									: 'bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-100 hover:shadow-sm'

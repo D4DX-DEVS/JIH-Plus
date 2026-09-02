@@ -11,8 +11,7 @@ import {
   BarChart3, 
   User, 
   LogOut, 
-  Menu, 
-  X,
+  Menu,
   Users,
   ClipboardList,
   LifeBuoy,
@@ -32,7 +31,7 @@ const Layout = () => {
   const { user, logout, switchRole } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState(new Set())
@@ -55,7 +54,6 @@ const Layout = () => {
     const result = await switchRole(targetRole)
     setSwitchingRole(false)
     if (result.success) {
-      setSidebarOpen(false)
       setProfileMenuOpen(false)
       navigate(roleDashboardPath[result.user.role] || '/ihthisabi/dashboard', { replace: true })
     }
@@ -92,6 +90,7 @@ const Layout = () => {
     if (toExpand.size > 0) {
       setExpandedGroups(prev => new Set([...prev, ...toExpand]))
     }
+    setMoreOpen(false)
   }, [location.pathname])
 
   const toggleGroup = (groupName) => {
@@ -276,16 +275,32 @@ const Layout = () => {
 
   const bottomNavItems = buildBottomNav()
 
+  // "More" lists only what the bottom bar doesn't already carry — repeating the
+  // four tabs that are one tap away is what made the old drawer feel redundant.
+  const moreItems = (() => {
+    const inBar = new Set(bottomNavItems.filter(i => i.href).map(i => i.href))
+    const rest = []
+    navigation.forEach(item => {
+      if (item.type === 'group') {
+        item.children.forEach(child => { if (!inBar.has(child.href)) rest.push(child) })
+      } else if (item.href && !inBar.has(item.href)) {
+        rest.push(item)
+      }
+    })
+    return rest
+  })()
+
   const isBottomActive = (item) => {
-    if (item.action === 'menu') return sidebarOpen
+    if (item.action === 'menu') return moreOpen
     if (item.match) return item.match.includes(bestMatchHref)
     return isActive(item.href)
   }
 
   const handleBottomClick = (item) => {
     if (item.action === 'menu') {
-      setSidebarOpen(true)
+      setMoreOpen(prev => !prev)
     } else {
+      setMoreOpen(false)
       navigate(item.href)
     }
   }
@@ -388,7 +403,7 @@ const Layout = () => {
                 return (
                   <button
                     key={child.href}
-                    onClick={() => { navigate(child.href); setSidebarOpen(false) }}
+                    onClick={() => navigate(child.href)}
                     className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
                       active
                         ? 'bg-[#7B4FF2] text-white shadow-lg shadow-[#7B4FF2]/30'
@@ -412,7 +427,7 @@ const Layout = () => {
     return (
       <button
         key={item.name}
-        onClick={() => { navigate(item.href); setSidebarOpen(false) }}
+        onClick={() => navigate(item.href)}
         className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
           active
             ? 'bg-[#7B4FF2] text-white shadow-lg shadow-[#7B4FF2]/30 transform scale-[1.02]'
@@ -428,24 +443,15 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-[#1E1040] to-[#2D1B69] border-r border-[#3D2475] shadow-xl transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      {/* Sidebar — desktop only; phones navigate via the bottom bar and its
+          "More" panel, so this never slides in on mobile. */}
+      <div className="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full bg-gradient-to-b from-[#1E1040] to-[#2D1B69] border-r border-[#3D2475] shadow-xl lg:translate-x-0">
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-[#3D2475] bg-[#1A0D3D]/50 backdrop-blur-sm">
+        <div className="flex items-center h-16 px-6 border-b border-[#3D2475] bg-[#1A0D3D]/50 backdrop-blur-sm">
           <div className="flex items-center space-x-3">
-            <img 
-              src={LogoWhite} 
-              alt="IHTHISABI Logo" 
+            <img
+              src={LogoWhite}
+              alt="IHTHISABI Logo"
               className="w-10 h-10 object-contain"
             />
             <div>
@@ -453,12 +459,6 @@ const Layout = () => {
               <span className="text-xs text-purple-300">REPORT</span>
             </div>
           </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-purple-300 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Sidebar content */}
@@ -569,7 +569,72 @@ const Layout = () => {
 
         {/* Mobile bottom nav — curated minimal destinations + More */}
         {bottomNavItems.length > 0 && (
+          <>
+          {moreOpen && (
+            <div
+              className="lg:hidden fixed inset-0 z-30 bg-gray-900/40"
+              onClick={() => setMoreOpen(false)}
+            />
+          )}
           <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 bg-white/80 backdrop-blur-xl backdrop-saturate-150 shadow-[0_-1px_0_rgba(16,24,40,0.06),0_-8px_32px_rgba(16,24,40,0.06)] ih-mobile-nav-safe">
+            {/* "More" panel — grows upward out of the bar, carrying only the
+                destinations the bar itself doesn't already show. */}
+            {moreOpen && (
+              <div className="ih-more-sheet max-h-[60vh] overflow-y-auto border-b border-gray-200 bg-white px-3 pb-2 pt-3">
+                {moreItems.length > 0 && (
+                  <div className="space-y-1">
+                    {moreItems.map(item => {
+                      const Icon = item.icon
+                      const active = isActive(item.href)
+                      return (
+                        <button
+                          key={item.href}
+                          onClick={() => { setMoreOpen(false); navigate(item.href) }}
+                          className={`flex w-full min-h-[52px] items-center gap-3 rounded-xl px-3 text-left text-sm font-medium transition-colors ${
+                            active ? 'bg-[#7B4FF2] text-white' : 'text-gray-700 active:bg-gray-100'
+                          }`}
+                        >
+                          <Icon className={`h-[18px] w-[18px] shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
+                          <span className="min-w-0 flex-1 truncate">{item.name}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {otherRoles.length > 0 && (
+                  <div className="mt-2 border-t border-gray-100 pt-2">
+                    <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                      Switch Role
+                    </p>
+                    {otherRoles.map(roleOption => (
+                      <button
+                        key={roleOption.role}
+                        onClick={() => { setMoreOpen(false); handleSwitchRole(roleOption.role) }}
+                        disabled={switchingRole}
+                        className="flex w-full min-h-[52px] items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-gray-700 transition-colors active:bg-gray-100 disabled:opacity-60"
+                      >
+                        <ArrowLeftRight className="h-[18px] w-[18px] shrink-0 text-gray-400" />
+                        <span className="min-w-0 flex-1 truncate">
+                          {roleOption.label}{roleOption.scope ? ` · ${roleOption.scope}` : ''}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-2 border-t border-gray-100 pt-2">
+                  <button
+                    onClick={() => { setMoreOpen(false); handleLogout() }}
+                    className="flex w-full min-h-[52px] items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold text-red-600 transition-colors active:bg-red-50"
+                  >
+                    <LogOut className="h-[18px] w-[18px] shrink-0" />
+                    <span>Logout</span>
+                  </button>
+                  <PoweredByD4DX />
+                </div>
+              </div>
+            )}
             <nav
               className="grid gap-0.5 px-1.5 py-1"
               style={{ gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))` }}
@@ -599,6 +664,7 @@ const Layout = () => {
               })}
             </nav>
           </div>
+          </>
         )}
       </div>
 

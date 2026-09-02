@@ -48,7 +48,7 @@ const AreaPageE = () => {
   return (
     <div className="p-5 bg-white rounded-2xl shadow-lg border border-gray-200 max-w-4xl mx-auto hover:shadow-xl transition-all duration-500">
       {/* Header */}
-      <div className="mb-5">
+      <div className="hidden lg:block mb-5">
         <h2 className="text-xl font-bold text-[#002349] mb-1.5">
           ഏരിയ തലം റിപ്പോർട്ട് - PART E
         </h2>
@@ -76,7 +76,7 @@ const AreaPageE = () => {
                 const value = e.target.value.replace(/[^0-9]/g, '');
                 updateFormData('partE', { male: value === '' ? null : parseInt(value) || 0 });
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
               placeholder="എണ്ണം നൽകുക"
             />
           </div>
@@ -91,7 +91,7 @@ const AreaPageE = () => {
                 const value = e.target.value.replace(/[^0-9]/g, '');
                 updateFormData('partE', { female: value === '' ? null : parseInt(value) || 0 });
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
               placeholder="എണ്ണം നൽകുക"
             />
           </div>
@@ -178,7 +178,7 @@ const AreaPageE = () => {
                         onChange={(e) => handleCountChange(item.key, 'male', e.target.value)}
                         onKeyDown={handleNumericKeyDown}
                         onPaste={(e) => handleNumericPaste(e, (value) => handleCountChange(item.key, 'male', value))}
-                        className="w-full px-2 py-1.5 border border-blue-300 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent text-xs"
+                        className="w-full px-2 py-1.5 border border-blue-300 rounded-xl focus:ring-1 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-xs"
                         placeholder="എണ്ണം"
                         min="0"
                       />
@@ -203,7 +203,7 @@ const AreaPageE = () => {
                         onChange={(e) => handleCountChange(item.key, 'female', e.target.value)}
                         onKeyDown={handleNumericKeyDown}
                         onPaste={(e) => handleNumericPaste(e, (value) => handleCountChange(item.key, 'female', value))}
-                        className="w-full px-2 py-1.5 border border-pink-300 rounded-xl focus:ring-1 focus:ring-pink-500 focus:border-transparent text-xs"
+                        className="w-full px-2 py-1.5 border border-pink-300 rounded-xl focus:ring-1 focus:ring-pink-500 focus:border-transparent text-[16px] sm:text-xs"
                         placeholder="എണ്ണം"
                         min="0"
                       />
@@ -219,7 +219,7 @@ const AreaPageE = () => {
               type="text"
               value={formData.partE.otherCategory || ''}
               onChange={(e) => updateFormData('partE', { otherCategory: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
               placeholder="മറ്റുള്ളവ എഴുതുക"
             />
           </div>

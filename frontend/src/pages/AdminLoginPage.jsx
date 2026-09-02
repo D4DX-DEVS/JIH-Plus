@@ -39,18 +39,18 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
       {/* Home Icon - Floating */}
       <button
         onClick={() => navigate('/')}
-        className="fixed top-6 right-6 z-50 text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
+        className="fixed top-3.5 right-3.5 z-50 p-2.5 text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
         aria-label="Back to Home"
       >
         <Home className="w-6 h-6" />
       </button>
 
       {/* Main Content */}
-      <main className="h-full overflow-hidden max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         {/* Logo and Heading Section */}
         <div className="text-center mb-16">
           <div className="flex justify-center mb-4">
@@ -76,7 +76,7 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
-                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-sm transition-all duration-200 bg-gray-50 hover:bg-white"
+                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                 disabled={isLoading}
                 required
               />
@@ -93,7 +93,7 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
-                  className="w-full px-4 py-2.5 pr-12 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-sm transition-all duration-200 bg-gray-50 hover:bg-white"
+                  className="w-full px-4 py-2.5 pr-12 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                   disabled={isLoading}
                   required
                 />

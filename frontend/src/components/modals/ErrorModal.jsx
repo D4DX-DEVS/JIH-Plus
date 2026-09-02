@@ -150,7 +150,7 @@ const ErrorModal = ({ isOpen, onClose, type = 'generic', title, description, det
             </div>
             <button
               onClick={onClose}
-              className="ml-4 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+              className="ml-4 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 p-2"
             >
               <X className="w-5 h-5" />
             </button>
@@ -170,7 +170,7 @@ const ErrorModal = ({ isOpen, onClose, type = 'generic', title, description, det
           <div className="flex justify-end px-6 pb-6">
             <button
               onClick={onClose}
-              className={`px-5 py-2 rounded-lg text-sm font-medium text-white transition-colors ${config.button}`}
+              className={`px-5 py-2.5 rounded-lg text-sm font-medium text-white transition-colors ${config.button}`}
             >
               OK, Got it
             </button>

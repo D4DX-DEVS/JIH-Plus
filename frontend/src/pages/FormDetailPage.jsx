@@ -72,7 +72,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-[60vh] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#002349] mx-auto mb-4"></div>
           <p className="text-gray-600 font-medium">ഫോം വിവരങ്ങൾ ലോഡ് ചെയ്യുന്നു...</p>
@@ -83,7 +83,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
 
   if (error) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-[60vh] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 max-w-md shadow-lg">
             <p className="text-red-600 mb-6 font-semibold">{error}</p>
@@ -101,7 +101,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
 
   if (!form) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-[60vh] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-8 max-w-md shadow-lg">
             <p className="text-yellow-700 mb-6 font-semibold">ഫോം കണ്ടെത്തിയില്ല</p>
@@ -647,16 +647,16 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
   return (
     <>
       {/* Page Header with Action Buttons */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">ഫോം വിവരങ്ങൾ</h1>
           <p className="text-lg text-gray-600 font-normal mt-1">District: <span className="font-bold">{form.district}</span></p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleDownloadPDF}
             disabled={isDownloading}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 min-h-[44px] rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
           >
             <Download className="w-4 h-4" />
             <span>{isDownloading ? 'ഡൗൺലോഡ് ചെയ്യുന്നു...' : 'PDF ഡൗൺലോഡ്'}</span>
@@ -664,7 +664,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
           {!isAdmin && (
             <button
               onClick={() => onEdit(form)}
-              className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-4 py-2 rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
+              className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-4 py-2 min-h-[44px] rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
             >
               <Edit className="w-4 h-4" />
               <span>Edit</span>
@@ -672,7 +672,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
           )}
           <button
             onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 min-h-[44px] rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
           >
             <Trash2 className="w-4 h-4" />
             <span>Delete</span>
@@ -692,14 +692,14 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
                 <span className="text-lg text-gray-600 font-medium">District:</span>
                 <h2 className="text-xl font-bold text-[#002349]">{form.district}</h2>
               </div>
-              <div className="flex items-center space-x-4 text-sm text-gray-600 font-medium mt-2">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 font-medium mt-2">
                 <div className="flex items-center space-x-1">
                   <Calendar className="w-4 h-4" />
                   <span>സമർപ്പിച്ചത് {new Date(form.submittedAt).toLocaleDateString()}</span>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <User className="w-4 h-4" />
-                  <span>ആക്സസ് കോഡ്: {form.submittedBy}</span>
+                <div className="flex items-center space-x-1 min-w-0">
+                  <User className="w-4 h-4 flex-shrink-0" />
+                  <span className="break-words">ആക്സസ് കോഡ്: {form.submittedBy}</span>
                 </div>
               </div>
             </div>

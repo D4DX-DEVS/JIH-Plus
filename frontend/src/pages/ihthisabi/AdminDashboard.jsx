@@ -33,7 +33,11 @@ import {
   Archive,
   Database,
   ChevronDown,
-  Search
+  ChevronRight,
+  Search,
+  Plus,
+  MapPin,
+  SlidersHorizontal
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { downloadUnitReplyPDF } from '../../utils/unitReplyPdfGenerator'
@@ -107,6 +111,10 @@ const AdminDashboard = () => {
   const [districtAdminPagination, setDistrictAdminPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [selectedDistrictAdminId, setSelectedDistrictAdminId] = useState(null)
   const [showDistrictAdminModal, setShowDistrictAdminModal] = useState(false)
+  const [districtAdminFiltersOpen, setDistrictAdminFiltersOpen] = useState(false)
+  const [unitAdminFiltersOpen, setUnitAdminFiltersOpen] = useState(false)
+  const [uploadCardOpen, setUploadCardOpen] = useState(false)
+  const [broadcastCardOpen, setBroadcastCardOpen] = useState(false)
 
   // District-wise submission stats + chart district selection (Dashboard tab)
   const [districtStats, setDistrictStats] = useState([])
@@ -850,9 +858,9 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="ih-page-shell">
-        {/* Header — hidden on mobile: the app bar names the page, and sub-tabs
-            (Members, Master Data, …) render their own heading below this one. */}
-        <div className="ih-page-header hidden sm:flex">
+        {/* Header — hidden below lg: the app bar (visible <lg) already names the
+            page and shows the user's identity; showing this too would duplicate both. */}
+        <div className="ih-page-header hidden lg:flex">
           <div className="min-w-0">
             <h1 className="ih-page-title">Admin Dashboard</h1>
             <p className="ih-page-subtitle truncate">
@@ -870,6 +878,21 @@ const AdminDashboard = () => {
           )}
         </div>
 
+        {/* The header above is desktop-only, so failed loads need their own
+            retry surface below lg. */}
+        {hasError && (
+          <div className="lg:hidden mb-3 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5">
+            <p className="min-w-0 text-xs font-medium text-red-700">Some data failed to load.</p>
+            <button
+              onClick={retryFailedRequests}
+              className="btn-primary shrink-0 gap-1.5 px-3.5 text-xs"
+            >
+              <Activity className="w-3.5 h-3.5" />
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Content based on active tab */}
         {activeTab === 'archive' ? (
           <ArchiveManagement />
@@ -886,7 +909,7 @@ const AdminDashboard = () => {
         ) : activeTab === 'unitreply' ? (
           <div className="space-y-6">
             <div className="ih-surface p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Send Reply to Unit Admin</h3>
                 <button
                   type="button"
@@ -895,7 +918,7 @@ const AdminDashboard = () => {
                     setTemplateEditing(next)
                     if (next) fetchFormFields(templateQuarter)
                   }}
-                  className="text-sm px-3 py-1.5 border border-indigo-300 rounded-lg text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"
+                  className="text-sm px-3 py-2.5 border border-indigo-300 rounded-lg text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"
                 >
                   <Settings className="w-4 h-4" />
                   {templateEditing ? 'Hide Template Editor' : 'Edit Reply Template'}
@@ -930,7 +953,7 @@ const AdminDashboard = () => {
                       if (e.target.value) fetchReplyAreas(e.target.value)
                       else { setReplyAreas([]); setReplyArea(''); setReplyUnits([]); setReplyFormData(prev => ({ ...prev, unit: '' })) }
                     }}
-                    className="form-select"
+                    className="form-select text-base"
                   >
                     <option value="">Select District</option>
                     {replyDistricts.map(d => (
@@ -948,7 +971,7 @@ const AdminDashboard = () => {
                       if (e.target.value) fetchReplyUnits(replyDistrict, e.target.value)
                       else { setReplyUnits([]); setReplyFormData(prev => ({ ...prev, unit: '' })) }
                     }}
-                    className="form-select"
+                    className="form-select text-base"
                     disabled={!replyDistrict || replyAreasLoading}
                   >
                     <option value="">
@@ -965,7 +988,7 @@ const AdminDashboard = () => {
                   <select
                     value={replyFormData.unit}
                     onChange={(e) => setReplyFormData(prev => ({ ...prev, unit: e.target.value }))}
-                    className="form-select"
+                    className="form-select text-base"
                     disabled={!replyArea || replyUnitsLoading}
                   >
                     <option value="">
@@ -986,7 +1009,7 @@ const AdminDashboard = () => {
                     type="number"
                     value={replyFormData.year}
                     onChange={(e) => setReplyFormData(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
-                    className="form-input"
+                    className="form-input text-base"
                     min="2020"
                     max={new Date().getFullYear() + 1}
                   />
@@ -997,7 +1020,7 @@ const AdminDashboard = () => {
                   <select
                     value={replyFormData.quarter}
                     onChange={(e) => setReplyFormData(prev => ({ ...prev, quarter: parseInt(e.target.value) }))}
-                    className="form-select"
+                    className="form-select text-base"
                   >
                     <option value={1}>Q1 (Jan-Mar)</option>
                     <option value={2}>Q2 (Apr-Jun)</option>
@@ -1064,14 +1087,8 @@ const AdminDashboard = () => {
                   <div className="bg-white border-2 border-gray-300 rounded-lg shadow-lg overflow-hidden">
                     <div className="bg-white" style={{ minHeight: '600px' }}>
                       {/* Letterhead */}
-                      <div 
-                        className="border-b-2 border-black text-center"
-                        style={{ 
-                          paddingTop: '15mm',
-                          paddingLeft: '20mm',
-                          paddingRight: '20mm',
-                          paddingBottom: '20px'
-                        }}
+                      <div
+                        className="border-b-2 border-black text-center px-4 pt-5 pb-5 sm:px-[20mm] sm:pt-[15mm]"
                       >
                         <img 
                           src={letterheadImage} 
@@ -1082,13 +1099,9 @@ const AdminDashboard = () => {
                       </div>
                       
                       {/* Letter Content */}
-                      <div 
-                        className="malayalam-text"
-                        style={{ 
-                          paddingTop: '30px',
-                          paddingLeft: '20mm',
-                          paddingRight: '20mm',
-                          paddingBottom: '15mm',
+                      <div
+                        className="malayalam-text px-4 pt-6 pb-6 sm:px-[20mm] sm:pt-[30px] sm:pb-[15mm]"
+                        style={{
                           lineHeight: '1.8',
                           fontSize: '14px',
                           color: '#000',
@@ -1129,14 +1142,23 @@ const AdminDashboard = () => {
             
 
             {/* Unit Admin Excel Upload */}
-            <div className="ih-surface p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload Unit Admin Excel</h3>
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="ih-surface p-3 sm:p-6">
+              {/* Tap to expand on phones; always open from lg: where there is room. */}
+              <button
+                type="button"
+                onClick={() => setUploadCardOpen(o => !o)}
+                aria-expanded={uploadCardOpen}
+                className="flex w-full items-center justify-between gap-2 text-left lg:pointer-events-none"
+              >
+                <h3 className="text-sm font-semibold text-gray-900 sm:text-lg">Upload Unit Admin Excel</h3>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-gray-400 transition-transform duration-300 lg:hidden ${uploadCardOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <p className={`${uploadCardOpen ? 'block' : 'hidden'} mt-2 text-sm text-gray-600 lg:!block lg:mt-4 lg:mb-4`}>
                 Upload an Excel file containing unit admin data. Expected format: Unit, District/City, Area (optional), Rukn ID, Rukn Name, Contact No, Email Id
               </p>
               
               {/* Upload Section */}
-              <div className="space-y-4">
+              <div className={`${uploadCardOpen ? 'block' : 'hidden'} mt-3 space-y-4 lg:!block`}>
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                   <input
                     type="file"
@@ -1230,27 +1252,35 @@ const AdminDashboard = () => {
             </div>
 
             {/* Unit Admin WhatsApp Broadcast */}
-            <div className="ih-surface p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Send WhatsApp Message</h3>
-                  <p className="text-sm text-gray-600">This message will be sent to all active unit admins.</p>
+            <div className="ih-surface p-3 sm:p-6">
+              <button
+                type="button"
+                onClick={() => setBroadcastCardOpen(o => !o)}
+                aria-expanded={broadcastCardOpen}
+                className="flex w-full items-center justify-between gap-2 text-left lg:pointer-events-none lg:mb-4"
+              >
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-gray-900 sm:text-lg">Send WhatsApp Message</h3>
+                  <p className="hidden text-sm text-gray-600 lg:block">This message will be sent to all active unit admins.</p>
                 </div>
-                {!isSuperAdmin && (
-                  <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
-                    Super admin only
-                  </span>
-                )}
-              </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {!isSuperAdmin && (
+                    <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                      Super admin only
+                    </span>
+                  )}
+                  <ChevronDown className={`h-4 w-4 shrink-0 text-gray-400 transition-transform duration-300 lg:hidden ${broadcastCardOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
 
-              <div className="grid grid-cols-1 gap-4">
+              <div className={`${broadcastCardOpen ? 'grid' : 'hidden'} mt-3 grid-cols-1 gap-4 lg:!grid lg:mt-0`}>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
                   <input
                     type="text"
                     value={unitAdminMessage.title}
                     onChange={(e) => setUnitAdminMessage(prev => ({ ...prev, title: e.target.value }))}
-                    className="form-input"
+                    className="form-input text-base"
                     placeholder="Enter message title"
                     disabled={!isSuperAdmin || unitAdminMessageSending}
                   />
@@ -1261,14 +1291,14 @@ const AdminDashboard = () => {
                   <textarea
                     value={unitAdminMessage.description}
                     onChange={(e) => setUnitAdminMessage(prev => ({ ...prev, description: e.target.value }))}
-                    className="form-textarea min-h-[120px]"
+                    className="form-textarea min-h-[120px] text-base"
                     placeholder="Enter message description"
                     disabled={!isSuperAdmin || unitAdminMessageSending}
                   />
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center space-x-3">
+              <div className={`${broadcastCardOpen ? 'flex' : 'hidden'} mt-4 items-center space-x-3 lg:!flex`}>
                 <button
                   onClick={handleSendUnitAdminMessage}
                   disabled={!isSuperAdmin || unitAdminMessageSending || !unitAdminMessage.title.trim() || !unitAdminMessage.description.trim()}
@@ -1291,39 +1321,66 @@ const AdminDashboard = () => {
 
             {/* Unit Admins List */}
             <div className="ih-surface">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Unit Admins</h3>
-                    <div className="text-sm text-gray-600">
+              <div className="border-b border-gray-200 px-3 py-2.5 sm:px-6 sm:py-4">
+                <div className="flex items-center justify-between gap-2 sm:gap-3">
+                  <div className="min-w-0">
+                    {/* Title only from lg: — the app bar already names this screen. */}
+                    <h3 className="hidden text-lg font-semibold text-gray-900 lg:block">Unit Admins</h3>
+                    <div className="truncate text-[11px] text-gray-600 sm:text-sm">
                       <span>Total Count: <span className="font-semibold text-blue-600">{pagination.total || unitAdmins.length}</span></span>
                       {pagination.pages > 1 && (
-                        <span className="ml-4">Page: <span className="font-semibold text-green-600">{pagination.current}</span> of <span className="font-semibold text-green-600">{pagination.pages}</span></span>
+                        <span className="ml-3 sm:ml-4">Page: <span className="font-semibold text-green-600">{pagination.current}</span> of <span className="font-semibold text-green-600">{pagination.pages}</span></span>
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    {/* Search Bar */}
-                    <div className="relative w-full sm:w-auto">
-                      <input
-                        type="text"
-                        placeholder="Search unit admins..."
-                        value={searchTerm}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        className="form-input pl-10"
-                      />
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      </div>
-                    </div>
 
-                    {/* District Filter */}
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      onClick={() => setUnitAdminFiltersOpen(o => !o)}
+                      title="Search and filter"
+                      aria-expanded={unitAdminFiltersOpen}
+                      className={`inline-flex h-[44px] shrink-0 items-center gap-1 rounded-full px-3 text-[11px] font-medium transition-colors sm:hidden ${
+                        (searchTerm || selectedDistrict) ? 'bg-primary/10 text-primary' : 'text-gray-500'
+                      }`}
+                      style={(searchTerm || selectedDistrict) ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
+                    >
+                      <SlidersHorizontal className="h-4 w-4" />
+                      <ChevronDown className={`h-3 w-3 transition-transform duration-300 ${unitAdminFiltersOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {unitAdmins.length > 0 && (
+                      <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        title="Delete all unit admins"
+                        aria-label="Delete all unit admins"
+                        className="btn-primary h-[44px] w-[44px] shrink-0 gap-1 rounded-full bg-red-600 px-0 hover:bg-red-700 sm:h-9 sm:w-auto sm:px-4 sm:text-sm"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        <span className="hidden sm:inline">Delete All</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search + district filter — collapsed on phones, always open from sm: */}
+                <div className={`${unitAdminFiltersOpen ? 'grid' : 'hidden'} mt-2.5 grid-cols-1 gap-2 sm:!grid sm:grid-cols-2 lg:grid-cols-3`}>
+                  <div className="relative">
+                    <Search className="ih-filter-icon" />
+                    <input
+                      type="text"
+                      placeholder="Search unit admins..."
+                      value={searchTerm}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="ih-field h-[44px] pr-3 text-base sm:h-9 sm:text-sm"
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <MapPin className="ih-filter-icon" />
                     <select
                       value={selectedDistrict}
                       onChange={(e) => handleDistrictFilter(e.target.value)}
-                      className="form-select w-full sm:w-auto"
+                      className="ih-filter-select h-[44px] truncate text-[13px] sm:h-9 sm:text-sm"
                     >
                       <option value="">All Districts</option>
                       {districts.map((district) => (
@@ -1332,41 +1389,68 @@ const AdminDashboard = () => {
                         </option>
                       ))}
                     </select>
-
-                    {/* Clear Filters Button */}
-                    {(searchTerm || selectedDistrict) && (
-                      <button
-                        onClick={clearFilters}
-                        className="btn-ghost w-full sm:w-auto"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        <span>Clear</span>
-                      </button>
-                    )}
-                    
-                    {/* Delete All Button */}
-                    {unitAdmins.length > 0 && (
-                      <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="btn-primary bg-red-600 hover:bg-red-700"
-                      >
-                        <XCircle className="h-4 w-4 mr-2" />
-                        <span>Delete All</span>
-                      </button>
-                    )}
                   </div>
+
+                  {(searchTerm || selectedDistrict) && (
+                    <button
+                      onClick={clearFilters}
+                      className="inline-flex h-[44px] items-center justify-center gap-1 rounded-full px-3 text-[11px] font-medium text-gray-500 transition-colors hover:text-gray-800 sm:h-9 sm:text-sm"
+                      style={{ backgroundColor: 'rgba(16,24,40,0.04)' }}
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      Clear
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="p-6">
+              <div className="p-3 sm:p-6">
                 {unitAdminLoading ? (
                   <div className="text-center py-8">
                     <div className="spinner w-8 h-8 mx-auto mb-4"></div>
                     <p className="text-gray-600">Loading unit admins...</p>
                   </div>
                 ) : unitAdmins.length > 0 ? (
-                  <div className="overflow-x-hidden sm:overflow-x-auto">
+                  <>
+                    {/* Mobile: roomy tappable rows — one full-width target per record */}
+                    <div className="lg:hidden">
+                      <div className="divide-y divide-gray-100">
+                        {unitAdmins.map((admin) => (
+                          <button
+                            key={admin._id}
+                            onClick={() => {
+                              setSelectedUnitAdminId(admin._id)
+                              setShowProfileModal(true)
+                            }}
+                            className="w-full min-h-[56px] flex items-center gap-3 px-1 py-3 text-left active:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex-shrink-0 h-10 w-10">
+                              <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                                <span className="text-sm font-medium text-primary-600">
+                                  {admin.name?.charAt(0)?.toUpperCase()}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">{admin.name}</p>
+                              <p className="text-[11px] text-gray-500 mt-0.5">
+                                ID: {admin.ruknId} · {admin.unit} · {admin.district}{admin.area ? `, ${admin.area}` : ''}
+                              </p>
+                              <p className="text-[11px] text-gray-500 mt-0.5 truncate">
+                                {admin.contactNo}{admin.emailId ? ` · ${admin.emailId}` : ''}
+                              </p>
+                              <span className={`mt-1 inline-block px-2 py-0.5 text-[10px] font-medium rounded-full ${
+                                admin.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {admin.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Desktop: table */}
+                    <div className="hidden lg:block overflow-x-hidden sm:overflow-x-auto">
                     <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                       <thead className="bg-gray-50">
                         <tr>
@@ -1392,7 +1476,7 @@ const AdminDashboard = () => {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {unitAdmins.map((admin) => (
-                          <tr 
+                          <tr
                             key={admin._id}
                             onClick={() => {
                               setSelectedUnitAdminId(admin._id)
@@ -1438,8 +1522,8 @@ const AdminDashboard = () => {
                             </td>
                             <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                admin.isActive 
-                                  ? 'bg-green-100 text-green-800' 
+                                admin.isActive
+                                  ? 'bg-green-100 text-green-800'
                                   : 'bg-red-100 text-red-800'
                               }`}>
                                 {admin.isActive ? 'Active' : 'Inactive'}
@@ -1449,7 +1533,8 @@ const AdminDashboard = () => {
                         ))}
                       </tbody>
                     </table>
-                  </div>
+                    </div>
+                  </>
                 ) : (
                   <div className="text-center py-8">
                     <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -1464,68 +1549,137 @@ const AdminDashboard = () => {
           </div>
         ) : activeTab === 'districtadmins' ? (
           <div className="space-y-6">
+            {/* Phones get the add action as a floating button instead of a full row. */}
+            <button
+              onClick={() => { setSelectedDistrictAdminId(null); setShowDistrictAdminModal(true) }}
+              title="Add District Admin"
+              aria-label="Add District Admin"
+              className="ih-fab"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
             {/* District Admins List */}
             <div className="ih-surface">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">District Admins</h3>
-                    <div className="text-sm text-gray-600">
+              <div className="border-b border-gray-200 px-3 py-2.5 sm:px-6 sm:py-4">
+                <div className="flex items-center justify-between gap-2 sm:gap-3">
+                  <div className="min-w-0">
+                    {/* Title only from lg: — the app bar already names this screen. */}
+                    <h3 className="hidden text-lg font-semibold text-gray-900 lg:block">District Admins</h3>
+                    <div className="truncate text-[11px] text-gray-600 sm:text-sm">
                       <span>Total Count: <span className="font-semibold text-blue-600">{districtAdminPagination.total || districtAdmins.length}</span></span>
                       {districtAdminPagination.pages > 1 && (
-                        <span className="ml-4">Page: <span className="font-semibold text-green-600">{districtAdminPagination.current}</span> of <span className="font-semibold text-green-600">{districtAdminPagination.pages}</span></span>
+                        <span className="ml-3 sm:ml-4">Page: <span className="font-semibold text-green-600">{districtAdminPagination.current}</span> of <span className="font-semibold text-green-600">{districtAdminPagination.pages}</span></span>
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    <div className="relative w-full sm:w-auto">
-                      <input
-                        type="text"
-                        placeholder="Search district admins..."
-                        value={districtAdminSearchTerm}
-                        onChange={(e) => handleDistrictAdminSearch(e.target.value)}
-                        className="form-input pl-10"
-                      />
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-gray-400" />
-                      </div>
-                    </div>
 
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      onClick={() => setDistrictAdminFiltersOpen(o => !o)}
+                      title="Search and filter"
+                      aria-expanded={districtAdminFiltersOpen}
+                      className={`inline-flex h-[44px] shrink-0 items-center gap-1 rounded-full px-3 text-[11px] font-medium transition-colors sm:hidden ${
+                        (districtAdminSearchTerm || selectedDistrictAdminDistrict) ? 'bg-primary/10 text-primary' : 'text-gray-500'
+                      }`}
+                      style={(districtAdminSearchTerm || selectedDistrictAdminDistrict) ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
+                    >
+                      <SlidersHorizontal className="h-4 w-4" />
+                      <ChevronDown className={`h-3 w-3 transition-transform duration-300 ${districtAdminFiltersOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    <button
+                      onClick={() => { setSelectedDistrictAdminId(null); setShowDistrictAdminModal(true) }}
+                      className="btn-primary hidden shrink-0 gap-1 sm:inline-flex sm:h-9 sm:px-4 sm:text-sm"
+                    >
+                      <Plus className="h-4 w-4" /> Add District Admin
+                    </button>
+                  </div>
+                </div>
+
+                {/* Search + district filter — collapsed on phones, always open from sm: */}
+                <div className={`${districtAdminFiltersOpen ? 'grid' : 'hidden'} mt-2.5 grid-cols-1 gap-2 sm:!grid sm:grid-cols-2 lg:grid-cols-3`}>
+                  <div className="relative">
+                    <Search className="ih-filter-icon" />
+                    <input
+                      type="text"
+                      placeholder="Search district admins..."
+                      value={districtAdminSearchTerm}
+                      onChange={(e) => handleDistrictAdminSearch(e.target.value)}
+                      className="ih-field h-[44px] pr-3 text-base sm:h-9 sm:text-sm"
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <MapPin className="ih-filter-icon" />
                     <select
                       value={selectedDistrictAdminDistrict}
                       onChange={(e) => handleDistrictAdminDistrictFilter(e.target.value)}
-                      className="form-select w-full sm:w-auto"
+                      className="ih-filter-select h-[44px] truncate text-[13px] sm:h-9 sm:text-sm"
                     >
                       <option value="">All Districts</option>
                       {districtAdminDistricts.map((district) => (
                         <option key={district} value={district}>{district}</option>
                       ))}
                     </select>
-
-                    {(districtAdminSearchTerm || selectedDistrictAdminDistrict) && (
-                      <button onClick={clearDistrictAdminFilters} className="btn-ghost w-full sm:w-auto">
-                        <XCircle className="h-4 w-4" />
-                        <span>Clear</span>
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => { setSelectedDistrictAdminId(null); setShowDistrictAdminModal(true) }}
-                      className="btn-primary w-full sm:w-auto"
-                    >
-                      Add District Admin
-                    </button>
                   </div>
+
+                  {(districtAdminSearchTerm || selectedDistrictAdminDistrict) && (
+                    <button
+                      onClick={clearDistrictAdminFilters}
+                      className="inline-flex h-[44px] items-center justify-center gap-1 rounded-full px-3 text-[11px] font-medium text-gray-500 transition-colors hover:text-gray-800 sm:h-9 sm:text-sm"
+                      style={{ backgroundColor: 'rgba(16,24,40,0.04)' }}
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      Clear
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="p-6">
+              <div className="p-3 sm:p-6">
                 {districtAdminLoading ? (
                   <div className="text-center py-8">
                     <div className="spinner w-8 h-8 mx-auto mb-4"></div>
                     <p className="text-gray-600">Loading district admins...</p>
                   </div>
                 ) : districtAdmins.length > 0 ? (
-                  <div className="overflow-x-hidden sm:overflow-x-auto">
+                  <>
+                    {/* Mobile: roomy tappable rows — one full-width target per record */}
+                    <div className="lg:hidden">
+                      <div className="divide-y divide-gray-100">
+                        {districtAdmins.map((admin) => (
+                          <button
+                            key={admin._id}
+                            onClick={() => { setSelectedDistrictAdminId(admin._id); setShowDistrictAdminModal(true) }}
+                            className="w-full min-h-[56px] flex items-center gap-3 px-1 py-3 text-left active:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex-shrink-0 h-10 w-10">
+                              <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                                <span className="text-sm font-medium text-primary-600">
+                                  {admin.name?.charAt(0)?.toUpperCase()}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">{admin.name}</p>
+                              <p className="text-[11px] text-gray-500 mt-0.5">
+                                ID: {admin.ruknId} · {admin.district}
+                              </p>
+                              <p className="text-[11px] text-gray-500 mt-0.5 truncate">
+                                {admin.contactNo || '-'}{admin.emailId ? ` · ${admin.emailId}` : ''}
+                              </p>
+                              <span className={`mt-1 inline-block px-2 py-0.5 text-[10px] font-medium rounded-full ${
+                                admin.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {admin.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Desktop: table */}
+                    <div className="hidden lg:block overflow-x-hidden sm:overflow-x-auto">
                     <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                       <thead className="bg-gray-50">
                         <tr>
@@ -1581,7 +1735,8 @@ const AdminDashboard = () => {
                         ))}
                       </tbody>
                     </table>
-                  </div>
+                    </div>
+                  </>
                 ) : (
                   <div className="text-center py-8">
                     <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -1830,7 +1985,7 @@ const AdminDashboard = () => {
                           value={chartDistrictSearch}
                           onChange={(e) => setChartDistrictSearch(e.target.value)}
                           placeholder="Search districts..."
-                          className="form-input text-sm pl-8 w-full"
+                          className="form-input text-base pl-8 w-full"
                           autoFocus
                         />
                       </div>
@@ -1839,14 +1994,14 @@ const AdminDashboard = () => {
                       <button
                         type="button"
                         onClick={() => setSelectedChartDistricts(districtStats.map((d) => d.district))}
-                        className="text-xs text-blue-600 hover:text-blue-700"
+                        className="text-xs text-blue-600 hover:text-blue-700 py-2 px-1 -mx-1"
                       >
                         Select all
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectedChartDistricts([])}
-                        className="text-xs text-gray-500 hover:text-gray-700"
+                        className="text-xs text-gray-500 hover:text-gray-700 py-2 px-1 -mx-1"
                       >
                         Clear
                       </button>
@@ -1857,7 +2012,7 @@ const AdminDashboard = () => {
                         .map((d) => (
                           <label
                             key={d.district}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-gray-50 cursor-pointer"
+                            className="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 cursor-pointer"
                           >
                             <input
                               type="checkbox"
@@ -1917,7 +2072,7 @@ const AdminDashboard = () => {
               <select
                 value={unitsStatusDistrict}
                 onChange={(e) => handleUnitsStatusDistrictChange(e.target.value)}
-                className="form-select text-sm"
+                className="form-select text-base flex-1 min-w-0"
               >
                 <option value="">All Districts</option>
                 {unitsStatusDistricts.map((d) => (
@@ -1927,7 +2082,7 @@ const AdminDashboard = () => {
               <select
                 value={unitsStatusArea}
                 onChange={(e) => handleUnitsStatusAreaChange(e.target.value)}
-                className="form-select text-sm"
+                className="form-select text-base flex-1 min-w-0"
                 disabled={!unitsStatusDistrict}
               >
                 <option value="">All Areas</option>
@@ -1978,24 +2133,40 @@ const AdminDashboard = () => {
                 {(unitsListTab === 'pending' ? unitsStatus.pendingUnits : unitsStatus.submittedUnits).length === 0 ? (
                   <p className="text-sm text-gray-400 text-center py-6">No units in this list</p>
                 ) : (
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-xs text-gray-500 uppercase">
-                        <th className="py-2 pr-4">Unit</th>
-                        <th className="py-2 pr-4">Area</th>
-                        <th className="py-2 pr-4">District</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
+                  <>
+                    {/* Mobile: roomy rows — one full-width row per record */}
+                    <div className="lg:hidden divide-y divide-gray-100">
                       {(unitsListTab === 'pending' ? unitsStatus.pendingUnits : unitsStatus.submittedUnits).map((u, idx) => (
-                        <tr key={`${u.district}-${u.area}-${u.unit}-${idx}`}>
-                          <td className="py-2 pr-4 font-medium text-gray-900">{u.unit}</td>
-                          <td className="py-2 pr-4 text-gray-600">{u.area}</td>
-                          <td className="py-2 pr-4 text-gray-600">{u.district}</td>
-                        </tr>
+                        <div key={`${u.district}-${u.area}-${u.unit}-${idx}`} className="min-h-[56px] flex items-center px-1 py-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">{u.unit}</p>
+                            <p className="text-[11px] text-gray-500 mt-0.5">{u.area} · {u.district}</p>
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
+                    </div>
+                    {/* Desktop: table */}
+                    <div className="hidden lg:block overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-xs text-gray-500 uppercase">
+                            <th className="py-2 pr-4">Unit</th>
+                            <th className="py-2 pr-4">Area</th>
+                            <th className="py-2 pr-4">District</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {(unitsListTab === 'pending' ? unitsStatus.pendingUnits : unitsStatus.submittedUnits).map((u, idx) => (
+                            <tr key={`${u.district}-${u.area}-${u.unit}-${idx}`}>
+                              <td className="py-2 pr-4 font-medium text-gray-900">{u.unit}</td>
+                              <td className="py-2 pr-4 text-gray-600">{u.area}</td>
+                              <td className="py-2 pr-4 text-gray-600">{u.district}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </div>
             </>
@@ -2090,7 +2261,7 @@ const AdminDashboard = () => {
                 onClick={() => {
                   navigate('submissions')
                 }}
-                className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors duration-150"
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors duration-150 py-2.5 -my-2.5 block w-full text-left"
               >
                 View all submissions →
               </button>

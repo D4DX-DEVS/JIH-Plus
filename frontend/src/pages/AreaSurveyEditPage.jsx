@@ -99,7 +99,6 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
         onLogout={handleLogout}
         onNotifications={() => navigate('/notifications')}
         onDynamicReports={() => navigate('/user-reports')}
-        onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'area' } })}
         areaName={area?.name || survey?.area || '—'}
         isMobileOpen={isSidebarOpen}
         onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
@@ -114,8 +113,8 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
           {/* Progress Bar */}
           <div className="bg-white shadow-lg border border-gray-200 rounded-2xl mb-4 hover:shadow-xl transition-all duration-500">
             <div className="px-4 py-3">
-              <div className="flex items-center justify-between mb-3">
-                <h1 className="text-lg font-bold text-[#002349]">
+              <div className="flex items-center justify-end lg:justify-between mb-3">
+                <h1 className="hidden lg:block text-lg font-bold text-[#002349]">
                   ഏരിയ തലം പ്രതിമാസ റിപ്പോർട്ട് എഡിറ്റ്
                 </h1>
                 <div className="text-xs text-gray-600 font-medium">
@@ -134,13 +133,13 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
                   />
                 ))}
               </div>
-              <div className="flex justify-between mt-1.5 text-[10px] text-gray-600 font-medium">
-                <span>ഘടകങ്ങൾ</span>
-                <span>പ്രവർത്തനങ്ങൾ</span>
-                <span>ഫോകസ്</span>
-                <span>ടീം പ്രവർത്തനങ്ങൾ</span>
-                <span>വ്യക്തികൾ</span>
-                <span>വർദ്ധനവ്</span>
+              <div className="flex gap-3 overflow-x-auto mt-1.5 text-[10px] text-gray-600 font-medium lg:justify-between lg:gap-0 lg:overflow-visible">
+                <span className="shrink-0 whitespace-nowrap">ഘടകങ്ങൾ</span>
+                <span className="shrink-0 whitespace-nowrap">പ്രവർത്തനങ്ങൾ</span>
+                <span className="shrink-0 whitespace-nowrap">ഫോകസ്</span>
+                <span className="shrink-0 whitespace-nowrap">ടീം പ്രവർത്തനങ്ങൾ</span>
+                <span className="shrink-0 whitespace-nowrap">വ്യക്തികൾ</span>
+                <span className="shrink-0 whitespace-nowrap">വർദ്ധനവ്</span>
               </div>
             </div>
           </div>

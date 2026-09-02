@@ -149,7 +149,6 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
         onTabChange={(tab) => navigate('/admin-dashboard')}
         onNavigateToReports={() => navigate('/view-reports')}
         onNavigateToNotifications={() => navigate('/notifications')}
-        onNavigateToMembership={() => navigate('/admin-dashboard')}
         onLogout={handleLogoutClick}
         adminData={adminData}
         isMobileOpen={isSidebarOpen}
@@ -230,7 +229,7 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
                   </h2>
                   <button
                     onClick={() => navigate('/view-reports')}
-                    className="text-xs font-semibold text-[#002349] hover:underline"
+                    className="p-2 -m-2 text-xs font-semibold text-[#002349] hover:underline"
                   >
                     എല്ലാം കാണുക
                   </button>
@@ -264,7 +263,7 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
                           </div>
                           <button
                             onClick={() => navigate(`/view-report/${report._id}`)}
-                            className="flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#002349] text-white text-xs font-semibold hover:bg-[#1a3a5c] transition-colors"
+                            className="flex-shrink-0 inline-flex min-h-[44px] items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#002349] text-white text-xs font-semibold hover:bg-[#1a3a5c] transition-colors"
                           >
                             കാണുക <ArrowRight className="w-3.5 h-3.5" />
                           </button>

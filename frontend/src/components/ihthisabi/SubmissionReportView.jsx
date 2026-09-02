@@ -24,14 +24,14 @@ const CountGrid = ({ counts }) => (
 
 const Question = ({ title, children }) => (
   <div className="pb-3 border-b border-gray-100 last:border-0">
-    <h4 className="text-xs font-semibold text-gray-900 mb-2 leading-relaxed">{title}</h4>
+    <h4 className="text-xs font-semibold text-gray-900 mb-2 leading-relaxed break-words">{title}</h4>
     {children}
   </div>
 )
 
 const TextValue = ({ value }) => (
   <div className="bg-gray-50 rounded px-3 py-2">
-    <span className="text-xs font-medium text-gray-900">{value}</span>
+    <span className="text-xs font-medium text-gray-900 break-words">{value}</span>
   </div>
 )
 

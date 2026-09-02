@@ -13,11 +13,11 @@ export const PUBLIC_HELP_DESK_CONTACTS = [
     ]
   },
   {
-    id: 'membership-queries',
-    topic: 'Membership Applications',
+    id: 'member-applications',
+    topic: 'Member Applications',
     person: 'Ibrahim Mulla',
     designation: 'Assistant Secretary JIH Kerala',
-    description: 'Support for Rukn and Karkun membership application queries.',
+    description: 'Support for Rukn and Karkun application access and processing.',
     phones: [
       {
         label: 'Primary Number',

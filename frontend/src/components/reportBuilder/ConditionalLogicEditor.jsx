@@ -67,7 +67,7 @@ export default function ConditionalLogicEditor({ logic, allFields, currentFieldI
                 value={cl.value ?? ''}
                 onChange={e => update('value', e.target.value)}
                 placeholder="Expected value"
-                className="w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-yellow-400"
+                className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-yellow-400"
               />
             </div>
           </div>

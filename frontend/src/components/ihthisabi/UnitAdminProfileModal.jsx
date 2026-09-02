@@ -37,7 +37,7 @@ const UnitAdminProfileModal = ({ unitAdminId, isOpen, onClose }) => {
           <h2 className="text-base font-bold text-gray-900">Unit Admin Profile</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-2 -m-2 rounded-full"
           >
             <X className="w-6 h-6" />
           </button>
@@ -173,7 +173,7 @@ const UnitAdminProfileModal = ({ unitAdminId, isOpen, onClose }) => {
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+            className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
           >
             Close
           </button>

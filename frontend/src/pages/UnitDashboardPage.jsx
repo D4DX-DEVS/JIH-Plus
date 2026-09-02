@@ -6,16 +6,12 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recha
 import FormDetailPage from './FormDetailPage';
 import FormPage from './FormPage';
 import UnitSurveyPage from './UnitSurveyPage';
-import KarkunForm from '../components/forms/membership/KarkunForm';
-import RuknForm from '../components/forms/membership/RuknForm';
 import { FormProvider } from '../contexts/FormContext';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
-import RejectionModal from '../components/modals/RejectionModal';
 import StatisticsCard from '../components/charts/StatisticsCard';
 import SurveyBarChart from '../components/charts/SurveyBarChart';
 import UnitMonthlyStatsTable from '../components/tables/UnitMonthlyStatsTable';
 import ActiveReportsCard from '../components/dashboard/ActiveReportsCard';
-import jihLogo from '../assets/LogoColor.png';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
 
@@ -105,16 +101,8 @@ const UnitDashboardPage = ({ onLogout }) => {
   const [monthlySurveys, setMonthlySurveys] = useState([]);
   const [error, setError] = useState('');
   
-  // Membership data
-  const [membershipData, setMembershipData] = useState({
-    karkun: [],
-    rukn: []
-  });
-  const [membershipLoading, setMembershipLoading] = useState(false);
-  const [membershipTab, setMembershipTab] = useState('karkun'); // 'karkun' | 'rukn'
-  
   // UI state
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'monthly', 'stats', 'membership'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'monthly', 'stats'
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState('');
@@ -124,24 +112,13 @@ const UnitDashboardPage = ({ onLogout }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [surveyToDelete, setSurveyToDelete] = useState(null);
-  const [showRejectionModal, setShowRejectionModal] = useState(false);
-  const [rejectionData, setRejectionData] = useState(null);
   const [showDetailView, setShowDetailView] = useState(false);
   const [showFormEdit, setShowFormEdit] = useState(false);
   const [showCreateSurvey, setShowCreateSurvey] = useState(false);
   const [selectedFormId, setSelectedFormId] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [viewingSurvey, setViewingSurvey] = useState(null);
-  const [showDeleteKarkunModal, setShowDeleteKarkunModal] = useState(false);
-  const [showDeleteRuknModal, setShowDeleteRuknModal] = useState(false);
-  const [formToDelete, setFormToDelete] = useState(null);
 const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
-  
-  // Membership navigation state
-  const [showKarkunForm, setShowKarkunForm] = useState(false);
-  const [showRuknForm, setShowRuknForm] = useState(false);
-  const [selectedKarkunForm, setSelectedKarkunForm] = useState(null);
-  const [selectedRuknForm, setSelectedRuknForm] = useState(null);
   
   // Filtering
   const [searchTerm, setSearchTerm] = useState('');
@@ -349,7 +326,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
         }
       }
     } else {
-      // Membership is now handled by dedicated MembershipPage route
+      // No data to fetch for the remaining tabs.
       lastFetchedRef.current = { activeTab, currentPage: null, monthFilter: null };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -395,17 +372,11 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
     setShowDetailView(false);
     setShowFormEdit(false);
     setShowCreateSurvey(false);
-    setShowKarkunForm(false);
-    setShowRuknForm(false);
     setViewingSurvey(null);
     setSelectedFormId(null);
     setEditingSurvey(null);
   };
 
-  const handleNavigateToMembership = () => {
-    setIsUnitSidebarOpen(false);
-    navigate('/membership', { state: { roleHint: 'unit' } });
-  };
 
   const handleSidebarNavigate = (viewId) => {
     setIsUnitSidebarOpen(false);
@@ -416,10 +387,6 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
     }
     if (viewId === 'dynamic-reports') {
       navigate('/user-reports');
-      return;
-    }
-    if (viewId === 'membership') {
-      handleNavigateToMembership();
       return;
     }
     if (viewId === 'dashboard' || viewId === 'monthly' || viewId === 'stats') {
@@ -437,194 +404,6 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
     setIsUnitSidebarOpen(false);
     // Navigate to notifications route
     navigate('/notifications');
-  };
-
-  // Handle Karkun form navigation
-  const handleViewKarkunForm = (form) => {
-    setSelectedKarkunForm(form);
-    setShowKarkunForm(true);
-  };
-
-  const handleBackFromKarkunForm = () => {
-    setShowKarkunForm(false);
-    setSelectedKarkunForm(null);
-  };
-
-  const handleVerifyKarkun = async (formId, status) => {
-    if (status === 'rejected') {
-      setRejectionData({ formId, type: 'karkun' });
-      setShowRejectionModal(true);
-      return;
-    }
-    
-    try {
-      const token = localStorage.getItem('userToken');
-      if (!token) {
-        alert('Not authenticated');
-        return;
-      }
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.put(
-        `${API_BASE_URL}/api/karkun/${formId}/verify/unit`,
-        { status },
-        { headers, timeout: 5000 }
-      );
-      const updated = res.data?.data;
-      if (updated?._id) {
-        setMembershipData(prev => ({
-          ...prev,
-          karkun: prev.karkun.map(f => (f._id === updated._id ? { ...f, ...updated } : f))
-        }));
-      } else {
-        await loadMembershipData();
-      }
-    } catch (e) {
-      alert(e.response?.data?.message || 'Verification failed');
-    }
-  };
-
-  const handleConfirmRejection = async (comments) => {
-    if (!rejectionData) return;
-    
-    try {
-      const token = localStorage.getItem('userToken');
-      if (!token) {
-        alert('Not authenticated');
-        return;
-      }
-      const headers = { Authorization: `Bearer ${token}` };
-      
-      const endpoint = rejectionData.type === 'karkun' 
-        ? `${API_BASE_URL}/api/karkun/${rejectionData.formId}/verify/unit`
-        : `${API_BASE_URL}/api/rukn/${rejectionData.formId}/verify/unit`;
-      
-      const res = await axios.put(endpoint, { status: 'rejected', comments }, { 
-        headers, 
-        timeout: 5000 
-      });
-      
-      const updated = res.data?.data;
-      if (updated?._id) {
-        setMembershipData(prev => ({
-          ...prev,
-          [rejectionData.type]: prev[rejectionData.type].map(f => (f._id === updated._id ? { ...f, ...updated } : f))
-        }));
-      } else {
-        await loadMembershipData();
-      }
-    } catch (e) {
-      alert(e.response?.data?.message || 'Rejection failed');
-    }
-  };
-
-  const handleDeleteKarkun = (form) => {
-    setFormToDelete({ id: form._id, type: 'karkun', name: form.name });
-    setShowDeleteKarkunModal(true);
-  };
-
-  const confirmDeleteKarkun = async () => {
-    if (!formToDelete || formToDelete.type !== 'karkun') return;
-    
-    try {
-      const token = localStorage.getItem('userToken');
-      if (!token) {
-        alert('Not authenticated');
-        return;
-      }
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.delete(`${API_BASE_URL}/api/karkun/${formToDelete.id}`, { 
-        headers, 
-        timeout: 5000 
-      });
-      setMembershipData(prev => ({
-        ...prev,
-        karkun: prev.karkun.filter(f => f._id !== formToDelete.id)
-      }));
-      setSuccessMessage('Karkun application deleted successfully');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (e) {
-      alert(e.response?.data?.message || 'Delete failed');
-    } finally {
-      setShowDeleteKarkunModal(false);
-      setFormToDelete(null);
-    }
-  };
-
-  const handleVerifyRukn = async (formId, status) => {
-    if (status === 'rejected') {
-      setRejectionData({ formId, type: 'rukn' });
-      setShowRejectionModal(true);
-      return;
-    }
-    
-    try {
-      const token = localStorage.getItem('userToken');
-      if (!token) {
-        alert('Not authenticated');
-        return;
-      }
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.put(
-        `${API_BASE_URL}/api/rukn/${formId}/verify/unit`,
-        { status },
-        { headers, timeout: 5000 }
-      );
-      const updated = res.data?.data;
-      if (updated?._id) {
-        setMembershipData(prev => ({
-          ...prev,
-          rukn: prev.rukn.map(f => (f._id === updated._id ? { ...f, ...updated } : f))
-        }));
-      } else {
-        await loadMembershipData();
-      }
-    } catch (e) {
-      alert(e.response?.data?.message || 'Verification failed');
-    }
-  };
-
-  const handleDeleteRukn = (form) => {
-    setFormToDelete({ id: form._id, type: 'rukn', name: form.name });
-    setShowDeleteRuknModal(true);
-  };
-
-  const confirmDeleteRukn = async () => {
-    if (!formToDelete || formToDelete.type !== 'rukn') return;
-    
-    try {
-      const token = localStorage.getItem('userToken');
-      if (!token) {
-        alert('Not authenticated');
-        return;
-      }
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.delete(`${API_BASE_URL}/api/rukn/${formToDelete.id}`, { 
-        headers, 
-        timeout: 5000 
-      });
-      setMembershipData(prev => ({
-        ...prev,
-        rukn: prev.rukn.filter(f => f._id !== formToDelete.id)
-      }));
-      setSuccessMessage('Rukn application deleted successfully');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (e) {
-      alert(e.response?.data?.message || 'Delete failed');
-    } finally {
-      setShowDeleteRuknModal(false);
-      setFormToDelete(null);
-    }
-  };
-
-  // Handle Rukn form navigation
-  const handleViewRuknForm = (form) => {
-    setSelectedRuknForm(form);
-    setShowRuknForm(true);
-  };
-
-  const handleBackFromRuknForm = () => {
-    setShowRuknForm(false);
-    setSelectedRuknForm(null);
   };
 
   const loadDashboardOverview = async () => {
@@ -750,60 +529,6 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
       }
     }
   };
-
-  const loadMembershipData = async () => {
-    if (!isMountedRef.current) return;
-    
-    const token = localStorage.getItem('userToken');
-    if (!token) {
-      setMembershipLoading(false);
-      return;
-    }
-
-    try {
-      setMembershipLoading(true);
-      setError('');
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const karkunResponse = await axios.get(
-        `${API_BASE_URL}/api/karkun/unit/mine`,
-        { headers, timeout: 5000 }
-      );
-      
-      const ruknResponse = await axios.get(
-        `${API_BASE_URL}/api/rukn/unit/mine`,
-        { headers, timeout: 5000 }
-      );
-
-      if (!isMountedRef.current) return;
-
-      setMembershipData({
-        karkun: karkunResponse.data?.data || [],
-        rukn: ruknResponse.data?.data || []
-      });
-    } catch (error) {
-      if (!isMountedRef.current) return;
-      
-      if (error.response?.status === 401) {
-        localStorage.removeItem('userToken');
-        localStorage.removeItem('userData');
-        navigate('/', { replace: true });
-        return;
-      }
-      
-      setMembershipData({ karkun: [], rukn: [] });
-      if (error.response?.status >= 500) {
-        setError('Server error. Please try again later.');
-      } else {
-        setError('Failed to load membership data');
-      }
-    } finally {
-      if (isMountedRef.current) {
-        setMembershipLoading(false);
-      }
-    }
-  };
-
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -966,6 +691,14 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
   const unitName = unit?.name || userData?.unit || userData?.unitName || '—';
   const areaName = area?.name || userData?.area || userData?.areaName || '';
   const districtName = userData?.district || userData?.districtName || '';
+  // Mobile top bar must name the active tab so it doesn't repeat/contradict
+  // the on-page heading below it.
+  const mobileTabTitles = {
+    dashboard: 'യൂണിറ്റ് ഡാഷ്ബോർഡ്',
+    monthly: 'പ്രതിമാസ റിപ്പോർട്ട്',
+    stats: 'സ്ഥിതിവിവരക്കണക്കുകൾ'
+  };
+  const mobileTitle = mobileTabTitles[activeTab] || mobileTabTitles.dashboard;
 
   if (showDetailView && viewingSurvey) {
     const detailViewContent = (
@@ -974,7 +707,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
         <div className="max-w-5xl mx-auto px-0 py-2">
           <div className="mb-2 flex items-start justify-between">
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">യൂണിറ്റ് റിപ്പോർട്ടുകളുടെ വിശദാംശങ്ങൾ</h1>
+              <h1 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">യൂണിറ്റ് റിപ്പോർട്ടുകളുടെ വിശദാംശങ്ങൾ</h1>
               <p className="text-sm text-gray-600 font-medium mt-1">
                 <span className="font-bold">{viewingSurvey.month}</span> {viewingSurvey.year} - {viewingSurvey.component}
               </p>
@@ -987,7 +720,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                   setEditingSurvey(viewingSurvey);
                   setShowFormEdit(true);
                 }}
-                className="p-2 text-[#957C3D] border border-[#957C3D] rounded-xl hover:bg-gradient-to-r hover:from-[#957C3D] hover:to-[#8A6F35] hover:text-white transition-all duration-300 hover:shadow-md"
+                className="min-h-[44px] min-w-[44px] lg:min-h-0 lg:min-w-0 inline-flex items-center justify-center p-2 text-[#957C3D] border border-[#957C3D] rounded-xl hover:bg-gradient-to-r hover:from-[#957C3D] hover:to-[#8A6F35] hover:text-white transition-all duration-300 hover:shadow-md"
                 title="Edit Report"
               >
                 <Edit className="w-4 h-4" />
@@ -997,7 +730,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                   setSurveyToDelete(viewingSurvey);
                   setShowDeleteModal(true);
                 }}
-                className="p-2 text-red-600 border border-red-600 rounded-xl hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 hover:text-white transition-all duration-300 hover:shadow-md"
+                className="min-h-[44px] min-w-[44px] lg:min-h-0 lg:min-w-0 inline-flex items-center justify-center p-2 text-red-600 border border-red-600 rounded-xl hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 hover:text-white transition-all duration-300 hover:shadow-md"
                 title="Delete Report"
               >
                 <Trash2 className="w-4 h-4" />
@@ -1008,7 +741,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                   setViewingSurvey(null);
                   setSelectedFormId(null);
                 }}
-                className="p-2 text-gray-600 border border-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-gray-500 hover:to-gray-600 hover:text-white transition-all duration-300 hover:shadow-md"
+                className="min-h-[44px] min-w-[44px] lg:min-h-0 lg:min-w-0 inline-flex items-center justify-center p-2 text-gray-600 border border-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-gray-500 hover:to-gray-600 hover:text-white transition-all duration-300 hover:shadow-md"
                 title="Close"
               >
                 <X className="w-4 h-4" />
@@ -1018,7 +751,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
         </div>
 
         {/* Survey Details */}
-        <div className="max-w-5xl mx-auto px-8 sm:px-12 lg:px-16 py-2">
+        <div className="max-w-5xl mx-auto px-4 sm:px-12 lg:px-16 py-2">
           <main>
             {/* Basic Information Container */}
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-200 p-4 md:p-6 mb-8">
@@ -1418,7 +1151,6 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
             onLogout={handleLogout}
             onNotifications={handleNotificationsShortcut}
             onDynamicReports={handleDynamicReportsShortcut}
-            onNavigateToMembership={handleNavigateToMembership}
             onReportTypeSelect={(type) => navigate('/user-reports', { state: { initialType: type } })}
             unitName={unitName}
             areaName={areaName}
@@ -1429,7 +1161,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
 
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <MobileTopBar
-              title="യൂണിറ്റ് ഡാഷ്ബോർഡ്"
+              title="യൂണിറ്റ് റിപ്പോർട്ടുകളുടെ വിശദാംശങ്ങൾ"
             />
             <div className="flex-1 overflow-y-auto overflow-x-hidden pb-24 lg:pb-0">
               {detailViewContent}
@@ -1465,90 +1197,6 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
     );
   }
 
-  // Show Karkun form if selected
-  if (showKarkunForm && selectedKarkunForm) {
-    return (
-      <div className="min-h-screen bg-white">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 animate-fade-in">
-          <div className="max-w-5xl mx-auto px-8 sm:px-12 lg:px-16">
-            <div className="flex flex-col sm:flex-row justify-between items-center py-4 sm:py-6 gap-4">
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                <button
-                  onClick={handleBackFromKarkunForm}
-                  className="text-gray-600 hover:text-[#002349] transition-all duration-500 flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 border border-gray-300 hover:border-[#002349] rounded-2xl hover:shadow-md transform hover:-translate-y-1 hover:scale-105 ease-out hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#002349]/10"
-                  title="Go back"
-                >
-                  <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-                <img src={jihLogo} alt="JIH Logo" className="h-8 sm:h-12 w-auto animate-fade-in" />
-                <div>
-                  <h1 className="text-lg sm:text-2xl font-bold text-[#002349]">Karkun Application</h1>
-                  <p className="text-sm text-gray-600 font-medium">
-                    {selectedKarkunForm.name} - {selectedKarkunForm.mobile}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Karkun Form */}
-        <main className="max-w-5xl mx-auto px-8 sm:px-12 lg:px-16 py-6">
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-500 animate-slide-in-up">
-            <KarkunForm 
-              initialData={selectedKarkunForm}
-              isReadOnly={true}
-              onBack={handleBackFromKarkunForm}
-            />
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // Show Rukn form if selected
-  if (showRuknForm && selectedRuknForm) {
-    return (
-      <div className="min-h-screen bg-white">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 animate-fade-in">
-          <div className="max-w-5xl mx-auto px-8 sm:px-12 lg:px-16">
-            <div className="flex flex-col sm:flex-row justify-between items-center py-4 sm:py-6 gap-4">
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                <button
-                  onClick={handleBackFromRuknForm}
-                  className="text-gray-600 hover:text-[#002349] transition-all duration-500 flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 border border-gray-300 hover:border-[#002349] rounded-2xl hover:shadow-md transform hover:-translate-y-1 hover:scale-105 ease-out hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#002349]/10"
-                  title="Go back"
-                >
-                  <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-                <img src={jihLogo} alt="JIH Logo" className="h-8 sm:h-12 w-auto animate-fade-in" />
-                <div>
-                  <h1 className="text-lg sm:text-2xl font-bold text-[#002349]">Rukn Application</h1>
-                  <p className="text-sm text-gray-600 font-medium">
-                    {selectedRuknForm.name} - {selectedRuknForm.mobile}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Rukn Form */}
-        <main className="max-w-5xl mx-auto px-8 sm:px-12 lg:px-16 py-6">
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-500 animate-slide-in-up">
-            <RuknForm 
-              initialData={selectedRuknForm}
-              isReadOnly={true}
-              onBack={handleBackFromRuknForm}
-            />
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   const pageContent = (
     <div className="min-h-screen">
       {/* Main Content */}
@@ -1565,7 +1213,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
           return (
             <div className="space-y-6">
               <div className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] rounded-2xl p-6 text-white">
-                <h2 className="text-xl font-bold">യൂണിറ്റ് ഡാഷ്ബോർഡ്</h2>
+                <h2 className="hidden lg:block text-xl font-bold">യൂണിറ്റ് ഡാഷ്ബോർഡ്</h2>
                 {unitName !== '—' && <p className="text-white/80 text-sm mt-1">{unitName}</p>}
               </div>
 
@@ -1577,7 +1225,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
               ) : dashboardError ? (
                 <div className="text-center py-10">
                   <p className="text-red-500">{dashboardError}</p>
-                  <button onClick={loadDashboardOverview} className="mt-3 px-4 py-2 bg-[#002349] text-white rounded-lg text-sm">Retry</button>
+                  <button onClick={loadDashboardOverview} className="mt-3 px-4 py-2.5 lg:py-2 bg-[#002349] text-white rounded-lg text-sm">Retry</button>
                 </div>
               ) : (
                 <>
@@ -1635,7 +1283,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
             {/* Page Heading */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 -mx-4 sm:-mx-6 lg:-mx-8 px-2 sm:px-3 lg:px-4">
               <div>
-                <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
+                <h1 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
                   പ്രതിമാസ റിപ്പോർട്ട്
                 </h1>
                 <p className="text-sm text-gray-600 mt-1 font-medium">
@@ -1661,7 +1309,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search reports..."
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-sm"
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-base lg:text-sm"
                   />
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 group-hover:text-[#002349] transition-colors duration-300" />
                 </div>
@@ -1671,7 +1319,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                 <select
                   value={monthFilter}
                   onChange={(e) => setMonthFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-base lg:text-sm"
                 >
                   <option value="">All Months</option>
                   {['January', 'February', 'March', 'April', 'May', 'June', 
@@ -1709,7 +1357,56 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                 </div>
               ) : (
                 <>
-                  <div className="overflow-x-auto">
+                  {/* Mobile list — table collapses into cards below lg, each
+                      action gets its own full-size tap target. */}
+                  <div className="lg:hidden divide-y divide-gray-100">
+                    {filteredSurveys.map((survey) => (
+                      <div key={survey._id} className="p-3.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#957C3D] text-white shadow-sm">
+                              {survey.month}
+                            </span>
+                            <p className="mt-1.5 text-sm font-semibold text-[#002349] truncate">
+                              {survey.submittedByName || survey.component || survey.submittedBy}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {new Date(survey.submittedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <span className="flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-green-100 text-green-800 shadow-sm">
+                            Submitted
+                          </span>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewSurvey(survey)}
+                            className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#002349]/10 text-[#002349] text-sm font-semibold"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleEditSurvey(survey)}
+                            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl border border-[#957C3D] text-[#957C3D]"
+                            title="Edit Report"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSurvey(survey)}
+                            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl border border-red-600 text-red-600"
+                            title="Delete Report"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop table */}
+                  <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-[#002349] border-b border-[#002349]">
                         <tr>
@@ -1813,14 +1510,14 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                           <button
                             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                             disabled={currentPage === 1}
-                            className="px-3 py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
+                            className="px-4 py-2.5 lg:px-3 lg:py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
                           >
                             Previous
                           </button>
                           <button
                             onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                             disabled={currentPage === totalPages}
-                            className="px-3 py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
+                            className="px-4 py-2.5 lg:px-3 lg:py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
                           >
                             Next
                           </button>
@@ -1875,13 +1572,13 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
               <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-500">
                 <h3 className="text-lg font-bold text-[#002349] mb-4">Unit Summary</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Unit Name:</span>
-                    <span className="text-sm font-medium text-gray-900">{unit?.name || unitId}</span>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="flex-shrink-0 text-sm text-gray-600">Unit Name:</span>
+                    <span className="min-w-0 truncate text-right text-sm font-medium text-gray-900">{unit?.name || unitId}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Area:</span>
-                    <span className="text-sm font-medium text-gray-900">{area?.name || 'Unknown'}</span>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="flex-shrink-0 text-sm text-gray-600">Area:</span>
+                    <span className="min-w-0 truncate text-right text-sm font-medium text-gray-900">{area?.name || 'Unknown'}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Total Reports:</span>
@@ -1915,7 +1612,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                       setEditingSurvey(null);
                       setShowCreateSurvey(true);
                     }}
-                    className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 py-2 rounded-2xl text-sm transition-all duration-500 flex items-center space-x-2 font-semibold hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out hover:shadow-green-500/50"
+                    className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 py-2.5 lg:py-2 rounded-2xl text-sm transition-all duration-500 flex items-center space-x-2 font-semibold hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out hover:shadow-green-500/50"
                   >
                     <Calendar className="w-4 h-4" />
                     <span>
@@ -1933,8 +1630,6 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
             </div>
           </div>
         )}
-
-        {/* Membership is now handled by dedicated MembershipPage route */}
 
         {successMessage && (
           <div className="mt-4 bg-green-50 border-2 border-green-200 rounded-2xl p-4 animate-fade-in">
@@ -1975,45 +1670,6 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
         confirmText="ലോഗൗട്ട്"
         cancelText="റദ്ദാക്കുക"
         type="logout"
-      />
-
-      <RejectionModal
-        isOpen={showRejectionModal}
-        onClose={() => {
-          setShowRejectionModal(false);
-          setRejectionData(null);
-        }}
-        onConfirm={handleConfirmRejection}
-        title="Reject Application"
-        message="Please enter the reason for rejection:"
-        confirmText="Reject"
-        cancelText="Cancel"
-      />
-
-      <ConfirmationModal
-        isOpen={showDeleteKarkunModal}
-        onClose={() => {
-          setShowDeleteKarkunModal(false);
-          setFormToDelete(null);
-        }}
-        onConfirm={confirmDeleteKarkun}
-        title="Delete Karkun Application"
-        message={`Are you sure you want to delete the Karkun application for ${formToDelete?.name || 'this applicant'}? This action cannot be undone.`}
-        confirmText="Delete"
-        confirmColor="red"
-      />
-
-      <ConfirmationModal
-        isOpen={showDeleteRuknModal}
-        onClose={() => {
-          setShowDeleteRuknModal(false);
-          setFormToDelete(null);
-        }}
-        onConfirm={confirmDeleteRukn}
-        title="Delete Rukn Application"
-        message={`Are you sure you want to delete the Rukn application for ${formToDelete?.name || 'this applicant'}? This action cannot be undone.`}
-        confirmText="Delete"
-        confirmColor="red"
       />
 
       {/* Custom CSS Animations */}
@@ -2101,7 +1757,6 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
           onLogout={handleLogout}
           onNotifications={handleNotificationsShortcut}
           onDynamicReports={handleDynamicReportsShortcut}
-          onNavigateToMembership={handleNavigateToMembership}
           onReportTypeSelect={(type) => navigate('/user-reports', { state: { initialType: type } })}
           unitName={unitName}
           areaName={areaName}
@@ -2112,7 +1767,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <MobileTopBar
-            title="യൂണിറ്റ് ഡാഷ്ബോർഡ്"
+            title={mobileTitle}
           />
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {pageContent}

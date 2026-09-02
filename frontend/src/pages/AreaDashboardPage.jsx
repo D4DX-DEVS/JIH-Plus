@@ -7,7 +7,6 @@ import AreaSurveyEditPage from './AreaSurveyEditPage';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import SubmissionsAnalytics from '../components/dashboard/SubmissionsAnalytics';
-import RejectionModal from '../components/modals/RejectionModal';
 import StatisticsCard from '../components/charts/StatisticsCard';
 import SurveyBarChart from '../components/charts/SurveyBarChart';
 import SurveyPieChart from '../components/charts/SurveyPieChart';
@@ -15,7 +14,6 @@ import AreaStatsChart from '../components/charts/AreaStatsChart';
 import AreaMonthlyStatsTable from '../components/tables/AreaMonthlyStatsTable';
 import UnitMonthlyStatsTable from '../components/tables/UnitMonthlyStatsTable';
 import jihLogo from '../assets/LogoColor.png';
-import KarkunForm from '../components/forms/membership/KarkunForm';
 import ActiveReportsCard from '../components/dashboard/ActiveReportsCard';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
@@ -56,17 +54,7 @@ const AreaDashboardPage = ({ onLogout }) => {
   const [selectedUnitSurveys, setSelectedUnitSurveys] = useState([]);
   const [showUnitDetailView, setShowUnitDetailView] = useState(false);
   const [viewingUnitSurvey, setViewingUnitSurvey] = useState(null);
-  const [membershipTab, setMembershipTab] = useState('karkun');
-  const [membershipLoading, setMembershipLoading] = useState(false);
-  const [membershipData, setMembershipData] = useState({ karkun: [], rukn: [] });
-  const [showKarkunForm, setShowKarkunForm] = useState(false);
-  const [selectedKarkunForm, setSelectedKarkunForm] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // Membership modals
-  const [showDeleteKarkunModal, setShowDeleteKarkunModal] = useState(false);
-  const [formToDelete, setFormToDelete] = useState(null);
-  const [showRejectionModalMembership, setShowRejectionModalMembership] = useState(false);
-  const [rejectionTarget, setRejectionTarget] = useState(null); // { formId }
   
   // Filtering
   const [searchTerm, setSearchTerm] = useState('');
@@ -139,122 +127,11 @@ const AreaDashboardPage = ({ onLogout }) => {
     }
   }, [units, activeTab]);
 
-  // Membership is now handled by dedicated MembershipPage
-
-  const loadMembershipData = async () => {
-    try {
-      setMembershipLoading(true);
-      const token = localStorage.getItem('userToken');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const karkunResp = await axios.get(`${import.meta.env.VITE_API_URL}/api/karkun/area/mine`, { 
-        headers, 
-        timeout: 5000 
-      });
-      setMembershipData({
-        karkun: karkunResp.data?.data || [],
-        rukn: []
-      });
-    } catch (e) {
-      setMembershipData({ karkun: [], rukn: [] });
-    } finally {
-      setMembershipLoading(false);
-    }
-  };
-
-  const handleVerifyKarkunArea = async (formId, status) => {
-    try {
-      const token = localStorage.getItem('userToken');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      if (status === 'rejected') {
-        setRejectionTarget({ formId });
-        setShowRejectionModalMembership(true);
-        return;
-      }
-      const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/karkun/${formId}/verify/area`, { status }, { 
-        headers, 
-        timeout: 5000 
-      });
-      const updated = res.data?.data;
-      if (updated?._id) {
-        setMembershipData(prev => ({ ...prev, karkun: prev.karkun.map(f => (f._id === updated._id ? { ...f, ...updated } : f)) }));
-      } else {
-        await loadMembershipData();
-      }
-    } catch (e) {
-      // Silent fail
-    }
-  };
-
-  const confirmRejectKarkunArea = async (comments) => {
-    try {
-      const token = localStorage.getItem('userToken');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      if (!rejectionTarget?.formId) return;
-      const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/karkun/${rejectionTarget.formId}/verify/area`, { status: 'rejected', comments }, { 
-        headers, 
-        timeout: 5000 
-      });
-      const updated = res.data?.data;
-      if (updated?._id) {
-        setMembershipData(prev => ({ ...prev, karkun: prev.karkun.map(f => (f._id === updated._id ? { ...f, ...updated } : f)) }));
-      } else {
-        await loadMembershipData();
-      }
-    } catch (e) {
-      // Silent fail
-    } finally {
-      setShowRejectionModalMembership(false);
-      setRejectionTarget(null);
-    }
-  };
-
-  const handleViewKarkunForm = (form) => {
-    setSelectedKarkunForm(form);
-    setShowKarkunForm(true);
-  };
-
-  const handleBackFromKarkunForm = () => {
-    setShowKarkunForm(false);
-    setSelectedKarkunForm(null);
-  };
-
-  const handleDeleteKarkun = (formIdOrForm) => {
-    const id = typeof formIdOrForm === 'object' ? (formIdOrForm._id) : formIdOrForm;
-    const name = typeof formIdOrForm === 'object' ? (formIdOrForm.name) : '';
-    setFormToDelete({ id, name });
-    setShowDeleteKarkunModal(true);
-  };
-
-  const confirmDeleteKarkun = async () => {
-    try {
-      const token = localStorage.getItem('userToken');
-      if (!token) return;
-      const headers = { Authorization: `Bearer ${token}` };
-      if (!formToDelete?.id) return;
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/karkun/${formToDelete.id}`, { 
-        headers, 
-        timeout: 5000 
-      });
-      setMembershipData(prev => ({ ...prev, karkun: prev.karkun.filter(f => f._id !== formToDelete.id) }));
-      setSuccessMessage('Karkun application deleted successfully');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (e) {
-      // Silent fail
-    } finally {
-      setShowDeleteKarkunModal(false);
-      setFormToDelete(null);
-    }
-  };
-
   // Handle back navigation to login page
   const handleBackNavigation = () => {
     navigate('/');
   };
 
-  const handleNavigateToMembership = () => {
-    setIsSidebarOpen(false);
-    navigate('/membership', { state: { roleHint: 'area' } });
-  };
 
   const handleSidebarNavigate = (tabId) => {
     setActiveTab(tabId);
@@ -708,8 +585,8 @@ const AreaDashboardPage = ({ onLogout }) => {
         return (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] rounded-2xl p-6 text-white">
-              <h2 className="text-xl font-bold">ഏരിയ ഡാഷ്ബോർഡ്</h2>
-              {areaName && <p className="text-white/80 text-sm mt-1">{areaName}</p>}
+              <h2 className="hidden lg:block text-xl font-bold">ഏരിയ ഡാഷ്ബോർഡ്</h2>
+              {areaName && <p className="text-white/80 text-sm lg:mt-1">{areaName}</p>}
             </div>
 
             <SubmissionsAnalytics scope="area" />
@@ -722,7 +599,7 @@ const AreaDashboardPage = ({ onLogout }) => {
             ) : dashboardError ? (
               <div className="text-center py-10">
                 <p className="text-red-500">{dashboardError}</p>
-                <button onClick={loadDashboardOverview} className="mt-3 px-4 py-2 bg-[#002349] text-white rounded-lg text-sm">Retry</button>
+                <button onClick={loadDashboardOverview} className="mt-3 inline-flex items-center justify-center min-h-[44px] px-4 py-2 bg-[#002349] text-white rounded-lg text-sm">Retry</button>
               </div>
             ) : (
               <>
@@ -784,7 +661,7 @@ const AreaDashboardPage = ({ onLogout }) => {
           <>
             {/* Page Heading */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-              <div>
+              <div className="hidden lg:block">
                 <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
                   ഏരിയ റിപ്പോർട്ട്
                 </h1>
@@ -808,7 +685,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search area reports..."
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-sm"
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-base"
                   />
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 group-hover:text-[#002349] transition-colors duration-300" />
                 </div>
@@ -818,7 +695,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                 <select
                   value={monthFilter}
                   onChange={(e) => setMonthFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-base"
                 >
                   <option value="">All Months</option>
                   {['January', 'February', 'March', 'April', 'May', 'June', 
@@ -893,13 +770,13 @@ const AreaDashboardPage = ({ onLogout }) => {
                               {new Date(survey.submittedAt).toLocaleDateString()}
                             </td>
                             <td className="px-4 py-1 whitespace-nowrap text-[13px] font-medium text-right align-middle">
-                              <div className="inline-flex items-center space-x-1.5">
+                              <div className="inline-flex items-center space-x-2">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleViewSurvey(survey);
                                   }}
-                                  className="text-[#002349] hover:text-[#1a3a5c] p-1.5 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-[#002349] hover:text-[#1a3a5c] hover:bg-gray-100 rounded-lg transition-all duration-200"
                                   title="View"
                                 >
                                   <Eye className="w-4 h-4" />
@@ -909,7 +786,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                                     e.stopPropagation();
                                     handleEditSurvey(survey);
                                   }}
-                                  className="text-[#957C3D] hover:text-[#8A6F35] p-1.5 hover:bg-amber-50 rounded-lg transition-all duration-200"
+                                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-[#957C3D] hover:text-[#8A6F35] hover:bg-amber-50 rounded-lg transition-all duration-200"
                                   title="Edit"
                                 >
                                   <Edit className="w-4 h-4" />
@@ -919,7 +796,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                                     e.stopPropagation();
                                     handleDeleteSurvey(survey);
                                   }}
-                                  className="text-red-600 hover:text-red-700 p-1.5 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                  className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
                                   title="Delete"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -1431,7 +1308,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                         value={unitSearchTerm}
                         onChange={(e) => setUnitSearchTerm(e.target.value)}
                         placeholder="Search units..."
-                        className="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                        className="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-base transition-all duration-300 hover:border-[#002349]/50"
                       />
                       <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                     </div>
@@ -1542,12 +1419,12 @@ const AreaDashboardPage = ({ onLogout }) => {
           <div className="space-y-6">
             {/* Sub-tabs: Statistics | Area Table | Unit Table */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-3">
-              <div className="flex space-x-2">
+              <div className="ih-mobile-tabs">
                 <button
                   onClick={() => setActiveStatsSubTab('summary')}
-                  className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
-                    activeStatsSubTab === 'summary' 
-                      ? 'bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white shadow-md' 
+                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
+                    activeStatsSubTab === 'summary'
+                      ? 'bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-100 hover:shadow-sm'
                   }`}
                 >
@@ -1555,9 +1432,9 @@ const AreaDashboardPage = ({ onLogout }) => {
                 </button>
                 <button
                   onClick={() => setActiveStatsSubTab('areaTable')}
-                  className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
-                    activeStatsSubTab === 'areaTable' 
-                      ? 'bg-gradient-to-r from-[#957C3D] to-[#8A6F35] text-white shadow-md' 
+                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
+                    activeStatsSubTab === 'areaTable'
+                      ? 'bg-gradient-to-r from-[#957C3D] to-[#8A6F35] text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-100 hover:shadow-sm'
                   }`}
                 >
@@ -1565,9 +1442,9 @@ const AreaDashboardPage = ({ onLogout }) => {
                 </button>
                 <button
                   onClick={() => setActiveStatsSubTab('unitTable')}
-                  className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
-                    activeStatsSubTab === 'unitTable' 
-                      ? 'bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white shadow-md' 
+                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
+                    activeStatsSubTab === 'unitTable'
+                      ? 'bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-100 hover:shadow-sm'
                   }`}
                 >
@@ -1763,9 +1640,9 @@ const AreaDashboardPage = ({ onLogout }) => {
                         const unitId = u.id || u._id || u.code;
                         return (
                           <tr key={unitId} className="hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#957C3D]/5 transition-all duration-300 hover:shadow-sm">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#002349]">
+                            <td className="whitespace-nowrap text-sm font-bold text-[#002349] p-0">
                               <button
-                                className="hover:underline transition-all duration-300"
+                                className="block w-full text-left px-6 py-4 hover:underline transition-all duration-300"
                                 onClick={() => setExpandedUnitId(expandedUnitId === unitId ? null : unitId)}
                               >
                                 {u.name || u.title || unitId}
@@ -1789,7 +1666,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                       <div key={`unit-${unitId}`} className="border border-gray-200 rounded-2xl p-4 bg-gray-50 hover:shadow-md transition-all duration-300">
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="text-md font-bold text-[#002349]">{u.name || u.title || unitId} - Monthly Table</h4>
-                          <button className="text-sm text-gray-600 hover:text-[#002349] font-medium transition-all duration-300" onClick={() => setExpandedUnitId(null)}>Close</button>
+                          <button className="p-2 text-sm text-gray-600 hover:text-[#002349] font-medium transition-all duration-300" onClick={() => setExpandedUnitId(null)}>Close</button>
                         </div>
                         <UnitMonthlyStatsTable 
                           surveys={unitSurveys}
@@ -1806,8 +1683,6 @@ const AreaDashboardPage = ({ onLogout }) => {
             )}
           </div>
         )}
-
-        {/* Membership is now handled by dedicated MembershipPage route */}
 
         {successMessage && (
           <div className="mt-4 bg-green-50 border-2 border-green-200 rounded-2xl p-4">
@@ -1835,7 +1710,6 @@ const AreaDashboardPage = ({ onLogout }) => {
           onLogout={handleLogout}
           onNotifications={() => navigate('/notifications')}
           onDynamicReports={() => navigate('/user-reports')}
-          onNavigateToMembership={handleNavigateToMembership}
           onReportTypeSelect={(type) => navigate('/user-reports', { state: { initialType: type } })}
           areaName={area?.name || '—'}
           districtName={userData?.district || userData?.districtName || ''}
@@ -1877,31 +1751,6 @@ const AreaDashboardPage = ({ onLogout }) => {
         type="logout"
       />
 
-      <ConfirmationModal
-        isOpen={showDeleteKarkunModal}
-        onClose={() => {
-          setShowDeleteKarkunModal(false);
-          setFormToDelete(null);
-        }}
-        onConfirm={confirmDeleteKarkun}
-        title="Delete Karkun Application"
-        message={`Are you sure you want to delete the Karkun application${formToDelete?.name ? ` for ${formToDelete.name}` : ''}? This action cannot be undone.`}
-        confirmText="Delete"
-        confirmColor="red"
-      />
-
-      <RejectionModal
-        isOpen={showRejectionModalMembership}
-        onClose={() => {
-          setShowRejectionModalMembership(false);
-          setRejectionTarget(null);
-        }}
-        onConfirm={confirmRejectKarkunArea}
-        title="Reject Application"
-        message="Please enter the reason for rejection:"
-        confirmText="Reject"
-        cancelText="Cancel"
-      />
             </>
   );
 };

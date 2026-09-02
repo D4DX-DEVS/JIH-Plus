@@ -67,9 +67,6 @@ const AreaMonthlyDetailPage = () => {
     navigate('/notifications');
   };
 
-  const handleNavigateToMembership = () => {
-    navigate('/membership', { state: { roleHint: 'admin' } });
-  };
 
   const handleDownloadCSV = async () => {
     try {
@@ -118,7 +115,6 @@ const AreaMonthlyDetailPage = () => {
           onNavigateToReports={handleNavigateToReports}
           onDownloadCSV={handleDownloadCSV}
           onNavigateToNotifications={handleNavigateToNotifications}
-          onNavigateToMembership={handleNavigateToMembership}
           onLogout={handleLogout}
           adminEmail={adminData?.email || 'Admin'}
           totalForms={totalForms}
@@ -127,6 +123,9 @@ const AreaMonthlyDetailPage = () => {
           onMobileToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
         <div className="flex-1 relative z-10 box-border flex flex-col min-w-0 overflow-hidden">
+          <MobileTopBar
+            title="പ്രതിമാസ റിപ്പോർട്ട്"
+          />
           <div className="flex-1 bg-white flex items-center justify-center">
             <div className="text-center">
               <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-8 max-w-md shadow-lg animate-fade-in">
@@ -162,7 +161,6 @@ const AreaMonthlyDetailPage = () => {
         onNavigateToReports={handleNavigateToReports}
         onDownloadCSV={handleDownloadCSV}
         onNavigateToNotifications={handleNavigateToNotifications}
-        onNavigateToMembership={handleNavigateToMembership}
         onLogout={handleLogout}
         adminEmail={adminData?.email || 'Admin'}
         totalForms={totalForms}

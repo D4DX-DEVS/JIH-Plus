@@ -149,7 +149,7 @@ const FormPage = ({ onBack, onSubmit, editingForm, isAdmin = false }) => {
         {onBack && (
               <button
                 onClick={onBack}
-            className="text-gray-600 hover:text-[#002349] transition-all duration-300 p-2 hover:bg-gray-100 rounded-full flex-shrink-0"
+            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] text-gray-600 hover:text-[#002349] transition-all duration-300 hover:bg-gray-100 rounded-full flex-shrink-0"
             title="Close"
           >
             <X className="w-5 h-5" />
@@ -168,22 +168,22 @@ const FormPage = ({ onBack, onSubmit, editingForm, isAdmin = false }) => {
       )}
 
       {/* Navigation and Progress Steps on same horizontal level */}
-      <div className="flex items-center justify-between mt-6 mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-y-3 mt-6 mb-4">
         {/* Back Button (left) */}
         <div className="flex-1">
           {currentStep > 1 && (
             <button
               onClick={prevStep}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 transition-colors"
+              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 min-h-[44px] rounded-lg text-sm font-semibold flex items-center space-x-2 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
               <span>തിരികെ</span>
               </button>
           )}
             </div>
-            
+
         {/* Progress Steps (center) */}
-        <div className="flex items-center space-x-2">
+        <div className="order-first flex w-full items-center justify-center space-x-2 sm:order-none sm:w-auto">
               {[1, 2, 3, 4, 5].map((step) => (
                 <div key={step} className="flex items-center">
                   <div
@@ -214,7 +214,7 @@ const FormPage = ({ onBack, onSubmit, editingForm, isAdmin = false }) => {
             <button
               onClick={nextStep}
               disabled={!validateCurrentStep()}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 min-h-[44px] rounded-lg text-sm font-semibold flex items-center space-x-2 transition-colors"
             >
               <span>അടുത്തത്</span>
               <ArrowRight className="w-4 h-4" />
@@ -223,7 +223,7 @@ const FormPage = ({ onBack, onSubmit, editingForm, isAdmin = false }) => {
             <button
               onClick={handleFormSubmit}
               disabled={isSubmitting || !validateCurrentStep()}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 transition-colors"
+              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 min-h-[44px] rounded-lg text-sm font-semibold flex items-center space-x-2 transition-colors"
             >
               {isSubmitting ? (
                 <>

@@ -101,7 +101,7 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
           <h2 className="text-base font-bold text-gray-900">User Profile</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-2 -m-2 rounded-full"
           >
             <X className="w-6 h-6" />
           </button>
@@ -278,6 +278,8 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
                           isAbroadEdit ? 'bg-blue-600' : 'bg-gray-300'
                         }`}
                       >
+                        {/* Invisible hit-area extension: keeps the 24px visual track but gives thumbs a ~40px target. */}
+                        <span className="absolute -inset-2" aria-hidden="true" />
                         <span
                           className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                             isAbroadEdit ? 'translate-x-5' : 'translate-x-0'
@@ -315,7 +317,7 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
                       <button
                         onClick={handleSaveAbroad}
                         disabled={abroadSaving || (isAbroadEdit && !abroadCountryEdit)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         <Save className="w-4 h-4" />
                         {abroadSaving ? 'Saving...' : 'Save Abroad Status'}
@@ -337,7 +339,7 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
                       <button
                         key={s.id || s._id}
                         onClick={() => { navigate(`/ihthisabi/submissions/${s.id || s._id}`); onClose(); }}
-                        className="inline-flex items-center px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-full text-xs font-semibold hover:bg-primary/20 transition-colors"
+                        className="inline-flex items-center px-3 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-full text-xs font-semibold hover:bg-primary/20 transition-colors"
                       >
                         {s.periodDisplay || `Q${s.submissionPeriod?.quarter} ${s.submissionPeriod?.year}`}
                       </button>
@@ -358,7 +360,7 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+            className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
           >
             Close
           </button>

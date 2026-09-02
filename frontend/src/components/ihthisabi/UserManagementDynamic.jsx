@@ -16,7 +16,10 @@ import {
   X,
   ShieldCheck,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  MapPin,
+  SlidersHorizontal,
+  ChevronDown
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -48,13 +51,13 @@ const TransferModal = ({ isOpen, onClose, user, onTransferred }) => {
   if (!isOpen || !user) return null
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-lg">
-        <div className="flex items-center justify-between p-5 border-b">
-          <div>
+      <div className="bg-white rounded-lg w-full max-w-lg max-h-[85vh] overflow-y-auto">
+        <div className="flex items-center justify-between gap-2 p-5 border-b">
+          <div className="min-w-0">
             <h3 className="text-lg font-semibold text-gray-900">Transfer Member</h3>
-            <p className="text-sm text-gray-500">{user.name} — Current unit: <strong>{user.unit}</strong></p>
+            <p className="truncate text-sm text-gray-500">{user.name} — Current unit: <strong>{user.unit}</strong></p>
           </div>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
+          <button onClick={onClose} className="shrink-0 p-2 -m-2 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <p className="text-sm text-gray-600">Select the new location for this member:</p>
@@ -134,32 +137,32 @@ const UnitAdminFormModal = ({ isOpen, onClose, editAdmin, onSaved }) => {
   if (!isOpen) return null
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg w-full max-w-lg my-4">
+      <div className="bg-white rounded-lg w-full max-w-lg my-4 max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b">
           <h3 className="text-lg font-semibold">{editAdmin ? 'Edit Unit Admin' : 'Add Unit Admin'}</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
+          <button onClick={onClose} className="shrink-0 p-2 -m-2 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Rukn ID <span className="text-red-500">*</span></label>
-              <input className="form-input text-sm" value={form.ruknId} onChange={e => set('ruknId', e.target.value)} required />
+              <input className="form-input text-base sm:text-sm" value={form.ruknId} onChange={e => set('ruknId', e.target.value)} required />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
-              <input className="form-input text-sm" value={form.name} onChange={e => set('name', e.target.value)} required />
+              <input className="form-input text-base sm:text-sm" value={form.name} onChange={e => set('name', e.target.value)} required />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Contact No</label>
-              <input className="form-input text-sm" value={form.contactNo} onChange={e => set('contactNo', e.target.value)} />
+              <input className="form-input text-base sm:text-sm" value={form.contactNo} onChange={e => set('contactNo', e.target.value)} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
-              <input type="email" className="form-input text-sm" value={form.emailId} onChange={e => set('emailId', e.target.value)} />
+              <input type="email" className="form-input text-base sm:text-sm" value={form.emailId} onChange={e => set('emailId', e.target.value)} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">{editAdmin ? 'New Password (leave blank to keep)' : 'Password *'}</label>
-              <input type="password" className="form-input text-sm" value={form.password} onChange={e => set('password', e.target.value)} placeholder={editAdmin ? 'Leave blank to keep current' : 'Min 6 characters'} />
+              <input type="password" className="form-input text-base sm:text-sm" value={form.password} onChange={e => set('password', e.target.value)} placeholder={editAdmin ? 'Leave blank to keep current' : 'Min 6 characters'} />
             </div>
           </div>
 
@@ -262,13 +265,13 @@ const AssignAdminModal = ({ isOpen, onClose, onAssigned }) => {
   if (!isOpen) return null
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg w-full max-w-lg my-4">
+      <div className="bg-white rounded-lg w-full max-w-lg my-4 max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b">
           <div>
             <h3 className="text-lg font-semibold">Assign Unit Admin from Member</h3>
             <p className="text-xs text-gray-500">Choose a member from any unit and assign them as unit admin</p>
           </div>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
+          <button onClick={onClose} className="shrink-0 p-2 -m-2 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
         </div>
         <div className="p-5 space-y-4">
           {/* Unit selection */}
@@ -312,7 +315,7 @@ const AssignAdminModal = ({ isOpen, onClose, onAssigned }) => {
                     key={m._id}
                     type="button"
                     onClick={() => setSelectedUser(m)}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between ${selectedUser?._id === m._id ? 'bg-blue-50 border-l-2 border-blue-500' : ''}`}
+                    className={`w-full text-left px-3 py-3 text-sm hover:bg-gray-50 flex items-center justify-between ${selectedUser?._id === m._id ? 'bg-blue-50 border-l-2 border-blue-500' : ''}`}
                   >
                     <div>
                       <span className="font-medium">{m.name}</span>
@@ -359,6 +362,7 @@ const UserManagementDynamic = () => {
   const [unitFilter,     setUnitFilter]     = useState('')
   const [selectedDistrictId, setSelectedDistrictId] = useState('')
   const [selectedAreaId,     setSelectedAreaId]     = useState('')
+  const [filtersOpen,        setFiltersOpen]        = useState(false)
   const [pagination,     setPagination]     = useState({ current: 1, pages: 1, total: 0 })
   const [uaPagination,   setUaPagination]   = useState({ current: 1, pages: 1, total: 0 })
 
@@ -435,6 +439,8 @@ const UserManagementDynamic = () => {
   }
 
   // ── filter controls ─────────────────────────────────────────────────────────
+  const activeFilterCount = [searchTerm, districtFilter, areaFilter, unitFilter].filter(Boolean).length
+
   const resetFilters = () => {
     setSearchTerm(''); setDistrictFilter(''); setAreaFilter(''); setUnitFilter('')
     setSelectedDistrictId(''); setSelectedAreaId('')
@@ -465,7 +471,8 @@ const UserManagementDynamic = () => {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
+        {/* Hidden on mobile — the app bar already names this screen there. */}
+        <div className="hidden lg:block">
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-indigo-600" />
             User Management
@@ -473,94 +480,128 @@ const UserManagementDynamic = () => {
           <p className="text-sm text-gray-500">Super admin — full control over members &amp; unit admins</p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        {/* Actions — one height, one shape; labels shorten on phones so the row
+            never wraps, even in the three-button unit-admin view. */}
+        <div className="flex w-full items-center gap-2 lg:w-auto">
           <button
-            onClick={() => { setView(view === 'members' ? 'unitadmins' : 'members'); resetFilters() }}
-            className="btn-ghost text-sm"
+            onClick={() => { setView(view === 'members' ? 'unitadmins' : 'members'); resetFilters(); setFiltersOpen(false) }}
+            className={`inline-flex h-[44px] min-w-0 flex-1 items-center justify-center gap-1 rounded-full px-3 text-[11px] font-medium transition-colors sm:h-9 sm:flex-none sm:px-4 sm:text-sm ${
+              view === 'unitadmins' ? 'bg-primary text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            }`}
+            style={view === 'unitadmins' ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
           >
-            <Settings className="w-4 h-4 mr-1" />
-            {view === 'members' ? 'View Unit Admins' : 'View Members'}
+            <Settings className="h-4 w-4 shrink-0" />
+            <span className="truncate">{view === 'members' ? 'Unit Admins' : 'Members'}</span>
+          </button>
+
+          <button
+            onClick={() => setFiltersOpen(o => !o)}
+            title="Search and filter"
+            aria-expanded={filtersOpen}
+            className={`inline-flex h-[44px] shrink-0 items-center gap-1 rounded-full px-3 text-[11px] font-medium transition-colors sm:hidden ${
+              activeFilterCount > 0 ? 'bg-primary/10 text-primary' : 'text-gray-500'
+            }`}
+            style={activeFilterCount > 0 ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {activeFilterCount > 0 && <span>{activeFilterCount}</span>}
+            <ChevronDown className={`h-3 w-3 transition-transform duration-300 ${filtersOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {view === 'members' && (
-            <button onClick={() => { setEditingUser(null); setShowUserForm(true) }} className="btn-primary text-sm">
-              <UserPlus className="w-4 h-4 mr-1" /> Add Member
+            <button onClick={() => { setEditingUser(null); setShowUserForm(true) }} className="btn-primary h-[44px] shrink-0 gap-1 px-3 text-[11px] sm:h-9 sm:px-4 sm:text-sm">
+              <UserPlus className="h-4 w-4" />
+              <span className="sm:hidden">Add</span>
+              <span className="hidden sm:inline">Add Member</span>
             </button>
           )}
           {view === 'unitadmins' && (
             <>
-              <button onClick={() => { setEditingUA(null); setShowUAForm(true) }} className="btn-primary text-sm">
-                <UserPlus className="w-4 h-4 mr-1" /> Add Unit Admin
+              <button onClick={() => { setEditingUA(null); setShowUAForm(true) }} className="btn-primary h-[44px] shrink-0 gap-1 px-3 text-[11px] sm:h-9 sm:px-4 sm:text-sm">
+                <UserPlus className="h-4 w-4" />
+                <span className="sm:hidden">Add</span>
+                <span className="hidden sm:inline">Add Unit Admin</span>
               </button>
-              <button onClick={() => setShowAssign(true)} className="btn-primary text-sm bg-indigo-600 hover:bg-indigo-700">
-                <ShieldCheck className="w-4 h-4 mr-1" /> Assign from Member
+              <button onClick={() => setShowAssign(true)} className="btn-primary h-[44px] shrink-0 gap-1 bg-indigo-600 px-3 text-[11px] hover:bg-indigo-700 sm:h-9 sm:px-4 sm:text-sm">
+                <ShieldCheck className="h-4 w-4" />
+                <span className="sm:hidden">Assign</span>
+                <span className="hidden sm:inline">Assign from Member</span>
               </button>
             </>
           )}
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <div className="bg-white border rounded-lg p-3 flex items-center gap-3">
-          <Users className="w-7 h-7 text-blue-500" />
-          <div>
-            <p className="text-xs text-gray-500">{view === 'members' ? 'Total Members' : 'Total Unit Admins'}</p>
-            <p className="text-xl font-bold text-gray-900">{curPag.total || 0}</p>
+      {/* Stats — three compact tiles on a single row at every width. */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        {[
+          { Icon: Users, tone: 'text-blue-500', short: 'Total',
+            label: view === 'members' ? 'Total Members' : 'Total Unit Admins',
+            value: curPag.total || 0 },
+          { Icon: CheckCircle, tone: 'text-green-500', short: 'Active', label: 'Active',
+            value: (view === 'members' ? users : unitAdmins).filter(u => u.isActive).length },
+          { Icon: AlertCircle, tone: 'text-amber-500', short: 'Inactive', label: 'Inactive',
+            value: (view === 'members' ? users : unitAdmins).filter(u => !u.isActive).length },
+        ].map(stat => (
+          <div key={stat.label} className="flex min-w-0 items-center gap-2 rounded-xl border bg-white p-2 sm:gap-3 sm:p-3">
+            <stat.Icon className={`h-4 w-4 shrink-0 sm:h-7 sm:w-7 ${stat.tone}`} />
+            <div className="min-w-0">
+              <p className="truncate text-[10px] text-gray-500 sm:text-xs">
+                <span className="sm:hidden">{stat.short}</span>
+                <span className="hidden sm:inline">{stat.label}</span>
+              </p>
+              <p className="text-base font-bold text-gray-900 sm:text-xl">{stat.value}</p>
+            </div>
           </div>
-        </div>
-        <div className="bg-white border rounded-lg p-3 flex items-center gap-3">
-          <CheckCircle className="w-7 h-7 text-green-500" />
-          <div>
-            <p className="text-xs text-gray-500">Active</p>
-            <p className="text-xl font-bold text-gray-900">
-              {view === 'members' ? users.filter(u => u.isActive).length : unitAdmins.filter(u => u.isActive).length}
-            </p>
-          </div>
-        </div>
-        <div className="bg-white border rounded-lg p-3 flex items-center gap-3">
-          <AlertCircle className="w-7 h-7 text-amber-500" />
-          <div>
-            <p className="text-xs text-gray-500">Inactive</p>
-            <p className="text-xl font-bold text-gray-900">
-              {view === 'members' ? users.filter(u => !u.isActive).length : unitAdmins.filter(u => !u.isActive).length}
-            </p>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Filters */}
-      <div className="bg-white border rounded-lg p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-700">Filters</span>
-          {(searchTerm || districtFilter || areaFilter || unitFilter) && (
-            <button onClick={resetFilters} className="text-xs text-blue-600 hover:underline">Reset</button>
-          )}
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+      {/* Search + filters — collapsed on phones behind the toggle above, always
+          open from sm: where there is room for them. */}
+      <div className={`${filtersOpen ? 'block' : 'hidden'} ih-surface p-2.5 sm:!block sm:p-3`}>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="ih-filter-icon" />
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Search name or Rukn ID…"
-              className="form-input pl-10 text-sm"
+              className="ih-field h-[44px] pr-3 text-base sm:h-9 sm:text-sm"
             />
           </div>
-          <select className="form-select text-sm" value={selectedDistrictId} onChange={e => handleDistrictChange(e.target.value)}>
-            <option value="">All Districts</option>
-            {districts.map(d => <option key={getId(d)} value={getId(d)}>{getLabel(d)}</option>)}
-          </select>
-          <select className="form-select text-sm" value={selectedAreaId} onChange={e => handleAreaChange(e.target.value)} disabled={!selectedDistrictId || locLoading.areas}>
-            <option value="">All Areas</option>
-            {areas.map(a => <option key={getId(a)} value={getId(a)}>{getLabel(a)}</option>)}
-          </select>
-          <select className="form-select text-sm" value={unitFilter ? getId(units.find(u => getLabel(u) === unitFilter)) || '' : ''} onChange={e => handleUnitChange(e.target.value)} disabled={!selectedAreaId || locLoading.units}>
-            <option value="">All Units</option>
-            {units.map(u => <option key={getId(u)} value={getId(u)}>{getLabel(u)}</option>)}
-          </select>
+          <div className="relative">
+            <MapPin className="ih-filter-icon" />
+            <select className="ih-filter-select h-[44px] truncate text-[13px] sm:h-9 sm:text-sm" value={selectedDistrictId} onChange={e => handleDistrictChange(e.target.value)}>
+              <option value="">All Districts</option>
+              {districts.map(d => <option key={getId(d)} value={getId(d)}>{getLabel(d)}</option>)}
+            </select>
+          </div>
+          <div className="relative">
+            <MapPin className="ih-filter-icon" />
+            <select className="ih-filter-select h-[44px] truncate text-[13px] sm:h-9 sm:text-sm" value={selectedAreaId} onChange={e => handleAreaChange(e.target.value)} disabled={!selectedDistrictId || locLoading.areas}>
+              <option value="">All Areas</option>
+              {areas.map(a => <option key={getId(a)} value={getId(a)}>{getLabel(a)}</option>)}
+            </select>
+          </div>
+          <div className="relative">
+            <MapPin className="ih-filter-icon" />
+            <select className="ih-filter-select h-[44px] truncate text-[13px] sm:h-9 sm:text-sm" value={unitFilter ? getId(units.find(u => getLabel(u) === unitFilter)) || '' : ''} onChange={e => handleUnitChange(e.target.value)} disabled={!selectedAreaId || locLoading.units}>
+              <option value="">All Units</option>
+              {units.map(u => <option key={getId(u)} value={getId(u)}>{getLabel(u)}</option>)}
+            </select>
+          </div>
         </div>
+        {activeFilterCount > 0 && (
+          <button
+            onClick={resetFilters}
+            className="mt-2 inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:text-gray-800"
+            style={{ backgroundColor: 'rgba(16,24,40,0.04)' }}
+          >
+            <X className="h-3 w-3" />
+            Clear all
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -571,8 +612,9 @@ const UserManagementDynamic = () => {
           </span>
         </div>
 
-        <div className="overflow-x-hidden sm:overflow-x-auto">
-          <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+        {/* Eight columns don't fit phone widths — mobile gets a card list below instead. */}
+        <div className="hidden lg:block lg:overflow-x-auto">
+          <table className="ih-table-compact w-full min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3 text-left">Rukn ID</th>
@@ -649,6 +691,66 @@ const UserManagementDynamic = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile list */}
+        <div className="ih-list lg:hidden">
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 py-8 text-xs text-gray-400">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+              Loading…
+            </div>
+          ) : (view === 'members' ? users : unitAdmins).length === 0 ? (
+            <div className="py-8 text-center text-xs text-gray-400">
+              No {view === 'members' ? 'members' : 'unit admins'} found
+            </div>
+          ) : (
+            (view === 'members' ? users : unitAdmins).map((row) => (
+              <div key={row._id} className="ih-list-row">
+                <div className="min-w-0 flex-1">
+                  <div className="ih-list-title">{row.name}</div>
+                  <div className="ih-list-meta">
+                    {row.ruknId}
+                    {view === 'members' && row.gender ? ` · ${row.gender}` : ''}
+                    {row.contactNo ? ` · ${row.contactNo}` : ''}
+                  </div>
+                  <div className="ih-list-meta">
+                    {[row.district, row.unit].filter(Boolean).join(' - ') || '—'}
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-1">
+                  <span className={`ih-chip ${row.isActive ? 'border-green-200 bg-green-100 text-green-800' : 'border-red-200 bg-red-100 text-red-800'}`}>
+                    {row.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (view === 'members') { setEditingUser(row); setShowUserForm(true) }
+                        else { setEditingUA(row); setShowUAForm(true) }
+                      }}
+                      title="Edit"
+                      className="ih-icon-btn text-blue-600 hover:bg-blue-50"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                    </button>
+                    {view === 'members' && (
+                      <button onClick={() => setTransferUser(row)} title="Transfer" className="ih-icon-btn text-indigo-600 hover:bg-indigo-50">
+                        <ArrowRightLeft className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setDeleteModal({ isOpen: true, id: row._id, name: row.name, type: view === 'members' ? 'user' : 'ua' })}
+                      title="Delete"
+                      className="ih-icon-btn text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         <Pagination pagination={curPag} onPageChange={curFetch} itemLabel={view === 'members' ? 'members' : 'unit admins'} />

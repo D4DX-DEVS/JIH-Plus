@@ -85,7 +85,7 @@ const ArchiveManagement = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="hidden lg:block">
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <Archive className="w-5 h-5 text-[#002349]" />
             Archive Quarters
@@ -96,7 +96,7 @@ const ArchiveManagement = () => {
         </div>
         <button
           onClick={() => { setShowForm(true); setFormData({ quarter: '', year: currentYear }) }}
-          className="btn-primary flex items-center gap-2"
+          className="btn-primary flex items-center gap-2 ml-auto"
           disabled={showForm}
         >
           <Plus className="w-4 h-4" />
@@ -158,6 +158,53 @@ const ArchiveManagement = () => {
 
       {/* Archived List */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {/* Mobile: roomy tappable rows — one full-width target per record */}
+        <div className="lg:hidden">
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 py-12 text-sm text-gray-500">
+              <div className="w-5 h-5 border-2 border-[#002349] border-t-transparent rounded-full animate-spin" />
+              Loading...
+            </div>
+          ) : archivedList.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 font-medium">No archived quarters</p>
+              <p className="text-sm text-gray-400 mt-1">Archived quarters will appear here</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {archivedList.map(item => (
+                <div key={item._id} className="min-h-[56px] flex items-center gap-2 px-3 py-3">
+                  <div className="min-w-0 flex-1 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                      <Archive className="w-4 h-4 text-amber-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-gray-900">Q{item.quarter} {item.year}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{QUARTER_NAMES[item.quarter]}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        Archived {item.archivedAt
+                          ? new Date(item.archivedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                          : '—'}
+                        {item.archivedBy ? ` · by ${item.archivedBy}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => openDeleteModal(item)}
+                    title="Unarchive"
+                    className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Unarchive
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* Desktop: table */}
+        <div className="hidden lg:block ih-scroll-x">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -234,6 +281,7 @@ const ArchiveManagement = () => {
             )}
           </tbody>
         </table>
+        </div>
         <Pagination pagination={pagination} onPageChange={fetchArchivedQuarters} loading={loading} itemLabel="archived quarters" />
       </div>
 
