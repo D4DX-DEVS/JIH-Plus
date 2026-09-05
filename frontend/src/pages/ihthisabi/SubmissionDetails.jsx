@@ -3,16 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { api } from '../../utils/ihthisabi/api'
 import ConfirmationModal from '../../components/ihthisabi/ConfirmationModal'
-import { 
-  ArrowLeft, 
-  Calendar, 
-  User, 
-  MapPin, 
-  CheckCircle, 
+import {
+  ArrowLeft,
+  Calendar,
+  User,
+  MapPin,
+  CheckCircle,
   Trash2,
   Edit,
   Star,
-  X as CloseIcon
+  X as CloseIcon,
+  AlertCircle
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -115,13 +116,29 @@ const SubmissionDetails = ({ userRole }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
   }
 
-  if (!submission) return null
+  if (!submission) {
+    return (
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center px-4">
+          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Submission Not Found</h3>
+          <p className="text-gray-600 mb-6">The submission you're looking for doesn't exist.</p>
+          <button
+            onClick={() => navigate(backPath)}
+            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const form = submission.form || {}
   const isDynamicSubmission = !!(submission.dynamicFormId && submission.dynamicFormData)
@@ -232,7 +249,7 @@ const SubmissionDetails = ({ userRole }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 px-4">
+    <div className="ih-screen bg-gray-50 py-4 sm:py-6 px-4">
       <div className="max-w-5xl mx-auto relative">
         {/* Below the sticky mobile app bar (~56px) so it never overlaps the account button */}
         <button

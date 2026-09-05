@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../../utils/ihthisabi/api';
-import { Eye, Send } from 'lucide-react';
+import { Eye, Send, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DynamicFormsUser = () => {
@@ -25,6 +25,8 @@ const DynamicFormsUser = () => {
   const [answers, setAnswers] = useState([]);
   const [formLoading, setFormLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
+  const fieldRefs = React.useRef({});
 
   // Detail state
   const [submission, setSubmission] = useState(null);
@@ -66,6 +68,7 @@ const DynamicFormsUser = () => {
             questionOrder: q.questionOrder,
             questionText: q.questionText,
             answerType: q.answerType,
+            isRequired: !!q.isRequired,
             value: q.answerType === 'checkbox' ? [] : ''
           });
         });
@@ -97,9 +100,36 @@ const DynamicFormsUser = () => {
     setAnswers((prev) =>
       prev.map((a) => (a.questionText === questionText ? { ...a, value } : a))
     );
+    if (errors[questionText]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[questionText];
+        return next;
+      });
+    }
+  };
+
+  const isAnswerEmpty = (value) => (Array.isArray(value) ? value.length === 0 : !String(value ?? '').trim());
+
+  const validateAnswers = () => {
+    const newErrors = {};
+    answers.forEach((a) => {
+      if (a.isRequired && isAnswerEmpty(a.value)) {
+        newErrors[a.questionText] = 'This field is required';
+      }
+    });
+    return newErrors;
   };
 
   const handleSubmit = async () => {
+    const newErrors = validateAnswers();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error('Please fill all required fields');
+      const firstKey = Object.keys(newErrors)[0];
+      fieldRefs.current[firstKey]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     setSaving(true);
     try {
       await api.post(`/ihthisabi/dynamic-reports/${formId}/submit`, { answers });
@@ -131,7 +161,7 @@ const DynamicFormsUser = () => {
       case 'text':
         return (
           <input
-            className="w-full border rounded px-3 py-2"
+            className="form-input"
             value={q.value}
             onChange={(e) => updateAnswer(q.questionText, e.target.value)}
             placeholder={q.placeholder}
@@ -141,7 +171,7 @@ const DynamicFormsUser = () => {
         return (
           <input
             type="number"
-            className="w-full border rounded px-3 py-2"
+            className="form-input"
             value={q.value}
             onChange={(e) => updateAnswer(q.questionText, e.target.value)}
             placeholder={q.placeholder}
@@ -150,7 +180,7 @@ const DynamicFormsUser = () => {
       case 'textarea':
         return (
           <textarea
-            className="w-full border rounded px-3 py-2"
+            className="form-textarea"
             value={q.value}
             onChange={(e) => updateAnswer(q.questionText, e.target.value)}
             rows={3}
@@ -161,7 +191,7 @@ const DynamicFormsUser = () => {
         return (
           <input
             type="date"
-            className="w-full border rounded px-3 py-2"
+            className="form-input"
             value={q.value}
             onChange={(e) => updateAnswer(q.questionText, e.target.value)}
           />
@@ -170,13 +200,14 @@ const DynamicFormsUser = () => {
         return (
           <div className="space-y-1">
             {opts.map((opt, idx) => (
-              <label key={idx} className="flex items-center gap-2 py-2 text-sm text-gray-700">
+              <label key={idx} className="flex min-h-[44px] items-center gap-2 text-sm text-gray-700">
                 <input
                   type="radio"
                   name={q.questionText}
                   value={opt}
                   checked={q.value === opt}
                   onChange={() => updateAnswer(q.questionText, opt)}
+                  className="form-radio"
                 />
                 {opt}
               </label>
@@ -186,7 +217,7 @@ const DynamicFormsUser = () => {
       case 'dropdown':
         return (
           <select
-            className="w-full border rounded px-3 py-2"
+            className="form-select min-h-[44px] sm:min-h-0"
             value={q.value}
             onChange={(e) => updateAnswer(q.questionText, e.target.value)}
           >
@@ -204,7 +235,7 @@ const DynamicFormsUser = () => {
             {opts.map((opt, idx) => {
               const checked = Array.isArray(q.value) && q.value.includes(opt);
               return (
-                <label key={idx} className="flex items-center gap-2 py-2 text-sm text-gray-700">
+                <label key={idx} className="flex min-h-[44px] items-center gap-2 text-sm text-gray-700">
                   <input
                     type="checkbox"
                     checked={checked}
@@ -215,6 +246,7 @@ const DynamicFormsUser = () => {
                         : current.filter((v) => v !== opt);
                       updateAnswer(q.questionText, next);
                     }}
+                    className="form-checkbox"
                   />
                   {opt}
                 </label>
@@ -349,21 +381,30 @@ const DynamicFormsUser = () => {
         <div className="text-gray-600">Form not found</div>
       ) : (
         <div className="space-y-4">
-          <div className="bg-white shadow rounded p-4">
+          <div className="card p-4">
             <div className="text-lg font-semibold">{form.title}</div>
             <div className="text-sm text-gray-700">{form.description}</div>
           </div>
 
           {(form.parts || []).map((p) => (
-            <div key={p.partOrder} className="bg-white shadow rounded p-4 space-y-3">
+            <div key={p.partOrder} className="card p-4 space-y-3">
               <div className="text-md font-semibold">{p.partName}</div>
               {(p.questions || []).map((q) => {
                 const ans = answers.find((a) => a.questionText === q.questionText) || q;
                 const merged = { ...q, ...ans, options: q.options || [] };
+                const error = errors[q.questionText];
                 return (
-                  <div key={q.questionOrder} className="space-y-2">
-                    <div className="text-sm font-medium text-gray-800">{q.questionText}</div>
+                  <div
+                    key={q.questionOrder}
+                    className="space-y-2"
+                    ref={(el) => { fieldRefs.current[q.questionText] = el; }}
+                  >
+                    <div className="text-sm font-medium text-gray-800">
+                      {q.questionText}
+                      {q.isRequired && <span className="text-red-500 ml-0.5">*</span>}
+                    </div>
                     {renderInput(merged)}
+                    {error && <p className="form-error">{error}</p>}
                   </div>
                 );
               })}
@@ -373,9 +414,15 @@ const DynamicFormsUser = () => {
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="w-full px-4 py-3 bg-black text-white rounded hover:bg-primary-600 disabled:opacity-50 sm:w-auto"
+            className="btn-primary w-full sm:w-auto"
           >
-            {saving ? 'Submitting...' : 'Submit'}
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...
+              </>
+            ) : (
+              'Submit'
+            )}
           </button>
         </div>
       )}

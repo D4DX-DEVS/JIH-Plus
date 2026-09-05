@@ -104,7 +104,7 @@ function ReportsList() {
   }, [mySubs])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell max-w-3xl">
         <div className="mb-2 hidden min-w-0 lg:mb-3 lg:block">
           <h1 className="ih-page-title">My Reports</h1>
@@ -260,10 +260,10 @@ function ReportForm() {
     }
   }
 
-  if (loading) return <div className="min-h-screen bg-gray-50"><Spinner /></div>
+  if (loading) return <div className="ih-screen bg-gray-50"><Spinner /></div>
   if (!report) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="ih-screen bg-gray-50">
         <div className="ih-page-shell max-w-3xl">
           <div className="ih-surface px-4 py-12 text-center">
             <p className="text-sm text-gray-500">Report not found</p>
@@ -277,7 +277,7 @@ function ReportForm() {
   const isEditingSubmitted = submission?.status === 'submitted'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell max-w-3xl">
         <BackLink onClick={() => navigate('/ihthisabi/mekhalanazim')}>Back to Reports</BackLink>
 
@@ -335,10 +335,10 @@ function SubmissionView() {
     load()
   }, [submissionId])
 
-  if (loading) return <div className="min-h-screen bg-gray-50"><Spinner /></div>
+  if (loading) return <div className="ih-screen bg-gray-50"><Spinner /></div>
   if (!submission) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="ih-screen bg-gray-50">
         <div className="ih-page-shell max-w-3xl">
           <div className="ih-surface px-4 py-12 text-center">
             <p className="text-sm text-gray-500">Submission not found</p>
@@ -354,7 +354,7 @@ function SubmissionView() {
   const usesFormData = pages.length > 0 && submission.formData && Object.keys(submission.formData).length > 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell max-w-3xl">
         <BackLink onClick={() => navigate('/ihthisabi/mekhalanazim')}>Back to Reports</BackLink>
 

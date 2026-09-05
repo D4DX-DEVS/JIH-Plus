@@ -16,9 +16,20 @@ const emptyForm = () => ({
 })
 
 function FormModal({ title, onClose, children }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-      <div className="ih-surface flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div className="ih-surface flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3.5 sm:px-6">
           <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 sm:text-base">{title}</h2>
           <button onClick={onClose} className="ih-icon-btn hover:bg-gray-100 hover:text-gray-700">
@@ -230,7 +241,7 @@ const MekhalaNazimManagement = () => {
   const inputClass = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell max-w-5xl">
         {/* Header row starts at sm: — on phones the app bar names the page and the
             add action lives in the floating button below. */}
@@ -388,12 +399,10 @@ const MekhalaNazimManagement = () => {
             {formError && <p className="text-sm text-red-500">{formError}</p>}
 
             <div className="flex justify-end gap-2 pt-1">
-              <button onClick={() => setFormOpen(false)}
-                className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-200">
+              <button onClick={() => setFormOpen(false)} className="btn-ghost">
                 Cancel
               </button>
-              <button onClick={handleSave} disabled={saving}
-                className="rounded-lg bg-[#161F2F] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1a2538] disabled:opacity-50">
+              <button onClick={handleSave} disabled={saving} className="btn-secondary">
                 {saving ? 'Saving…' : editItem ? 'Save' : 'Create'}
               </button>
             </div>

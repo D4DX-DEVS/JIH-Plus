@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, FileText, Search, Filter, Edit, Trash2, Users, ArrowLeft, Check, Bell, Eye, MapPin, Building, BookOpen, TrendingUp } from 'lucide-react';
+import { FileText, Filter, Edit, Trash2, Users, ArrowLeft, Eye, Building, BookOpen, TrendingUp, Calendar, LogOut, Bell, MapPin } from 'lucide-react';
+import { JihFilterBar, JihFilterSelect, JihFab, JihAddButton } from '../components/JihToolbar';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import AreaSurveyDetailPage from './AreaSurveyDetailPage';
 import AreaSurveyEditPage from './AreaSurveyEditPage';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
@@ -35,8 +37,7 @@ const AreaDashboardPage = ({ onLogout }) => {
   const [enhancedStats, setEnhancedStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  
+
   // UI state
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'monthly', 'units', 'stats'
   const [activeStatsSubTab, setActiveStatsSubTab] = useState('summary'); // 'summary' | 'areaTable' | 'unitTable'
@@ -236,23 +237,22 @@ const AreaDashboardPage = ({ onLogout }) => {
     try {
       const token = localStorage.getItem('userToken');
       const headers = { Authorization: `Bearer ${token}` };
-      let allSurveys = [];
 
-      for (const unit of units) {
+      const perUnitSurveys = await Promise.all(units.map(async (unit) => {
         try {
           const unitId = unit.id || unit._id || unit.code;
           const response = await axios.get(
             `${import.meta.env.VITE_API_URL}/api/unit/unit-surveys/unit/${encodeURIComponent(unitId)}?page=1&limit=100`,
             { headers, timeout: 5000 }
           );
-          const unitSurveys = (response.data?.surveys || []).map(s => ({ ...s, __unitId: unitId }));
-          allSurveys = [...allSurveys, ...unitSurveys];
+          return (response.data?.surveys || []).map(s => ({ ...s, __unitId: unitId }));
         } catch (error) {
           // Silent fail for individual unit errors
+          return [];
         }
-      }
+      }));
 
-      setAllUnitSurveys(allSurveys);
+      setAllUnitSurveys(perUnitSurveys.flat());
     } catch (error) {
       setAllUnitSurveys([]);
     }
@@ -444,8 +444,9 @@ const AreaDashboardPage = ({ onLogout }) => {
         });
         setSurveyToDelete(null);
         loadMonthlySurveys();
+        toast.success('Area report deleted successfully!');
       }
-      
+
       setShowDeleteModal(false);
     } catch (error) {
       setError('Failed to delete report');
@@ -557,13 +558,7 @@ const AreaDashboardPage = ({ onLogout }) => {
         onSubmit={(updatedSurvey) => {
               setShowFormEdit(false);
               setEditingSurvey(null);
-              setSuccessMessage(`${updatedSurvey?.month || 'Area'} മാസത്തിലെ റിപ്പോർട്ട് വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു!`);
-              
-              // Clear success message after 3 seconds
-              setTimeout(() => {
-                setSuccessMessage('');
-              }, 3000);
-              
+              toast.success(`${updatedSurvey?.month || 'Area'} മാസത്തിലെ റിപ്പോർട്ട് വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു!`);
             loadMonthlySurveys();
           }}
         />
@@ -660,51 +655,30 @@ const AreaDashboardPage = ({ onLogout }) => {
         {activeTab === 'monthly' && (
           <>
             {/* Page Heading */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-              <div className="hidden lg:block">
-                <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
-                  ഏരിയ റിപ്പോർട്ട്
-                </h1>
-              </div>
-              <button
-                onClick={handleCreateSurvey}
-                className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-6 py-3 rounded-2xl transition-all duration-500 flex items-center space-x-2 text-sm font-semibold hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out"
-              >
-                <FileText className="w-4 h-4" />
-                <span>New Area Report</span>
-              </button>
+            <div className="hidden lg:flex justify-between items-center mb-4 gap-3">
+              <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
+                ഏരിയ റിപ്പോർട്ട്
+              </h1>
+              <JihAddButton onClick={handleCreateSurvey} icon={FileText}>New Area Report</JihAddButton>
             </div>
+            <JihFab onClick={handleCreateSurvey} label="New Area Report" />
 
-            {/* Inline Search & Filters (no container card) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-              <div>
-                <label className="block text-xs font-semibold text-[#002349] mb-1">Search</label>
-                <div className="relative group">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search area reports..."
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-base"
-                  />
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 group-hover:text-[#002349] transition-colors duration-300" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#002349] mb-1">Month</label>
-                <select
-                  value={monthFilter}
-                  onChange={(e) => setMonthFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-base"
-                >
-                  <option value="">All Months</option>
-                  {['January', 'February', 'March', 'April', 'May', 'June', 
-                    'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
-                    <option key={month} value={month}>{month}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <JihFilterBar
+              className="mb-4"
+              search={searchTerm}
+              onSearchChange={setSearchTerm}
+              placeholder="Search area reports..."
+              activeFilterCount={monthFilter ? 1 : 0}
+              gridClass="sm:grid-cols-3 lg:grid-cols-4"
+            >
+              <JihFilterSelect icon={Calendar} value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}>
+                <option value="">All Months</option>
+                {['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                <option key={month} value={month}>{month}</option>
+              ))}
+              </JihFilterSelect>
+            </JihFilterBar>
 
             {/* Surveys Table */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-500">
@@ -726,7 +700,55 @@ const AreaDashboardPage = ({ onLogout }) => {
                 </div>
               ) : (
                 <>
-                  <div className="overflow-x-auto">
+                  {/* Mobile list — table collapses into cards below lg, each
+                      action gets its own full-size tap target. */}
+                  <div className="lg:hidden divide-y divide-gray-100">
+                    {filteredSurveys.map((survey) => (
+                      <div key={survey._id} className="p-3.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#957C3D] text-white shadow-sm">
+                              {survey.month}
+                            </span>
+                            <p className="mt-1.5 text-sm font-semibold text-[#002349] truncate">
+                              {survey.area || 'Unknown Area'}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {survey.district || 'Unknown District'} • {new Date(survey.submittedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <span className="flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-green-100 text-green-800 shadow-sm">
+                            Submitted
+                          </span>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewSurvey(survey)}
+                            className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#002349]/10 text-[#002349] text-sm font-semibold"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleEditSurvey(survey)}
+                            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl border border-[#957C3D] text-[#957C3D]"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSurvey(survey)}
+                            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl border border-red-600 text-red-600"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-[#002349] border-b border-[#002349]">
                         <tr>
@@ -1234,53 +1256,82 @@ const AreaDashboardPage = ({ onLogout }) => {
                       <p className="text-xs text-gray-600">This unit hasn't submitted any monthly reports yet.</p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Month
-                            </th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Year
-                            </th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Submitted At
-                            </th>
-                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {selectedUnitSurveys.map((survey) => (
-                            <tr key={survey._id} className="hover:bg-gray-50">
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <>
+                      {/* Mobile list */}
+                      <div className="lg:hidden divide-y divide-gray-100">
+                        {selectedUnitSurveys.map((survey) => (
+                          <div key={survey._id} className="p-3.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-green-100 text-green-800">
                                   {survey.month}
                                 </span>
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                {survey.year}
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                {new Date(survey.submittedAt).toLocaleDateString()}
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                                <div className="flex space-x-2">
+                                <p className="text-xs text-gray-500 mt-1.5">
+                                  {survey.year} • {new Date(survey.submittedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-3">
+                              <button
+                                onClick={() => handleViewUnitSurvey(survey)}
+                                className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#002349]/10 text-[#002349] text-sm font-semibold"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Desktop table */}
+                      <div className="hidden lg:block overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Month
+                              </th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Year
+                              </th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Submitted At
+                              </th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {selectedUnitSurveys.map((survey) => (
+                              <tr key={survey._id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    {survey.month}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                  {survey.year}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                  {new Date(survey.submittedAt).toLocaleDateString()}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                                   <button
                                     onClick={() => handleViewUnitSurvey(survey)}
-                                    className="text-blue-600 hover:text-blue-900 text-xs"
+                                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-[#002349] hover:text-[#1a3a5c] hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                    title="View"
                                   >
-                                    View
+                                    <Eye className="w-4 h-4" />
                                   </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -1301,26 +1352,12 @@ const AreaDashboardPage = ({ onLogout }) => {
                       )}
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={unitSearchTerm}
-                        onChange={(e) => setUnitSearchTerm(e.target.value)}
-                        placeholder="Search units..."
-                        className="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-base transition-all duration-300 hover:border-[#002349]/50"
-                      />
-                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                    </div>
-                    {unitSearchTerm && (
-                      <button
-                        onClick={() => setUnitSearchTerm('')}
-                        className="px-3 py-2 text-sm text-gray-600 hover:text-[#002349] border border-gray-300 rounded-2xl hover:bg-gray-50 transition-all duration-300 font-medium"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
+                  <JihFilterBar
+                    className="w-full sm:w-72 !p-0 !shadow-none !bg-transparent"
+                    search={unitSearchTerm}
+                    onSearchChange={setUnitSearchTerm}
+                    placeholder="Search units..."
+                  />
                 </div>
               </div>
 
@@ -1640,9 +1677,10 @@ const AreaDashboardPage = ({ onLogout }) => {
                         const unitId = u.id || u._id || u.code;
                         return (
                           <tr key={unitId} className="hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#957C3D]/5 transition-all duration-300 hover:shadow-sm">
-                            <td className="whitespace-nowrap text-sm font-bold text-[#002349] p-0">
+                            <td className="text-sm font-bold text-[#002349] p-0">
                               <button
-                                className="block w-full text-left px-6 py-4 hover:underline transition-all duration-300"
+                                className="block w-full text-left px-6 py-4 hover:underline transition-all duration-300 truncate max-w-[9rem]"
+                                title={u.name || u.title || unitId}
                                 onClick={() => setExpandedUnitId(expandedUnitId === unitId ? null : unitId)}
                               >
                                 {u.name || u.title || unitId}
@@ -1681,15 +1719,6 @@ const AreaDashboardPage = ({ onLogout }) => {
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {successMessage && (
-          <div className="mt-4 bg-green-50 border-2 border-green-200 rounded-2xl p-4">
-            <div className="flex items-center space-x-2">
-              <Check className="w-5 h-5 text-green-600" />
-              <p className="text-green-700 text-sm font-semibold">{successMessage}</p>
-            </div>
           </div>
         )}
 

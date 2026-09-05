@@ -346,6 +346,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">റുക്ന്‍:</label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={localData.workers?.rukkun || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -361,6 +363,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">കാർകുൻ:</label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={localData.workers?.karkun || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -376,6 +380,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">ആക്ടീവ് അസോസിയേറ്റ്‌സ്</label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={localData.workers?.activeAssociate || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -419,6 +425,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">ആൺ</label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={localData.partA?.spokenPersons?.male || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -434,6 +442,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">പെൺ </label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={localData.partA?.spokenPersons?.female || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -491,6 +501,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
                       {gender.male && (
                         <input
                           type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={counts.male || 0}
                           onChange={(e) => {
                             const cleaned = validateNumericInput(e.target.value);
@@ -518,6 +530,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
                       {gender.female && (
                         <input
                           type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={counts.female || 0}
                           onChange={(e) => {
                             const cleaned = validateNumericInput(e.target.value);
@@ -554,7 +568,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
       <div className="mt-12 flex justify-end">
         <button
           onClick={handleNext}
-          className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-[#002349] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#002349] text-white text-sm font-semibold rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#002349] focus:ring-offset-2 transition-all duration-500 hover:shadow-lg transform hover:scale-105 ease-out hover:shadow-[#002349]/50"
+          className="inline-flex items-center min-h-[44px] px-6 py-2 bg-gradient-to-r from-[#002349] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#002349] text-white text-sm font-semibold rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#002349] focus:ring-offset-2 transition-all duration-500 hover:shadow-lg transform hover:scale-105 ease-out hover:shadow-[#002349]/50"
         >
           അടുത്തത്
           <ArrowRight className="ml-2 h-4 w-4" />

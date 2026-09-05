@@ -78,7 +78,7 @@ const AreaPageC = () => {
       <div className="mt-6 flex justify-between">
         <button
           onClick={prevStep}
-          className="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-2xl text-sm font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg"
+          className="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-2xl text-sm min-h-[44px] font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>മുൻപത്തെ</span>
@@ -86,7 +86,7 @@ const AreaPageC = () => {
         <button
           onClick={nextStep}
           disabled={!validateCurrentStep()}
-          className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-5 py-2 rounded-2xl text-sm font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out disabled:bg-gray-400 disabled:transform-none disabled:hover:translate-y-0 disabled:hover:scale-100"
+          className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-5 py-2 rounded-2xl text-sm min-h-[44px] font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out disabled:bg-gray-400 disabled:transform-none disabled:hover:translate-y-0 disabled:hover:scale-100"
         >
           <span>അടുത്തത്</span>
           <ArrowRight className="w-4 h-4" />

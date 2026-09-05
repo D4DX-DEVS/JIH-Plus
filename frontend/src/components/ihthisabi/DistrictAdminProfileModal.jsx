@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { api } from '../../utils/ihthisabi/api'
 import { X, User, Phone, Mail, MapPin, Calendar, CheckCircle2, XCircle, Loader2, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import ConfirmationModal from './ConfirmationModal'
 
 const emptyForm = { ruknId: '', name: '', district: '', contactNo: '', emailId: '', password: '', isActive: true }
 
@@ -12,6 +13,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(isCreate)
   const [form, setForm] = useState(emptyForm)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return
@@ -97,7 +99,6 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
   }
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete district admin "${districtAdmin?.name}"? This cannot be undone.`)) return
     setSaving(true)
     try {
       await api.delete(`ihthisabi/admin/district-admins/${districtAdminId}`)
@@ -109,6 +110,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
       toast.error('Failed to delete district admin')
     } finally {
       setSaving(false)
+      setConfirmDelete(false)
     }
   }
 
@@ -288,7 +290,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
 
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-4 py-3 flex flex-wrap items-center justify-between gap-2">
           {!isCreate && !editing && (
-            <button onClick={handleDelete} disabled={saving} className="inline-flex items-center gap-1.5 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium disabled:opacity-50">
+            <button onClick={() => setConfirmDelete(true)} disabled={saving} className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium disabled:opacity-50">
               <Trash2 className="w-4 h-4" /> Delete
             </button>
           )}
@@ -316,13 +318,24 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
               </>
             )}
             {!editing && (
-              <button onClick={onClose} className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+              <button onClick={onClose} className="min-h-[44px] sm:min-h-0 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
                 Close
               </button>
             )}
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title="Delete District Admin"
+        message={`Delete district admin "${districtAdmin?.name}"? This cannot be undone.`}
+        confirmText="Delete"
+        variant="danger"
+        isLoading={saving}
+      />
     </div>
   )
 }

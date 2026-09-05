@@ -10,6 +10,7 @@ import AbroadMemberManagement from '../../components/ihthisabi/AbroadMemberManag
 import AbroadSubmissions from './AbroadSubmissions'
 import UnitAdminProfileModal from '../../components/ihthisabi/UnitAdminProfileModal'
 import DistrictAdminProfileModal from '../../components/ihthisabi/DistrictAdminProfileModal'
+import ConfirmationModal from '../../components/ihthisabi/ConfirmationModal'
 import Pagination from '../../components/ihthisabi/Pagination'
 import letterheadImage from '../../assets/LH.png'
 import { 
@@ -218,8 +219,15 @@ const AdminDashboard = () => {
         setChartDistrictDropdownOpen(false)
       }
     }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setChartDistrictDropdownOpen(false)
+    }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
   }, [chartDistrictDropdownOpen])
 
   const toggleChartDistrict = (district) => {
@@ -829,7 +837,7 @@ const AdminDashboard = () => {
   // Show loading while authentication is being checked
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">
@@ -843,7 +851,7 @@ const AdminDashboard = () => {
   // Show error if not authenticated or not admin
   if (!isAuthenticated || !user || user.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <XCircle className="w-8 h-8 text-red-600" />
@@ -856,7 +864,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell">
         {/* Header — hidden below lg: the app bar (visible <lg) already names the
             page and shows the user's identity; showing this too would duplicate both. */}
@@ -918,7 +926,7 @@ const AdminDashboard = () => {
                     setTemplateEditing(next)
                     if (next) fetchFormFields(templateQuarter)
                   }}
-                  className="text-sm px-3 py-2.5 border border-indigo-300 rounded-lg text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"
+                  className="text-sm min-h-[44px] sm:min-h-0 px-3 py-2.5 border border-indigo-300 rounded-lg text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"
                 >
                   <Settings className="w-4 h-4" />
                   {templateEditing ? 'Hide Template Editor' : 'Edit Reply Template'}
@@ -1916,7 +1924,7 @@ const AdminDashboard = () => {
               { name: `Q${dashboardData.currentQuarter} ${dashboardData.currentYear}`, value: Math.round((curr / maxVal) * 100), fill: '#002349', rawCount: curr },
             ];
             return (
-              <div className="ih-surface p-6 mb-8">
+              <div className="ih-surface p-3 sm:p-6 mb-8">
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">Quarter vs Quarter Submissions</h3>
                 <p className="text-xs text-gray-400 mb-4">Relative comparison of submissions between quarters</p>
                 <ResponsiveContainer width="100%" height={200}>
@@ -1950,7 +1958,7 @@ const AdminDashboard = () => {
 
         {/* District-wise submissions & comparison with last period */}
         {dashboardData && (
-          <div className="ih-surface p-6 mb-6">
+          <div className="ih-surface p-3 sm:p-6 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
               <div>
                 <h3 className="text-sm font-semibold text-gray-700">District-wise Submissions</h3>
@@ -2012,7 +2020,7 @@ const AdminDashboard = () => {
                         .map((d) => (
                           <label
                             key={d.district}
-                            className="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 cursor-pointer"
+                            className="flex min-h-[44px] items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 cursor-pointer"
                           >
                             <input
                               type="checkbox"
@@ -2062,7 +2070,7 @@ const AdminDashboard = () => {
         )}
 
         {/* Submitted / Pending units */}
-        <div className="ih-surface p-6 mb-6">
+        <div className="ih-surface p-3 sm:p-6 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div>
               <h3 className="text-sm font-semibold text-gray-700">Unit Submission Status</h3>
@@ -2097,7 +2105,7 @@ const AdminDashboard = () => {
             <div className="text-center py-8 text-sm text-gray-500">Loading unit status...</div>
           ) : unitsStatus ? (
             <>
-              <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
                   <p className="text-2xl font-bold text-gray-900">{unitsStatus.totalUnits}</p>
                   <p className="text-xs text-gray-500">Total Units</p>
@@ -2273,33 +2281,15 @@ const AdminDashboard = () => {
       </div>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center mb-4">
-              <XCircle className="h-6 w-6 text-red-600 mr-3" />
-              <h3 className="text-lg font-semibold text-gray-900">Delete All Unit Admins</h3>
-            </div>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete all {unitAdmins.length} unit admins? This action cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="btn-ghost"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteAllUnitAdmins}
-                className="btn-primary bg-red-600 hover:bg-red-700"
-              >
-                Delete All
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteAllUnitAdmins}
+        title="Delete All Unit Admins"
+        message={`Are you sure you want to delete all ${unitAdmins.length} unit admins? This action cannot be undone.`}
+        confirmText="Delete All"
+        variant="danger"
+      />
 
       {/* Unit Admin Profile Modal */}
       <UnitAdminProfileModal

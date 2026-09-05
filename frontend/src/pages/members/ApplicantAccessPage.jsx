@@ -14,6 +14,12 @@ import { Button, Field, Input, Spinner } from '../../components/members/ui'
  * has already had every role-scoped page and field stripped server-side, so no
  * reviewer comment section is reachable from here even in the network response.
  */
+// The session token alone isn't enough to know it belongs to *this* link — a
+// second applicant opening their own link on a shared device would otherwise
+// silently resume the first applicant's session. The link token travels
+// alongside it so a resume only happens when they match.
+const APPLICANT_LINK_KEY = `${APPLICANT_TOKEN_KEY}_link`
+
 export default function ApplicantAccessPage() {
   const { token } = useParams()
   const [credentials, setCredentials] = useState({ username: '', password: '' })
@@ -36,6 +42,7 @@ export default function ApplicantAccessPage() {
       const status = error.response?.status
       if (status === 401) {
         localStorage.removeItem(APPLICANT_TOKEN_KEY)
+        localStorage.removeItem(APPLICANT_LINK_KEY)
         setAuthed(false)
       } else {
         setBlockedMessage(apiError(error, 'This form is not available'))
@@ -45,10 +52,19 @@ export default function ApplicantAccessPage() {
     }
   }, [])
 
-  // Resume an existing session on reload rather than asking for the credential again.
+  // Resume an existing session on reload rather than asking for the credential
+  // again — but only when the stored session was created from this same link.
+  // A different applicant's link on the same device must always show the login form.
   useEffect(() => {
-    if (localStorage.getItem(APPLICANT_TOKEN_KEY)) loadForm()
-  }, [loadForm])
+    const hasToken = localStorage.getItem(APPLICANT_TOKEN_KEY)
+    const sessionLink = localStorage.getItem(APPLICANT_LINK_KEY)
+    if (hasToken && sessionLink === token) {
+      loadForm()
+    } else if (hasToken) {
+      localStorage.removeItem(APPLICANT_TOKEN_KEY)
+      localStorage.removeItem(APPLICANT_LINK_KEY)
+    }
+  }, [loadForm, token])
 
   const signIn = async (e) => {
     e.preventDefault()
@@ -60,6 +76,7 @@ export default function ApplicantAccessPage() {
         password: credentials.password
       })
       localStorage.setItem(APPLICANT_TOKEN_KEY, data.token)
+      localStorage.setItem(APPLICANT_LINK_KEY, token)
       await loadForm()
     } catch (error) {
       toast.error(apiError(error, 'Invalid link or credentials'))
@@ -81,6 +98,7 @@ export default function ApplicantAccessPage() {
     try {
       await applicantApi.post('/access/submit', { formData })
       localStorage.removeItem(APPLICANT_TOKEN_KEY)
+      localStorage.removeItem(APPLICANT_LINK_KEY)
       setDone(true)
     } catch (error) {
       toast.error(apiError(error, 'Could not submit your application'))
@@ -110,6 +128,9 @@ export default function ApplicantAccessPage() {
         <div className="text-center py-10">
           <h1 className="text-lg font-semibold text-gray-900">Form unavailable</h1>
           <p className="text-sm text-gray-600 mt-2 max-w-sm mx-auto">{blockedMessage}</p>
+          <Button variant="secondary" className="mt-4" onClick={() => { setBlockedMessage(''); loadForm() }}>
+            Try again
+          </Button>
         </div>
       </Shell>
     )

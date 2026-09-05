@@ -240,10 +240,10 @@ const DistrictPageA = () => {
         </h3>
         
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="w-full border-collapse">
+          <table className="ih-table-compact w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
+                <th className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">ഹാജർ</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">ലീവ്</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">ആബ്‌സന്റ്</th>
@@ -252,10 +252,12 @@ const DistrictPageA = () => {
             <tbody>
               {wings.map((wing) => (
                 <tr key={wing.key} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
+                  <td className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
                   <td className="border border-gray-200 px-4 py-3">
                     <input
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={formData.partA.attendance[wing.key].present || ''}
                       onChange={(e) => {
                         const cleaned = validateNumericInput(e.target.value);
@@ -270,6 +272,8 @@ const DistrictPageA = () => {
                   <td className="border border-gray-200 px-4 py-3">
                     <input
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       min={0}
                       value={formData.partA.attendance[wing.key].leave || ''}
                       onChange={(e) => {
@@ -285,6 +289,8 @@ const DistrictPageA = () => {
                   <td className="border border-gray-200 px-4 py-3">
                     <input
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       min={0}
                       value={formData.partA.attendance[wing.key].absent || ''}
                       onChange={(e) => {
@@ -346,10 +352,10 @@ const DistrictPageA = () => {
         </h3>
         
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="w-full border-collapse">
+          <table className="ih-table-compact w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
+                <th className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">ഘടക സന്ദർശനങ്ങൾ</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">ഏരിയ സന്ദർശനങ്ങൾ</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">പുതിയ ഘടക ശ്രമങ്ങൾ</th>
@@ -359,10 +365,12 @@ const DistrictPageA = () => {
             <tbody>
               {wings.map((wing) => (
                 <tr key={wing.key} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
+                  <td className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
                   <td className="border border-gray-200 px-4 py-3">
                     <input
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={formData.partC?.activities?.[wing.key]?.componentVisits || ''}
                       onChange={(e) => {
                         const cleaned = validateNumericInput(e.target.value);
@@ -377,6 +385,8 @@ const DistrictPageA = () => {
                   <td className="border border-gray-200 px-4 py-3">
                     <input
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={formData.partC?.activities?.[wing.key]?.areaVisits || ''}
                       onChange={(e) => {
                         const cleaned = validateNumericInput(e.target.value);
@@ -391,6 +401,8 @@ const DistrictPageA = () => {
                   <td className="border border-gray-200 px-4 py-3">
                     <input
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={formData.partC?.activities?.[wing.key]?.newComponentFormationAttempts || ''}
                       onChange={(e) => {
                         const cleaned = validateNumericInput(e.target.value);
@@ -405,6 +417,8 @@ const DistrictPageA = () => {
                   <td className="border border-gray-200 px-4 py-3">
                     <input
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={formData.partC?.activities?.[wing.key]?.newPersonConnections || ''}
                       onChange={(e) => {
                         const cleaned = validateNumericInput(e.target.value);

@@ -9,6 +9,7 @@ import { getAuthToken, isAdminUser } from '../utils/auth';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => {
   const { unitId } = useParams();
@@ -130,7 +131,8 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unit, setUnit] = useState(null);
   const [area, setArea] = useState(null);
-  
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+
   useEffect(() => {
     if (isAdmin) {
       const storedAdminData = localStorage.getItem('adminData');
@@ -623,6 +625,14 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
     }
   };
 
+  const handleCloseClick = () => {
+    if (currentStep > 1) {
+      setShowDiscardModal(true);
+    } else {
+      handleClose();
+    }
+  };
+
   const renderCurrentStep = () => {
     console.log('=== renderCurrentStep DEBUG ===');
     console.log('currentStep:', currentStep);
@@ -698,7 +708,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
             </h1>
             {/* Close Button - Top Right */}
             <button
-              onClick={handleClose}
+              onClick={handleCloseClick}
               className="text-gray-600 hover:text-[#002349] transition-all duration-500 flex items-center justify-center w-11 h-11 lg:w-10 lg:h-10 border border-gray-300 hover:border-[#002349] rounded-full hover:shadow-md transform hover:-translate-y-1 hover:scale-105 ease-out hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#002349]/10"
               title="Close and return to monthly reports"
             >
@@ -746,7 +756,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
                 }`}>
                   1
                 </div>
-                <span className="text-sm font-semibold">Unit Page A</span>
+                <span className="text-sm font-semibold">അടിസ്ഥാന വിവരങ്ങൾ</span>
               </div>
               
               <div className={`w-8 h-0.5 rounded-full transition-all duration-500 ${currentStep >= 2 ? 'bg-[#002349] shadow-md' : 'bg-gray-200'}`}></div>
@@ -757,7 +767,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
                 }`}>
                   2
                 </div>
-                <span className="text-sm font-semibold">Unit Page B</span>
+                <span className="text-sm font-semibold">അധിക വിവരങ്ങൾ</span>
               </div>
             </div>
           </div>
@@ -804,6 +814,15 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
                 </div>
               </div>
             )}
+
+            <ConfirmationModal
+              isOpen={showDiscardModal}
+              onClose={() => setShowDiscardModal(false)}
+              onConfirm={() => { setShowDiscardModal(false); handleClose(); }}
+              title="Discard Report"
+              message="ഈ റിപ്പോർട്ട് ഉപേക്ഷിക്കണോ? Discard this report and its progress?"
+              confirmText="Discard"
+            />
 
             {/* Custom CSS Animations */}
             <style>{`

@@ -84,10 +84,10 @@ export default function AreaMonthlyStatsTable({ surveys, onRowClick }) {
 					<h3 className="text-lg font-bold text-[#002349]">{title}</h3>
 				</div>
 				<div className="overflow-x-auto">
-					<table className="w-full">
+					<table className="ih-table-compact w-full">
 						<thead className="bg-gray-50">
 							<tr>
-								<th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Month</th>
+								<th className="sticky left-0 bg-white z-[1] px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Month</th>
 								<th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Year</th>
 								{columns.map((col, idx) => (
 									<th key={idx} className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -101,7 +101,7 @@ export default function AreaMonthlyStatsTable({ surveys, onRowClick }) {
 								const candidates = (surveys || []).filter((s) => s.month === monthName);
 								const survey = candidates.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
 								const data = getData(survey);
-								
+
 								const handleRowClick = (e) => {
 									if (!onRowClick || !survey) return;
 									e.preventDefault();
@@ -110,7 +110,7 @@ export default function AreaMonthlyStatsTable({ surveys, onRowClick }) {
 								};
 
 								return (
-									<tr 
+									<tr
 										key={`${monthName}-${rIdx}`}
 										className="hover:bg-gradient-to-r hover:from-[#002349]/5 hover:to-[#957C3D]/5 cursor-pointer transition-all duration-300 group"
 										onClick={handleRowClick}
@@ -119,7 +119,7 @@ export default function AreaMonthlyStatsTable({ surveys, onRowClick }) {
 											if (e.key === 'Enter') handleRowClick(e);
 										}}
 									>
-										<td className="px-4 py-4 whitespace-nowrap text-sm font-semibold text-[#002349]">
+										<td className="sticky left-0 bg-white z-[1] px-4 py-4 whitespace-nowrap text-sm font-semibold text-[#002349]">
 											{monthName}
 										</td>
 										<td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
@@ -369,7 +369,7 @@ export default function AreaMonthlyStatsTable({ surveys, onRowClick }) {
 	return (
 		<div className="space-y-6">
 			{/* Part Selection Buttons */}
-			<div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-3">
+			<div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-3 relative">
 				<div className="flex gap-3 overflow-x-auto pb-1">
 					{partButtons.map((part) => (
 						<button
@@ -385,6 +385,7 @@ export default function AreaMonthlyStatsTable({ surveys, onRowClick }) {
 						</button>
 					))}
 				</div>
+				<div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent rounded-r-2xl" />
 			</div>
 
 			{/* Active Table */}

@@ -317,6 +317,20 @@ const DistrictAdminDashboard = () => {
     }
   }
 
+  // Close whichever detail modal is open on Escape
+  useEffect(() => {
+    if (!selectedMember && !selectedSubmissionId && !selectedReply && !selectedAltSubmission) return
+    const handleKeyDown = (e) => {
+      if (e.key !== 'Escape') return
+      if (selectedMember) { setSelectedMember(null); setMemberDetails(null) }
+      if (selectedSubmissionId) { setSelectedSubmissionId(null); setSubmissionDetails(null); setSubmissionFormSchema(null) }
+      if (selectedReply) setSelectedReply(null)
+      if (selectedAltSubmission) setSelectedAltSubmission(null)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedMember, selectedSubmissionId, selectedReply, selectedAltSubmission])
+
   const openMemberDetails = async (member) => {
     setSelectedMember(member)
     setMemberDetailsLoading(true)
@@ -593,7 +607,7 @@ const DistrictAdminDashboard = () => {
                     <select
                       value={breakdownPeriod?.quarter || ''}
                       onChange={(e) => fetchDashboard({ quarter: Number(e.target.value), year: breakdownPeriod?.year || stats.currentYear })}
-                      className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-[13px] sm:text-xs focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+                      className="flex-1 sm:flex-none px-2 py-1.5 min-h-[44px] sm:min-h-0 border border-gray-200 rounded-lg text-[13px] sm:text-xs focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
                     >
                       {getAvailableQuarters().map((q) => (
                         <option key={q} value={q}>{getQuarterName(q)}</option>
@@ -602,7 +616,7 @@ const DistrictAdminDashboard = () => {
                     <select
                       value={breakdownPeriod?.year || ''}
                       onChange={(e) => fetchDashboard({ quarter: breakdownPeriod?.quarter || stats.currentQuarter, year: Number(e.target.value) })}
-                      className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-[13px] sm:text-xs focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+                      className="flex-1 sm:flex-none px-2 py-1.5 min-h-[44px] sm:min-h-0 border border-gray-200 rounded-lg text-[13px] sm:text-xs focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
                     >
                       {(availableYears.length ? availableYears : [stats.currentYear].filter(Boolean)).map((y) => (
                         <option key={y} value={y}>{y}</option>
@@ -736,7 +750,7 @@ const DistrictAdminDashboard = () => {
             <select
               value={membersArea}
               onChange={(e) => setMembersArea(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+              className="px-3 py-2 min-h-[44px] sm:min-h-0 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
             >
               <option value="">All Areas</option>
               {areas.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -744,14 +758,14 @@ const DistrictAdminDashboard = () => {
             <div className="flex gap-3 sm:contents">
               <button
                 onClick={() => fetchMembers(1)}
-                className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 bg-[#7B4FF2] text-white rounded-lg text-sm font-medium hover:bg-[#6a3dd9]"
+                className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-4 py-2.5 sm:py-2 bg-[#7B4FF2] text-white rounded-lg text-sm font-medium hover:bg-[#6a3dd9]"
               >
                 Apply
               </button>
               <button
                 onClick={handlePrintMembers}
                 disabled={printLoading}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="flex-1 sm:flex-none inline-flex min-h-[44px] sm:min-h-0 items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 {printLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
                 {printLoading ? 'Preparing…' : 'Print'}
@@ -872,7 +886,7 @@ const DistrictAdminDashboard = () => {
             <select
               value={submissionsArea}
               onChange={(e) => setSubmissionsArea(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+              className="px-3 py-2 min-h-[44px] sm:min-h-0 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
             >
               <option value="">All Areas</option>
               {areas.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -881,7 +895,7 @@ const DistrictAdminDashboard = () => {
               <select
                 value={submissionsQuarter}
                 onChange={(e) => setSubmissionsQuarter(e.target.value)}
-                className="flex-1 min-w-0 sm:flex-none px-3 py-2 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+                className="flex-1 min-w-0 sm:flex-none px-3 py-2 min-h-[44px] sm:min-h-0 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
               >
                 <option value="">All Quarters</option>
                 {getAvailableQuarters().map((q) => (
@@ -891,7 +905,7 @@ const DistrictAdminDashboard = () => {
               <select
                 value={submissionsYear}
                 onChange={(e) => setSubmissionsYear(e.target.value)}
-                className="flex-1 min-w-0 sm:flex-none px-3 py-2 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+                className="flex-1 min-w-0 sm:flex-none px-3 py-2 min-h-[44px] sm:min-h-0 border border-gray-200 rounded-lg text-[13px] sm:text-sm focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
               >
                 <option value="">All Years</option>
                 {(availableYears.length ? availableYears : [stats.currentYear].filter(Boolean)).map((y) => (
@@ -902,14 +916,14 @@ const DistrictAdminDashboard = () => {
             <div className="flex gap-3 sm:contents">
               <button
                 onClick={() => fetchSubmissions(1)}
-                className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 bg-[#7B4FF2] text-white rounded-lg text-sm font-medium hover:bg-[#6a3dd9]"
+                className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-4 py-2.5 sm:py-2 bg-[#7B4FF2] text-white rounded-lg text-sm font-medium hover:bg-[#6a3dd9]"
               >
                 Apply
               </button>
               <button
                 onClick={handlePrintSubmissions}
                 disabled={printLoading}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="flex-1 sm:flex-none inline-flex min-h-[44px] sm:min-h-0 items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 {printLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
                 {printLoading ? 'Preparing…' : 'Print'}
@@ -1127,8 +1141,11 @@ const DistrictAdminDashboard = () => {
 
       {/* Member Details Modal */}
       {selectedMember && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3"
+          onClick={() => { setSelectedMember(null); setMemberDetails(null) }}
+        >
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900">Member Details</h3>
               <button onClick={() => { setSelectedMember(null); setMemberDetails(null) }} className="text-gray-400 hover:text-gray-600 p-2 -m-2 rounded-full">
@@ -1178,8 +1195,11 @@ const DistrictAdminDashboard = () => {
 
       {/* Submission Details Modal */}
       {selectedSubmissionId && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3"
+          onClick={() => { setSelectedSubmissionId(null); setSubmissionDetails(null); setSubmissionFormSchema(null) }}
+        >
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900">Submission Details</h3>
               <button onClick={() => { setSelectedSubmissionId(null); setSubmissionDetails(null); setSubmissionFormSchema(null) }} className="text-gray-400 hover:text-gray-600 p-2 -m-2 rounded-full">
@@ -1223,8 +1243,11 @@ const DistrictAdminDashboard = () => {
 
       {/* Reply Details Modal */}
       {selectedReply && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3">
-          <div className="bg-white rounded-lg max-w-xl w-full max-h-[85vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3"
+          onClick={() => setSelectedReply(null)}
+        >
+          <div className="bg-white rounded-lg max-w-xl w-full max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 min-w-0 truncate">{selectedReply.unit}</h3>
               <button onClick={() => setSelectedReply(null)} className="text-gray-400 hover:text-gray-600 p-2 -m-2 rounded-full">
@@ -1241,8 +1264,11 @@ const DistrictAdminDashboard = () => {
 
       {/* Alternative Submission Details Modal */}
       {selectedAltSubmission && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3">
-          <div className="bg-white rounded-lg max-w-xl w-full max-h-[85vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3"
+          onClick={() => setSelectedAltSubmission(null)}
+        >
+          <div className="bg-white rounded-lg max-w-xl w-full max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
               <div className="min-w-0">
                 <h3 className="text-lg font-semibold text-gray-900 truncate">{selectedAltSubmission.ruknName || selectedAltSubmission.userId?.name}</h3>

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Building, MapPin, AlertCircle, Search } from 'lucide-react';
 import axios from 'axios';
 
 const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCreated, notification }) => {
   const isEdit = Boolean(notification);
+  const errorRef = useRef(null);
   const [formData, setFormData] = useState(() => notification ? {
     title: notification.title || '',
     description: notification.description || '',
@@ -47,6 +48,14 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
       fetchHierarchy();
     }
   }, [isOpen, userData]);
+
+  // Bring the error banner back into view when a submit fails after the
+  // admin has scrolled deep into the district/area/unit recipient tree.
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [error]);
 
   const normalizeDistrict = (d) => ({
     id: d?.id || d?._id || d?.code || d?.districtId || d?.district_id || '',
@@ -349,7 +358,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
 
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         {error && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4">
+          <div ref={errorRef} className="bg-red-50 border-2 border-red-200 rounded-2xl p-4">
             <div className="flex items-center">
               <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
               <p className="text-red-700 text-sm font-semibold">{error}</p>
@@ -501,7 +510,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                                       setExpandedDistricts(prev => prev.filter(id => id !== district.id));
                                     }
                                   }}
-                                  className="text-sm text-blue-600 hover:text-blue-800 py-2 px-1"
+                                  className="text-sm text-blue-600 hover:text-blue-800 p-2 -m-2"
                                 >
                                   {loadingAreas[district.id]
                                     ? 'Loading...'
@@ -547,7 +556,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                                                   setExpandedAreas(prev => prev.filter(id => id !== area.id));
                                                 }
                                               }}
-                                              className="text-xs text-blue-600 hover:text-blue-800 py-1.5 px-1"
+                                              className="text-xs text-blue-600 hover:text-blue-800 p-2 -m-2"
                                             >
                                               {loadingUnits[area.id]
                                                 ? 'Loading...'
@@ -664,7 +673,7 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
                                       setExpandedAreas(prev => prev.filter(id => id !== area.id));
                                     }
                                   }}
-                                  className="text-xs text-blue-600 hover:text-blue-800 py-1.5 px-1"
+                                  className="text-xs text-blue-600 hover:text-blue-800 p-2 -m-2"
                                 >
                                   {loadingUnits[area.id] ? 'Loading...' : areaExpanded ? 'Hide units' : 'Show units'}
                                 </button>

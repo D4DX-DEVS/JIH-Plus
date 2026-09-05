@@ -21,7 +21,7 @@ export default function PageTabs({ pages, activeIndex, onSelect, onAdd, onRemove
             <button
               type="button"
               onClick={() => onRemove(i)}
-              className="text-gray-300 hover:text-red-400 p-1.5 rounded"
+              className="text-gray-300 hover:text-red-400 p-2 -m-1 rounded"
             >
               <Trash2 size={12} />
             </button>

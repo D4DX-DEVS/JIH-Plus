@@ -48,7 +48,7 @@ const SupportContactCard = ({
             <div className="flex flex-col gap-2 sm:flex-row">
               <a
                 href={getTelHref(phone.value)}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#002349] px-3 py-2.5 text-xs font-semibold text-white transition-colors duration-200 hover:bg-[#1a3a5c] sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm"
+                className="inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg bg-[#002349] px-3 py-2.5 text-xs font-semibold text-white transition-colors duration-200 hover:bg-[#1a3a5c] sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm"
               >
                 <PhoneCall className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>Call</span>
@@ -57,7 +57,7 @@ const SupportContactCard = ({
                 href={getWhatsAppHref(phone.value, topic)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#957C3D] bg-[#957C3D]/10 px-3 py-2.5 text-xs font-semibold text-[#7b652f] transition-colors duration-200 hover:bg-[#957C3D]/20 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm"
+                className="inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-lg border border-[#957C3D] bg-[#957C3D]/10 px-3 py-2.5 text-xs font-semibold text-[#7b652f] transition-colors duration-200 hover:bg-[#957C3D]/20 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm"
               >
                 <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>Message</span>

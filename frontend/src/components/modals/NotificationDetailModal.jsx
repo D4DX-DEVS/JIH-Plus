@@ -45,6 +45,7 @@ const NotificationDetailModal = ({ isOpen, onClose, notification }) => {
             </div>
             <button
               onClick={onClose}
+              aria-label="Close"
               className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 p-2"
             >
               <X className="w-5 h-5" />

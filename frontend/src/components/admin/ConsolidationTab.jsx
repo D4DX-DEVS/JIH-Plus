@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { RefreshCw, BarChart3, Hash, Table2, Type, ListChecks, Users } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -62,7 +63,7 @@ export default function ConsolidationTab() {
   useEffect(() => {
     axios.get(`${API_BASE_URL}/api/master/districts`, { headers })
       .then(r => setDistricts(r.data.data || []))
-      .catch(e => console.error('Load districts error', e));
+      .catch(e => { console.error('Load districts error', e); toast.error('Failed to load districts'); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -71,7 +72,7 @@ export default function ConsolidationTab() {
     if (districtId) {
       axios.get(`${API_BASE_URL}/api/master/areas?districtId=${districtId}`, { headers })
         .then(r => setAreas(r.data.data || []))
-        .catch(e => console.error('Load areas error', e));
+        .catch(e => { console.error('Load areas error', e); toast.error('Failed to load areas'); });
     } else {
       setAreas([]);
     }
@@ -85,7 +86,7 @@ export default function ConsolidationTab() {
     if (reportFor === 'unit' && districtId && areaId) {
       axios.get(`${API_BASE_URL}/api/master/units?districtId=${districtId}&areaId=${areaId}`, { headers })
         .then(r => setUnits(r.data.data || []))
-        .catch(e => console.error('Load units error', e));
+        .catch(e => { console.error('Load units error', e); toast.error('Failed to load units'); });
     } else {
       setUnits([]);
     }
@@ -103,7 +104,7 @@ export default function ConsolidationTab() {
     if (type === 'monthly' && month) params.append('month', month);
     axios.get(`${API_BASE_URL}/api/admin/reports/for-consolidation?${params}`, { headers })
       .then(r => setReports(r.data.data || []))
-      .catch(e => console.error('Load reports error', e))
+      .catch(e => { console.error('Load reports error', e); toast.error('Failed to load reports'); })
       .finally(() => setReportsLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, reportFor, month, year]);
@@ -306,7 +307,7 @@ export default function ConsolidationTab() {
     );
   };
 
-  const selectCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400';
+  const selectCls = 'w-full min-h-[44px] sm:min-h-0 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400';
 
   return (
     <div className="space-y-4">

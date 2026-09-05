@@ -34,6 +34,15 @@ const AlternativeSubmissionForm = () => {
     }
     return '/ihthisabi/dashboard'
   }
+
+  // Get the correct "submit a report" entry point based on user role —
+  // '/ihthisabi/submit' is rukn-only, a unit admin must land on their own route.
+  const getSubmitFormPath = () => {
+    if (authUser?.role === 'unitAdmin') {
+      return '/ihthisabi/unitadmin/submit-form'
+    }
+    return '/ihthisabi/submit'
+  }
   const [loading, setLoading] = useState(false)
   const [hasExistingSubmission, setHasExistingSubmission] = useState(false)
   const [editMode, setEditMode] = useState(false)
@@ -122,7 +131,7 @@ const AlternativeSubmissionForm = () => {
         setSelectedYear(parseInt(year))
       } else {
         // If no quarter/year provided, redirect to regular submission form
-        navigate('/ihthisabi/submit')
+        navigate(getSubmitFormPath())
       }
     }
   }, [id])
@@ -262,7 +271,7 @@ const AlternativeSubmissionForm = () => {
       if (authUser?.role === 'admin') {
         navigate('/ihthisabi/admin/submissions')
       } else {
-        navigate('/ihthisabi/submit')
+        navigate(getSubmitFormPath())
       }
     } catch (error) {
       console.error('Failed to delete submission:', error)
@@ -614,7 +623,7 @@ const AlternativeSubmissionForm = () => {
   if (viewMode) {
     if (authLoading || loading) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="ih-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading submission details...</p>
@@ -625,7 +634,7 @@ const AlternativeSubmissionForm = () => {
 
     if (!submission) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="ih-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Submission Not Found</h3>
@@ -647,7 +656,7 @@ const AlternativeSubmissionForm = () => {
 
     return (
       <>
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="ih-screen bg-gray-50 py-8">
           <div className="max-w-4xl mx-auto px-4">
             <button
               onClick={() => {
@@ -655,7 +664,7 @@ const AlternativeSubmissionForm = () => {
                 if (authUser?.role === 'admin') {
                   navigate('/ihthisabi/admin/submissions')
                 } else {
-                  navigate('/ihthisabi/submit')
+                  navigate(getSubmitFormPath())
                 }
               }}
               className="mb-6 flex items-center py-2.5 text-gray-600 hover:text-gray-900 transition-colors"
@@ -871,7 +880,7 @@ const AlternativeSubmissionForm = () => {
   // Form mode - show form
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
@@ -885,7 +894,7 @@ const AlternativeSubmissionForm = () => {
     <>
       {/* Fixed Close Button - Top Right Corner */}
       <button
-        onClick={() => navigate('/ihthisabi/dashboard')}
+        onClick={() => navigate(getDashboardPath())}
         className="fixed top-16 right-4 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white shadow-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors lg:top-4"
         title="Close"
       >
@@ -897,10 +906,11 @@ const AlternativeSubmissionForm = () => {
           {/* Heading outside container */}
           <div className="mb-4 mt-2">
             <h1 className="hidden lg:block text-3xl font-bold text-gray-900 mb-2">
-              {editMode ? 'Akternate Submission Edit' : 'Alternate Submission'}
+              {editMode ? 'Alternate Submission Edit' : 'Alternate Submission'}
             </h1>
             <p className="text-gray-600">
-              {selectedQuarter && selectedYear 
+              {editMode ? 'Editing · ' : ''}
+              {selectedQuarter && selectedYear
                 ? `Quarter ${selectedQuarter}, ${selectedYear}`
                 : 'Select quarter to continue'}
             </p>

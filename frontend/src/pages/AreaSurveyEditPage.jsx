@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, X, CheckCircle } from 'lucide-react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { AreaFormProvider, useAreaForm } from '../contexts/AreaFormContext';
 import AreaPageA from '../components/forms/area/AreaPageA';
 import AreaPageB from '../components/forms/area/AreaPageB';
@@ -11,12 +12,15 @@ import AreaPageE from '../components/forms/area/AreaPageE';
 import AreaPageF from '../components/forms/area/AreaPageF';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, success, setError, setSuccess }) => {
   const { currentStep } = useAreaForm();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [area, setArea] = useState(null);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [pendingNavTabId, setPendingNavTabId] = useState(null);
 
   useEffect(() => {
     // Load area data
@@ -61,7 +65,7 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
     navigate('/', { replace: true });
   };
 
-  const handleSidebarNavigate = (tabId) => {
+  const performSidebarNavigate = (tabId) => {
     setIsSidebarOpen(false);
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     const areaId = userData.areaId || userData.area;
@@ -69,6 +73,23 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
       navigate(`/area-dashboard/${areaId}`, { state: { initialTab: tabId } });
     } else {
       navigate('/area-dashboard');
+    }
+  };
+
+  const handleSidebarNavigate = (tabId) => {
+    if (currentStep > 1) {
+      setPendingNavTabId(tabId);
+      setShowDiscardModal(true);
+      return;
+    }
+    performSidebarNavigate(tabId);
+  };
+
+  const confirmDiscardNav = () => {
+    setShowDiscardModal(false);
+    if (pendingNavTabId) {
+      performSidebarNavigate(pendingNavTabId);
+      setPendingNavTabId(null);
     }
   };
 
@@ -169,6 +190,19 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={showDiscardModal}
+        onClose={() => {
+          setShowDiscardModal(false);
+          setPendingNavTabId(null);
+        }}
+        onConfirm={confirmDiscardNav}
+        title="Discard this report"
+        message="ഈ റിപ്പോർട്ട് ഉപേക്ഷിക്കണോ? / Discard this report and its progress?"
+        confirmText="Discard"
+        type="warning"
+      />
     </div>
   );
 };
@@ -230,6 +264,7 @@ const AreaSurveyEditPage = ({ surveyId: propSurveyId, onBack, onSubmit }) => {
 
       if (response.data.success) {
         setSuccess('Area report updated successfully!');
+        toast.success('Area report updated successfully!');
         setTimeout(() => {
           if (onSubmit) {
             onSubmit(response.data.data);

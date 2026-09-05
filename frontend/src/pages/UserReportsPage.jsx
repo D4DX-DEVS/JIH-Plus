@@ -1,21 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Clock,
-  Loader2,
-  Search,
-  SendHorizontal,
-  Save,
-  AlertCircle,
-  Pencil,
-  Trash2,
-  Eye,
-  Download,
-  FileText
-} from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, Loader2, Search, SendHorizontal, Save, AlertCircle, Pencil, Trash2, Eye, Download, FileText } from 'lucide-react';
 import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
@@ -24,6 +10,7 @@ import DynamicFormRenderer from '../components/reportRenderer/DynamicFormRendere
 import SubmissionPreviewModal from '../components/reportRenderer/SubmissionPreviewModal';
 import { downloadDynamicReportPdf } from '../utils/dynamicReportPdfGenerator';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import { JihFilterBar, JihFilterSelect } from '../components/JihToolbar';
 
 const statusBadgeClass = (status) => {
   if (status === 'submitted') {
@@ -70,6 +57,7 @@ const UserReportsPage = ({ onBack, userData }) => {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewData, setPreviewData] = useState(null); // { report, submission }
   const [downloadingId, setDownloadingId] = useState(null);
+  const [showBackDiscardModal, setShowBackDiscardModal] = useState(false);
 
   const storedUserData = useMemo(() => {
     try {
@@ -232,6 +220,13 @@ const UserReportsPage = ({ onBack, userData }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (feedback.message) {
+      const timer = setTimeout(() => setFeedback({ type: '', message: '' }), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedback]);
 
   const populateAnswersFromSubmission = (submission) => {
     if (!submission) { setAnswers({}); return; }
@@ -587,21 +582,38 @@ const UserReportsPage = ({ onBack, userData }) => {
         ? unitName
         : '';
 
+  const hasUnsavedAnswers = Object.values(answers).some((value) => {
+    if (value === null || value === undefined || value === '') return false;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'object') return Object.keys(value).length > 0;
+    return true;
+  });
+
+  const closeSelectedReport = () => {
+    setSelectedReport(null);
+    setSelectedReportId(null);
+    setAnswers({});
+    setSubmissionInfo(null);
+    setIsEditing(false);
+    setCurrentPageInfo(null);
+  };
+
+  const handleBackToList = () => {
+    if (hasUnsavedAnswers) {
+      setShowBackDiscardModal(true);
+    } else {
+      closeSelectedReport();
+    }
+  };
+
   const pageContent = (
     <div className="space-y-6 min-w-0 overflow-x-hidden">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           {selectedReport && (
             <button
-              onClick={() => {
-                setSelectedReport(null);
-                setSelectedReportId(null);
-                setAnswers({});
-                setSubmissionInfo(null);
-                setIsEditing(false);
-                setCurrentPageInfo(null);
-              }}
-              className="inline-flex items-center justify-center p-2 rounded-lg text-[#002349] hover:bg-gray-100 transition-colors"
+              onClick={handleBackToList}
+              className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2 rounded-lg text-[#002349] hover:bg-gray-100 transition-colors"
               title="Back to Reports List"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -663,27 +675,19 @@ const UserReportsPage = ({ onBack, userData }) => {
 
       {!selectedReport && (
         <>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by title or type..."
-                className="w-full h-11 pl-10 pr-4 text-base sm:text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 bg-white shadow-sm"
-              />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-11 border border-gray-300 rounded-xl px-3 text-[13px] sm:text-sm focus:ring-2 focus:ring-[#002349] focus:border-[#002349] bg-white shadow-sm w-full sm:w-auto"
-            >
+          <JihFilterBar
+            search={searchTerm}
+            onSearchChange={setSearchTerm}
+            placeholder="Search by title or type..."
+            activeFilterCount={statusFilter ? 1 : 0}
+            gridClass="sm:grid-cols-3 lg:grid-cols-4"
+          >
+            <JihFilterSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">All Status</option>
               <option value="submitted">Submitted</option>
               <option value="pending">Pending</option>
-            </select>
-          </div>
+            </JihFilterSelect>
+          </JihFilterBar>
 
           <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden min-w-0">
             {listLoading ? (
@@ -1160,6 +1164,14 @@ const UserReportsPage = ({ onBack, userData }) => {
           cancelText="റദ്ദാക്കുക"
           type="danger"
         />
+        <ConfirmationModal
+          isOpen={showBackDiscardModal}
+          onClose={() => setShowBackDiscardModal(false)}
+          onConfirm={() => { setShowBackDiscardModal(false); closeSelectedReport(); }}
+          title="Discard Answers"
+          message="നിങ്ങളുടെ ഉത്തരങ്ങൾ ഉപേക്ഷിക്കണോ? Discard your answers?"
+          confirmText="Discard"
+        />
       </>
     );
   }
@@ -1209,6 +1221,14 @@ const UserReportsPage = ({ onBack, userData }) => {
           confirmText="ഡിലീറ്റ്"
           cancelText="റദ്ദാക്കുക"
           type="danger"
+        />
+        <ConfirmationModal
+          isOpen={showBackDiscardModal}
+          onClose={() => setShowBackDiscardModal(false)}
+          onConfirm={() => { setShowBackDiscardModal(false); closeSelectedReport(); }}
+          title="Discard Answers"
+          message="നിങ്ങളുടെ ഉത്തരങ്ങൾ ഉപേക്ഷിക്കണോ? Discard your answers?"
+          confirmText="Discard"
         />
       </>
     );
@@ -1262,6 +1282,14 @@ const UserReportsPage = ({ onBack, userData }) => {
           cancelText="റദ്ദാക്കുക"
           type="danger"
         />
+        <ConfirmationModal
+          isOpen={showBackDiscardModal}
+          onClose={() => setShowBackDiscardModal(false)}
+          onConfirm={() => { setShowBackDiscardModal(false); closeSelectedReport(); }}
+          title="Discard Answers"
+          message="നിങ്ങളുടെ ഉത്തരങ്ങൾ ഉപേക്ഷിക്കണോ? Discard your answers?"
+          confirmText="Discard"
+        />
       </>
     );
   }
@@ -1290,6 +1318,14 @@ const UserReportsPage = ({ onBack, userData }) => {
         confirmText="ഡിലീറ്റ്"
         cancelText="റദ്ദാക്കുക"
         type="danger"
+      />
+      <ConfirmationModal
+        isOpen={showBackDiscardModal}
+        onClose={() => setShowBackDiscardModal(false)}
+        onConfirm={() => { setShowBackDiscardModal(false); closeSelectedReport(); }}
+        title="Discard Answers"
+        message="നിങ്ങളുടെ ഉത്തരങ്ങൾ ഉപേക്ഷിക്കണോ? Discard your answers?"
+        confirmText="Discard"
       />
     </>
   );

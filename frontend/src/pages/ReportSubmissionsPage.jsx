@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, X, Filter, ChevronDown } from 'lucide-react';
+import { ArrowLeft, MapPin, FileText, Activity } from 'lucide-react';
+import { JihFilterBar, JihFilterSelect } from '../components/JihToolbar';
 import axios from 'axios';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
@@ -34,7 +35,6 @@ const ReportSubmissionsPage = ({ onLogout }) => {
   const [reportForFilter, setReportForFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   // Filters start collapsed on phones — expanded they cost most of the viewport.
-  const [showFilters, setShowFilters] = useState(false);
   const [reportList, setReportList] = useState([]); // for dropdown
   const [selectedReportId, setSelectedReportId] = useState('');
 
@@ -341,31 +341,6 @@ const ReportSubmissionsPage = ({ onLogout }) => {
     navigate('/view-reports');
   };
 
-  const handleDownloadCSV = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/forms/export/csv`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          responseType: 'blob'
-        }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `forms_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error downloading CSV:', error);
-    }
-  };
-
   const handleNavigateToNotifications = () => {
     navigate('/notifications');
   };
@@ -459,7 +434,6 @@ const ReportSubmissionsPage = ({ onLogout }) => {
           activeTab=""
           onTabChange={handleTabChange}
           onNavigateToReports={handleNavigateToReports}
-          onDownloadCSV={handleDownloadCSV}
           onNavigateToNotifications={handleNavigateToNotifications}
           onLogout={handleLogout}
           adminEmail={adminData?.email || 'Admin'}
@@ -516,8 +490,9 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => toggleSubmission(null)}
-                    className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
+                    className="inline-flex h-[44px] w-[44px] items-center justify-center hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
                     title="Back to list"
+                    aria-label="Back to list"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
@@ -609,7 +584,8 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => navigate(isUnitUser ? '/user-reports' : '/view-reports')}
-                    className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
+                    className="inline-flex h-[44px] w-[44px] items-center justify-center hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
+                    aria-label="Back"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
@@ -617,90 +593,53 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                     {isCrossReport ? 'All Submissions' : 'റിപ്പോർട്ട് സമർപ്പണങ്ങൾ'}
                   </h2>
                 </div>
-                <div className="relative w-full md:w-80">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <input
-                    type="text"
-                    placeholder="Search by district, area, unit..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent bg-white shadow-sm"
-                  />
-                </div>
               </div>
 
-              {/* ── Cross-report filter bar — collapsed behind its toggle on phones ── */}
-              {isCrossReport && (
-                <div className="mb-4 lg:mb-5 bg-white border border-gray-200 rounded-2xl p-3 sm:p-4 shadow-sm">
-                <div className="flex items-center gap-2 lg:hidden">
-                  <button
-                    type="button"
-                    onClick={() => setShowFilters(v => !v)}
-                    aria-expanded={showFilters}
-                    className="flex min-h-[40px] items-center gap-2 py-2 text-[#002349]"
-                  >
-                    <Filter className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wide">Filters</span>
-                    {activeFilterCount > 0 && (
-                      <span className="rounded-full bg-[#002349] px-1.5 py-0.5 text-[10px] font-bold text-white">{activeFilterCount}</span>
-                    )}
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-                  </button>
-                  <span className="ml-auto text-xs font-semibold text-[#002349]">
-                    {filteredSubmissions.length} submission{filteredSubmissions.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                <div className={`${showFilters ? 'flex' : 'hidden'} lg:flex flex-wrap gap-2 sm:gap-3 mt-3 lg:mt-0`}>
-                  <select
-                    value={typeFilter}
-                    onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-[13px] sm:text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                  >
+              <JihFilterBar
+                className="mb-4 lg:mb-5"
+                search={searchTerm}
+                onSearchChange={setSearchTerm}
+                placeholder="Search by district, area, unit..."
+                activeFilterCount={isCrossReport ? activeFilterCount : 0}
+                onClear={() => { setTypeFilter(''); setReportForFilter(''); setSelectedReportId(''); setStatusFilter(''); setCurrentPage(1); }}
+                gridClass="sm:grid-cols-3 lg:grid-cols-5"
+              >
+                {isCrossReport && (
+                  <JihFilterSelect value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}>
                     <option value="">All Types</option>
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
                     <option value="special">Special</option>
-                  </select>
-                  <select
-                    value={reportForFilter}
-                    onChange={(e) => { setReportForFilter(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-[13px] sm:text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                  >
+                  </JihFilterSelect>
+                )}
+                {isCrossReport && (
+                  <JihFilterSelect icon={MapPin} value={reportForFilter} onChange={(e) => { setReportForFilter(e.target.value); setCurrentPage(1); }}>
                     <option value="">All Audiences</option>
                     <option value="district">District</option>
                     <option value="area">Area</option>
                     <option value="unit">Unit</option>
-                  </select>
-                  <select
-                    value={selectedReportId}
-                    onChange={(e) => { setSelectedReportId(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[180px] border border-gray-200 rounded-xl px-3 py-2 text-[13px] sm:text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                  >
+                  </JihFilterSelect>
+                )}
+                {isCrossReport && (
+                  <JihFilterSelect icon={FileText} value={selectedReportId} onChange={(e) => { setSelectedReportId(e.target.value); setCurrentPage(1); }}>
                     <option value="">All Reports</option>
                     {reportList.map(r => (
                       <option key={r._id} value={r._id}>{r.title}</option>
                     ))}
-                  </select>
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-[13px] sm:text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                  >
+                  </JihFilterSelect>
+                )}
+                {isCrossReport && (
+                  <JihFilterSelect icon={Activity} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
                     <option value="">All Statuses</option>
                     <option value="submitted">Submitted</option>
                     <option value="pending">Pending</option>
-                  </select>
-                  {(typeFilter || reportForFilter || selectedReportId || statusFilter) && (
-                    <button
-                      onClick={() => { setTypeFilter(''); setReportForFilter(''); setSelectedReportId(''); setStatusFilter(''); }}
-                      className="px-3 py-2 text-sm text-gray-500 hover:text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50"
-                    >
-                      Clear
-                    </button>
-                  )}
-                  <span className="ml-auto self-center hidden lg:block text-sm text-gray-500 font-medium">{filteredSubmissions.length} submission{filteredSubmissions.length !== 1 ? 's' : ''}</span>
-                </div>
-                </div>
+                  </JihFilterSelect>
+                )}
+              </JihFilterBar>
+              {isCrossReport && (
+                <p className="-mt-2 mb-4 text-right text-xs font-semibold text-[#002349]">
+                  {filteredSubmissions.length} submission{filteredSubmissions.length !== 1 ? 's' : ''}
+                </p>
               )}
 
               {/* ── Submissions Table ── */}

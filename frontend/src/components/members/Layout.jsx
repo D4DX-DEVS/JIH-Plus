@@ -53,6 +53,31 @@ export default function Layout() {
 
   const items = navItems({ isSuperAdmin, canCreateAccessLinks })
 
+  // Mobile app-bar title. Pages hide their own <h1> on phones, so the bar is the
+  // only thing that names the screen — longest matching prefix wins.
+  const PAGE_TITLES = {
+    '/members/applications': 'Applications',
+    '/members/notifications': 'Notifications',
+    '/members/access-links': 'Form Access',
+    '/members/forms': 'Form Builder',
+    '/members/workflows': 'Workflows',
+    '/members/roles': 'Roles',
+    '/members/accounts': 'Accounts',
+    '/members/master-data': 'Master Data',
+    '/members': 'Dashboard'
+  }
+
+  const pageTitle = (() => {
+    const current = location.pathname
+    let best = null
+    Object.keys(PAGE_TITLES).forEach(prefix => {
+      if (current === prefix || current.startsWith(prefix + '/')) {
+        if (!best || prefix.length > best.length) best = prefix
+      }
+    })
+    return best ? PAGE_TITLES[best] : 'Members Application'
+  })()
+
   // Curated mobile bottom bar — the most important destinations, always derived
   // from `items` so a role missing a permission never gets a dead tab. Everything
   // else (permission-gated or super-admin-only) lives in the "More" sheet instead.
@@ -150,9 +175,9 @@ export default function Layout() {
 
       <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
         <header className="lg:hidden flex-shrink-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
-          <span className="font-semibold text-gray-900">Members Application</span>
+          <span className="font-semibold text-gray-900 truncate">{pageTitle}</span>
           {unread > 0 && (
-            <NavLink to="/members/notifications" className="ml-auto relative p-2.5 -mr-1 text-gray-600">
+            <NavLink to="/members/notifications" className="ml-auto relative p-3 -mr-1 text-gray-600">
               <Bell size={20} />
               <span className="absolute -top-0.5 -right-0.5 text-[10px] font-semibold bg-red-500 text-white rounded-full px-1 py-0.5 leading-none">
                 {unread > 99 ? '99+' : unread}

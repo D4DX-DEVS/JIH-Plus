@@ -114,7 +114,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
         {/* Home Icon */}
         <button
           onClick={() => navigate('/')}
-          className="fixed top-3.5 right-3.5 z-50 p-2.5 text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
+          className="fixed top-3.5 right-3.5 z-50 inline-flex h-[44px] w-[44px] items-center justify-center text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
           aria-label="Back to Home"
         >
           <Home className="w-6 h-6" />
@@ -202,6 +202,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-[#002349]"
                         tabIndex={-1}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -285,6 +286,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                         onClick={() => setShowAdminPassword(!showAdminPassword)}
                         className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-[#002349]"
                         tabIndex={-1}
+                        aria-label={showAdminPassword ? "Hide password" : "Show password"}
                       >
                         {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api, apiError } from '../../utils/members/api'
 import {
@@ -20,20 +20,32 @@ export default function ApplicationsPage() {
   const mine = params.get('mine') || ''
   const search = params.get('search') || ''
   const page = Number(params.get('page') || 1)
+  const [searchBox, setSearchBox] = useState(search)
 
-  const setParam = (key, value) => {
-    const next = new URLSearchParams(params)
-    if (value) next.set(key, value)
-    else next.delete(key)
-    if (key !== 'page') next.delete('page')
-    setParams(next)
-  }
+  const setParam = useCallback((key, value) => {
+    setParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (value) next.set(key, value)
+      else next.delete(key)
+      if (key !== 'page') next.delete('page')
+      return next
+    })
+  }, [setParams])
+
+  const clearAll = () => { setParams(new URLSearchParams()); setSearchBox('') }
 
   useEffect(() => {
     api.get('/workflows').then(({ data }) => setWorkflows(data.workflows || [])).catch(() => {})
   }, [])
 
+  // Debounce the search box so each keystroke doesn't hit the server, same as
+  // the other list pages (FormsPage, AccountsPage, MasterDataPage).
   useEffect(() => {
+    const id = setTimeout(() => setParam('search', searchBox.trim()), 350)
+    return () => clearTimeout(id)
+  }, [searchBox, setParam])
+
+  const load = useCallback(() => {
     setLoading(true)
     api.get('/applications', { params: { formType, status, mine, search, page, limit: PAGE_SIZE } })
       .then(({ data }) => {
@@ -44,6 +56,8 @@ export default function ApplicationsPage() {
       .catch(err => setError(apiError(err, 'Failed to load applications')))
       .finally(() => setLoading(false))
   }, [formType, status, mine, search, page])
+
+  useEffect(load, [load])
 
   // Stage keys are opaque in the DB; the workflow config carries their labels.
   const stageName = (app) => {
@@ -57,6 +71,7 @@ export default function ApplicationsPage() {
       <PageHeader
         title="Applications"
         subtitle={`${total} application${total === 1 ? '' : 's'} in your scope`}
+        hideTitleOnMobile
         actions={
           <Button
             variant={mine ? 'primary' : 'secondary'}
@@ -67,12 +82,12 @@ export default function ApplicationsPage() {
         }
       />
 
-      <FilterBar active={Boolean(formType || status || search || mine)} onClear={() => setParams(new URLSearchParams())}>
+      <FilterBar active={Boolean(formType || status || search || mine)} onClear={clearAll}>
         <SearchInput
           className="flex-1 min-w-[200px]"
-          placeholder="Search name, mobile or member ID (press Enter)"
-          defaultValue={search}
-          onKeyDown={e => { if (e.key === 'Enter') setParam('search', e.target.value.trim()) }}
+          placeholder="Search name, mobile or member ID"
+          value={searchBox}
+          onChange={e => setSearchBox(e.target.value)}
         />
 
         <Select className="sm:w-40" value={formType} onChange={e => setParam('formType', e.target.value)}>
@@ -95,7 +110,10 @@ export default function ApplicationsPage() {
         {loading ? (
           <Spinner />
         ) : error ? (
-          <p className="p-6 text-sm text-red-600">{error}</p>
+          <div className="p-6 text-center">
+            <p className="text-sm text-red-600 mb-3">{error}</p>
+            <Button variant="secondary" onClick={load}>Retry</Button>
+          </div>
         ) : applications.length === 0 ? (
           <EmptyState
             title={formType || status || search || mine ? 'No applications match these filters' : 'No applications yet'}
@@ -103,7 +121,7 @@ export default function ApplicationsPage() {
               ? 'Try widening or clearing the filters.'
               : 'Applications appear here once an applicant submits through a form access link.'}
             action={(formType || status || search || mine) && (
-              <Button variant="secondary" onClick={() => setParams(new URLSearchParams())}>Clear filters</Button>
+              <Button variant="secondary" onClick={clearAll}>Clear filters</Button>
             )}
           />
         ) : (

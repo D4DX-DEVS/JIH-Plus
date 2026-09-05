@@ -121,10 +121,10 @@ const AreaPageB = () => {
           2. പ്രതിമാസയോഗ ഹാജർ
         </h3>
         <div className="overflow-x-auto rounded-xl border border-gray-200">
-          <table className="w-full border-collapse min-w-full">
+          <table className="w-full border-collapse min-w-full ih-table-compact">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-3 py-2 text-left text-xs font-semibold text-gray-700">വിംഗ്</th>
+                <th className="border border-gray-200 px-3 py-2 text-left text-xs font-semibold text-gray-700 sticky left-0 bg-white z-[1]">വിംഗ്</th>
                 <th className="border border-gray-200 px-3 py-2 text-center text-xs font-semibold text-gray-700">ഹാജർ</th>
                 <th className="border border-gray-200 px-3 py-2 text-center text-xs font-semibold text-gray-700">ലീവ്</th>
                 <th className="border border-gray-200 px-3 py-2 text-center text-xs font-semibold text-gray-700">ആബ്‌സന്റ്</th>
@@ -133,7 +133,7 @@ const AreaPageB = () => {
             <tbody>
               {wings.map(wing => (
                 <tr key={wing.key} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="border border-gray-200 px-3 py-2 text-sm font-semibold text-[#002349]">{wing.label}</td>
+                  <td className="border border-gray-200 px-3 py-2 text-sm font-semibold text-[#002349] sticky left-0 bg-white z-[1]">{wing.label}</td>
                   <td className="border border-gray-200 px-3 py-2">
                     <input
                       type="text"
@@ -141,6 +141,8 @@ const AreaPageB = () => {
                       onChange={(e) => handleWingAttendanceChange(wing.key, 'present', e.target.value)}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleWingAttendanceChange(wing.key, 'present', value))}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-[16px] sm:text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
@@ -152,6 +154,8 @@ const AreaPageB = () => {
                       onChange={(e) => handleWingAttendanceChange(wing.key, 'leave', e.target.value)}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleWingAttendanceChange(wing.key, 'leave', value))}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-[16px] sm:text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
@@ -163,6 +167,8 @@ const AreaPageB = () => {
                       onChange={(e) => handleWingAttendanceChange(wing.key, 'absent', e.target.value)}
                       onKeyDown={handleNumericKeyDown}
                       onPaste={(e) => handleNumericPaste(e, (value) => handleWingAttendanceChange(wing.key, 'absent', value))}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       className="w-full px-2 py-1.5 border border-gray-300 rounded-xl text-center text-[16px] sm:text-sm focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
@@ -216,7 +222,7 @@ const AreaPageB = () => {
       <div className="mt-6 flex justify-between">
         <button
           onClick={prevStep}
-          className="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-2xl text-sm font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg"
+          className="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-2xl text-sm min-h-[44px] font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>മുൻപത്തെ</span>
@@ -224,7 +230,7 @@ const AreaPageB = () => {
         <button
           onClick={nextStep}
           disabled={!validateCurrentStep()}
-          className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-5 py-2 rounded-2xl text-sm font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out disabled:bg-gray-400 disabled:transform-none disabled:hover:translate-y-0 disabled:hover:scale-100"
+          className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-5 py-2 rounded-2xl text-sm min-h-[44px] font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out disabled:bg-gray-400 disabled:transform-none disabled:hover:translate-y-0 disabled:hover:scale-100"
         >
           <span>അടുത്തത്</span>
           <ArrowRight className="w-4 h-4" />

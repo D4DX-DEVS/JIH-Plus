@@ -93,6 +93,19 @@ const Layout = () => {
     setMoreOpen(false)
   }, [location.pathname])
 
+  // Close profile menu / More sheet on Escape
+  useEffect(() => {
+    if (!profileMenuOpen && !moreOpen) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setProfileMenuOpen(false)
+        setMoreOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [profileMenuOpen, moreOpen])
+
   const toggleGroup = (groupName) => {
     setExpandedGroups(prev => {
       const next = new Set(prev)
@@ -525,7 +538,7 @@ const Layout = () => {
             <div className="relative shrink-0">
               <button
                 onClick={() => setProfileMenuOpen((prev) => !prev)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+                className="inline-flex h-[40px] w-[40px] items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
                 aria-label="Account menu"
               >
                 <User className="h-[18px] w-[18px]" />
@@ -646,7 +659,7 @@ const Layout = () => {
                   <button
                     key={item.name}
                     onClick={() => handleBottomClick(item)}
-                    className={`relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1.5 text-[9px] font-semibold leading-none transition-colors duration-300 ease-out ${
+                    className={`relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1.5 text-[10px] font-semibold leading-none transition-colors duration-300 ease-out ${
                       active ? 'text-[#7B4FF2]' : 'text-gray-400 hover:text-gray-700'
                     }`}
                     aria-current={active ? 'page' : undefined}

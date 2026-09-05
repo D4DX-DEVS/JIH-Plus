@@ -39,6 +39,7 @@ export default function ApplicationDetailPage() {
   const [editing, setEditing] = useState(false)
   const [formDraft, setFormDraft] = useState({})
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -106,17 +107,25 @@ export default function ApplicationDetailPage() {
   }
 
   const remove = async () => {
+    setDeleting(true)
     try {
       await api.delete(`/applications/${id}`)
       toast.success('Application deleted')
       navigate('/members/applications', { replace: true })
     } catch (err) {
       toast.error(apiError(err, 'Could not delete the application'))
+    } finally {
+      setDeleting(false)
     }
   }
 
   if (loading) return <Spinner />
-  if (error) return <p className="text-sm text-red-600">{error}</p>
+  if (error) return (
+    <div className="p-6 text-center">
+      <p className="text-sm text-red-600 mb-3">{error}</p>
+      <Button variant="secondary" onClick={load}>Retry</Button>
+    </div>
+  )
   if (!data) return null
 
   const { application, template } = data
@@ -125,7 +134,7 @@ export default function ApplicationDetailPage() {
     <div>
       <button
         onClick={() => navigate('/members/applications')}
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 pt-2 pb-2 -mt-2 mb-1"
+        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 pt-2 pb-2 -mt-2 mb-1 min-h-11"
       >
         <ArrowLeft size={16} /> Back to applications
       </button>
@@ -362,7 +371,9 @@ export default function ApplicationDetailPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setConfirmDelete(false)}>Cancel</Button>
-            <Button variant="danger" onClick={remove}>Delete permanently</Button>
+            <Button variant="danger" onClick={remove} disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete permanently'}
+            </Button>
           </>
         }
       >

@@ -10,6 +10,7 @@ import {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [unreadOnly, setUnreadOnly] = useState('')
@@ -20,8 +21,9 @@ export default function NotificationsPage() {
       .then(({ data }) => {
         setNotifications(data.notifications || [])
         setTotal(data.pagination?.total || 0)
+        setError('')
       })
-      .catch(err => toast.error(apiError(err, 'Failed to load notifications')))
+      .catch(err => setError(apiError(err, 'Failed to load notifications')))
       .finally(() => setLoading(false))
   }
 
@@ -50,6 +52,7 @@ export default function NotificationsPage() {
       <PageHeader
         title="Notifications"
         subtitle="Updates on applications reaching your stage."
+        hideTitleOnMobile
         actions={
           notifications.some(n => !n.read)
             ? <Button variant="secondary" onClick={markAll}>Mark all read</Button>
@@ -72,7 +75,12 @@ export default function NotificationsPage() {
       </FilterBar>
 
       <Card>
-        {loading ? <Spinner /> : notifications.length === 0 ? (
+        {loading ? <Spinner /> : error ? (
+          <div className="py-14 px-4 text-center">
+            <p className="text-sm text-red-600 mb-3">{error}</p>
+            <Button variant="secondary" onClick={load}>Retry</Button>
+          </div>
+        ) : notifications.length === 0 ? (
           <EmptyState
             title={unreadOnly ? 'Nothing unread' : 'Nothing yet'}
             message={unreadOnly

@@ -376,8 +376,10 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
   };
 
   const [validationError, setValidationError] = useState('');
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const handleNext = () => {
+    if (hasSubmitted) return;
     console.log('UnitPageB - partBData being sent:', partBData);
     console.log('UnitPageB - memberCategoriesCounts:', partBData.memberCategoriesCounts);
 
@@ -390,7 +392,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
       return;
     }
     setValidationError('');
-    
+    setHasSubmitted(true);
+
     // Update the parent form data with UnitPageB data before submitting
     if (setFormData) {
       setFormData(prev => {
@@ -483,6 +486,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               </label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={partBData.newJIHMembers.male || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -501,6 +506,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               </label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={partBData.newJIHMembers.female || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -542,6 +549,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                       {gender.male && (
                         <input
                           type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={counts.male || 0}
                           onChange={(e) => {
                             const cleaned = validateNumericInput(e.target.value);
@@ -569,6 +578,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                       {gender.female && (
                         <input
                           type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={counts.female || 0}
                           onChange={(e) => {
                             const cleaned = validateNumericInput(e.target.value);
@@ -621,6 +632,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">ആൺ </label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={partCData.publicMeetingAttendees.male || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -636,6 +649,8 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">പെൺ </label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={partCData.publicMeetingAttendees.female || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -721,13 +736,15 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">മൊത്തം</label>
-                  <input 
-                    type="text" 
-                    value={partDData.growthAcceleration.solidarity?.male || 0} 
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={partDData.growthAcceleration.solidarity?.male || 0}
                     onChange={(e) => {
                       const cleaned = validateNumericInput(e.target.value);
                       handlePartDInputChange('growthAcceleration.solidarity.male', cleaned);
-                    }} 
+                    }}
                     onKeyDown={handleNumericKeyDown} 
                     onPaste={(e) => handleNumericPaste(e, (value) => handlePartDInputChange('growthAcceleration.solidarity.male', value))} 
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50" 
@@ -743,13 +760,15 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">മൊത്തം</label>
-                  <input 
-                    type="text" 
-                    value={partDData.growthAcceleration.sio?.male || 0} 
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={partDData.growthAcceleration.sio?.male || 0}
                     onChange={(e) => {
                       const cleaned = validateNumericInput(e.target.value);
                       handlePartDInputChange('growthAcceleration.sio.male', cleaned);
-                    }} 
+                    }}
                     onKeyDown={handleNumericKeyDown} 
                     onPaste={(e) => handleNumericPaste(e, (value) => handlePartDInputChange('growthAcceleration.sio.male', value))} 
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50" 
@@ -765,13 +784,15 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">മൊത്തം</label>
-                  <input 
-                    type="text" 
-                    value={partDData.growthAcceleration.gio?.male || 0} 
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={partDData.growthAcceleration.gio?.male || 0}
                     onChange={(e) => {
                       const cleaned = validateNumericInput(e.target.value);
                       handlePartDInputChange('growthAcceleration.gio.male', cleaned);
-                    }} 
+                    }}
                     onKeyDown={handleNumericKeyDown} 
                     onPaste={(e) => handleNumericPaste(e, (value) => handlePartDInputChange('growthAcceleration.gio.male', value))} 
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50" 
@@ -788,15 +809,16 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
       <div className="mt-12 flex justify-between">
         <button
           onClick={handlePrevious}
-          className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-2 rounded-2xl text-sm font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg transform hover:scale-105 ease-out hover:shadow-gray-500/50"
+          className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-2 min-h-[44px] rounded-2xl text-sm font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg transform hover:scale-105 ease-out hover:shadow-gray-500/50"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>മുമ്പത്തെ</span>
         </button>
-        
+
         <button
           onClick={handleNext}
-          className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-2 rounded-2xl text-sm font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg transform hover:scale-105 ease-out hover:shadow-green-500/50"
+          disabled={hasSubmitted}
+          className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 min-h-[44px] rounded-2xl text-sm font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg transform hover:scale-105 ease-out hover:shadow-green-500/50"
         >
           <span>സബ്മിറ്റ് ചെയ്യുക</span>
           <Check className="w-4 h-4" />

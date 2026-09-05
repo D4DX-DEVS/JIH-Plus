@@ -49,6 +49,8 @@ export default function MasterDataPage() {
   const [renaming, setRenaming] = useState(null)
   const [busy, setBusy] = useState(false)
   const [form, setForm] = useState({ name: '', mekhala: '', district: '', area: '' })
+  const [toDelete, setToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   // Mekhalas, districts and areas — everything the filters and pickers need.
   const loadParents = useCallback(() => {
@@ -189,16 +191,20 @@ export default function MasterDataPage() {
     }
   }
 
-  const remove = async (location) => {
+  const confirmDelete = async () => {
+    setDeleting(true)
     try {
-      await api.delete(`/admin/master-data/${location._id}`)
+      await api.delete(`/admin/master-data/${toDelete._id}`)
       toast.success('Location deleted')
+      setToDelete(null)
       loadParents()
       // Stepping back avoids landing on a page that no longer exists.
       if (rows.length === 1 && page > 1) setPage(p => p - 1)
       else load()
     } catch (err) {
       toast.error(apiError(err, 'Could not delete the location'))
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -214,6 +220,7 @@ export default function MasterDataPage() {
       <PageHeader
         title="Master Data"
         subtitle="Mekhalas, districts, areas and units for the members section."
+        hideTitleOnMobile
         actions={<Button onClick={openCreate}><Plus size={16} /> Add {tab}</Button>}
       />
 
@@ -317,10 +324,17 @@ export default function MasterDataPage() {
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
-                    <button onClick={() => setRenaming({ ...row })} className="text-[#5b21b6] text-[13px] font-medium p-2">
+                    <button
+                      onClick={() => setRenaming({ ...row })}
+                      className="flex min-h-11 min-w-11 items-center justify-center text-[#5b21b6] text-[13px] font-medium"
+                    >
                       Edit
                     </button>
-                    <button onClick={() => remove(row)} className="text-gray-400 active:text-red-600 p-2">
+                    <button
+                      onClick={() => setToDelete(row)}
+                      aria-label="Delete location"
+                      className="flex min-h-11 min-w-11 items-center justify-center text-gray-400 active:text-red-600"
+                    >
                       <Trash2 size={15} />
                     </button>
                   </div>
@@ -362,7 +376,7 @@ export default function MasterDataPage() {
                       <button onClick={() => setRenaming({ ...row })} className="text-[#5b21b6] hover:underline py-2 px-1 mr-2">
                         Edit
                       </button>
-                      <button onClick={() => remove(row)} className="text-gray-400 hover:text-red-600 p-2">
+                      <button onClick={() => setToDelete(row)} aria-label="Delete location" className="text-gray-400 hover:text-red-600 p-2">
                         <Trash2 size={15} />
                       </button>
                     </td>
@@ -454,6 +468,25 @@ export default function MasterDataPage() {
             </label>
           </form>
         )}
+      </Modal>
+
+      <Modal
+        open={Boolean(toDelete)}
+        onClose={() => setToDelete(null)}
+        title="Delete this location?"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setToDelete(null)}>Cancel</Button>
+            <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete location'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600">
+          <strong>{toDelete?.name}</strong> will be removed permanently. Deleting also removes every
+          child location and account posted here. This cannot be undone.
+        </p>
       </Modal>
     </div>
   )

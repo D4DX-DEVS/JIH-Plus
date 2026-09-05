@@ -32,9 +32,20 @@ function SearchBox({ value, onChange, placeholder }) {
 // ── Shared UI Primitives ──────────────────────────────────────────────────────
 
 function Modal({ title, onClose, children }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between gap-2 px-6 py-4 border-b flex-shrink-0">
           <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-[#002349]">{title}</h2>
           <button onClick={onClose} className="shrink-0 text-gray-400 hover:text-gray-600">
@@ -307,9 +318,9 @@ function MekhalasTab() {
         <Modal title={editItem ? `Edit Mekhala: ${editItem.name}` : 'Add Mekhala'} onClose={() => setFormOpen(false)}>
           <MekhalaForm value={form} onChange={setForm} districts={districtOptions} error={formError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setFormOpen(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setFormOpen(false)} className="btn-ghost">Cancel</button>
             <button onClick={handleSave} disabled={working}
-              className="flex items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
               {working ? <Spinner /> : null} {editItem ? 'Save' : 'Add'}
             </button>
           </div>
@@ -330,9 +341,9 @@ function MekhalasTab() {
           )}
           <ErrorMsg msg={deleteError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setDeleteItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleDeleteConfirm} disabled={working || Boolean(deleteItem.nazim)}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
               {working ? <Spinner /> : null} Delete
             </button>
           </div>
@@ -577,9 +588,9 @@ function DistrictsTab() {
             )}
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setSplitItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setSplitItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleSplitConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Split
               </button>
             </div>
@@ -603,9 +614,9 @@ function DistrictsTab() {
           </select>
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setMergeItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setMergeItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleMergeConfirm} disabled={txWorking || !mergeSurvivor}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Merge
             </button>
           </div>
@@ -627,9 +638,9 @@ function DistrictsTab() {
             </div>
             <ErrorMsg msg={addError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setAddOpen(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setAddOpen(false)} className="btn-ghost">Cancel</button>
               <button onClick={handleAddConfirm} disabled={addWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
                 {addWorking ? <Spinner /> : null} Add
               </button>
             </div>
@@ -647,9 +658,9 @@ function DistrictsTab() {
             </div>
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setRenameItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setRenameItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleRenameConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Rename
               </button>
             </div>
@@ -668,9 +679,9 @@ function DistrictsTab() {
           )}
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setDeleteItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleDeleteConfirm} disabled={txWorking || deleteItem.count > 0}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Delete
             </button>
           </div>
@@ -826,7 +837,7 @@ function AreasTab() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <label className="text-sm text-gray-600">Filter by district:</label>
         <select value={selectedDistrict} onChange={(e) => { setSelectedDistrict(e.target.value); setPage(1); }}
-          className="text-sm border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]">
+          className="min-h-[44px] sm:min-h-0 text-sm border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]">
           <option value="">All Districts</option>
           {districts.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
         </select>
@@ -988,9 +999,9 @@ function AreasTab() {
             )}
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setSplitItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setSplitItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleSplitConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Split
               </button>
             </div>
@@ -1014,9 +1025,9 @@ function AreasTab() {
           </select>
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setMergeItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setMergeItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleMergeConfirm} disabled={txWorking || !mergeSurvivorKey}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Merge
             </button>
           </div>
@@ -1037,9 +1048,9 @@ function AreasTab() {
           </select>
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setTransferItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setTransferItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleTransferConfirm} disabled={txWorking || !transferTarget}
-              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Transfer
             </button>
           </div>
@@ -1070,9 +1081,9 @@ function AreasTab() {
             </div>
             <ErrorMsg msg={addError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setAddOpen(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setAddOpen(false)} className="btn-ghost">Cancel</button>
               <button onClick={handleAddConfirm} disabled={addWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
                 {addWorking ? <Spinner /> : null} Add
               </button>
             </div>
@@ -1090,9 +1101,9 @@ function AreasTab() {
             </div>
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setRenameItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setRenameItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleRenameConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Rename
               </button>
             </div>
@@ -1111,9 +1122,9 @@ function AreasTab() {
           )}
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setDeleteItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleDeleteConfirm} disabled={txWorking || deleteItem.count > 0}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Delete
             </button>
           </div>
@@ -1299,13 +1310,13 @@ function UnitsTab() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <label className="text-sm text-gray-600">District:</label>
         <select value={selectedDistrict} onChange={(e) => { setSelectedDistrict(e.target.value); setSelectedArea(''); setPage(1); }}
-          className="text-sm border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]">
+          className="min-h-[44px] sm:min-h-0 text-sm border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]">
           <option value="">All</option>
           {districts.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
         </select>
         <label className="text-sm text-gray-600">Area:</label>
         <select value={selectedArea} onChange={(e) => { setSelectedArea(e.target.value); setPage(1); }}
-          className="text-sm border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]">
+          className="min-h-[44px] sm:min-h-0 text-sm border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]">
           <option value="">All</option>
           {filteredAreas.map((a) => <option key={`${a.district}-${a.name}`} value={a.name}>{a.name}</option>)}
         </select>
@@ -1450,9 +1461,9 @@ function UnitsTab() {
             </div>
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setSplitItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setSplitItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleSplitConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Split
               </button>
             </div>
@@ -1476,9 +1487,9 @@ function UnitsTab() {
           </select>
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setMergeItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setMergeItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleMergeConfirm} disabled={txWorking || !mergeSurvivorKey}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Merge
             </button>
           </div>
@@ -1507,9 +1518,9 @@ function UnitsTab() {
           </select>
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setTransferItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setTransferItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleTransferConfirm} disabled={txWorking || !transferTargetKey}
-              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Transfer
             </button>
           </div>
@@ -1551,9 +1562,9 @@ function UnitsTab() {
             </div>
             <ErrorMsg msg={addError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setAddOpen(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setAddOpen(false)} className="btn-ghost">Cancel</button>
               <button onClick={handleAddConfirm} disabled={addWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
                 {addWorking ? <Spinner /> : null} Add
               </button>
             </div>
@@ -1571,9 +1582,9 @@ function UnitsTab() {
             </div>
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setRenameItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setRenameItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleRenameConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Rename
               </button>
             </div>
@@ -1592,9 +1603,9 @@ function UnitsTab() {
           )}
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setDeleteItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleDeleteConfirm} disabled={txWorking || deleteItem.count > 0}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Delete
             </button>
           </div>
@@ -1622,7 +1633,7 @@ export default function MasterDataManagement() {
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`shrink-0 whitespace-nowrap min-h-[44px] sm:min-h-0 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
               activeTab === id ? 'bg-white text-[#002349] shadow' : 'text-gray-600 hover:bg-gray-200'
             }`}
           >

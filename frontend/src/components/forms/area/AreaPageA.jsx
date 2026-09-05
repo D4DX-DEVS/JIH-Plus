@@ -156,7 +156,7 @@ const AreaPageA = () => {
         <select
           value={formData.month}
           onChange={(e) => updateFormData('month', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
+          className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
         >
           <option value="">തിരഞ്ഞെടുക്കുക</option>
           <option value="January">ജനുവരി</option>
@@ -194,6 +194,8 @@ const AreaPageA = () => {
               }}
               onKeyDown={handleNumericKeyDown}
               onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('kh', value))}
+              inputMode="numeric"
+              pattern="[0-9]*"
               className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
               placeholder="0"
             />
@@ -212,6 +214,8 @@ const AreaPageA = () => {
               }}
               onKeyDown={handleNumericKeyDown}
               onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('vkh', value))}
+              inputMode="numeric"
+              pattern="[0-9]*"
               className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
               placeholder="0"
             />
@@ -231,7 +235,7 @@ const AreaPageA = () => {
         <button
           onClick={handleNext}
           disabled={!validateCurrentStep()}
-          className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-6 py-2 rounded-2xl text-sm font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out disabled:bg-gray-400 disabled:transform-none disabled:hover:translate-y-0 disabled:hover:scale-100"
+          className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-6 py-2 rounded-2xl text-sm min-h-[44px] font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out disabled:bg-gray-400 disabled:transform-none disabled:hover:translate-y-0 disabled:hover:scale-100"
         >
           <span>അടുത്തത്</span>
           <ArrowRight className="w-4 h-4" />

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   FileText, UserCheck, Users, Clock, CheckCircle2, XCircle, Link2, ArrowRight
@@ -9,7 +9,7 @@ import {
 } from 'recharts'
 import { api, apiError } from '../../utils/members/api'
 import { useAuth } from '../../contexts/members/AuthContext'
-import { Card, PageHeader, Spinner, StatusBadge } from '../../components/members/ui'
+import { Button, Card, PageHeader, Spinner, StatusBadge } from '../../components/members/ui'
 import { FORM_TYPE_LABEL } from '../../utils/members/constants'
 
 /** Sums an aggregate result of { _id: {...}, count } down to a flat map. */
@@ -73,7 +73,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true)
     Promise.all([
       api.get('/admin/stats'),
       api.get('/applications', { params: { mine: 1, limit: 5 } }),
@@ -83,10 +84,13 @@ export default function Dashboard() {
         setStats(statsRes.data.stats)
         setWaiting(mineRes.data.applications || [])
         setWorkflows(wfRes.data.workflows || [])
+        setError('')
       })
       .catch(err => setError(apiError(err, 'Failed to load the dashboard')))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(load, [load])
 
   const byStatus = useMemo(() => tally(stats?.byStatus, 'status'), [stats])
   const byType = useMemo(() => tally(stats?.byStatus, 'formType'), [stats])
@@ -130,7 +134,12 @@ export default function Dashboard() {
   }, [stats])
 
   if (loading) return <Spinner />
-  if (error) return <p className="text-sm text-red-600">{error}</p>
+  if (error) return (
+    <Card className="p-6 text-center">
+      <p className="text-sm text-red-600 mb-3">{error}</p>
+      <Button variant="secondary" onClick={load}>Retry</Button>
+    </Card>
+  )
 
   const totalApplications = (byType.rukn || 0) + (byType.karkoon || 0)
 
@@ -155,6 +164,7 @@ export default function Dashboard() {
       <PageHeader
         title={`Welcome, ${user?.name || 'there'}`}
         subtitle={user?.role?.name ? `Signed in as ${user.role.name}` : undefined}
+        hideTitleOnMobile
       />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 mb-6">
@@ -261,7 +271,7 @@ export default function Dashboard() {
             </div>
             <Link
               to="/members/applications?mine=1"
-              className="inline-flex items-center gap-1 text-sm font-medium text-[#5b21b6] hover:underline py-2.5 -my-2.5"
+              className="inline-flex items-center gap-1 text-sm font-medium text-[#5b21b6] hover:underline min-h-[44px] -my-3"
             >
               View all <ArrowRight size={14} />
             </Link>

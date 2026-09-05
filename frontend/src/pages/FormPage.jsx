@@ -7,11 +7,23 @@ import PartB from '../components/forms/monthly/PartB';
 import PartC from '../components/forms/monthly/PartC';
 import PartD from '../components/forms/monthly/PartD';
 import PartE from '../components/forms/monthly/PartE';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const FormPage = ({ onBack, onSubmit, editingForm, isAdmin = false }) => {
   const { currentStep, nextStep, prevStep, formData, setFormData, validateCurrentStep } = useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  const hasUnsavedChanges = currentStep > 1 || !!formData?.district;
+
+  const handleCloseClick = () => {
+    if (hasUnsavedChanges) {
+      setShowExitConfirm(true);
+    } else {
+      onBack();
+    }
+  };
 
   // Load editing form data if provided
   React.useEffect(() => {
@@ -148,7 +160,7 @@ const FormPage = ({ onBack, onSubmit, editingForm, isAdmin = false }) => {
         </div>
         {onBack && (
               <button
-                onClick={onBack}
+                onClick={handleCloseClick}
             className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] text-gray-600 hover:text-[#002349] transition-all duration-300 hover:bg-gray-100 rounded-full flex-shrink-0"
             title="Close"
           >
@@ -156,6 +168,17 @@ const FormPage = ({ onBack, onSubmit, editingForm, isAdmin = false }) => {
           </button>
         )}
       </div>
+
+      <ConfirmationModal
+        isOpen={showExitConfirm}
+        onClose={() => setShowExitConfirm(false)}
+        onConfirm={onBack}
+        title="Discard changes?"
+        message="You have entered data in this form. Are you sure you want to leave without saving?"
+        confirmText="Discard"
+        cancelText="Keep editing"
+        type="danger"
+      />
 
       {/* Form content directly in the page */}
       {renderCurrentStep()}

@@ -112,9 +112,11 @@ html, body {
   /* iOS Safari zooms the page when a focused text control's computed font-size
      is under 16px. The 14px rem base above drags every rem-sized input below
      that threshold, so force real text-entry controls up to 16px on phones.
-     Selects/checkboxes/radios are excluded — they open native pickers and
-     never trigger the zoom. */
+     Checkboxes/radios are excluded — they open native pickers and never trigger
+     the zoom. Selects DO trigger it on iOS Safari when focused, so they are
+     included; their pills are `truncate`d so the larger text never overflows. */
   input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):not([type='button']):not([type='submit']),
+  select,
   textarea {
     font-size: 16px !important;
   }
@@ -475,7 +477,7 @@ input[type="number"] {
 
   /* Icon-only action button sized for touch without eating the row. */
   .ih-icon-btn {
-    @apply inline-flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-full text-gray-400 transition-colors shrink-0;
+    @apply inline-flex h-[40px] w-[40px] sm:h-8 sm:w-8 items-center justify-center rounded-full text-gray-400 transition-colors shrink-0;
   }
 
   /* Filter grid — two controls per row on phones instead of one. */
@@ -488,6 +490,12 @@ input[type="number"] {
   .ih-filter-select,
   .ih-field {
     @apply block w-full appearance-none rounded-full border-0 py-[7px] pl-8 pr-7 text-[13px] sm:text-sm text-gray-700;
+  }
+
+  /* A select is a tap target in its own right: 44px tall on phones (the 14px
+     root font makes py-[7px] + 13px text only ~30px), compact from sm: up. */
+  .ih-filter-select {
+    @apply min-h-[44px] sm:min-h-0;
     background-color: rgba(16, 24, 40, 0.04);
     transition: background-color 0.2s ease, box-shadow 0.2s ease;
   }
@@ -523,7 +531,7 @@ input[type="number"] {
   /* flex: 1 0 auto — pills grow to share spare width but never shrink below
      their own label, so a long label (e.g. "District Replies") is never cut off. */
   .ih-segment-btn {
-    @apply inline-flex flex-[1_0_auto] items-center justify-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-medium text-gray-500 whitespace-nowrap sm:text-xs;
+    @apply inline-flex flex-[1_0_auto] min-h-[44px] sm:min-h-0 items-center justify-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-medium text-gray-500 whitespace-nowrap sm:text-xs;
     transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
   }
 
@@ -554,6 +562,20 @@ input[type="number"] {
     background-color: #178582;
   }
 
+  /* Full-height page shell inside the ihthisabi Layout. `min-h-screen` on a page
+     that sits under the app bar and above the fixed bottom nav always over-
+     shoots the viewport by header + nav height, so every short page scrolls
+     ~130px into empty space. Subtract both on phones; full height on lg+. */
+  .ih-screen {
+    min-height: calc(100dvh - 4.125rem - 4.5rem - env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 1024px) {
+    .ih-screen {
+      min-height: 100vh;
+    }
+  }
+
   .ih-mobile-bottom-safe {
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
   }
@@ -576,6 +598,32 @@ input[type="number"] {
   }
 
   .ih-fab:disabled {
+    @apply opacity-50;
+  }
+
+  /* JIH expansion-portal variants of the toolbar primitives — same shapes, navy
+     accent. Its bottom nav runs to lg, so the FAB hides at lg rather than sm. */
+  .jih-toolbar .ih-field:focus,
+  .jih-toolbar .ih-filter-select:focus {
+    box-shadow: 0 0 0 2px rgba(0, 35, 73, 0.3), var(--shadow-soft);
+  }
+
+  .jih-toolbar .ih-filter-select {
+    @apply py-[10px] sm:py-[7px];
+  }
+
+  .jih-fab {
+    @apply fixed right-4 z-20 inline-flex h-[52px] w-[52px] items-center justify-center rounded-full text-white transition-colors lg:hidden;
+    bottom: calc(4.5rem + env(safe-area-inset-bottom) + 0.75rem);
+    background-color: #002349;
+    box-shadow: 0 4px 12px rgba(0, 35, 73, 0.32), 0 8px 24px rgba(16, 24, 40, 0.12);
+  }
+
+  .jih-fab:active {
+    background-color: #1a3a5c;
+  }
+
+  .jih-fab:disabled {
     @apply opacity-50;
   }
 

@@ -8,7 +8,7 @@ import PartD from '../components/forms/monthly/PartD';
 import MonthlySurveyPartE from '../components/forms/monthly/MonthlySurveyPartE';
 
 const MonthlySurveyPage = ({ onBack, onSubmit, editingSurvey, isAdmin = false }) => {
-  const { currentStep, formData, setFormData } = useForm();
+  const { currentStep, formData, setFormData, nextStep, prevStep, validateCurrentStep } = useForm();
 
   // Load editing survey data if provided
   React.useEffect(() => {
@@ -88,6 +88,7 @@ const MonthlySurveyPage = ({ onBack, onSubmit, editingSurvey, isAdmin = false })
                   {editingSurvey && editingSurvey._id ? 'പ്രതിമാസ  റിപ്പോർട്ട് എഡിറ്റ് ചെയ്യുക' : 'പുതിയ പ്രതിമാസ  റിപ്പോർട്ട്'}
                 </h1>
                 <p className="text-sm text-gray-600 font-medium truncate">{getStepTitle()}</p>
+                <p className="md:hidden text-xs text-gray-600 font-medium mt-1">Step {currentStep} of 5</p>
               </div>
             </div>
             
@@ -123,6 +124,18 @@ const MonthlySurveyPage = ({ onBack, onSubmit, editingSurvey, isAdmin = false })
       {/* Main Content */}
       <main className="max-w-7xl mx-auto">
         {renderCurrentStep()}
+        {currentStep < 5 && (
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-4">
+            {currentStep > 1 ? (
+              <button onClick={prevStep} className="min-h-[44px] px-6 rounded-2xl border border-gray-300 text-gray-700 font-semibold text-sm">
+                മുൻപത്തെ
+              </button>
+            ) : <span />}
+            <button onClick={nextStep} disabled={!validateCurrentStep()} className="min-h-[44px] px-6 rounded-2xl bg-[#002349] hover:bg-[#1a3a5c] disabled:bg-gray-400 text-white font-semibold text-sm">
+              അടുത്തത്
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

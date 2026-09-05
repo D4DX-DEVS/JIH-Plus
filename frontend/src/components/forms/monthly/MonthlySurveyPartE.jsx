@@ -236,7 +236,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
           5. 6 മാസത്തിനുള്ളിൽ രൂപീകരിക്കാൻ സാധിക്കുന്ന ഘടകങ്ങൾ:
         </label>
         <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300">
+          <table className="ih-table-compact w-full border border-gray-300">
             <thead>
               <tr className="bg-gray-50">
                 <th className="border border-gray-300 px-4 py-3 text-center font-medium">JIH</th>

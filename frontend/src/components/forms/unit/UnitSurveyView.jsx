@@ -106,20 +106,26 @@ const UnitSurveyView = ({ survey, onBack, onEdit }) => {
           <div className="flex space-x-2">
             <button
               onClick={onBack}
-              className="p-2 hover:opacity-70 transition-opacity"
+              aria-label="തിരികെ"
+              title="തിരികെ"
+              className="p-2 min-h-[44px] min-w-[44px] hover:opacity-70 transition-opacity"
             >
               <ArrowLeft className="w-5 h-5 text-gray-700" />
             </button>
             <button
               onClick={handleDownloadPDF}
-              className="p-2 hover:opacity-70 transition-opacity"
+              aria-label="ഡൗൺലോഡ്"
+              title="ഡൗൺലോഡ്"
+              className="p-2 min-h-[44px] min-w-[44px] hover:opacity-70 transition-opacity"
             >
               <Download className="w-5 h-5 text-gray-700" />
             </button>
             {onEdit && (
               <button
                 onClick={onEdit}
-                className="p-2 hover:opacity-70 transition-opacity"
+                aria-label="എഡിറ്റ്"
+                title="എഡിറ്റ്"
+                className="p-2 min-h-[44px] min-w-[44px] hover:opacity-70 transition-opacity"
               >
                 <Edit className="w-5 h-5 text-gray-700" />
               </button>
@@ -376,17 +382,17 @@ const UnitSurveyView = ({ survey, onBack, onEdit }) => {
         </h3>
         
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="w-full border-collapse">
+          <table className="ih-table-compact w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
+                <th className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">എണ്ണം</th>
               </tr>
             </thead>
             <tbody>
               {growthWings.map((wing) => (
                 <tr key={wing.key} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
+                  <td className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
                   <td className="border border-gray-200 px-4 py-3 text-center font-medium text-gray-700">
                     {survey.partC?.growthAcceleration?.[wing.key] || 0}
                   </td>

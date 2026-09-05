@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 
 /** Small shared primitives so the members pages stay short and consistent. */
@@ -6,10 +6,15 @@ import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 /** Rows every list page requests per page. */
 export const PAGE_SIZE = 10
 
-export function PageHeader({ title, subtitle, actions }) {
+/**
+ * `hideTitleOnMobile` is for pages whose title now duplicates the Layout mobile
+ * app bar (see components/members/Layout.jsx's PAGE_TITLES). Actions stay
+ * visible on mobile either way — they're controls, not the duplicated title.
+ */
+export function PageHeader({ title, subtitle, actions, hideTitleOnMobile }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
-      <div className="min-w-0">
+    <div className={`${hideTitleOnMobile && !actions ? 'hidden lg:flex' : 'flex'} flex-wrap items-start justify-between gap-3 mb-6`}>
+      <div className={`min-w-0 ${hideTitleOnMobile ? 'hidden lg:block' : ''}`}>
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 break-words">{title}</h1>
         {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
       </div>
@@ -35,7 +40,7 @@ export function Button({ variant = 'primary', className = '', children, ...props
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c4b5fd] focus-visible:ring-offset-1 disabled:cursor-not-allowed ${BUTTON_VARIANTS[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] sm:min-h-0 rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c4b5fd] focus-visible:ring-offset-1 disabled:cursor-not-allowed ${BUTTON_VARIANTS[variant]} ${className}`}
     >
       {children}
     </button>
@@ -109,7 +114,7 @@ export function Tabs({ tabs, value, onChange, className = '' }) {
           key={tab.value}
           type="button"
           onClick={() => onChange(tab.value)}
-          className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+          className={`min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
             value === tab.value
               ? 'bg-white text-[#5b21b6] shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
@@ -128,6 +133,13 @@ export function Tabs({ tabs, value, onChange, className = '' }) {
 }
 
 export function Modal({ open, onClose, title, children, footer, wide }) {
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [open, onClose])
+
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">

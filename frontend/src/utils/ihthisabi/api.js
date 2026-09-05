@@ -69,8 +69,8 @@ api.interceptors.response.use(
               console.log('Admin token expired or invalid - logging out')
               localStorage.removeItem('token')
               delete api.defaults.headers.common['Authorization']
-              if (window.location.pathname !== '/login') {
-                window.location.href = '/login'
+              if (window.location.pathname !== '/ihthisabi/login') {
+                window.location.href = '/ihthisabi/login'
               }
             } else {
               console.log('Admin endpoint error (not auth-related):', data.message)
@@ -79,8 +79,8 @@ api.interceptors.response.use(
             console.log('401 Unauthorized - clearing token and redirecting to login')
             localStorage.removeItem('token')
             delete api.defaults.headers.common['Authorization']
-            if (window.location.pathname !== '/login') {
-              window.location.href = '/login'
+            if (window.location.pathname !== '/ihthisabi/login') {
+              window.location.href = '/ihthisabi/login'
             }
           }
           break

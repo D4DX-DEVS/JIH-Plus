@@ -160,6 +160,7 @@ const DistrictSurveyContent = ({ editingSurvey, isAdmin }) => {
 
 const DistrictSurveyPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { editingSurvey, isAdmin: isAdminFromState } = location.state || {};
   const [adminData, setAdminData] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

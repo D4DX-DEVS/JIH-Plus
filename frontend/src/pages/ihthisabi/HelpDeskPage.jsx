@@ -67,7 +67,7 @@ const HelpDeskPage = () => {
               <LifeBuoy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span>Ihthisabi Help Desk</span>
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-3xl">Get Support Quickly</h1>
+            <h1 className="hidden lg:block text-xl font-bold tracking-tight text-gray-900 sm:text-3xl">Get Support Quickly</h1>
             <p className="mt-1.5 text-xs leading-5 text-gray-600 sm:mt-3 sm:text-base sm:leading-6">
               This page covers common Ihthisabi support contacts. Member application support is intentionally excluded here.
             </p>

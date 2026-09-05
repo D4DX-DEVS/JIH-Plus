@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ErrorProvider } from './contexts/ErrorContext';
 import LandingPage from './pages/LandingPage';
@@ -897,6 +897,23 @@ const IhthisabiRoutes = () => {
   );
 };
 
+// Unmatched /members/* deep links land here instead of silently bouncing to
+// the dashboard, matching the ihthisabi routes' NotFound behavior.
+const MembersNotFound = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="text-center max-w-sm">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Page not found</h2>
+        <p className="text-gray-600 mb-4">This page doesn't exist or has moved.</p>
+        <button onClick={() => navigate('/members')} className="px-4 py-2 rounded-lg bg-[#5b21b6] text-white">
+          Go to dashboard
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // MEMBERS APPLICATION Routes Component
 const MembersRoutes = () => (
   <Routes>
@@ -918,7 +935,7 @@ const MembersRoutes = () => (
       <Route
         path="access-links"
         element={
-          <MembersProtectedRoute>
+          <MembersProtectedRoute canCreateAccessLinksOnly>
             <MembersAccessLinksPage />
           </MembersProtectedRoute>
         }
@@ -929,11 +946,11 @@ const MembersRoutes = () => (
       <Route path="forms/:id" element={<MembersProtectedRoute superAdminOnly><MembersFormBuilderPage /></MembersProtectedRoute>} />
       <Route path="workflows" element={<MembersProtectedRoute superAdminOnly><MembersWorkflowBuilderPage /></MembersProtectedRoute>} />
       <Route path="roles" element={<MembersProtectedRoute superAdminOnly><MembersRolesPage /></MembersProtectedRoute>} />
-      <Route path="accounts" element={<MembersProtectedRoute><MembersAccountsPage /></MembersProtectedRoute>} />
+      <Route path="accounts" element={<MembersProtectedRoute superAdminOnly><MembersAccountsPage /></MembersProtectedRoute>} />
       <Route path="master-data" element={<MembersProtectedRoute superAdminOnly><MembersMasterDataPage /></MembersProtectedRoute>} />
     </Route>
 
-    <Route path="*" element={<Navigate to="/members" replace />} />
+    <Route path="*" element={<MembersNotFound />} />
   </Routes>
 );
 

@@ -151,15 +151,22 @@ const Consolidation = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600 text-sm">ലോഡ് ചെയ്യുന്നു…</div>
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center gap-2 text-gray-600 text-sm">
+          <RefreshCcw className="w-4 h-4 animate-spin" />
+          ലോഡ് ചെയ്യുന്നു…
+        </div>
       </div>
     )
   }
   if (!isAuthenticated || !user || user.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+        <AlertCircle className="w-10 h-10 text-gray-300" />
         <div className="text-gray-600 text-sm">Access denied</div>
+        <button onClick={() => navigate(-1)} className="btn-ghost">
+          Go Back
+        </button>
       </div>
     )
   }
@@ -404,7 +411,7 @@ const Consolidation = () => {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell">
         <div className="mb-4">
           <div className="ih-page-header">
@@ -427,7 +434,7 @@ const Consolidation = () => {
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
-                className="form-select truncate text-[13px] sm:text-sm"
+                className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
               >
                 <option value="">Select year</option>
                 {years.map(y => (
@@ -440,7 +447,7 @@ const Consolidation = () => {
               <select
                 value={selectedQuarter}
                 onChange={(e) => setSelectedQuarter(e.target.value)}
-                className="form-select truncate text-[13px] sm:text-sm"
+                className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
               >
                 <option value="">Select quarter</option>
                 {quarters.map(q => (
@@ -503,7 +510,7 @@ const Consolidation = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">District</label>
-                  <select value={district} onChange={(e) => setDistrict(e.target.value)} className="form-select truncate text-[13px] sm:text-sm">
+                  <select value={district} onChange={(e) => setDistrict(e.target.value)} className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm">
                     <option value="all">All Districts</option>
                     {districts.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
@@ -513,7 +520,7 @@ const Consolidation = () => {
                   <select
                     value={area}
                     onChange={(e) => setArea(e.target.value)}
-                    className="form-select truncate text-[13px] sm:text-sm"
+                    className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
                     disabled={district === 'all'}
                   >
                     <option value="all">All Areas</option>
@@ -525,7 +532,7 @@ const Consolidation = () => {
                   <select
                     value={unit}
                     onChange={(e) => setUnit(e.target.value)}
-                    className="form-select truncate text-[13px] sm:text-sm"
+                    className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
                     disabled={district === 'all' || area === 'all'}
                   >
                     <option value="all">All Units</option>

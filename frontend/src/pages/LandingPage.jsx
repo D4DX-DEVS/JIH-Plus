@@ -371,7 +371,16 @@ const TrustStrip = () => (
   </section>
 );
 
-const HelpDeskModal = ({ onClose }) => (
+const HelpDeskModal = ({ onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  return (
   <div
     className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#101936]/45 p-4 backdrop-blur-sm"
     onClick={onClose}
@@ -437,7 +446,8 @@ const HelpDeskModal = ({ onClose }) => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 const BackgroundCanvas = () => (
   <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">

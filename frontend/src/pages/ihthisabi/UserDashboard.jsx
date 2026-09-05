@@ -24,7 +24,6 @@ import { Q3_DISABLED, isQ3Disabled } from '../../utils/ihthisabi/quarterHelper'
 const UserDashboard = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const [stats, setStats] = useState(null)
   const [submissions, setSubmissions] = useState([])
   const [submissionsPagination, setSubmissionsPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [loading, setLoading] = useState(true)
@@ -39,7 +38,6 @@ const UserDashboard = () => {
       }
       
       const timer = setTimeout(() => {
-        fetchStats()
         fetchSubmissions()
         fetchAlternativeSubmissions()
       }, 100)
@@ -49,21 +47,6 @@ const UserDashboard = () => {
       navigate('/ihthisabi/login')
     }
   }, [isAuthenticated, authLoading, user])
-
-  const fetchStats = async () => {
-    try {
-      const response = await api.get('/submissions/stats/my-stats')
-      setStats(response.data.data)
-    } catch (error) {
-      console.error('Failed to fetch stats:', error)
-      
-      if (error.response?.status === 404 || error.response?.data?.message?.includes('No submissions')) {
-        setStats(null)
-      } else {
-        toast.error('Failed to load dashboard data')
-      }
-    }
-  }
 
   const fetchSubmissions = async (page = 1) => {
     try {
@@ -353,7 +336,7 @@ const UserDashboard = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">
@@ -366,7 +349,7 @@ const UserDashboard = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Please log in to access your dashboard.</p>
           <button 
@@ -381,7 +364,7 @@ const UserDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <div className="ih-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <div className="ih-page-shell">
         {/* Welcome Header with CTA */}
         <div className="ih-page-header">

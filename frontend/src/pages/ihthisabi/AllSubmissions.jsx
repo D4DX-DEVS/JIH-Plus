@@ -58,6 +58,8 @@ const AllSubmissions = () => {
   const [drawerFormSchema, setDrawerFormSchema] = useState(null)
   const [replyMessage, setReplyMessage] = useState('')
   const [replyLoading, setReplyLoading] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [nsExporting, setNsExporting] = useState(false)
   const [whatsappStatus, setWhatsappStatus] = useState(null)
   const [showAlternativeSubmissions, setShowAlternativeSubmissions] = useState(false)
   const [showAbroadSubmissions, setShowAbroadSubmissions] = useState(false)
@@ -289,6 +291,9 @@ const AllSubmissions = () => {
   }
 
   const handleNonSubmittedExportCSV = async () => {
+    if (nsExporting) return
+    setNsExporting(true)
+    try {
     const rows = await fetchAllNonSubmittedForExport().catch(() => {
       toast.error('Failed to export')
       return null
@@ -326,9 +331,15 @@ const AllSubmissions = () => {
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
     toast.success('CSV exported')
+    } finally {
+      setNsExporting(false)
+    }
   }
 
   const handleNonSubmittedExportPDF = async () => {
+    if (nsExporting) return
+    setNsExporting(true)
+    try {
     const nonSubmittedList = await fetchAllNonSubmittedForExport().catch(() => {
       toast.error('Failed to export')
       return null
@@ -376,6 +387,9 @@ const AllSubmissions = () => {
     })
     doc.save(`non-submitted-${nonSubmittedPeriodDisplay.replace(' ', '-')}-${new Date().toISOString().slice(0, 10)}.pdf`)
     toast.success('PDF exported')
+    } finally {
+      setNsExporting(false)
+    }
   }
 
   const getStatusIcon = (status) => {
@@ -547,6 +561,9 @@ const AllSubmissions = () => {
   }
 
   const handleExport = async () => {
+    if (exporting) return
+    setExporting(true)
+    try {
     // Submissions are now server-paginated (10/page), so exporting the current filters
     // means fetching every matching page at export time rather than just the visible page.
     const params = { limit: 200 }
@@ -621,12 +638,15 @@ const AllSubmissions = () => {
     URL.revokeObjectURL(url)
 
     toast.success('Exported filtered submissions')
+    } finally {
+      setExporting(false)
+    }
   }
 
   // Show loading while authentication is being checked
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">
@@ -640,7 +660,7 @@ const AllSubmissions = () => {
   // Show error if not authenticated or not admin
   if (!isAuthenticated || !user || user.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <XCircle className="w-8 h-8 text-red-600" />
@@ -653,16 +673,20 @@ const AllSubmissions = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell">
         {/* Header — desktop only. On mobile the app bar already names the page and
             Export moves into the search row, so no row is spent on a title. */}
         <div className="mb-2 hidden items-center justify-between gap-2 lg:flex">
           <h1 className="ih-page-title">All Submissions</h1>
           {!showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted && (
-            <button onClick={handleExport} className="btn-primary shrink-0 gap-1.5">
-              <Download className="w-4 h-4" />
-              Export
+            <button onClick={handleExport} disabled={exporting} className="btn-primary shrink-0 gap-1.5">
+              {exporting ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              {exporting ? 'Exporting...' : 'Export'}
             </button>
           )}
         </div>
@@ -749,10 +773,15 @@ const AllSubmissions = () => {
             </button>
             <button
               onClick={handleExport}
+              disabled={exporting}
               title="Export"
               className="btn-primary h-[44px] w-[44px] min-h-0 shrink-0 p-0 sm:h-9 sm:w-9 lg:hidden"
             >
-              <Download className="w-4 h-4" />
+              {exporting ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
             </button>
           </div>
 
@@ -1054,17 +1083,27 @@ const AllSubmissions = () => {
                   <>
                     <button
                       onClick={handleNonSubmittedExportCSV}
+                      disabled={nsExporting}
                       title="Export CSV"
-                      className="ih-icon-btn border border-gray-300 bg-white hover:bg-gray-50 hover:text-gray-700"
+                      className="ih-icon-btn border border-gray-300 bg-white hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50"
                     >
-                      <Download className="w-3.5 h-3.5" />
+                      {nsExporting ? (
+                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
                     </button>
                     <button
                       onClick={handleNonSubmittedExportPDF}
+                      disabled={nsExporting}
                       title="Export PDF"
-                      className="ih-icon-btn border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                      className="ih-icon-btn border border-red-300 bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
                     >
-                      <FileText className="w-3.5 h-3.5" />
+                      {nsExporting ? (
+                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
+                      ) : (
+                        <FileText className="w-3.5 h-3.5" />
+                      )}
                     </button>
                   </>
                 )}
@@ -1222,9 +1261,17 @@ const AllSubmissions = () => {
                       {alternativeSubmissions.map((submission, index) => {
                         const serialNumber = (alternativePagination.current - 1) * alternativeItemsPerPage + index + 1
                         return (
-                        <tr 
-                          key={submission._id || submission.id} 
+                        <tr
+                          key={submission._id || submission.id}
                           onClick={() => navigate(`/ihthisabi/alternative-submissions/${submission._id || submission.id}`)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              navigate(`/ihthisabi/alternative-submissions/${submission._id || submission.id}`)
+                            }
+                          }}
+                          role="button"
+                          tabIndex={0}
                           className="hover:bg-gray-50 cursor-pointer"
                         >
                           <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-500 font-medium">{serialNumber}</td>
@@ -1302,6 +1349,14 @@ const AllSubmissions = () => {
                       key={submission._id || submission.id}
                       className="ih-list-row ih-list-row-roomy cursor-pointer"
                       onClick={() => navigate(`/ihthisabi/alternative-submissions/${submission._id || submission.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          navigate(`/ihthisabi/alternative-submissions/${submission._id || submission.id}`)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                     >
                       <div className="ih-avatar h-9 w-9 bg-orange-100 text-orange-600">
                         {(submission.ruknName || submission.userId?.name || 'U').charAt(0).toUpperCase()}
@@ -1391,9 +1446,17 @@ const AllSubmissions = () => {
                       const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;
                       const hasReply = submission.adminReply?.message;
                       return (
-                        <tr 
-                          key={submission.id} 
+                        <tr
+                          key={submission.id}
                           onClick={() => handleViewSubmission(submission.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              handleViewSubmission(submission.id)
+                            }
+                          }}
+                          role="button"
+                          tabIndex={0}
                           className="hover:bg-gray-50 cursor-pointer"
                         >
                           <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-500 font-medium">
@@ -1468,6 +1531,14 @@ const AllSubmissions = () => {
                       key={submission.id}
                       className="ih-list-row ih-list-row-roomy cursor-pointer"
                       onClick={() => handleViewSubmission(submission.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleViewSubmission(submission.id)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                     >
                       <span className="w-4 shrink-0 text-[11px] font-medium text-gray-300">{serialNumber}</span>
                       <div className="ih-avatar h-9 w-9 bg-gradient-to-br from-primary to-primary-700 text-white shadow-sm">
@@ -1532,7 +1603,7 @@ const AllSubmissions = () => {
                   <p className="text-xs text-gray-500">{details.periodDisplay}</p>
                 )}
               </div>
-              <button onClick={closeDrawer} className="p-2 rounded-md hover:bg-gray-100 text-gray-500">
+              <button onClick={closeDrawer} className="p-2 -m-2 rounded-md hover:bg-gray-100 text-gray-500" aria-label="Close">
                 <CloseIcon className="w-4" />
               </button>
             </div>
@@ -1919,15 +1990,14 @@ const AllSubmissions = () => {
                   <div className="flex items-center justify-end space-x-2">
                     <button
                       onClick={closeDrawer}
-                      className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                      className="btn-ghost"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSubmitReply}
                       disabled={!replyMessage.trim() || replyLoading}
-                      className="px-4 py-2 text-sm text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center font-medium shadow-sm"
-                      style={{ backgroundColor: '#121A2A' }}
+                      className="btn-primary"
                     >
                       {replyLoading ? (
                         <>

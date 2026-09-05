@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../../utils/ihthisabi/api'
+import toast from 'react-hot-toast'
 import {
   ArrowLeft,
   Users,
@@ -86,6 +87,7 @@ const UnitAdminDetails = () => {
       if (response.data?.success) setData(response.data.data)
     } catch (error) {
       console.error('Error fetching unit details:', error)
+      toast.error('Failed to load details')
     } finally {
       setInitialLoading(false)
       setListLoading(false)
@@ -145,7 +147,7 @@ const UnitAdminDetails = () => {
       <div className="flex items-start gap-2 mb-3 sm:mb-4">
         <button
           onClick={() => navigate('/ihthisabi/unitadmin')}
-          className="mt-0.5 p-2.5 lg:p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 shrink-0"
+          className="mt-0.5 inline-flex h-[44px] w-[44px] items-center justify-center lg:h-8 lg:w-8 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 shrink-0"
           aria-label="Back to dashboard"
         >
           <ArrowLeft className="w-4 h-4" />

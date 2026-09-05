@@ -4,7 +4,7 @@ import { useLocation as useHierarchyLocation } from '../../hooks/useLocation'
 import UnitAdminProfileModal from './UnitAdminProfileModal'
 import UserProfileModal from './UserProfileModal'
 import ConfirmationModal from './ConfirmationModal'
-import MemberFormModal from './MemberFormModal'
+import MemberFormModal, { LocationSelects } from './MemberFormModal'
 import Pagination from './Pagination'
 import {
   Upload,
@@ -65,12 +65,7 @@ const UserManagement = () => {
   // Transfer modal state
   const [transferModal, setTransferModal] = useState({ isOpen: false, user: null })
   const [transferMode, setTransferMode] = useState('location') // 'location' | 'abroad'
-  const [transferDistricts, setTransferDistricts] = useState([])
-  const [transferAreas, setTransferAreas] = useState([])
-  const [transferUnits, setTransferUnits] = useState([])
-  const [transferDistrict, setTransferDistrict] = useState('')
-  const [transferArea, setTransferArea] = useState('')
-  const [transferUnit, setTransferUnit] = useState('')
+  const [transferLoc, setTransferLoc] = useState({ district: '', area: '', unit: '' })
   const [abroadCountries, setAbroadCountries] = useState([])
   const [abroadAreas, setAbroadAreas] = useState([])
   const [abroadUnits, setAbroadUnits] = useState([])
@@ -222,42 +217,17 @@ const UserManagement = () => {
     e.stopPropagation()
     setTransferError('')
     setTransferMode('location')
-    setTransferDistrict(''); setTransferArea(''); setTransferUnit('')
-    setTransferDistricts([]); setTransferAreas([]); setTransferUnits([])
+    setTransferLoc({ district: '', area: '', unit: '' })
     setTransferAbroadCountry(''); setTransferAbroadArea(''); setTransferAbroadUnit('')
     setAbroadAreas([]); setAbroadUnits([])
     setTransferModal({ isOpen: true, user })
-    // Fetch districts and abroad countries in parallel
+    // Fetch abroad countries
     try {
-      const [distRes, countryRes] = await Promise.all([
-        api.get('/ihthisabi/admin/master-data/districts'),
-        api.get('/ihthisabi/admin/abroad-countries')
-      ])
-      setTransferDistricts(distRes.data.data || [])
+      const countryRes = await api.get('/ihthisabi/admin/abroad-countries')
       setAbroadCountries(countryRes.data.data?.countries || [])
     } catch (err) {
       setTransferError(err.response?.data?.message || 'Failed to load locations')
     }
-  }
-
-  const handleTransferDistrictChange = async (districtName) => {
-    setTransferDistrict(districtName); setTransferArea(''); setTransferUnit(''); setTransferAreas([]); setTransferUnits([])
-    if (!districtName) return
-    try {
-      const res = await api.get('/ihthisabi/admin/master-data/areas', { params: { district: districtName } })
-      setTransferAreas(res.data.data || [])
-    } catch { /* ignore */ }
-  }
-
-  const handleTransferAreaChange = async (areaName) => {
-    setTransferArea(areaName); setTransferUnit(''); setTransferUnits([])
-    if (!areaName || !transferDistrict) return
-    try {
-      const res = await api.get('/ihthisabi/admin/master-data/units', {
-        params: { district: transferDistrict, area: areaName }
-      })
-      setTransferUnits(res.data.data || [])
-    } catch { /* ignore */ }
   }
 
   const handleTransferAbroadCountryChange = async (countryId) => {
@@ -298,11 +268,11 @@ const UserManagement = () => {
       } catch (e) { setTransferError(e.response?.data?.message || 'Transfer failed') }
       setTransferWorking(false)
     } else {
-      if (!transferDistrict || !transferArea || !transferUnit) return setTransferError('Please select district, area and unit')
+      if (!transferLoc.district || !transferLoc.area || !transferLoc.unit) return setTransferError('Please select district, area and unit')
       setTransferWorking(true)
       try {
         await api.put(`/ihthisabi/admin/users/${user._id}/transfer`, {
-          isAbroad: false, district: transferDistrict, area: transferArea, unit: transferUnit
+          isAbroad: false, district: transferLoc.district, area: transferLoc.area, unit: transferLoc.unit
         })
         toast.success('User transferred successfully')
         setTransferModal({ isOpen: false, user: null })
@@ -948,62 +918,16 @@ const UserManagement = () => {
       )}
 
       {/* Delete All Users Confirmation Modal */}
-      {showDeleteAllModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Delete All Users</h3>
-              <button
-                onClick={() => setShowDeleteAllModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <AlertCircle className="w-6 h-6 text-red-600 mr-3" />
-                  <div>
-                    <h4 className="font-medium text-red-800">Warning!</h4>
-                    <p className="text-sm text-red-700 mt-1">
-                      This action will permanently delete ALL {Math.max(meta.totalUsers, users.length)} users from the database. 
-                      This cannot be undone.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-sm text-gray-600">
-                <p className="font-medium mb-2">This will delete:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>All user records</li>
-                  <li>All user data including names, districts, units, etc.</li>
-                  <li>Associated submissions and data</li>
-                </ul>
-              </div>
-
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleDeleteAllUsers}
-                  disabled={deleteAllLoading}
-                  className="btn-primary bg-red-600 hover:bg-red-700 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {deleteAllLoading ? 'Deleting...' : 'Yes, Delete All Users'}
-                </button>
-                <button
-                  onClick={() => setShowDeleteAllModal(false)}
-                  disabled={deleteAllLoading}
-                  className="btn-ghost flex-1 disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={showDeleteAllModal}
+        onClose={() => setShowDeleteAllModal(false)}
+        onConfirm={handleDeleteAllUsers}
+        title="Delete All Users"
+        message={`This action will permanently delete ALL ${Math.max(meta.totalUsers, users.length)} users from the database — all user records, their data (names, districts, units, etc.) and associated submissions. This cannot be undone.`}
+        confirmText="Yes, Delete All Users"
+        variant="danger"
+        isLoading={deleteAllLoading}
+      />
 
       {/* Add Member Modal */}
       <MemberFormModal
@@ -1078,49 +1002,7 @@ const UserManagement = () => {
             </div>
 
             {transferMode === 'location' && (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
-                  <select
-                    value={transferDistrict}
-                    onChange={(e) => handleTransferDistrictChange(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                  >
-                    <option value="">Select district</option>
-                    {transferDistricts.map((d) => (
-                      <option key={d.name} value={d.name}>{d.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Area</label>
-                  <select
-                    value={transferArea}
-                    onChange={(e) => handleTransferAreaChange(e.target.value)}
-                    disabled={!transferDistrict}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
-                  >
-                    <option value="">Select area</option>
-                    {transferAreas.map((a) => (
-                      <option key={`${a.district}-${a.name}`} value={a.name}>{a.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                  <select
-                    value={transferUnit}
-                    onChange={(e) => setTransferUnit(e.target.value)}
-                    disabled={!transferArea}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
-                  >
-                    <option value="">Select unit</option>
-                    {transferUnits.map((u) => (
-                      <option key={`${u.district}-${u.area}-${u.name}`} value={u.name}>{u.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              <LocationSelects value={transferLoc} onChange={setTransferLoc} required />
             )}
 
             {transferMode === 'abroad' && (
@@ -1130,7 +1012,7 @@ const UserManagement = () => {
                   <select
                     value={transferAbroadCountry}
                     onChange={(e) => handleTransferAbroadCountryChange(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="form-select text-[13px] sm:text-sm"
                   >
                     <option value="">Select country</option>
                     {abroadCountries.map((c) => (
@@ -1144,7 +1026,7 @@ const UserManagement = () => {
                     value={transferAbroadArea}
                     onChange={(e) => handleTransferAbroadAreaChange(e.target.value)}
                     disabled={!transferAbroadCountry || abroadAreas.length === 0}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
+                    className="form-select text-[13px] sm:text-sm"
                   >
                     <option value="">{!transferAbroadCountry ? 'Select country first' : abroadAreas.length === 0 ? 'No areas available' : 'Select area'}</option>
                     {abroadAreas.map((a) => (
@@ -1158,7 +1040,7 @@ const UserManagement = () => {
                     value={transferAbroadUnit}
                     onChange={(e) => setTransferAbroadUnit(e.target.value)}
                     disabled={!transferAbroadArea || abroadUnits.length === 0}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
+                    className="form-select text-[13px] sm:text-sm"
                   >
                     <option value="">{!transferAbroadArea ? 'Select area first' : abroadUnits.length === 0 ? 'No units available' : 'Select unit'}</option>
                     {abroadUnits.map((u) => (

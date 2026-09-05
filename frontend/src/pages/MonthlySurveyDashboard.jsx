@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Edit, Trash2, Calendar, Search, FileText, Users, Building, Eye, X } from 'lucide-react';
+import { Edit, Calendar, FileText, Users, Building, Eye, X, ArrowLeft, Trash2 } from 'lucide-react';
+import { JihFilterBar, JihFilterSelect, JihFab, JihAddButton } from '../components/JihToolbar';
 import axios from 'axios';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import jihLogo from '../assets/LogoColor.png';
@@ -109,7 +110,28 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
 
   useEffect(() => {
     fetchSurveys();
-  }, [currentPage, levelFilter, monthFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  // Reset to page 1 whenever a filter changes so the newly-filtered result
+  // set isn't sliced against a stale page number.
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchSurveys();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [levelFilter, monthFilter, focusAreaFilter, areaFocusFilter]);
+
+  // The backend has no free-text search and the focus-area filters are
+  // client-side only, so widen the fetched page instead of only matching
+  // the current 10-record server page (debounced to avoid a fetch per keystroke).
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      fetchSurveys();
+    }, 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
   // Clear focus area filters when level changes
   useEffect(() => {
@@ -125,11 +147,12 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('userToken');
+      const hasClientFilter = searchTerm.trim().length > 0 || !!focusAreaFilter || !!areaFocusFilter;
       const params = new URLSearchParams({
-        page: currentPage,
-        limit: 10,
+        page: hasClientFilter ? 1 : currentPage,
+        limit: hasClientFilter ? 500 : 10,
       });
-      
+
       if (monthFilter) params.append('month', monthFilter);
 
       let endpoint = '';
@@ -1571,89 +1594,52 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
           </p>
         </div>
         {canCreate && (
-          <button
-            onClick={onCreateNew}
-            className="bg-[#957C3D] hover:bg-[#8A6F35] text-white px-6 py-3 rounded-2xl transition-all duration-500 flex items-center space-x-2 text-sm font-semibold hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New District Report</span>
-          </button>
+          <>
+            <JihAddButton onClick={onCreateNew}>New District Report</JihAddButton>
+            <JihFab onClick={onCreateNew} label="New District Report" />
+          </>
         )}
       </div>
 
-      {/* Inline Search & Filters (no container card) */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${(levelFilter === 'district' || levelFilter === 'area') ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-3 mb-4`}>
-        <div>
-          <label className="block text-xs font-semibold text-[#002349] mb-1">Search</label>
-          <div className="relative group">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search reports..."
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-base sm:text-sm"
-            />
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 group-hover:text-[#002349] transition-colors duration-300" />
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-[#002349] mb-1">Level</label>
-          <select
-            value={levelFilter}
-            onChange={(e) => setLevelFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-[13px] sm:text-sm"
-          >
-            <option value="">All Levels</option>
-            <option value="district">District</option>
-            <option value="area">Area</option>
-            <option value="unit">Unit</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-[#002349] mb-1">Month</label>
-          <select
-            value={monthFilter}
-            onChange={(e) => setMonthFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-[13px] sm:text-sm"
-          >
-            <option value="">All Months</option>
-            {['January', 'February', 'March', 'April', 'May', 'June', 
-              'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
-              <option key={month} value={month}>{month}</option>
-            ))}
-          </select>
-        </div>
-        {levelFilter === 'district' && (
-          <div>
-            <label className="block text-xs font-semibold text-[#002349] mb-1">Focus Area</label>
-            <select
-              value={focusAreaFilter}
-              onChange={(e) => setFocusAreaFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-[13px] sm:text-sm"
-            >
-              <option value="">All Focus Areas</option>
-              {focusAreaOptions.map(option => (
-                <option key={option.key} value={option.key}>{option.label}</option>
+      <JihFilterBar
+        className="mb-4"
+        search={searchTerm}
+        onSearchChange={setSearchTerm}
+        placeholder="Search reports..."
+        activeFilterCount={[levelFilter, monthFilter, levelFilter === 'district' && focusAreaFilter, levelFilter === 'area' && areaFocusFilter].filter(Boolean).length}
+        onClear={() => { setLevelFilter(''); setMonthFilter(''); setFocusAreaFilter(''); setAreaFocusFilter(''); }}
+        gridClass="sm:grid-cols-3 lg:grid-cols-4"
+      >
+        <JihFilterSelect icon={Building} value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
+          <option value="">All Levels</option>
+          <option value="district">District</option>
+          <option value="area">Area</option>
+          <option value="unit">Unit</option>
+        </JihFilterSelect>
+        <JihFilterSelect icon={Calendar} value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}>
+          <option value="">All Months</option>
+          {['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                <option key={month} value={month}>{month}</option>
               ))}
-            </select>
-          </div>
+        </JihFilterSelect>
+        {levelFilter === 'district' && (
+          <JihFilterSelect value={focusAreaFilter} onChange={(e) => setFocusAreaFilter(e.target.value)}>
+            <option value="">All Focus Areas</option>
+            {focusAreaOptions.map(option => (
+              <option key={option.key} value={option.key}>{option.label}</option>
+            ))}
+          </JihFilterSelect>
         )}
         {levelFilter === 'area' && (
-          <div>
-            <label className="block text-xs font-semibold text-[#002349] mb-1">Focus Area</label>
-            <select
-              value={areaFocusFilter}
-              onChange={(e) => setAreaFocusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-[13px] sm:text-sm"
-            >
-              <option value="">All Focus Areas</option>
-              {areaFocusOptions.map(option => (
-                <option key={option.key} value={option.key}>{option.label}</option>
-              ))}
-            </select>
-          </div>
+          <JihFilterSelect value={areaFocusFilter} onChange={(e) => setAreaFocusFilter(e.target.value)}>
+            <option value="">All Focus Areas</option>
+            {areaFocusOptions.map(option => (
+              <option key={option.key} value={option.key}>{option.label}</option>
+            ))}
+          </JihFilterSelect>
         )}
-      </div>
+      </JihFilterBar>
 
       {error && (
         <div className="mb-4 bg-red-50 border-2 border-red-200 rounded-2xl p-3 animate-fade-in text-sm">

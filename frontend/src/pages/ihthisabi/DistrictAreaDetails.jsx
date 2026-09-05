@@ -141,17 +141,17 @@ const DistrictAreaDetails = () => {
       <div className="flex items-start gap-2 mb-3 sm:mb-4">
         <button
           onClick={() => navigate('/ihthisabi/districtadmin')}
-          className="mt-0.5 h-10 w-10 sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 shrink-0"
+          className="mt-0.5 h-[44px] w-[44px] sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 shrink-0"
           aria-label="Back to dashboard"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="min-w-0">
-          <h1 className="ih-page-title truncate">{area}</h1>
+          <h1 className="hidden lg:block ih-page-title truncate">{area}</h1>
           <p className="ih-page-subtitle flex items-center gap-1">
             <MapPin className="w-3 h-3 shrink-0 text-[#7B4FF2]" />
             <span className="truncate">
-              {data?.district || '…'}{period ? ` · ${getQuarterName(period.quarter)} ${period.year}` : ''}
+              {area}{data?.district ? ` · ${data.district}` : ''}{period ? ` · ${getQuarterName(period.quarter)} ${period.year}` : ''}
             </span>
           </p>
         </div>
@@ -163,7 +163,7 @@ const DistrictAreaDetails = () => {
           value={period?.quarter || ''}
           onChange={(e) => changePeriod(Number(e.target.value), period?.year)}
           disabled={initialLoading}
-          className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-[13px] sm:text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+          className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-2 py-1.5 border border-gray-200 rounded-lg text-[13px] sm:text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
         >
           {getAvailableQuarters().map((q) => (
             <option key={q} value={q}>{getQuarterName(q)}</option>
@@ -173,7 +173,7 @@ const DistrictAreaDetails = () => {
           value={period?.year || ''}
           onChange={(e) => changePeriod(period?.quarter, Number(e.target.value))}
           disabled={initialLoading}
-          className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-[13px] sm:text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+          className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-2 py-1.5 border border-gray-200 rounded-lg text-[13px] sm:text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
         >
           {Array.from({ length: 4 }, (_, i) => new Date().getFullYear() - i).map((y) => (
             <option key={y} value={y}>{y}</option>

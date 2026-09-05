@@ -242,12 +242,6 @@ const UnitAdminDashboard = () => {
     }
   }
 
-  const closeMemberModal = () => {
-    setShowMemberModal(false)
-    setSelectedMember(null)
-    setMemberDetails(null)
-  }
-
   const handleSubmissionClick = async (submission) => {
     try {
       setSubmissionDetailsLoading(true)
@@ -387,6 +381,19 @@ const UnitAdminDashboard = () => {
     setAlternativeSubmissionDetails(null)
   }
 
+  // Close the reply/alternative-submission modals on Escape
+  useEffect(() => {
+    if (!showReplyModal && !showAlternativeSubmissionModal) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (showReplyModal) closeReplyModal()
+        if (showAlternativeSubmissionModal) closeAlternativeSubmissionModal()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showReplyModal, showAlternativeSubmissionModal])
+
   // Extract quarter number and year from a submission, with fallback to parsing the quarter string
   const getSubmissionPeriod = (s) => {
     if (s.submissionPeriod?.quarter && s.submissionPeriod?.year) {
@@ -417,7 +424,7 @@ const UnitAdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="spinner w-8 h-8 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading dashboard...</p>
@@ -427,7 +434,7 @@ const UnitAdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell">
         {/* Header */}
         <div className="mb-2 sm:mb-4 hidden lg:block">
@@ -629,7 +636,11 @@ const UnitAdminDashboard = () => {
                       {submissions.slice(0, 5).map((submission) => {
                         const submissionId = submission.submissionId || submission._id
                         return (
-                          <div key={submissionId} className="flex flex-col items-start justify-between gap-3 p-4 bg-gray-50 rounded-lg sm:flex-row sm:items-center">
+                          <div
+                            key={submissionId}
+                            onClick={() => handleSubmissionClick(submission)}
+                            className="flex flex-col items-start justify-between gap-3 p-4 bg-gray-50 rounded-lg sm:flex-row sm:items-center cursor-pointer hover:bg-gray-100 transition-colors"
+                          >
                             <div className="flex items-center space-x-4">
                               <div className="flex-shrink-0">
                                 <FileText className="h-5 w-5 text-gray-400" />
@@ -683,7 +694,7 @@ const UnitAdminDashboard = () => {
                     <select
                       value={mySubmissionsYearFilter}
                       onChange={(e) => setMySubmissionsYearFilter(e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 min-h-[44px] lg:min-h-0 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                     >
                       <option value="all">All Years</option>
                       {mySubmissionYears.map(y => (
@@ -693,7 +704,7 @@ const UnitAdminDashboard = () => {
                     <select
                       value={mySubmissionsQuarterFilter}
                       onChange={(e) => setMySubmissionsQuarterFilter(e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 min-h-[44px] lg:min-h-0 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                     >
                       <option value="all">All Quarters</option>
                       <option value="1">Q1 (Jan–Mar)</option>
@@ -961,7 +972,7 @@ const UnitAdminDashboard = () => {
                     <select
                       value={submissionsYearFilter}
                       onChange={(e) => setSubmissionsYearFilter(e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 min-h-[44px] lg:min-h-0 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                     >
                       <option value="all">All Years</option>
                       {submissionYears.map(y => (
@@ -971,7 +982,7 @@ const UnitAdminDashboard = () => {
                     <select
                       value={submissionsQuarterFilter}
                       onChange={(e) => setSubmissionsQuarterFilter(e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 lg:py-1.5 min-h-[44px] lg:min-h-0 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary"
                     >
                       <option value="all">All Quarters</option>
                       <option value="1">Q1 (Jan–Mar)</option>
@@ -1759,8 +1770,11 @@ const UnitAdminDashboard = () => {
 
       {/* Unit Reply Modal */}
       {showReplyModal && selectedReply && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-3 lg:p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-3 lg:p-4"
+          onClick={closeReplyModal}
+        >
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="p-3 sm:p-5">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3 sm:mb-4 border-b border-gray-200 pb-2 sm:pb-3 gap-3">
                 <div className="flex-1 min-w-0">
@@ -1792,7 +1806,7 @@ const UnitAdminDashboard = () => {
                 </div>
                 <button
                   onClick={closeReplyModal}
-                  className="p-2 rounded-md hover:bg-gray-100 text-gray-500 flex-shrink-0"
+                  className="p-2 -m-2 rounded-md hover:bg-gray-100 text-gray-500 flex-shrink-0"
                   aria-label="Close"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1822,8 +1836,11 @@ const UnitAdminDashboard = () => {
 
       {/* Alternative Submission Modal */}
       {showAlternativeSubmissionModal && selectedAlternativeSubmission && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-2 sm:p-3 lg:p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto shadow-2xl">
+        <div
+          className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50 p-2 sm:p-3 lg:p-4"
+          onClick={closeAlternativeSubmissionModal}
+        >
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="p-3 sm:p-5">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3 sm:mb-4 border-b border-gray-200 pb-2 sm:pb-3 gap-3">
                 <div className="flex-1 min-w-0">
@@ -1853,7 +1870,7 @@ const UnitAdminDashboard = () => {
                 </div>
                 <button
                   onClick={closeAlternativeSubmissionModal}
-                  className="p-2 rounded-md hover:bg-gray-100 text-gray-500 flex-shrink-0"
+                  className="p-2 -m-2 rounded-md hover:bg-gray-100 text-gray-500 flex-shrink-0"
                   aria-label="Close"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

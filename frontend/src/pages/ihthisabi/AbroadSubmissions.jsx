@@ -74,7 +74,7 @@ const MemberDetailDrawer = ({ memberId, submissions, onClose, onViewSubmission }
       <div className="w-full max-w-xl bg-white shadow-2xl flex flex-col h-full">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-bold text-gray-900">Member Details</h3>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+          <button onClick={onClose} className="p-2 -m-2 rounded-lg hover:bg-gray-100 text-gray-500" aria-label="Close">
             <CloseIcon className="w-5 h-5" />
           </button>
         </div>
@@ -521,7 +521,7 @@ const SubmissionDrawer = ({ submissionId, onClose, onRefresh }) => {
               <p className="text-xs text-gray-500">{details.periodDisplay}</p>
             )}
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+          <button onClick={onClose} className="p-2 -m-2 rounded-lg hover:bg-gray-100 text-gray-500" aria-label="Close">
             <CloseIcon className="w-5 h-5" />
           </button>
         </div>
@@ -1076,41 +1076,39 @@ const MemberRow = ({ member, submissions, onViewSubmission, onOpenMemberDetails 
     <div className="border-b border-gray-50 last:border-0">
       {/* Member header row */}
       <div
-        className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 cursor-pointer"
+        className="ih-list-row cursor-pointer"
         onClick={() => onOpenMemberDetails(member, submissions)}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shrink-0">
-            {(member.name || '?').charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <div className="font-semibold text-gray-900 text-sm truncate">{member.name || '—'}</div>
-            <div className="flex items-center gap-2 mt-0.5 min-w-0">
-              {member.ruknId && (
-                <span className="text-xs text-gray-500 font-mono shrink-0">{member.ruknId}</span>
-              )}
-              {member.unit && (
-                <span className="text-xs text-gray-400 truncate">· {member.unit}</span>
-              )}
-            </div>
+        <div className="ih-avatar bg-indigo-100 text-indigo-700">
+          {(member.name || '?').charAt(0).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="ih-list-title">{member.name || '—'}</div>
+          <div className="flex items-center gap-2 mt-0.5 min-w-0">
+            {member.ruknId && (
+              <span className="ih-list-meta shrink-0">{member.ruknId}</span>
+            )}
+            {member.unit && (
+              <span className="ih-list-meta">· {member.unit}</span>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {submissions.length === 0 ? (
-            <span className="inline-flex items-center gap-1 text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full">
+            <span className="ih-chip bg-gray-50 border border-gray-200 text-gray-400">
               <AlertCircle className="w-3.5 h-3.5" />
               No submissions
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-xs text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">
+            <span className="ih-chip bg-blue-50 border border-blue-200 text-blue-700">
               <FileText className="w-3.5 h-3.5" />
               {submissions.length} submission{submissions.length !== 1 ? 's' : ''}
             </span>
           )}
 
           {latestSub && (
-            <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border font-medium ${statusColor(latestSub.status)}`}>
+            <span className={`ih-chip border font-medium ${statusColor(latestSub.status)}`}>
               {statusIcon(latestSub.status)}
               {latestSub.status}
             </span>
@@ -1122,7 +1120,7 @@ const MemberRow = ({ member, submissions, onViewSubmission, onOpenMemberDetails 
                 e.stopPropagation()
                 setExpanded(prev => !prev)
               }}
-              className="p-2.5 -m-1 rounded hover:bg-gray-100 shrink-0"
+              className="ih-icon-btn"
               aria-label={expanded ? 'Collapse submissions' : 'Expand submissions'}
             >
               {expanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
@@ -1138,32 +1136,30 @@ const MemberRow = ({ member, submissions, onViewSubmission, onOpenMemberDetails 
             <div
               key={sub._id}
               onClick={() => onViewSubmission(sub._id)}
-              className="flex items-center justify-between px-8 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-0"
+              className="ih-list-row cursor-pointer pl-10 hover:bg-gray-100"
             >
-              <div className="flex items-center gap-3">
-                <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <div>
-                  <div className="text-sm font-medium text-gray-800">
-                    {sub.submissionPeriod
-                      ? `Q${sub.submissionPeriod.quarter} ${sub.submissionPeriod.year}`
-                      : 'Submission'}
-                  </div>
-                  <div className="text-xs text-gray-500">{formatDate(sub.createdAt)}</div>
+              <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="ih-list-title">
+                  {sub.submissionPeriod
+                    ? `Q${sub.submissionPeriod.quarter} ${sub.submissionPeriod.year}`
+                    : 'Submission'}
                 </div>
+                <div className="ih-list-meta">{formatDate(sub.createdAt)}</div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 shrink-0">
                 {sub.adminReply?.message && (
-                  <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
+                  <span className="ih-chip bg-green-50 border border-green-200 text-green-700">
                     <MessageSquare className="w-3 h-3" /> Replied
                   </span>
                 )}
-                <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border font-medium ${statusColor(sub.status)}`}>
+                <span className={`ih-chip border font-medium ${statusColor(sub.status)}`}>
                   {statusIcon(sub.status)}
                   {sub.status}
                 </span>
                 <button
                   onClick={e => { e.stopPropagation(); onViewSubmission(sub._id) }}
-                  className="text-xs font-medium text-primary border border-primary/30 px-2.5 py-1 rounded-lg hover:bg-primary/5"
+                  className="text-xs font-medium text-primary border border-primary/30 px-2.5 py-1 -my-1 rounded-lg hover:bg-primary/5"
                 >
                   View
                 </button>

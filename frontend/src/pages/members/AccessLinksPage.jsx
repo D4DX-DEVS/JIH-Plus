@@ -28,6 +28,8 @@ export default function AccessLinksPage() {
   const [filter, setFilter] = useState({ formType: '', status: '' })
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
+  const [toDelete, setToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -80,8 +82,7 @@ export default function AccessLinksPage() {
 
   const act = async (id, verb) => {
     try {
-      if (verb === 'delete') await api.delete(`/access-links/${id}`)
-      else await api.patch(`/access-links/${id}/${verb}`)
+      await api.patch(`/access-links/${id}/${verb}`)
       toast.success('Access link updated')
       load()
     } catch (err) {
@@ -89,7 +90,25 @@ export default function AccessLinksPage() {
     }
   }
 
+  const confirmDelete = async () => {
+    setDeleting(true)
+    try {
+      await api.delete(`/access-links/${toDelete._id}`)
+      toast.success('Access link deleted')
+      setToDelete(null)
+      load()
+    } catch (err) {
+      toast.error(apiError(err, 'Could not delete the access link'))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const fullUrl = (path) => `${window.location.origin}${path}`
+
+  // Mobile action bar: equal-width, thumb-sized targets across the row —
+  // matches the pattern already used in FormsPage.jsx.
+  const mobileIconBtn = 'flex h-11 flex-1 items-center justify-center text-gray-500 rounded-lg transition-colors'
 
   const copy = async (text) => {
     try {
@@ -105,6 +124,7 @@ export default function AccessLinksPage() {
       <PageHeader
         title="Form Access"
         subtitle="Create a personal link and credential for each applicant, then block it once they have submitted."
+        hideTitleOnMobile
         actions={<Button onClick={() => setCreating(true)}><Plus size={16} /> New access link</Button>}
       />
 
@@ -146,8 +166,8 @@ export default function AccessLinksPage() {
             {/* Mobile: roomy tappable rows — one full-width target per record */}
             <div className="lg:hidden divide-y divide-gray-100">
               {links.map(link => (
-                <div key={link._id} className="min-h-[56px] flex items-center gap-2 px-4 py-3">
-                  <div className="min-w-0 flex-1">
+                <div key={link._id} className="px-4 py-3">
+                  <div className="min-w-0">
                     <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">
                       {link.applicantName || '—'}
                     </p>
@@ -162,38 +182,43 @@ export default function AccessLinksPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
+                  {/* Actions get their own full-width line so targets stay thumb-sized. */}
+                  <div className="mt-2.5 flex items-center gap-1 border-t border-gray-100 pt-2">
                     <button
                       title="Copy link"
+                      aria-label="Copy link"
                       onClick={() => copy(fullUrl(`/members/apply/${link.token}`))}
-                      className="p-2 text-gray-500 active:text-gray-700 rounded"
+                      className={`${mobileIconBtn} active:text-gray-700 active:bg-gray-100`}
                     >
-                      <Copy size={15} />
+                      <Copy size={16} />
                     </button>
                     {link.status === 'blocked' ? (
                       <button
                         title="Reopen"
+                        aria-label="Reopen"
                         onClick={() => act(link._id, 'reopen')}
-                        className="p-2 text-gray-500 active:text-green-600 rounded"
+                        className={`${mobileIconBtn} active:text-green-600 active:bg-green-50`}
                       >
-                        <RotateCcw size={15} />
+                        <RotateCcw size={16} />
                       </button>
                     ) : (
                       <button
                         title="Block"
+                        aria-label="Block"
                         onClick={() => act(link._id, 'block')}
-                        className="p-2 text-gray-500 active:text-red-600 rounded"
+                        className={`${mobileIconBtn} active:text-red-600 active:bg-red-50`}
                       >
-                        <Ban size={15} />
+                        <Ban size={16} />
                       </button>
                     )}
                     {!link.applicationId && (
                       <button
                         title="Delete"
-                        onClick={() => act(link._id, 'delete')}
-                        className="p-2 text-gray-500 active:text-red-600 rounded"
+                        aria-label="Delete"
+                        onClick={() => setToDelete(link)}
+                        className={`${mobileIconBtn} active:text-red-600 active:bg-red-50`}
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={16} />
                       </button>
                     )}
                   </div>
@@ -232,6 +257,7 @@ export default function AccessLinksPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           title="Copy link"
+                          aria-label="Copy link"
                           onClick={() => copy(fullUrl(`/members/apply/${link.token}`))}
                           className="p-2 text-gray-500 hover:text-gray-700 rounded"
                         >
@@ -240,6 +266,7 @@ export default function AccessLinksPage() {
                         {link.status === 'blocked' ? (
                           <button
                             title="Reopen"
+                            aria-label="Reopen"
                             onClick={() => act(link._id, 'reopen')}
                             className="p-2 text-gray-500 hover:text-green-600 rounded"
                           >
@@ -248,6 +275,7 @@ export default function AccessLinksPage() {
                         ) : (
                           <button
                             title="Block"
+                            aria-label="Block"
                             onClick={() => act(link._id, 'block')}
                             className="p-2 text-gray-500 hover:text-red-600 rounded"
                           >
@@ -257,7 +285,8 @@ export default function AccessLinksPage() {
                         {!link.applicationId && (
                           <button
                             title="Delete"
-                            onClick={() => act(link._id, 'delete')}
+                            aria-label="Delete"
+                            onClick={() => setToDelete(link)}
                             className="p-2 text-gray-500 hover:text-red-600 rounded"
                           >
                             <Trash2 size={15} />
@@ -359,6 +388,25 @@ export default function AccessLinksPage() {
             ))}
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={Boolean(toDelete)}
+        onClose={() => setToDelete(null)}
+        title="Delete this access link?"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setToDelete(null)}>Cancel</Button>
+            <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete link'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600">
+          The link and credential for <strong>{toDelete?.applicantName || toDelete?.username}</strong> will
+          be removed permanently. This cannot be undone.
+        </p>
       </Modal>
     </div>
   )

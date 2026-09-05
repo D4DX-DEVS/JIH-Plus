@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { api } from '../../utils/ihthisabi/api'
-import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, User, Globe, MapPin, Building2, Phone, Mail, X, Loader2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, User, Globe, MapPin, Building2, Phone, Mail, X, Loader2, SlidersHorizontal } from 'lucide-react'
 import toast from 'react-hot-toast'
 import ConfirmationModal from './ConfirmationModal'
 
@@ -182,7 +182,7 @@ function MemberModal({ member, onClose, onSaved }) {
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+            <button type="button" onClick={onClose} className="btn-ghost">Cancel</button>
             <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {member ? 'Save Changes' : 'Add Member'}
@@ -205,6 +205,7 @@ const AbroadMemberManagement = () => {
   const [expanded, setExpanded] = useState({})
   const [searchText, setSearchText] = useState('')
   const [filterCountry, setFilterCountry] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [countries, setCountries] = useState([])
 
   const loadMembers = useCallback(async () => {
@@ -261,25 +262,46 @@ const AbroadMemberManagement = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="hidden lg:block">
+      <div className="hidden items-center justify-between gap-2 sm:flex">
+        <div>
           <h2 className="text-xl font-bold text-gray-900">Abroad Members</h2>
           <p className="text-sm text-gray-500 mt-1">Members grouped by Country → Area → Unit</p>
         </div>
-        <button onClick={() => { setEditMember(null); setShowModal(true) }} className="btn-primary flex items-center gap-2 ml-auto">
+        <button onClick={() => { setEditMember(null); setShowModal(true) }} className="btn-primary flex items-center gap-2">
           <Plus className="w-4 h-4" /> Add Member
         </button>
       </div>
+      <button
+        onClick={() => { setEditMember(null); setShowModal(true) }}
+        title="Add Member"
+        aria-label="Add Member"
+        className="ih-fab"
+      >
+        <Plus className="w-5 h-5" />
+      </button>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-2">
         <input
           type="text"
           placeholder="Search by name or Rukn ID..."
           value={searchText}
           onChange={e => setSearchText(e.target.value)}
-          className="form-input max-w-xs text-base lg:text-sm"
+          className="form-input flex-1 min-w-0 text-base sm:text-sm sm:max-w-xs"
         />
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(v => !v)}
+          className="ih-icon-btn border border-gray-300 bg-white hover:bg-gray-50 sm:hidden relative"
+          aria-expanded={filtersOpen}
+          title="Filters"
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          {filterCountry && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary" />}
+        </button>
+        <span className="hidden sm:inline text-sm text-gray-400 ml-auto">{filtered.length} member{filtered.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div className={`${filtersOpen ? 'flex' : 'hidden'} items-center gap-3 flex-wrap sm:flex`}>
         <select value={filterCountry} onChange={e => setFilterCountry(e.target.value)} className="form-input max-w-xs">
           <option value="">All Countries</option>
           {countries.map(c => <option key={c._id} value={c._id}>{c.title}</option>)}
@@ -287,7 +309,7 @@ const AbroadMemberManagement = () => {
         {(searchText || filterCountry) && (
           <button onClick={() => { setSearchText(''); setFilterCountry('') }} className="text-sm text-gray-500 hover:text-gray-700 underline">Clear</button>
         )}
-        <span className="text-sm text-gray-400 ml-auto">{filtered.length} member{filtered.length !== 1 ? 's' : ''}</span>
+        <span className="sm:hidden text-sm text-gray-400 ml-auto">{filtered.length} member{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Grouped list */}

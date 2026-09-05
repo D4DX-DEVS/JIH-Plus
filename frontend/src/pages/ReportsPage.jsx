@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import {
-  ArrowLeft, Search, Edit, Trash2, Eye, Plus, Save,
-  FileText, Globe, EyeOff, X, Settings, CheckCircle2, Copy, FileStack,
-} from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Eye, Plus, Save, FileText, Globe, EyeOff, X, Settings, CheckCircle2, Copy, FileStack, MapPin, Activity } from 'lucide-react';
 import axios from 'axios';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
@@ -12,6 +9,7 @@ import FieldTypeSelector from '../components/reportBuilder/FieldTypeSelector';
 import DynamicFormRenderer from '../components/reportRenderer/DynamicFormRenderer';
 import jihLogo from '../assets/LogoColor.png';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import { JihFilterBar, JihFilterSelect, JihFab } from '../components/JihToolbar';
 
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
 const TYPE_LABELS = { monthly: 'Monthly', special: 'Special', yearly: 'Yearly', quarterly: 'Quarterly' };
@@ -122,16 +120,8 @@ function ReportListView({ onLogout }) {
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => setShowLogoutModal(true)} adminData={adminData} />
 
       <div className="flex-1 min-w-0 flex flex-col overflow-y-auto overflow-x-hidden">
-        <MobileTopBar
-          title="റിപ്പോർട്ടുകൾ"
-          actions={
-            <button
-              onClick={() => navigate('/create-report')}
-              className="flex min-h-[44px] items-center gap-1 rounded-lg bg-[#002349] px-3 py-1.5 text-xs font-semibold text-white">
-              <Plus size={14} /> New
-            </button>
-          }
-        />
+        <MobileTopBar title="റിപ്പോർട്ടുകൾ" />
+        <JihFab onClick={() => navigate('/create-report')} label="New Report" />
 
         <div className="hidden lg:flex bg-white border-b px-6 py-3 items-center gap-3 sticky top-0 z-10 shadow-sm">
           <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
@@ -149,30 +139,33 @@ function ReportListView({ onLogout }) {
         {error && <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>}
         {success && <div className="mb-3 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">{success}</div>}
 
-        <div className="bg-white rounded-xl border p-3 mb-4 flex flex-wrap gap-2">
-          <div className="relative flex-1 min-w-40">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search reports..." className="pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-base sm:text-sm w-full outline-none focus:ring-2 focus:ring-blue-300" />
-          </div>
-          <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-2 text-[13px] sm:text-sm outline-none">
+        <JihFilterBar
+          className="mb-4"
+          search={search}
+          onSearchChange={setSearch}
+          placeholder="Search reports..."
+          activeFilterCount={[typeFilter, reportForFilter, statusFilter].filter(Boolean).length}
+          onClear={() => { setTypeFilter(''); setReportForFilter(''); setStatusFilter(''); }}
+        >
+          <JihFilterSelect value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
             <option value="">All Types</option>
             <option value="monthly">Monthly</option>
             <option value="quarterly">Quarterly</option>
             <option value="special">Special</option>
             <option value="yearly">Yearly</option>
-          </select>
-          <select value={reportForFilter} onChange={e => setReportForFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-2 text-[13px] sm:text-sm outline-none">
+          </JihFilterSelect>
+          <JihFilterSelect icon={MapPin} value={reportForFilter} onChange={e => setReportForFilter(e.target.value)}>
             <option value="">All Levels</option>
             <option value="district">District</option>
             <option value="area">Area</option>
             <option value="unit">Unit</option>
-          </select>
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-2 text-[13px] sm:text-sm outline-none">
+          </JihFilterSelect>
+          <JihFilterSelect icon={Activity} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
-          </select>
-        </div>
+          </JihFilterSelect>
+        </JihFilterBar>
 
         <div className="bg-white rounded-xl border overflow-hidden">
           {loading ? (
@@ -183,7 +176,7 @@ function ReportListView({ onLogout }) {
             <div className="text-center py-12 text-gray-400">
               <FileText size={32} className="mx-auto mb-2 opacity-50" />
               <p>No reports found</p>
-              <button onClick={() => navigate('/create-report')} className="mt-3 text-sm text-blue-600 hover:underline">Create your first report</button>
+              <button onClick={() => navigate('/create-report')} className="mt-3 inline-flex min-h-[44px] items-center px-3 text-sm text-blue-600 hover:underline">Create your first report</button>
             </div>
           ) : (
             <>
@@ -312,6 +305,7 @@ function ReportBuilderView({ reportId, onLogout }) {
     startDate: '',
   });
   const [loading, setLoading] = useState(isEdit);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -330,8 +324,19 @@ function ReportBuilderView({ reportId, onLogout }) {
   }, []);
 
   useEffect(() => {
+    if (!showPreview) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowPreview(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showPreview]);
+
+  const loadReport = () => {
     if (!isEdit) return;
     (async () => {
+      setLoading(true);
+      setLoadFailed(false);
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/reports/${reportId}`, authHeader());
         if (res.data.success) {
@@ -372,9 +377,14 @@ function ReportBuilderView({ reportId, onLogout }) {
             setPages(converted);
           }
         }
-      } catch { setError('Failed to load report'); }
+      } catch { setError('Failed to load report'); setLoadFailed(true); }
       finally { setLoading(false); }
     })();
+  };
+
+  useEffect(() => {
+    loadReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportId, isEdit]);
 
   const allFields = pages.flatMap(p => p.fields || []);
@@ -448,6 +458,20 @@ function ReportBuilderView({ reportId, onLogout }) {
     </div>
   );
 
+  if (loadFailed) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="bg-white border-2 border-red-200 rounded-2xl p-8 max-w-md text-center shadow-lg">
+        <p className="text-red-600 font-semibold mb-6">{error || 'Failed to load report'}</p>
+        <button
+          onClick={loadReport}
+          className="min-h-[44px] px-6 py-3 bg-[#002349] hover:bg-[#1a3a5c] text-white rounded-2xl font-semibold transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  );
+
   // ── Step 0: Choose Report Type ──────────────────────────────────────────────
   if (setupStep === 0) {
     const types = [
@@ -495,7 +519,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           <span className="text-xs text-gray-400 font-medium">Step 1 of 2</span>
         </header>
 
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-10">
+        <div className="flex-1 flex flex-col items-center justify-start lg:justify-center px-4 py-6 lg:py-10">
           <div className="w-full max-w-xl">
             {/* Progress */}
             <div className="flex items-center gap-2 mb-8">
@@ -579,7 +603,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           <span className="text-xs text-gray-400 font-medium">Step 2 of 2</span>
         </header>
 
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-10">
+        <div className="flex-1 flex flex-col items-center justify-start lg:justify-center px-4 py-6 lg:py-10">
           <div className="w-full max-w-xl">
             {/* Progress */}
             <div className="flex items-center gap-2 mb-8">

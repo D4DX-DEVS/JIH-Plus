@@ -61,7 +61,7 @@ const EntityRow = ({ label, breakdown, showNames, namePrompt, reports = [], repo
           value={reportValue || ''}
           onChange={e => onReportChange(e.target.value)}
           title={reports.find(r => String(r._id) === String(reportValue))?.title || ''}
-          className="w-full sm:w-auto sm:ml-auto sm:max-w-[20rem] min-w-0 truncate border border-gray-200 rounded-lg px-2 py-2 text-xs text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+          className="w-full sm:w-auto sm:ml-auto sm:max-w-[20rem] min-w-0 truncate border border-gray-200 rounded-lg px-2 py-2 min-h-[44px] sm:min-h-0 text-base sm:text-xs text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
         >
           <option value="">എല്ലാ റിപ്പോർട്ടുകളും</option>
           {reports.map(r => (
@@ -119,6 +119,7 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
   const [districtFilter, setDistrictFilter] = useState('');
   const [areaFilter, setAreaFilter] = useState('');
   const [showNames, setShowNames] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -153,7 +154,7 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
       }
     })();
     return () => { active = false; };
-  }, [cfg.url, cfg.tokenKey]);
+  }, [cfg.url, cfg.tokenKey, refreshKey]);
 
   const levelOf = (s) => s.userId?.type || s.reportId?.reportFor || 'unit';
 
@@ -348,7 +349,15 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
 
   if (error) {
     return (
-      <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl text-sm">{error}</div>
+      <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl text-sm flex items-center justify-between gap-3">
+        <span>{error}</span>
+        <button
+          onClick={() => setRefreshKey(k => k + 1)}
+          className="shrink-0 min-h-[44px] px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
     );
   }
 
@@ -369,7 +378,7 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
               <select
                 value={districtFilter}
                 onChange={e => { setDistrictFilter(e.target.value); setAreaFilter(''); }}
-                className="flex-1 min-w-0 sm:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+                className="flex-1 min-w-0 sm:flex-none border border-gray-200 rounded-xl px-3 py-2 min-h-[44px] sm:min-h-0 text-base sm:text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
               >
                 <option value="">എല്ലാ ജില്ലകളും</option>
                 {allDistricts.map(d => <option key={d} value={d}>{d}</option>)}
@@ -378,7 +387,7 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
             <select
               value={areaFilter}
               onChange={e => setAreaFilter(e.target.value)}
-              className="flex-1 min-w-0 sm:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
+              className="flex-1 min-w-0 sm:flex-none border border-gray-200 rounded-xl px-3 py-2 min-h-[44px] sm:min-h-0 text-base sm:text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
             >
               <option value="">എല്ലാ ഏരിയകളും</option>
               {allAreas.map(a => <option key={a} value={a}>{a}</option>)}

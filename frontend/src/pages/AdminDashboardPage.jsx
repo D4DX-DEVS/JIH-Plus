@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, FileText, Search, Edit, Trash2, Download, Bell, X, Eye, Plus, MapPin, Calendar, TrendingUp, Check, Clock, ArrowLeft, ChevronRight } from 'lucide-react';
+import { FileText, Trash2, Download, MapPin, Calendar, TrendingUp, ArrowLeft, ChevronRight, LogOut, Edit, Bell, X, Eye, Plus, Check, Clock } from 'lucide-react';
+import { JihFilterBar, JihFilterSelect, JihToolbarAction } from '../components/JihToolbar';
 import axios from 'axios';
 import FormDetailPage from './FormDetailPage';
 
@@ -47,6 +48,7 @@ const AdminDashboardPage = ({ onLogout }) => {
   const [districtPage, setDistrictPage] = useState(1);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
+  const [selectedUnit, setSelectedUnit] = useState(null);
   const [districtFilterValue, setDistrictFilterValue] = useState('all');
   const [areaFilterValue, setAreaFilterValue] = useState('all');
   const [unitFilterValue, setUnitFilterValue] = useState('all');
@@ -173,14 +175,28 @@ const AdminDashboardPage = ({ onLogout }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
+  // Yearly forms search: backend has no free-text search across district/submittedBy/id,
+  // so widen the page size while a search term is active instead of only matching the
+  // current 10-record page (debounced to avoid a fetch per keystroke).
+  useEffect(() => {
+    if (activeTab !== 'yearly') return;
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      loadAllForms();
+    }, 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
+
   const loadAllForms = async () => {
     try {
       const token = localStorage.getItem('adminToken');
+      const hasSearch = searchTerm.trim().length > 0;
       const params = new URLSearchParams({
-        page: currentPage,
-        limit: 10
+        page: hasSearch ? 1 : currentPage,
+        limit: hasSearch ? 500 : 10
       });
-      
+
       if (districtFilter) params.append('district', districtFilter);
       if (userFilter) params.append('submittedBy', userFilter);
 
@@ -235,35 +251,6 @@ const AdminDashboardPage = ({ onLogout }) => {
       setDistrictMonthlySurveys(response.data.surveys || []);
     } catch (error) {
       console.error('Error loading district monthly surveys:', error);
-    }
-  };
-
-  // ===== CSV Export Handler =====
-  const handleDownloadCSV = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/user/users/export-csv`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          responseType: 'blob'
-        }
-      );
-
-      // Create a blob URL and trigger download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('CSV download error:', error);
-      alert('Failed to download CSV. Please try again.');
     }
   };
 
@@ -779,7 +766,6 @@ const AdminDashboardPage = ({ onLogout }) => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onNavigateToReports={() => navigate('/view-reports')}
-        onDownloadCSV={handleDownloadCSV}
         onNavigateToNotifications={handleNavigateToNotifications}
         onLogout={handleLogout}
         adminEmail={adminData?.email || 'Admin'}
@@ -824,27 +810,32 @@ const AdminDashboardPage = ({ onLogout }) => {
         {(
               <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <h2 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">വാർഷിക റിപ്പോർട്ട്</h2>
-                <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                <div className="w-full lg:w-auto lg:flex lg:items-center lg:gap-3">
                   <button
                     onClick={handleDownloadAllForms}
                     disabled={isDownloading || forms.length === 0}
-                    className="bg-gradient-to-r from-[#957C3D] to-[#8A6F35] hover:from-[#8A6F35] hover:to-[#957C3D] disabled:from-gray-400 disabled:to-gray-400 text-white px-3 py-2 rounded-xl transition-all duration-500 flex items-center space-x-1.5 text-sm font-semibold hover:shadow-md transform hover:scale-105 ease-out hover:shadow-[#957C3D]/50 disabled:transform-none"
+                    className="hidden lg:flex bg-gradient-to-r from-[#957C3D] to-[#8A6F35] hover:from-[#8A6F35] hover:to-[#957C3D] disabled:from-gray-400 disabled:to-gray-400 text-white px-3 py-2 rounded-xl transition-all duration-500 items-center space-x-1.5 text-sm font-semibold hover:shadow-md"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>{isDownloading ? 'Generating...' : 'Download All PDF'}</span>
                   </button>
-                  <div className="relative flex-1 min-w-[160px] lg:flex-none lg:max-w-xs">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Search by district, user, or ID..."
-                      className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 bg-white shadow-sm"
-                />
-                    <Search className="absolute left-2.5 top-1.5 h-4 w-4 text-gray-400" />
+                  <JihFilterBar
+                    className="lg:w-96"
+                    search={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    placeholder="Search by district, user, or ID..."
+                    actions={
+                      <JihToolbarAction
+                        icon={Download}
+                        label={isDownloading ? 'Generating...' : 'Download All PDF'}
+                        onClick={handleDownloadAllForms}
+                        disabled={isDownloading || forms.length === 0}
+                        className="lg:hidden"
+                      />
+                    }
+                  />
+                </div>
               </div>
-            </div>
-        </div>
         )}
 
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 mt-8">
@@ -867,7 +858,7 @@ const AdminDashboardPage = ({ onLogout }) => {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -887,8 +878,8 @@ const AdminDashboardPage = ({ onLogout }) => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredForms.map((form) => (
-                      <tr 
-                        key={form._id} 
+                      <tr
+                        key={form._id}
                         className="hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#957C3D]/5 cursor-pointer transition-all duration-300 group border-l-4 border-transparent hover:border-[#002349]"
                         onClick={() => handleViewForm(form)}
                       >
@@ -916,6 +907,30 @@ const AdminDashboardPage = ({ onLogout }) => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              <div className="lg:hidden divide-y divide-gray-100">
+                {filteredForms.map((form) => (
+                  <div
+                    key={form._id}
+                    className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer active:bg-gray-50"
+                    onClick={() => handleViewForm(form)}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-[#002349] truncate">{form.district}</p>
+                      <p className="text-sm text-gray-600 truncate">{form.submittedBy}</p>
+                      <p className="text-xs text-gray-400">{new Date(form.submittedAt).toLocaleDateString()}</p>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteForm(form); }}
+                      className="shrink-0 inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-red-600 hover:bg-red-50 rounded-lg"
+                      title="Delete"
+                      aria-label="Delete form"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
 
               {/* Pagination */}
@@ -958,67 +973,32 @@ const AdminDashboardPage = ({ onLogout }) => {
                 <h2 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">പ്രതിമാസ റിപ്പോർട്ട്</h2>
                 <p className="text-sm text-gray-600">Browse monthly reports by district, area, and unit.</p>
               </div>
-              <div className="relative w-full lg:w-80">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by district, area, unit, or ID..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 bg-white shadow-sm"
-                />
-                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              </div>
             </div>
 
-            {/* Filter bar */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">District</label>
-                <select
-                  value={districtFilterValue}
-                  onChange={(e) => handleDistrictFilterChange(e.target.value)}
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                >
-                  {districtOptions.map((d) => (
-                    <option key={d} value={d}>
-                      {d === 'all' ? 'All Districts' : d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">Area</label>
-                <select
-                  value={areaFilterValue}
-                  onChange={(e) => handleAreaFilterChange(e.target.value)}
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                  disabled={areaOptions.length <= 1}
-                >
-                  {areaOptions.map((a) => (
-                    <option key={a} value={a}>
-                      {a === 'all' ? 'All Areas' : a}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">Unit</label>
-                <select
-                  value={unitFilterValue}
-                  onChange={(e) => handleUnitFilterChange(e.target.value)}
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                  disabled={unitOptions.length <= 1}
-                >
-                  {unitOptions.map((u) => (
-                    <option key={u} value={u}>
-                      {u === 'all' ? 'All Units' : u}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <JihFilterBar
+              className="mb-4"
+              search={searchTerm}
+              onSearchChange={setSearchTerm}
+              placeholder="Search by district, area, unit, or ID..."
+              activeFilterCount={[districtFilterValue, areaFilterValue, unitFilterValue].filter(v => v && v !== 'all').length}
+              gridClass="sm:grid-cols-3"
+            >
+              <JihFilterSelect icon={MapPin} value={districtFilterValue} onChange={(e) => handleDistrictFilterChange(e.target.value)}>
+                {districtOptions.map((d) => (
+                  <option key={d} value={d}>{d === 'all' ? 'All Districts' : d}</option>
+                ))}
+              </JihFilterSelect>
+              <JihFilterSelect icon={MapPin} value={areaFilterValue} onChange={(e) => handleAreaFilterChange(e.target.value)} disabled={areaOptions.length <= 1}>
+                {areaOptions.map((a) => (
+                  <option key={a} value={a}>{a === 'all' ? 'All Areas' : a}</option>
+                ))}
+              </JihFilterSelect>
+              <JihFilterSelect icon={MapPin} value={unitFilterValue} onChange={(e) => handleUnitFilterChange(e.target.value)} disabled={unitOptions.length <= 1}>
+                {unitOptions.map((u) => (
+                  <option key={u} value={u}>{u === 'all' ? 'All Units' : u}</option>
+                ))}
+              </JihFilterSelect>
+            </JihFilterBar>
 
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
               {isLoading ? (
@@ -1038,7 +1018,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                 <>
                   {/* Hierarchical table rendering */}
                   {!selectedDistrict && areaFilterValue === 'all' && unitFilterValue === 'all' ? (
-                    <div className="overflow-x-auto">
+                    <div className="hidden lg:block overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-[#002349] text-white">
                           <tr>
@@ -1129,7 +1109,74 @@ const AdminDashboardPage = ({ onLogout }) => {
                         </tbody>
                       </table>
                     </div>
-                  ) : selectedDistrict && (selectedArea || areaFilterValue !== 'all' || unitFilterValue !== 'all') ? (
+                  ) : null}
+
+                  {!selectedDistrict && areaFilterValue === 'all' && unitFilterValue === 'all' && (
+                    <div className="lg:hidden divide-y divide-gray-100">
+                      {paginatedDistricts.length === 0 ? (
+                        <p className="px-4 py-6 text-center text-sm text-gray-500">No districts found.</p>
+                      ) : (
+                        paginatedDistricts.map((district) => {
+                          const reports = [...(district.districtReports || [])].sort(
+                            (a, b) =>
+                              new Date(b.updatedAt || b.submittedAt) - new Date(a.updatedAt || a.submittedAt)
+                          );
+                          const hasReports = reports.length > 0;
+                          const isExpanded = expandedDistrictReports[district.district];
+
+                          return (
+                            <div key={district.district} className="px-4 py-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  {hasReports && (
+                                    <button
+                                      onClick={() =>
+                                        setExpandedDistrictReports((prev) => ({
+                                          ...prev,
+                                          [district.district]: !prev[district.district]
+                                        }))
+                                      }
+                                      className="shrink-0 text-gray-500 hover:text-[#002349] p-2 -m-2"
+                                      aria-label="Toggle district reports"
+                                    >
+                                      <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                    </button>
+                                  )}
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-gray-900 truncate">{district.district}</p>
+                                    <p className="text-xs text-gray-500">
+                                      {Object.keys(district.areas || {}).length} areas · {hasReports ? `${reports.length} report${reports.length > 1 ? 's' : ''}` : 'no reports'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handleDistrictSelect(district.district)}
+                                  className="shrink-0 text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold transition-colors"
+                                >
+                                  View Areas
+                                </button>
+                              </div>
+                              {isExpanded && hasReports && (
+                                <div className="mt-3 space-y-2">
+                                  {reports.map((report) => (
+                                    <div
+                                      key={report._id}
+                                      onClick={() => handleReportNavigate(report._id)}
+                                      className="px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-[#002349] hover:bg-blue-50 cursor-pointer transition-colors"
+                                    >
+                                      <p className="text-sm font-medium text-gray-900">{formatReportOptionLabel(report)}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+
+                  {selectedDistrict && (selectedArea || areaFilterValue !== 'all' || unitFilterValue !== 'all') ? (
                     // Units table
                     <div className="overflow-x-auto">
                       <div className="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center gap-3">
@@ -1149,6 +1196,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                           Units in <span className="font-semibold text-[#002349]">{selectedArea || areaFilterValue}</span> — {selectedDistrict}
                         </div>
                       </div>
+                      <div className="hidden lg:block overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-[#002349] text-white">
                           <tr>
@@ -1210,6 +1258,51 @@ const AdminDashboardPage = ({ onLogout }) => {
                           )}
                         </tbody>
                       </table>
+                      </div>
+                      <div className="lg:hidden divide-y divide-gray-100">
+                        {filteredUnits.length === 0 ? (
+                          <p className="px-4 py-6 text-center text-sm text-gray-500">No unit reports found for this area.</p>
+                        ) : (
+                          filteredUnits.map((unit) => {
+                            const unitReports = [...(unit.unitReports || [])].sort(
+                              (a, b) =>
+                                new Date(b.updatedAt || b.submittedAt) - new Date(a.updatedAt || a.submittedAt)
+                            );
+                            return (
+                              <div key={`${unit.unit}-${selectedArea || areaFilterValue}-card`} className="px-4 py-3">
+                                <p className="text-sm font-semibold text-gray-900">{unit.unit}</p>
+                                <p className="text-xs text-gray-500 mb-2">
+                                  {unitReports.length ? `${unitReports.length} report${unitReports.length > 1 ? 's' : ''}` : 'No reports'}
+                                </p>
+                                {unitReports.length > 0 && (
+                                  <select
+                                    defaultValue=""
+                                    className="w-full border border-gray-200 rounded-xl px-3 py-2 min-h-[44px] text-base focus:outline-none focus:ring-2 focus:ring-[#002349] bg-white shadow-sm"
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        handleReportNavigate(e.target.value);
+                                        e.target.value = '';
+                                      }
+                                    }}
+                                  >
+                                    <option value="">Select unit report...</option>
+                                    {unitReports.map((report) => (
+                                      <option key={report._id} value={report._id}>
+                                        {formatUnitReportOptionLabel(
+                                          report,
+                                          unit.unit,
+                                          selectedArea || areaFilterValue,
+                                          selectedDistrict
+                                        )}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
                   ) : (
                     // Area table
@@ -1234,6 +1327,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                           Areas in <span className="font-semibold text-[#002349]">{selectedDistrict}</span>
                         </div>
                       </div>
+                      <div className="hidden lg:block overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-[#002349] text-white">
                           <tr>
@@ -1328,6 +1422,70 @@ const AdminDashboardPage = ({ onLogout }) => {
                           )}
                         </tbody>
                       </table>
+                      </div>
+                      <div className="lg:hidden divide-y divide-gray-100">
+                        {filteredAreas.length === 0 ? (
+                          <p className="px-4 py-6 text-center text-sm text-gray-500">No areas found for this district.</p>
+                        ) : (
+                          filteredAreas.map((area) => {
+                            const areaReports = [...(area.areaReports || [])].sort(
+                              (a, b) =>
+                                new Date(b.updatedAt || b.submittedAt) - new Date(a.updatedAt || a.submittedAt)
+                            );
+                            const hasReports = areaReports.length > 0;
+                            const areaKey = `${selectedDistrict}-${area.area}-card`;
+                            const isExpanded = expandedAreaReports[areaKey];
+
+                            return (
+                              <div key={areaKey} className="px-4 py-3">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {hasReports && (
+                                      <button
+                                        onClick={() =>
+                                          setExpandedAreaReports((prev) => ({
+                                            ...prev,
+                                            [areaKey]: !prev[areaKey]
+                                          }))
+                                        }
+                                        className="shrink-0 text-gray-500 hover:text-[#002349] p-2 -m-2"
+                                        aria-label="Toggle area reports"
+                                      >
+                                        <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                      </button>
+                                    )}
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-semibold text-gray-900 truncate">{area.area}</p>
+                                      <p className="text-xs text-gray-500">
+                                        {Object.keys(area.units || {}).length} units · {hasReports ? `${areaReports.length} report${areaReports.length > 1 ? 's' : ''}` : 'no reports'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => handleAreaSelect(area.area)}
+                                    className="shrink-0 text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold transition-colors"
+                                  >
+                                    View Units
+                                  </button>
+                                </div>
+                                {isExpanded && hasReports && (
+                                  <div className="mt-3 space-y-2">
+                                    {areaReports.map((report) => (
+                                      <div
+                                        key={report._id}
+                                        onClick={() => handleReportNavigate(report._id)}
+                                        className="px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-[#002349] hover:bg-blue-50 cursor-pointer transition-colors"
+                                      >
+                                        <p className="text-sm font-medium text-gray-900">{formatReportOptionLabel(report)}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -1369,7 +1527,7 @@ const AdminDashboardPage = ({ onLogout }) => {
               <div className="flex gap-1 overflow-x-auto">
                 <button
                   onClick={() => setActiveSubTab('summary')}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[40px] rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 ${
                     activeSubTab === 'summary'
                       ? 'bg-[#002349] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1379,7 +1537,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                 </button>
                 <button
                   onClick={() => setActiveSubTab('table')}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[40px] rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 ${
                     activeSubTab === 'table'
                       ? 'bg-[#002349] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1389,7 +1547,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                 </button>
                 <button
                   onClick={() => setActiveSubTab('consolidation')}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[40px] rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 ${
                     activeSubTab === 'consolidation'
                       ? 'bg-[#002349] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1541,7 +1699,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                       <div className="px-4 py-3 border-b border-gray-200">
                         <h3 className="text-lg font-semibold text-[#002349]">District-wise Details</h3>
                       </div>
-                      <div className="overflow-x-auto">
+                      <div className="hidden lg:block overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                           <thead className="bg-gray-50">
                             <tr>
@@ -1564,8 +1722,8 @@ const AdminDashboardPage = ({ onLogout }) => {
                                 </td>
                                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                    district.yearlySubmitted 
-                                      ? 'bg-green-100 text-green-800' 
+                                    district.yearlySubmitted
+                                      ? 'bg-green-100 text-green-800'
                                       : 'bg-red-100 text-red-800'
                                   }`}>
                                     {district.yearlySubmitted ? 'Submitted' : 'Pending'}
@@ -1578,6 +1736,23 @@ const AdminDashboardPage = ({ onLogout }) => {
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                      <div className="lg:hidden divide-y divide-gray-100">
+                        {stats.overall?.districtComparison?.map((district, index) => (
+                          <div key={index} className="flex items-center justify-between gap-3 px-4 py-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-[#002349] truncate">{district.district}</p>
+                              <p className="text-xs text-gray-500">Monthly: {district.monthlyCount}</p>
+                            </div>
+                            <span className={`shrink-0 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              district.yearlySubmitted
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {district.yearlySubmitted ? 'Submitted' : 'Pending'}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </>

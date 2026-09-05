@@ -152,10 +152,10 @@ export default function UnitMonthlyStatsTable({ surveys, onRowClick }) {
 					<h3 className="text-lg font-bold text-[#002349]">{title}</h3>
 				</div>
 				<div className="overflow-x-auto">
-					<table className="w-full">
+					<table className="ih-table-compact w-full">
 						<thead className="bg-gray-50">
 							<tr>
-								<th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Month</th>
+								<th className="sticky left-0 bg-white z-[1] px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Month</th>
 								<th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Year</th>
 								{columns.map((col, idx) => (
 									<th key={idx} className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -169,7 +169,7 @@ export default function UnitMonthlyStatsTable({ surveys, onRowClick }) {
 								const candidates = (surveys || []).filter((s) => s.month === monthName);
 								const survey = candidates.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
 								const data = getData(survey);
-								
+
 								const handleRowClick = (e) => {
 									if (!onRowClick || !survey) return;
 									e.preventDefault();
@@ -178,7 +178,7 @@ export default function UnitMonthlyStatsTable({ surveys, onRowClick }) {
 								};
 
 								return (
-									<tr 
+									<tr
 										key={`${monthName}-${rIdx}`}
 										className="hover:bg-gradient-to-r hover:from-[#002349]/5 hover:to-[#957C3D]/5 cursor-pointer transition-all duration-300 group"
 										onClick={handleRowClick}
@@ -187,7 +187,7 @@ export default function UnitMonthlyStatsTable({ surveys, onRowClick }) {
 											if (e.key === 'Enter') handleRowClick(e);
 										}}
 									>
-										<td className="px-4 py-4 whitespace-nowrap text-sm font-semibold text-[#002349]">
+										<td className="sticky left-0 bg-white z-[1] px-4 py-4 whitespace-nowrap text-sm font-semibold text-[#002349]">
 											{monthName}
 										</td>
 										<td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">

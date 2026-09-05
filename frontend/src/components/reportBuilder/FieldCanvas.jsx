@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { Plus, ClipboardPaste, X } from 'lucide-react';
 import FieldEditor from './FieldEditor';
+import ConfirmationModal from '../ihthisabi/ConfirmationModal';
 
 export default function FieldCanvas({
   pages,
@@ -22,6 +23,7 @@ export default function FieldCanvas({
 }) {
   const page = pages[pageIndex];
   const fields = page.fields || [];
+  const [confirmRemoveIndex, setConfirmRemoveIndex] = useState(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -48,6 +50,18 @@ export default function FieldCanvas({
     const newFields = fields.filter((_, i) => i !== fieldIndex);
     const newPages = pages.map((p, pi) => pi === pageIndex ? { ...p, fields: newFields } : p);
     onPagesChange(newPages);
+  };
+
+  // A blank, just-added field can be removed immediately — nothing to lose. A
+  // field with a label or options gets a confirmation so it isn't tapped away by accident.
+  const requestRemoveField = (fieldIndex) => {
+    const field = fields[fieldIndex];
+    const hasContent = Boolean(field?.label?.trim()) || (field?.options && field.options.length > 0);
+    if (hasContent) {
+      setConfirmRemoveIndex(fieldIndex);
+    } else {
+      removeField(fieldIndex);
+    }
   };
 
   // Thin drop-zone shown between fields while a field is on the clipboard, so
@@ -136,7 +150,7 @@ export default function FieldCanvas({
                 fieldIndex={fieldIndex}
                 isCopied={copiedFieldId === field.id}
                 onChange={newField => updateField(fieldIndex, newField)}
-                onRemove={() => removeField(fieldIndex)}
+                onRemove={() => requestRemoveField(fieldIndex)}
                 onCopy={onCopyField ? () => onCopyField(field) : undefined}
                 onDuplicate={onDuplicateField ? () => onDuplicateField(fieldIndex) : undefined}
                 roleOptions={page.audience === 'role' ? null : roleOptions}
@@ -193,6 +207,16 @@ export default function FieldCanvas({
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={confirmRemoveIndex != null}
+        onClose={() => setConfirmRemoveIndex(null)}
+        onConfirm={() => { removeField(confirmRemoveIndex); setConfirmRemoveIndex(null); }}
+        title="Delete Field"
+        message="This field has content. Deleting it cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

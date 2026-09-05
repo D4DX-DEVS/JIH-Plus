@@ -14,7 +14,7 @@ const HelpDeskPage = () => {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#002349] shadow-sm transition-colors duration-200 hover:bg-slate-50"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#002349] shadow-sm transition-colors duration-200 hover:bg-slate-50"
           >
             <ChevronLeft className="h-4 w-4" />
             <span>Back to Home</span>

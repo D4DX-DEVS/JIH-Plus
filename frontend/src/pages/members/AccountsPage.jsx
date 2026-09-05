@@ -24,6 +24,8 @@ export default function AccountsPage() {
   const [filters, setFilters] = useState({ roleKey: '', status: '', scopeName: '' })
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
+  const [toDelete, setToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const load = () => {
     setLoading(true)
@@ -95,14 +97,18 @@ export default function AccountsPage() {
     }
   }
 
-  const remove = async (account) => {
+  const confirmDelete = async () => {
+    setDeleting(true)
     try {
-      await api.delete(`/admin/accounts/${account._id}`)
+      await api.delete(`/admin/accounts/${toDelete._id}`)
       toast.success('Account deleted')
+      setToDelete(null)
       if (accounts.length === 1 && page > 1) setPage(p => p - 1)
       else load()
     } catch (err) {
       toast.error(apiError(err, 'Could not delete the account'))
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -118,6 +124,7 @@ export default function AccountsPage() {
       <PageHeader
         title="Accounts"
         subtitle="Reviewer logins. Each account holds one role and one posting."
+        hideTitleOnMobile
         actions={<Button onClick={() => setEditing({ ...BLANK })}><Plus size={16} /> New account</Button>}
       />
 
@@ -183,10 +190,17 @@ export default function AccountsPage() {
                     )}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
-                    <button onClick={() => startEdit(account)} className="text-[#5b21b6] text-[13px] font-medium p-2">
+                    <button
+                      onClick={() => startEdit(account)}
+                      className="flex min-h-11 min-w-11 items-center justify-center text-[#5b21b6] text-[13px] font-medium"
+                    >
                       Edit
                     </button>
-                    <button onClick={() => remove(account)} className="text-gray-400 active:text-red-600 p-2">
+                    <button
+                      onClick={() => setToDelete(account)}
+                      aria-label="Delete account"
+                      className="flex min-h-11 min-w-11 items-center justify-center text-gray-400 active:text-red-600"
+                    >
                       <Trash2 size={15} />
                     </button>
                   </div>
@@ -223,7 +237,7 @@ export default function AccountsPage() {
                       <button onClick={() => startEdit(account)} className="text-[#5b21b6] hover:underline py-2 px-1 mr-2">
                         Edit
                       </button>
-                      <button onClick={() => remove(account)} className="text-gray-400 hover:text-red-600 p-2">
+                      <button onClick={() => setToDelete(account)} aria-label="Delete account" className="text-gray-400 hover:text-red-600 p-2">
                         <Trash2 size={15} />
                       </button>
                     </td>
@@ -346,6 +360,24 @@ export default function AccountsPage() {
             )}
           </form>
         )}
+      </Modal>
+
+      <Modal
+        open={Boolean(toDelete)}
+        onClose={() => setToDelete(null)}
+        title="Delete this account?"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setToDelete(null)}>Cancel</Button>
+            <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete account'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600">
+          <strong>{toDelete?.name}</strong>'s login will be removed permanently. This cannot be undone.
+        </p>
       </Modal>
     </div>
   )

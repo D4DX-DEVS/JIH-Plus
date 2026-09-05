@@ -68,7 +68,7 @@ export default function FieldEditor({
             value={fieldWidth(field)}
             onChange={e => update('width', e.target.value)}
             title="How many fields share this line. Give each field on the line the same setting."
-            className="flex-shrink-0 text-xs text-gray-500 border border-gray-200 rounded px-1 py-0.5 bg-white outline-none focus:ring-1 focus:ring-blue-400"
+            className="flex-shrink-0 min-h-[44px] sm:min-h-0 text-sm sm:text-xs text-gray-500 border border-gray-200 rounded px-1.5 sm:px-1 py-0.5 bg-white outline-none focus:ring-1 focus:ring-blue-400"
           >
             {FIELD_WIDTHS.map(w => (
               <option key={w.value} value={w.value}>{w.perLine}/line</option>
@@ -86,42 +86,44 @@ export default function FieldEditor({
             Req
           </label>
         )}
-        {onCopy && (
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {onCopy && (
+            <button
+              type="button"
+              onClick={onCopy}
+              title={isCopied ? 'Copied — paste it on any page' : 'Copy field (paste on any page)'}
+              className={`p-2 -m-1 transition-colors ${isCopied ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'}`}
+            >
+              {isCopied ? <Check size={15} /> : <Copy size={15} />}
+            </button>
+          )}
+          {onDuplicate && (
+            <button
+              type="button"
+              onClick={onDuplicate}
+              title="Duplicate below"
+              className="p-2 -m-1 text-gray-400 hover:text-blue-600"
+            >
+              <CopyPlus size={15} />
+            </button>
+          )}
           <button
             type="button"
-            onClick={onCopy}
-            title={isCopied ? 'Copied — paste it on any page' : 'Copy field (paste on any page)'}
-            className={`flex-shrink-0 transition-colors ${isCopied ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'}`}
+            onClick={() => setExpanded(v => !v)}
+            title="Field settings"
+            className="p-2 -m-1 text-gray-400 hover:text-gray-600"
           >
-            {isCopied ? <Check size={15} /> : <Copy size={15} />}
+            <Settings size={15} />
           </button>
-        )}
-        {onDuplicate && (
           <button
             type="button"
-            onClick={onDuplicate}
-            title="Duplicate below"
-            className="text-gray-400 hover:text-blue-600 flex-shrink-0"
+            onClick={onRemove}
+            title="Delete field"
+            className="p-2 -m-1 text-red-300 hover:text-red-500"
           >
-            <CopyPlus size={15} />
+            <Trash2 size={15} />
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setExpanded(v => !v)}
-          title="Field settings"
-          className="text-gray-400 hover:text-gray-600 flex-shrink-0"
-        >
-          <Settings size={15} />
-        </button>
-        <button
-          type="button"
-          onClick={onRemove}
-          title="Delete field"
-          className="text-red-300 hover:text-red-500 flex-shrink-0"
-        >
-          <Trash2 size={15} />
-        </button>
+        </div>
       </div>
 
       {expanded && (

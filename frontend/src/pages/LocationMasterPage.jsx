@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Plus, Pencil, Trash2, RefreshCw, Copy, Check, ChevronDown,
-  MapPin, Building2, Home, Layers, X, Eye, EyeOff, Download,
-  ChevronLeft, ChevronRight, Scissors, GitMerge, ArrowRightLeft, Search
-} from 'lucide-react';
+import { Pencil, Trash2, RefreshCw, Copy, Check, MapPin, Building2, Home, Layers, X, Eye, EyeOff, Download, ChevronLeft, ChevronRight, Scissors, GitMerge, ArrowRightLeft, Search, ChevronDown } from 'lucide-react';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import * as svc from '../services/locationMasterService';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import { JihFilterBar, JihFilterSelect, JihFab, JihAddButton, JihToolbarAction } from '../components/JihToolbar';
 
 const PAGE_SIZE = 20;
 
@@ -36,21 +33,6 @@ function PaginationBar({ page, totalPages, total, onPrev, onNext, loading }) {
           Next <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
-    </div>
-  );
-}
-
-// ── Search Box ────────────────────────────────────────────────────────────────
-function SearchBox({ value, onChange, placeholder }) {
-  return (
-    <div className="relative">
-      <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder || 'Search by name…'}
-        className="text-base lg:text-sm border rounded-lg pl-8 pr-3 py-1.5 w-48 focus:outline-none focus:ring-2 focus:ring-[#002349]"
-      />
     </div>
   );
 }
@@ -163,12 +145,26 @@ function CredentialBox({ code, password }) {
 }
 
 function Modal({ title, onClose, children }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <h2 className="text-lg font-semibold text-[#002349]">{title}</h2>
-          <button onClick={onClose} className="p-2 -m-2 text-gray-400 hover:text-gray-600 rounded-lg">
+          <button onClick={onClose} className="p-2 -m-2 text-gray-400 hover:text-gray-600 rounded-lg" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -183,13 +179,13 @@ function ConfirmModal({ message, onConfirm, onCancel, loading }) {
     <Modal title="സ്ഥിരീകരിക്കുക" onClose={onCancel}>
       <p className="text-gray-700 mb-6">{message}</p>
       <div className="flex gap-3 justify-end">
-        <button onClick={onCancel} className="px-4 py-2 border rounded-lg hover:bg-gray-50">
+        <button onClick={onCancel} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">
           Cancel
         </button>
         <button
           onClick={onConfirm}
           disabled={loading}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+          className="px-4 py-2 min-h-[44px] bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
         >
           {loading ? 'Deleting…' : 'Delete'}
         </button>
@@ -285,18 +281,12 @@ function StatesTab() {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-base font-semibold text-gray-700">States ({total})</h3>
-          <SearchBox value={search} onChange={setSearch} placeholder="Search states…" />
-        </div>
-        <button
-          onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setError(''); }}
-          className="flex items-center gap-1.5 px-3 py-2 bg-[#002349] text-white rounded-lg text-sm hover:bg-[#1a3a5c]"
-        >
-          <Plus className="w-4 h-4" /> Add State
-        </button>
+      <div className="flex justify-between items-center gap-3 mb-3">
+        <h3 className="text-base font-semibold text-gray-700">States ({total})</h3>
+        <JihAddButton onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setError(''); }}>Add State</JihAddButton>
       </div>
+      <JihFab onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setError(''); }} label="Add State" />
+      <JihFilterBar className="mb-4 !p-0 !shadow-none !bg-transparent" search={search} onSearchChange={setSearch} placeholder="Search states…" />
 
       {loading ? <p className="text-center py-8 text-gray-400">Loading…</p> : (
         <>
@@ -380,8 +370,8 @@ function StatesTab() {
           />
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => { setShowAdd(false); setEditItem(null); }} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#1a3a5c] disabled:opacity-50">
+            <button onClick={() => { setShowAdd(false); setEditItem(null); }} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="px-4 py-2 min-h-[44px] bg-[#002349] text-white rounded-lg hover:bg-[#1a3a5c] disabled:opacity-50">
               {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
@@ -566,35 +556,34 @@ function DistrictsTab() {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-base font-semibold text-gray-700">Districts ({total})</h3>
-          <select
-            value={selectedState}
-            onChange={(e) => setSelectedState(e.target.value)}
-            className="text-base lg:text-sm border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#002349]"
-          >
-            <option value="">All States</option>
-            {states.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-          </select>
-          <SearchBox value={search} onChange={setSearch} placeholder="Search districts…" />
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="flex justify-between items-center gap-3 mb-3">
+        <h3 className="text-base font-semibold text-gray-700">Districts ({total})</h3>
+        <div className="hidden lg:flex items-center gap-2">
           <button
             onClick={handleExportCsv}
             disabled={exporting || total === 0}
-            className="flex items-center gap-1.5 px-3 py-2 border border-[#002349] text-[#002349] rounded-lg text-sm hover:bg-[#002349] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#002349] px-4 text-sm font-semibold text-[#002349] hover:bg-[#002349] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4" /> {exporting ? 'Exporting…' : 'Export CSV'}
           </button>
-          <button
-            onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setStateId(''); setError(''); setNewCred(null); }}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[#002349] text-white rounded-lg text-sm hover:bg-[#1a3a5c]"
-          >
-            <Plus className="w-4 h-4" /> Add District
-          </button>
+          <JihAddButton onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setStateId(''); setError(''); setNewCred(null); }}>Add District</JihAddButton>
         </div>
       </div>
+      <JihFab onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setStateId(''); setError(''); setNewCred(null); }} label="Add District" />
+      <JihFilterBar
+        className="mb-4 !p-0 !shadow-none !bg-transparent"
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search districts…"
+        activeFilterCount={selectedState ? 1 : 0}
+        gridClass="sm:grid-cols-3 lg:grid-cols-4"
+        actions={<JihToolbarAction icon={Download} label={exporting ? 'Exporting…' : 'Export CSV'} onClick={handleExportCsv} disabled={exporting || total === 0} className="lg:hidden" />}
+      >
+        <JihFilterSelect icon={MapPin} value={selectedState} onChange={(e) => setSelectedState(e.target.value)}>
+          <option value="">All States</option>
+          {states.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+        </JihFilterSelect>
+      </JihFilterBar>
 
       {newCred && (
         <div className="mb-4">
@@ -718,7 +707,7 @@ function DistrictsTab() {
             password={resetResult.password}
           />
           <div className="flex justify-end mt-4">
-            <button onClick={() => setResetResult(null)} className="px-4 py-2 bg-[#002349] text-white rounded-lg">Done</button>
+            <button onClick={() => setResetResult(null)} className="px-4 py-2 min-h-[44px] bg-[#002349] text-white rounded-lg">Done</button>
           </div>
         </Modal>
       )}
@@ -758,8 +747,8 @@ function DistrictsTab() {
           )}
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => { setShowAdd(false); setEditItem(null); }} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#1a3a5c] disabled:opacity-50">
+            <button onClick={() => { setShowAdd(false); setEditItem(null); }} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="px-4 py-2 min-h-[44px] bg-[#002349] text-white rounded-lg hover:bg-[#1a3a5c] disabled:opacity-50">
               {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
@@ -814,9 +803,9 @@ function DistrictsTab() {
             )}
             {txError && <p className="text-red-500 text-sm">{txError}</p>}
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setSplitItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setSplitItem(null)} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
               <button onClick={handleSplitConfirm} disabled={txWorking}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                className="px-4 py-2 min-h-[44px] bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
                 {txWorking ? 'Splitting…' : 'Split'}
               </button>
             </div>
@@ -830,7 +819,7 @@ function DistrictsTab() {
           <p className="text-sm text-gray-600 mb-3">New district "{splitCred.name}" created.</p>
           <CredentialBox code={splitCred.uniqueCode} password={splitCred.plainPassword} />
           <div className="flex justify-end mt-4">
-            <button onClick={() => setSplitCred(null)} className="px-4 py-2 bg-[#002349] text-white rounded-lg">Done</button>
+            <button onClick={() => setSplitCred(null)} className="px-4 py-2 min-h-[44px] bg-[#002349] text-white rounded-lg">Done</button>
           </div>
         </Modal>
       )}
@@ -851,9 +840,9 @@ function DistrictsTab() {
           </select>
           {txError && <p className="text-red-500 text-sm mt-2">{txError}</p>}
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setMergeItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setMergeItem(null)} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
             <button onClick={handleMergeConfirm} disabled={txWorking || !mergeSurvivorId}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+              className="px-4 py-2 min-h-[44px] bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
               {txWorking ? 'Merging…' : 'Merge'}
             </button>
           </div>
@@ -1055,35 +1044,34 @@ function AreasTab() {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-base font-semibold text-gray-700">Areas ({total})</h3>
-          <select
-            value={selectedDistrict}
-            onChange={(e) => setSelectedDistrict(e.target.value)}
-            className="text-base lg:text-sm border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#002349]"
-          >
-            <option value="">All Districts</option>
-            {districts.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
-          </select>
-          <SearchBox value={search} onChange={setSearch} placeholder="Search areas…" />
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="flex justify-between items-center gap-3 mb-3">
+        <h3 className="text-base font-semibold text-gray-700">Areas ({total})</h3>
+        <div className="hidden lg:flex items-center gap-2">
           <button
             onClick={handleExportCsv}
             disabled={exporting || total === 0}
-            className="flex items-center gap-1.5 px-3 py-2 border border-[#002349] text-[#002349] rounded-lg text-sm hover:bg-[#002349] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#002349] px-4 text-sm font-semibold text-[#002349] hover:bg-[#002349] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4" /> {exporting ? 'Exporting…' : 'Export CSV'}
           </button>
-          <button
-            onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setDistrictId(''); setError(''); setNewCred(null); }}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[#002349] text-white rounded-lg text-sm hover:bg-[#1a3a5c]"
-          >
-            <Plus className="w-4 h-4" /> Add Area
-          </button>
+          <JihAddButton onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setDistrictId(''); setError(''); setNewCred(null); }}>Add Area</JihAddButton>
         </div>
       </div>
+      <JihFab onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setDistrictId(''); setError(''); setNewCred(null); }} label="Add Area" />
+      <JihFilterBar
+        className="mb-4 !p-0 !shadow-none !bg-transparent"
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search areas…"
+        activeFilterCount={selectedDistrict ? 1 : 0}
+        gridClass="sm:grid-cols-3 lg:grid-cols-4"
+        actions={<JihToolbarAction icon={Download} label={exporting ? 'Exporting…' : 'Export CSV'} onClick={handleExportCsv} disabled={exporting || total === 0} className="lg:hidden" />}
+      >
+        <JihFilterSelect icon={MapPin} value={selectedDistrict} onChange={(e) => setSelectedDistrict(e.target.value)}>
+          <option value="">All Districts</option>
+          {districts.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
+        </JihFilterSelect>
+      </JihFilterBar>
 
       {newCred && (
         <div className="mb-4">
@@ -1213,7 +1201,7 @@ function AreasTab() {
             password={resetResult.password}
           />
           <div className="flex justify-end mt-4">
-            <button onClick={() => setResetResult(null)} className="px-4 py-2 bg-[#002349] text-white rounded-lg">Done</button>
+            <button onClick={() => setResetResult(null)} className="px-4 py-2 min-h-[44px] bg-[#002349] text-white rounded-lg">Done</button>
           </div>
         </Modal>
       )}
@@ -1253,8 +1241,8 @@ function AreasTab() {
           )}
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => { setShowAdd(false); setEditItem(null); }} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#1a3a5c] disabled:opacity-50">
+            <button onClick={() => { setShowAdd(false); setEditItem(null); }} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="px-4 py-2 min-h-[44px] bg-[#002349] text-white rounded-lg hover:bg-[#1a3a5c] disabled:opacity-50">
               {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
@@ -1306,9 +1294,9 @@ function AreasTab() {
             )}
             {txError && <p className="text-red-500 text-sm">{txError}</p>}
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setSplitItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setSplitItem(null)} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
               <button onClick={handleSplitConfirm} disabled={txWorking}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                className="px-4 py-2 min-h-[44px] bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
                 {txWorking ? 'Splitting…' : 'Split'}
               </button>
             </div>
@@ -1321,7 +1309,7 @@ function AreasTab() {
           <p className="text-sm text-gray-600 mb-3">New area "{splitCred.name}" created.</p>
           <CredentialBox code={splitCred.uniqueCode} password={splitCred.plainPassword} />
           <div className="flex justify-end mt-4">
-            <button onClick={() => setSplitCred(null)} className="px-4 py-2 bg-[#002349] text-white rounded-lg">Done</button>
+            <button onClick={() => setSplitCred(null)} className="px-4 py-2 min-h-[44px] bg-[#002349] text-white rounded-lg">Done</button>
           </div>
         </Modal>
       )}
@@ -1342,9 +1330,9 @@ function AreasTab() {
           </select>
           {txError && <p className="text-red-500 text-sm mt-2">{txError}</p>}
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setMergeItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setMergeItem(null)} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
             <button onClick={handleMergeConfirm} disabled={txWorking || !mergeSurvivorId}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+              className="px-4 py-2 min-h-[44px] bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
               {txWorking ? 'Merging…' : 'Merge'}
             </button>
           </div>
@@ -1367,9 +1355,9 @@ function AreasTab() {
           </select>
           {txError && <p className="text-red-500 text-sm mt-2">{txError}</p>}
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setTransferItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setTransferItem(null)} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
             <button onClick={handleTransferConfirm} disabled={txWorking || !transferDistrictId}
-              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50">
+              className="px-4 py-2 min-h-[44px] bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50">
               {txWorking ? 'Transferring…' : 'Transfer'}
             </button>
           </div>
@@ -1597,45 +1585,40 @@ function UnitsTab() {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="text-base font-semibold text-gray-700">Units ({total})</h3>
-          <select
-            value={selectedDistrict}
-            onChange={(e) => { setSelectedDistrict(e.target.value); setSelectedArea(''); }}
-            className="text-base lg:text-sm border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#002349]"
-          >
-            <option value="">All Districts</option>
-            {districts.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
-          </select>
-          <select
-            value={selectedArea}
-            onChange={(e) => setSelectedArea(e.target.value)}
-            className="text-base lg:text-sm border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#002349]"
-          >
-            <option value="">All Areas</option>
-            {areas
-              .filter((a) => !selectedDistrict || a.districtId?._id === selectedDistrict || a.districtId === selectedDistrict)
-              .map((a) => <option key={a._id} value={a._id}>{a.name}</option>)}
-          </select>
-          <SearchBox value={search} onChange={setSearch} placeholder="Search units…" />
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="flex justify-between items-center gap-3 mb-3">
+        <h3 className="text-base font-semibold text-gray-700">Units ({total})</h3>
+        <div className="hidden lg:flex items-center gap-2">
           <button
             onClick={handleExportCsv}
             disabled={exporting || total === 0}
-            className="flex items-center gap-1.5 px-3 py-2 border border-[#002349] text-[#002349] rounded-lg text-sm hover:bg-[#002349] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#002349] px-4 text-sm font-semibold text-[#002349] hover:bg-[#002349] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4" /> {exporting ? 'Exporting…' : 'Export CSV'}
           </button>
-          <button
-            onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setDistrictId(''); setAreaId(''); setError(''); setNewCred(null); }}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[#002349] text-white rounded-lg text-sm hover:bg-[#1a3a5c]"
-          >
-            <Plus className="w-4 h-4" /> Add Unit
-          </button>
+          <JihAddButton onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setDistrictId(''); setAreaId(''); setError(''); setNewCred(null); }}>Add Unit</JihAddButton>
         </div>
       </div>
+      <JihFab onClick={() => { setShowAdd(true); setEditItem(null); setName(''); setDistrictId(''); setAreaId(''); setError(''); setNewCred(null); }} label="Add Unit" />
+      <JihFilterBar
+        className="mb-4 !p-0 !shadow-none !bg-transparent"
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search units…"
+        activeFilterCount={[selectedDistrict, selectedArea].filter(Boolean).length}
+        gridClass="sm:grid-cols-3 lg:grid-cols-4"
+        actions={<JihToolbarAction icon={Download} label={exporting ? 'Exporting…' : 'Export CSV'} onClick={handleExportCsv} disabled={exporting || total === 0} className="lg:hidden" />}
+      >
+        <JihFilterSelect icon={MapPin} value={selectedDistrict} onChange={(e) => { setSelectedDistrict(e.target.value); setSelectedArea(''); }}>
+          <option value="">All Districts</option>
+          {districts.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
+        </JihFilterSelect>
+        <JihFilterSelect icon={Building2} value={selectedArea} onChange={(e) => setSelectedArea(e.target.value)}>
+          <option value="">All Areas</option>
+          {areas
+            .filter((a) => !selectedDistrict || a.districtId?._id === selectedDistrict || a.districtId === selectedDistrict)
+            .map((a) => <option key={a._id} value={a._id}>{a.name}</option>)}
+        </JihFilterSelect>
+      </JihFilterBar>
 
       {newCred && (
         <div className="mb-4">
@@ -1768,7 +1751,7 @@ function UnitsTab() {
             password={resetResult.password}
           />
           <div className="flex justify-end mt-4">
-            <button onClick={() => setResetResult(null)} className="px-4 py-2 bg-[#002349] text-white rounded-lg">Done</button>
+            <button onClick={() => setResetResult(null)} className="px-4 py-2 min-h-[44px] bg-[#002349] text-white rounded-lg">Done</button>
           </div>
         </Modal>
       )}
@@ -1817,8 +1800,8 @@ function UnitsTab() {
           )}
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => { setShowAdd(false); setEditItem(null); }} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
-            <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#1a3a5c] disabled:opacity-50">
+            <button onClick={() => { setShowAdd(false); setEditItem(null); }} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="px-4 py-2 min-h-[44px] bg-[#002349] text-white rounded-lg hover:bg-[#1a3a5c] disabled:opacity-50">
               {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
@@ -1853,9 +1836,9 @@ function UnitsTab() {
             </p>
             {txError && <p className="text-red-500 text-sm">{txError}</p>}
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setSplitItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setSplitItem(null)} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
               <button onClick={handleSplitConfirm} disabled={txWorking}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                className="px-4 py-2 min-h-[44px] bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
                 {txWorking ? 'Splitting…' : 'Split'}
               </button>
             </div>
@@ -1868,7 +1851,7 @@ function UnitsTab() {
           <p className="text-sm text-gray-600 mb-3">New unit "{splitCred.name}" created.</p>
           <CredentialBox code={splitCred.uniqueCode} password={splitCred.plainPassword} />
           <div className="flex justify-end mt-4">
-            <button onClick={() => setSplitCred(null)} className="px-4 py-2 bg-[#002349] text-white rounded-lg">Done</button>
+            <button onClick={() => setSplitCred(null)} className="px-4 py-2 min-h-[44px] bg-[#002349] text-white rounded-lg">Done</button>
           </div>
         </Modal>
       )}
@@ -1889,9 +1872,9 @@ function UnitsTab() {
           </select>
           {txError && <p className="text-red-500 text-sm mt-2">{txError}</p>}
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setMergeItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setMergeItem(null)} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
             <button onClick={handleMergeConfirm} disabled={txWorking || !mergeSurvivorId}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+              className="px-4 py-2 min-h-[44px] bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
               {txWorking ? 'Merging…' : 'Merge'}
             </button>
           </div>
@@ -1921,9 +1904,9 @@ function UnitsTab() {
           </select>
           {txError && <p className="text-red-500 text-sm mt-2">{txError}</p>}
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setTransferItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setTransferItem(null)} className="px-4 py-2 min-h-[44px] border rounded-lg hover:bg-gray-50">Cancel</button>
             <button onClick={handleTransferConfirm} disabled={txWorking || !transferAreaId}
-              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50">
+              className="px-4 py-2 min-h-[44px] bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50">
               {txWorking ? 'Transferring…' : 'Transfer'}
             </button>
           </div>

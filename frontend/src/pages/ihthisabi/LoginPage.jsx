@@ -249,7 +249,7 @@ const LoginPage = () => {
       {/* Home Icon - Floating */}
       <button
         onClick={() => navigate('/')}
-        className="fixed top-4 right-4 z-50 p-2.5 text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
+        className="fixed top-4 right-4 z-50 inline-flex h-[44px] w-[44px] items-center justify-center text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
         aria-label="Back to Home"
       >
         <Home className="w-6 h-6" />
@@ -285,7 +285,7 @@ const LoginPage = () => {
                 setError(null)
                 setAdminError(null)
               }}
-              className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
+              className={`min-h-[44px] px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
                 !showMainAdminLogin
                   ? 'bg-[#7B4FF2] text-white shadow-md'
                   : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
@@ -300,7 +300,7 @@ const LoginPage = () => {
                 setAdminError(null)
                 setRoleSelection(null)
               }}
-              className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
+              className={`min-h-[44px] px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
                 showMainAdminLogin
                   ? 'bg-[#7B4FF2] text-white shadow-md'
                   : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
@@ -427,7 +427,7 @@ const LoginPage = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="mx-auto max-w-xs bg-[#7B4FF2] hover:bg-[#6a3dd9] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 text-sm shadow-md hover:shadow-lg"
+                    className="mx-auto max-w-xs bg-[#7B4FF2] hover:bg-[#6a3dd9] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold min-h-[44px] py-3 px-6 rounded-lg transition-all duration-200 text-sm shadow-md hover:shadow-lg"
                   >
                     {loading ? (
                       <div className="flex items-center justify-center">
@@ -462,6 +462,7 @@ const LoginPage = () => {
                     id="mainAdminEmail"
                     name="email"
                     type="email"
+                    autoComplete="email"
                     required
                     value={mainAdminFormData.email}
                     onChange={(e) => {
@@ -483,6 +484,7 @@ const LoginPage = () => {
                     id="mainAdminPassword"
                     name="password"
                     type="password"
+                    autoComplete="current-password"
                     required
                     value={mainAdminFormData.password}
                     onChange={(e) => {
@@ -508,7 +510,7 @@ const LoginPage = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="mx-auto max-w-xs bg-[#7B4FF2] hover:bg-[#6a3dd9] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 text-sm shadow-md hover:shadow-lg"
+                    className="mx-auto max-w-xs bg-[#7B4FF2] hover:bg-[#6a3dd9] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold min-h-[44px] py-3 px-6 rounded-lg transition-all duration-200 text-sm shadow-md hover:shadow-lg"
                   >
                     {loading ? (
                       <div className="flex items-center justify-center">

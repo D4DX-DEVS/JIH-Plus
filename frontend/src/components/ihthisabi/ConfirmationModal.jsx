@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { AlertTriangle, X, CheckCircle } from 'lucide-react'
 import LogoColor from '../../assets/LogoColor.png'
 
@@ -13,6 +13,15 @@ const ConfirmationModal = ({
   variant = 'danger', // 'danger', 'warning', 'info'
   isLoading = false
 }) => {
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   const variantStyles = {
@@ -95,16 +104,16 @@ const ConfirmationModal = ({
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-ghost"
             >
               {cancelText}
             </button>
             <button
               onClick={onConfirm}
               disabled={isLoading}
-                className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
-                  confirmText === 'Logout' 
-                    ? 'bg-[#141D2D] hover:bg-[#1a2538] text-white' 
+                className={`inline-flex min-h-[44px] sm:min-h-0 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  confirmText === 'Logout'
+                    ? 'bg-[#141D2D] hover:bg-[#1a2538] text-white'
                     : styles.confirmButton
                 }`}
             >

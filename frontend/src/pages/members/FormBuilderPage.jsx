@@ -6,7 +6,7 @@ import { api, apiError } from '../../utils/members/api'
 import FieldCanvas from '../../components/reportBuilder/FieldCanvas'
 import FieldTypeSelector from '../../components/reportBuilder/FieldTypeSelector'
 import DynamicFormRenderer from '../../components/reportRenderer/DynamicFormRenderer'
-import { Button, Card, Field, Input, Select, Spinner, Textarea } from '../../components/members/ui'
+import { Button, Card, Field, Input, Modal, Select, Spinner, Textarea } from '../../components/members/ui'
 
 // Field ids must be unique across the whole form — the conditional-logic editor
 // and the renderer both address fields by bare id.
@@ -50,6 +50,8 @@ export default function FormBuilderPage() {
   const [saving, setSaving] = useState(false)
   const [published, setPublished] = useState(false)
   const [usageCount, setUsageCount] = useState(0)
+  const [dirty, setDirty] = useState(false)
+  const [confirmLeave, setConfirmLeave] = useState(false)
 
   // Once applications exist against this template its structure is frozen —
   // only the title and description can still change.
@@ -75,6 +77,7 @@ export default function FormBuilderPage() {
         setUsageCount(data.usageCount || 0)
         const loaded = template.pages?.length ? template.pages : [makeNewPage(0)]
         setPages(loaded)
+        setDirty(false)
         // Continue ids above whatever the saved form already used.
         const maxId = Math.max(
           0,
@@ -89,15 +92,20 @@ export default function FormBuilderPage() {
 
   const allFields = useMemo(() => pages.flatMap(p => p.fields || []), [pages])
 
+  // Marks the form dirty on every structural or metadata edit, so leaving the
+  // page mid-edit can be confirmed instead of silently discarding work.
+  const updatePages = (updater) => { setDirty(true); setPages(updater) }
+  const updateMeta = (patch) => { setDirty(true); setMeta(prev => ({ ...prev, ...patch })) }
+
   const addField = (type) => {
-    setPages(prev => prev.map((p, pi) =>
+    updatePages(prev => prev.map((p, pi) =>
       pi !== activePage ? p : { ...p, fields: [...(p.fields || []), makeNewField(type)] }))
   }
 
   const cloneField = (field) => ({ ...JSON.parse(JSON.stringify(field)), id: nextId() })
 
   const insertField = (pageIdx, index, field) => {
-    setPages(prev => prev.map((p, pi) => {
+    updatePages(prev => prev.map((p, pi) => {
       if (pi !== pageIdx) return p
       const fields = [...(p.fields || [])]
       fields.splice(index, 0, field)
@@ -106,13 +114,13 @@ export default function FormBuilderPage() {
   }
 
   const addPage = () => {
-    setPages(prev => [...prev, makeNewPage(prev.length)])
+    updatePages(prev => [...prev, makeNewPage(prev.length)])
     setActivePage(pages.length)
   }
 
   const removePage = (i) => {
     if (pages.length <= 1) return
-    setPages(prev => prev.filter((_, pi) => pi !== i))
+    updatePages(prev => prev.filter((_, pi) => pi !== i))
     setActivePage(a => (a >= i && a > 0 ? a - 1 : a))
   }
 
@@ -131,10 +139,12 @@ export default function FormBuilderPage() {
       if (isNew) {
         const { data } = await api.post('/forms', payload())
         toast.success('Draft saved')
+        setDirty(false)
         navigate(`/members/forms/${data.template._id}`, { replace: true })
       } else {
         await api.put(`/forms/${id}`, payload())
         toast.success(published ? 'Changes saved' : 'Draft saved')
+        setDirty(false)
       }
     } catch (err) {
       toast.error(apiError(err, 'Could not save the form'))
@@ -159,6 +169,7 @@ export default function FormBuilderPage() {
       await api.patch(`/forms/${formId}/publish`)
       toast.success('Form published')
       setPublished(true)
+      setDirty(false)
       if (isNew) navigate(`/members/forms/${formId}`, { replace: true })
     } catch (err) {
       toast.error(apiError(err, 'Could not publish the form'))
@@ -182,8 +193,8 @@ export default function FormBuilderPage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/members/forms')}
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 -ml-2 p-2 mb-1"
+        onClick={() => (dirty ? setConfirmLeave(true) : navigate('/members/forms'))}
+        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 -ml-2 p-2 mb-1 min-h-11"
       >
         <ArrowLeft size={16} /> Back to forms
       </button>
@@ -210,7 +221,7 @@ export default function FormBuilderPage() {
           <Field label="Application type" required>
             <Select
               value={meta.formType}
-              onChange={e => setMeta({ ...meta, formType: e.target.value })}
+              onChange={e => updateMeta({ formType: e.target.value })}
               disabled={!isNew}
             >
               <option value="rukn">Rukn</option>
@@ -221,14 +232,14 @@ export default function FormBuilderPage() {
           <Field label="Form title" required>
             <Input
               value={meta.title}
-              onChange={e => setMeta({ ...meta, title: e.target.value })}
+              onChange={e => updateMeta({ title: e.target.value })}
             />
           </Field>
 
           <Field label="Description">
             <Input
               value={meta.description}
-              onChange={e => setMeta({ ...meta, description: e.target.value })}
+              onChange={e => updateMeta({ description: e.target.value })}
             />
           </Field>
         </div>
@@ -279,7 +290,7 @@ export default function FormBuilderPage() {
             pages={pages}
             pageIndex={activePage}
             allFields={allFields}
-            onPagesChange={setPages}
+            onPagesChange={updatePages}
             onAddField={() => setShowFieldSelector(true)}
             clipboard={clipboard}
             copiedFieldId={copiedFieldId}
@@ -349,6 +360,22 @@ export default function FormBuilderPage() {
           </div>
         </div>
       )}
+
+      <Modal
+        open={confirmLeave}
+        onClose={() => setConfirmLeave(false)}
+        title="Discard unsaved changes?"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmLeave(false)}>Keep editing</Button>
+            <Button variant="danger" onClick={() => navigate('/members/forms')}>Discard changes</Button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600">
+          You have unsaved changes to this form. Leaving now will lose them.
+        </p>
+      </Modal>
     </div>
   )
 }

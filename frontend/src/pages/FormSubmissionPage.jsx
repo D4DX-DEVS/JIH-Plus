@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Plus, Trash2, Edit } from 'lucide-react';
+import { FileText, Trash2, Edit } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { JihFab, JihAddButton } from '../components/JihToolbar';
 import axios from 'axios';
 import FormPage from './FormPage';
 import FormDetailPage from './FormDetailPage';
@@ -13,6 +15,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
   const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [formToDelete, setFormToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editingForm, setEditingForm] = useState(null);
 
   useEffect(() => {
@@ -64,6 +67,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
   };
 
   const handleFormSubmit = (formData) => {
+    toast.success(editingForm ? 'Form updated successfully' : 'Form submitted successfully');
     setShowForm(false);
     setEditingForm(null);
     // Reload forms after submission
@@ -109,17 +113,24 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
 
   const confirmDeleteForm = async () => {
     try {
+      setIsDeleting(true);
       const token = localStorage.getItem('userToken');
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/user/forms/${formToDelete._id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
+      toast.success('Form deleted successfully');
       loadUserForms();
       setFormToDelete(null);
+      setShowDeleteModal(false);
     } catch (error) {
       console.error('Error deleting form:', error);
       setError('Failed to delete form');
+      toast.error('Failed to delete form');
+      setShowDeleteModal(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -170,13 +181,10 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
           </p>
         </div>
         {onCreateNew && (
-          <button
-            onClick={handleCreateForm}
-            className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-4 py-2 min-h-[44px] rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all duration-300 hover:shadow-md"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New Form</span>
-          </button>
+          <>
+            <JihAddButton onClick={handleCreateForm}>Create New Form</JihAddButton>
+            <JihFab onClick={handleCreateForm} label="Create New Form" />
+          </>
         )}
       </div>
 
@@ -196,9 +204,12 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
             <FileText className="w-7 h-7 text-gray-400" />
           </div>
           <h3 className="text-lg font-bold text-[#002349] mb-2">No forms submitted yet</h3>
-          <p className="text-gray-600 mb-1 text-sm">
-            Get started by creating your first form submission from the top button.
+          <p className="text-gray-600 mb-4 text-sm">
+            Get started by creating your first form submission.
           </p>
+          {onCreateNew && (
+            <JihAddButton onClick={handleCreateForm} className="inline-flex min-h-[44px]">Create New Form</JihAddButton>
+          )}
         </div>
       ) : (
         <>
@@ -311,6 +322,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
         confirmText="Delete"
         cancelText="Cancel"
         type="danger"
+        loading={isDeleting}
       />
     </>
   );

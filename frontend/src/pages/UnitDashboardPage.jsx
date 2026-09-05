@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, FileText, Search, Filter, Edit, Trash2, Calendar, ArrowLeft, Eye, Save, Bell, Check, X, BookOpen, TrendingUp } from 'lucide-react';
+import { FileText, Edit, Trash2, Calendar, Eye, X, BookOpen, TrendingUp, LogOut, Filter, ArrowLeft, Save, Bell } from 'lucide-react';
+import { JihFilterBar, JihFilterSelect, JihFab, JihAddButton } from '../components/JihToolbar';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import FormDetailPage from './FormDetailPage';
 import FormPage from './FormPage';
@@ -116,7 +118,6 @@ const UnitDashboardPage = ({ onLogout }) => {
   const [showFormEdit, setShowFormEdit] = useState(false);
   const [showCreateSurvey, setShowCreateSurvey] = useState(false);
   const [selectedFormId, setSelectedFormId] = useState(null);
-  const [successMessage, setSuccessMessage] = useState('');
   const [viewingSurvey, setViewingSurvey] = useState(null);
 const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
   
@@ -627,13 +628,9 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
           timeout: 5000
         });
         
-        setSuccessMessage(`${surveyToDelete.month} മാസത്തിലെ റിപ്പോർട്ട് വിജയകരമായി ഡിലീറ്റ് ചെയ്തു!`);
+        toast.success(`${surveyToDelete.month} മാസത്തിലെ റിപ്പോർട്ട് വിജയകരമായി ഡിലീറ്റ് ചെയ്തു!`);
         setSurveyToDelete(null);
-        
-        setTimeout(() => {
-          setSuccessMessage('');
-        }, 3000);
-        
+
         loadMonthlySurveys();
       }
       
@@ -1290,45 +1287,26 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                   Total: {totalSurveys} monthly reports submitted by this unit
                 </p>
               </div>
-              <button
-                onClick={handleCreateSurvey}
-                className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-6 py-3 rounded-2xl transition-all duration-500 flex items-center space-x-2 text-sm font-semibold hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out"
-              >
-                <FileText className="w-4 h-4" />
-                <span>Create Monthly Report</span>
-              </button>
+              <JihAddButton onClick={handleCreateSurvey} icon={FileText}>Create Monthly Report</JihAddButton>
+              <JihFab onClick={handleCreateSurvey} label="Create Monthly Report" />
             </div>
 
-            {/* Inline Search & Filters (no container card) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-              <div>
-                <label className="block text-xs font-semibold text-[#002349] mb-1">Search</label>
-                <div className="relative group">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search reports..."
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-base lg:text-sm"
-                  />
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 group-hover:text-[#002349] transition-colors duration-300" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#002349] mb-1">Month</label>
-                <select
-                  value={monthFilter}
-                  onChange={(e) => setMonthFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-base lg:text-sm"
-                >
-                  <option value="">All Months</option>
-                  {['January', 'February', 'March', 'April', 'May', 'June', 
-                    'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
-                    <option key={month} value={month}>{month}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <JihFilterBar
+              className="mb-4 -mx-4 sm:-mx-6 lg:-mx-8"
+              search={searchTerm}
+              onSearchChange={setSearchTerm}
+              placeholder="Search reports..."
+              activeFilterCount={monthFilter ? 1 : 0}
+              gridClass="sm:grid-cols-3 lg:grid-cols-4"
+            >
+              <JihFilterSelect icon={Calendar} value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}>
+                <option value="">All Months</option>
+                {['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                <option key={month} value={month}>{month}</option>
+              ))}
+              </JihFilterSelect>
+            </JihFilterBar>
 
             {/* Surveys Table */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-500 -mx-4 sm:-mx-6 lg:-mx-8">
@@ -1627,15 +1605,6 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
             <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-500">
               <h3 className="text-lg font-bold text-[#002349] mb-4">സ്ഥിതിവിവരക്കണക്കുകൾ</h3>
               <UnitMonthlyStatsTable surveys={monthlySurveys} />
-            </div>
-          </div>
-        )}
-
-        {successMessage && (
-          <div className="mt-4 bg-green-50 border-2 border-green-200 rounded-2xl p-4 animate-fade-in">
-            <div className="flex items-center space-x-2">
-              <Check className="w-5 h-5 text-green-600" />
-              <p className="text-green-700 text-sm font-semibold">{successMessage}</p>
             </div>
           </div>
         )}

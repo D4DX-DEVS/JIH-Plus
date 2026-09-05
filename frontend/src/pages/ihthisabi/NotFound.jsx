@@ -6,7 +6,7 @@ const NotFound = () => {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="ih-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 text-center">
         {/* Error Icon */}
         <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100">
@@ -37,7 +37,7 @@ const NotFound = () => {
         {/* Action Buttons */}
         <div className="space-y-3">
           <button
-            onClick={() => navigate('dashboard')}
+            onClick={() => navigate('/ihthisabi/dashboard')}
             className="w-full btn-primary py-3 text-base font-medium"
           >
             <Home className="w-5 h-5 mr-2 inline" />

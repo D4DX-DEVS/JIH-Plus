@@ -198,7 +198,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
   const handleCreateMonthlySurvey = () => {
     setEditingSurvey(null);
     // For district users, navigate to the district survey form
-    window.location.href = '/district-survey';
+    navigate('/district-survey');
   };
   
   const handleEditMonthlySurvey = (survey) => {
@@ -692,6 +692,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
       return (
         <div className="text-center py-12">
           <p className="text-red-600 font-semibold">{statsError}</p>
+          <button onClick={loadDistrictStats} className="mt-4 px-4 py-2 bg-[#002349] text-white rounded-lg text-sm">Retry</button>
         </div>
       );
     }
@@ -1105,7 +1106,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
   const renderLocationsView = () => (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] rounded-2xl p-6 text-white">
-        <h2 className="text-xl font-bold">ഏരിയകളും യൂണിറ്റുകളും</h2>
+        <h2 className="hidden lg:block text-xl font-bold">ഏരിയകളും യൂണിറ്റുകളും</h2>
         <p className="text-white/80 text-sm mt-1">
           {userData?.district || userData?.districtName || ''} · {areas.length} areas
         </p>

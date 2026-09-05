@@ -446,7 +446,7 @@ const QuarterlySelection = ({ submissions = [], alternativeSubmissions = [], onQ
                             e.stopPropagation()
                             navigate(`/ihthisabi/alternative-submission?quarter=${quarter}&year=${year}`)
                           }}
-                          className="inline-flex w-full items-center justify-center gap-1 rounded-full px-2 py-2 text-[10px] font-medium text-white shadow-sm transition-opacity hover:opacity-90 sm:py-1.5 sm:text-xs"
+                          className="inline-flex w-full min-h-[44px] sm:min-h-0 items-center justify-center gap-1 rounded-full px-2 py-2 text-[10px] font-medium text-white shadow-sm transition-opacity hover:opacity-90 sm:py-1.5 sm:text-xs"
                           style={{ backgroundColor: '#1A3A5C' }}
                           title="Submit alternative submission if unable to complete regular report"
                         >

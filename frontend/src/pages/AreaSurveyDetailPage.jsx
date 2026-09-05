@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, Calendar, User, MapPin, CheckCircle, Users, TrendingUp, Activity } from 'lucide-react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import jihLogo from '../assets/LogoColor.png';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
@@ -121,7 +122,8 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/area/surveys/${surveyId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+      toast.success('Area report deleted successfully!');
+
       if (onDelete) {
         onDelete();
       } else {
@@ -317,10 +319,10 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
         
         {partD.activities ? (
           <div className="overflow-x-auto rounded-xl border border-gray-200">
-            <table className="w-full border-collapse">
+            <table className="ih-table-compact w-full border-collapse">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="border-b border-gray-200 px-3 py-2 text-left text-xs font-semibold text-[#002349]">വിംഗ്</th>
+                  <th className="sticky left-0 bg-white z-[1] border-b border-gray-200 px-3 py-2 text-left text-xs font-semibold text-[#002349]">വിംഗ്</th>
                   <th className="border-b border-gray-200 px-3 py-2 text-center text-xs font-semibold text-[#002349]">ഘടക സന്ദർശനങ്ങൾ</th>
                   <th className="border-b border-gray-200 px-3 py-2 text-center text-xs font-semibold text-[#002349]">പുതിയ ഘടക ശ്രമങ്ങൾ</th>
                   <th className="border-b border-gray-200 px-3 py-2 text-center text-xs font-semibold text-[#002349]">പുതിയ വ്യക്തി കണ്ടെത്തൽ ശ്രമങ്ങൾ</th>
@@ -329,7 +331,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
               <tbody>
                 {Object.entries(partD.activities).map(([wing, data]) => (
                   <tr key={wing} className="hover:bg-gray-50 transition-colors duration-200">
-                    <td className="border-b border-gray-100 px-3 py-2 text-xs font-bold text-[#002349]">{wingLabels[wing] || wing}</td>
+                    <td className="sticky left-0 bg-white z-[1] border-b border-gray-100 px-3 py-2 text-xs font-bold text-[#002349]">{wingLabels[wing] || wing}</td>
                     <td className="border-b border-gray-100 px-3 py-2 text-center text-xs font-semibold text-gray-700">{data.componentVisits || 0}</td>
                     <td className="border-b border-gray-100 px-3 py-2 text-center text-xs font-semibold text-gray-700">
                       {data.newComponentAttempts === 1 ? 'അതെ' : data.newComponentAttempts === 0 ? 'ഇല്ല' : '-'}
@@ -674,14 +676,14 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
             <div className="flex items-center space-x-2 shrink-0">
               <button
                 onClick={handleEdit}
-                className="bg-[#957C3D] hover:bg-[#8A6F35] text-white px-3 py-2.5 lg:py-1.5 rounded-xl transition-all duration-300 flex items-center space-x-1.5 text-xs font-semibold hover:shadow-md"
+                className="min-h-[44px] bg-[#957C3D] hover:bg-[#8A6F35] text-white px-3 py-2.5 lg:py-1.5 rounded-xl transition-all duration-300 flex items-center space-x-1.5 text-xs font-semibold hover:shadow-md"
               >
                 <Edit className="w-3.5 h-3.5" />
                 <span>തിരുത്തുക</span>
               </button>
               <button
                 onClick={handleDelete}
-                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2.5 lg:py-1.5 rounded-xl transition-all duration-300 flex items-center space-x-1.5 text-xs font-semibold hover:shadow-md"
+                className="min-h-[44px] bg-red-600 hover:bg-red-700 text-white px-3 py-2.5 lg:py-1.5 rounded-xl transition-all duration-300 flex items-center space-x-1.5 text-xs font-semibold hover:shadow-md"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>ഇല്ലാതാക്കുക</span>

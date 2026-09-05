@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { ArrowDown, ArrowUp, Plus, RotateCcw, Save, Trash2 } from 'lucide-react'
 import { api, apiError } from '../../utils/members/api'
 import {
-  Button, Card, Field, Input, PageHeader, Select, Spinner, Tabs, Textarea
+  Button, Card, Field, Input, Modal, PageHeader, Select, Spinner, Tabs, Textarea
 } from '../../components/members/ui'
 import { FORM_TYPE_LABEL } from '../../utils/members/constants'
 
@@ -35,6 +35,9 @@ export default function WorkflowBuilderPage() {
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [dirty, setDirty] = useState(false)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [removeIndex, setRemoveIndex] = useState(null)
 
   const load = (type) => {
     setLoading(true)
@@ -42,6 +45,7 @@ export default function WorkflowBuilderPage() {
       .then(([wfRes, roleRes]) => {
         setStages(wfRes.data.workflow?.stages || [])
         setRoles((roleRes.data.roles || []).filter(r => r.isActive))
+        setDirty(false)
       })
       .catch(err => {
         if (err.response?.status === 404) setStages([])
@@ -52,20 +56,32 @@ export default function WorkflowBuilderPage() {
 
   useEffect(() => load(formType), [formType])
 
+  // Warn on tab close/refresh while edits haven't been saved yet — the page
+  // itself has no "back" control, only nav-away, so this is the one point we
+  // can reliably intercept without a data-router navigation blocker.
+  useEffect(() => {
+    if (!dirty) return
+    const onBeforeUnload = (e) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [dirty])
+
+  const updateStages = (updater) => { setDirty(true); setStages(updater) }
+
   const stageOptions = useMemo(
     () => stages.filter(s => s.key).map(s => ({ key: s.key, name: s.name || s.key })),
     [stages]
   )
 
   const update = (index, patch) =>
-    setStages(prev => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)))
+    updateStages(prev => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)))
 
   const move = (index, delta) => {
     const target = index + delta
     if (target < 0 || target >= stages.length) return
     const next = [...stages]
     ;[next[index], next[target]] = [next[target], next[index]]
-    setStages(next.map((s, i) => ({ ...s, order: i + 1 })))
+    updateStages(next.map((s, i) => ({ ...s, order: i + 1 })))
   }
 
   const save = async () => {
@@ -86,11 +102,13 @@ export default function WorkflowBuilderPage() {
     try {
       const { data } = await api.post(`/workflows/${formType}/reset`)
       setStages(data.workflow.stages || [])
+      setDirty(false)
       toast.success('Restored the default pipeline')
     } catch (err) {
       toast.error(apiError(err, 'Could not reset the workflow'))
     } finally {
       setSaving(false)
+      setConfirmReset(false)
     }
   }
 
@@ -99,9 +117,10 @@ export default function WorkflowBuilderPage() {
       <PageHeader
         title="Workflows"
         subtitle="The stages each application passes through, and which role acts at each one."
+        hideTitleOnMobile
         actions={
           <>
-            <Button variant="secondary" onClick={reset} disabled={saving}>
+            <Button variant="secondary" onClick={() => setConfirmReset(true)} disabled={saving}>
               <RotateCcw size={15} /> Reset to default
             </Button>
             <Button onClick={save} disabled={saving}>
@@ -136,7 +155,7 @@ export default function WorkflowBuilderPage() {
                   <button onClick={() => move(i, 1)} disabled={i === stages.length - 1} className="p-2 text-gray-400 hover:text-gray-700 disabled:opacity-30">
                     <ArrowDown size={15} />
                   </button>
-                  <button onClick={() => setStages(prev => prev.filter((_, si) => si !== i))} className="p-2 text-gray-400 hover:text-red-600">
+                  <button onClick={() => setRemoveIndex(i)} className="p-2 text-gray-400 hover:text-red-600">
                     <Trash2 size={15} />
                   </button>
                 </div>
@@ -306,13 +325,54 @@ export default function WorkflowBuilderPage() {
 
           <Button
             variant="secondary"
-            onClick={() => setStages(prev => [...prev, blankStage(prev.length + 1)])}
+            onClick={() => updateStages(prev => [...prev, blankStage(prev.length + 1)])}
             className="w-full"
           >
             <Plus size={16} /> Add stage
           </Button>
         </div>
       )}
+
+      <Modal
+        open={confirmReset}
+        onClose={() => setConfirmReset(false)}
+        title="Reset to default pipeline?"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmReset(false)}>Cancel</Button>
+            <Button variant="danger" onClick={reset} disabled={saving}>
+              {saving ? 'Resetting...' : 'Reset pipeline'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600">
+          This immediately overwrites the current {FORM_TYPE_LABEL[formType]} pipeline with the default
+          stages. This cannot be undone.
+        </p>
+      </Modal>
+
+      <Modal
+        open={removeIndex !== null}
+        onClose={() => setRemoveIndex(null)}
+        title="Remove this stage?"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setRemoveIndex(null)}>Cancel</Button>
+            <Button
+              variant="danger"
+              onClick={() => { updateStages(prev => prev.filter((_, si) => si !== removeIndex)); setRemoveIndex(null) }}
+            >
+              Remove stage
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600">
+          "{stages[removeIndex]?.name || 'This stage'}" and its captured values will be removed from the
+          pipeline. This isn't saved until you press "Save workflow".
+        </p>
+      </Modal>
     </div>
   )
 }

@@ -227,18 +227,13 @@ export const AuthProvider = ({ children }) => {
               payload: null
             })
           } else {
-            // Other errors - keep token but show as unauthenticated
-            console.log('Auth check failed with non-401 error, keeping token')
+            // Other errors (e.g. 500) are not genuine network failures - treat
+            // as an auth failure so the user sees the login page instead of a
+            // half-authenticated shell with an unrecognized 'unknown' role.
+            console.log('Auth check failed with non-401 error, treating as auth failure')
             dispatch({
-              type: 'AUTH_SUCCESS',
-              payload: {
-                user: { 
-                  username: 'User', 
-                  role: 'unknown',
-                  isOffline: true 
-                },
-                token: state.token
-              }
+              type: 'AUTH_FAILURE',
+              payload: null
             })
           }
         }
@@ -328,7 +323,11 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       const message = error.response?.data?.message || 'Login failed'
       dispatch({ type: 'AUTH_FAILURE', payload: message })
-      toast.error(message)
+      // Expected auth failures (wrong RUKN ID/password, etc.) are shown inline
+      // by the caller (LoginPage) — only toast for unexpected/network errors.
+      if (!error.response) {
+        toast.error(message)
+      }
       return { success: false, error: message }
     }
   }

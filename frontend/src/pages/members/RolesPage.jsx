@@ -23,6 +23,8 @@ export default function RolesPage() {
   const [busy, setBusy] = useState(false)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
+  const [toDelete, setToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const load = () => {
     setLoading(true)
@@ -53,14 +55,18 @@ export default function RolesPage() {
     }
   }
 
-  const remove = async (role) => {
+  const confirmDelete = async () => {
+    setDeleting(true)
     try {
-      await api.delete(`/admin/roles/${role._id}`)
+      await api.delete(`/admin/roles/${toDelete._id}`)
       toast.success('Role deleted')
+      setToDelete(null)
       if (roles.length === 1 && page > 1) setPage(p => p - 1)
       else load()
     } catch (err) {
       toast.error(apiError(err, 'Could not delete the role'))
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -69,6 +75,7 @@ export default function RolesPage() {
       <PageHeader
         title="Roles"
         subtitle="The hierarchy that drives scoping, form comment sections and workflow stages."
+        hideTitleOnMobile
         actions={<Button onClick={() => setEditing({ ...BLANK })}><Plus size={16} /> New role</Button>}
       />
 
@@ -91,11 +98,18 @@ export default function RolesPage() {
                     {!role.isActive && <p className="text-[11px] text-red-500 mt-0.5">Inactive</p>}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
-                    <button onClick={() => setEditing(role)} className="text-[#5b21b6] text-[13px] font-medium p-2">
+                    <button
+                      onClick={() => setEditing(role)}
+                      className="flex min-h-11 min-w-11 items-center justify-center text-[#5b21b6] text-[13px] font-medium"
+                    >
                       Edit
                     </button>
                     {!role.isSystem && (
-                      <button onClick={() => remove(role)} className="text-gray-400 active:text-red-600 p-2">
+                      <button
+                        onClick={() => setToDelete(role)}
+                        aria-label="Delete role"
+                        className="flex min-h-11 min-w-11 items-center justify-center text-gray-400 active:text-red-600"
+                      >
                         <Trash2 size={15} />
                       </button>
                     )}
@@ -133,7 +147,7 @@ export default function RolesPage() {
                         Edit
                       </button>
                       {!role.isSystem && (
-                        <button onClick={() => remove(role)} className="text-gray-400 hover:text-red-600 p-2">
+                        <button onClick={() => setToDelete(role)} aria-label="Delete role" className="text-gray-400 hover:text-red-600 p-2">
                           <Trash2 size={15} />
                         </button>
                       )}
@@ -224,6 +238,25 @@ export default function RolesPage() {
             )}
           </form>
         )}
+      </Modal>
+
+      <Modal
+        open={Boolean(toDelete)}
+        onClose={() => setToDelete(null)}
+        title="Delete this role?"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setToDelete(null)}>Cancel</Button>
+            <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete role'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-gray-600">
+          <strong>{toDelete?.name}</strong> will be removed permanently. Accounts using this role must be
+          reassigned first.
+        </p>
       </Modal>
     </div>
   )

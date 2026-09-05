@@ -138,13 +138,13 @@ const ArchiveManagement = () => {
               <button
                 onClick={handleArchive}
                 disabled={saving}
-                className="inline-flex items-center px-4 py-2 rounded-lg bg-[#002349] text-white text-sm font-medium hover:bg-[#003070] disabled:opacity-50"
+                className="inline-flex min-h-[44px] sm:min-h-0 items-center px-4 py-2 rounded-lg bg-[#002349] text-white text-sm font-medium hover:bg-[#003070] disabled:opacity-50"
               >
                 {saving ? 'Archiving...' : 'Confirm Archive'}
               </button>
               <button
                 onClick={() => setShowForm(false)}
-                className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-300"
+                className="btn-ghost"
               >
                 Cancel
               </button>
@@ -193,7 +193,7 @@ const ArchiveManagement = () => {
                   <button
                     onClick={() => openDeleteModal(item)}
                     title="Unarchive"
-                    className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors"
+                    className="shrink-0 inline-flex min-h-[44px] items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Unarchive

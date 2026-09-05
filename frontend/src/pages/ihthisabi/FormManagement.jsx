@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { api } from '../../utils/ihthisabi/api'
+import ConfirmationModal from '../../components/ihthisabi/ConfirmationModal'
 import toast from 'react-hot-toast'
 import {
   Plus, Edit2, Trash2, Copy, Eye, ChevronDown, ChevronUp,
@@ -52,6 +53,8 @@ const FormManagement = () => {
   const [cloneTarget, setCloneTarget] = useState({ quarter: 1, year: 2026 })
   const [savingForm, setSavingForm] = useState(false)
   const [expandedQuestion, setExpandedQuestion] = useState(null)
+  const [confirmAction, setConfirmAction] = useState(null) // { type: 'delete' | 'publish', formId }
+  const [confirmLoading, setConfirmLoading] = useState(false)
 
   const fetchForms = useCallback(async () => {
     try {
@@ -79,6 +82,16 @@ const FormManagement = () => {
     fetchNextQuarter()
   }, [fetchForms, fetchNextQuarter])
 
+  // Close clone modal on Escape
+  useEffect(() => {
+    if (!showCloneModal) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowCloneModal(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showCloneModal])
+
   const handleCreateNew = () => {
     const defaultQ = nextQuarterInfo?.nextQuarter?.quarter || 1
     const defaultY = nextQuarterInfo?.nextQuarter?.year || new Date().getFullYear()
@@ -105,13 +118,16 @@ const FormManagement = () => {
   }
 
   const handleDelete = async (formId) => {
-    if (!window.confirm('Are you sure you want to delete this form?')) return
+    setConfirmLoading(true)
     try {
       await api.delete(`/ihthisabi/application-forms/${formId}`)
       toast.success('Form deleted')
       fetchForms()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete form')
+    } finally {
+      setConfirmLoading(false)
+      setConfirmAction(null)
     }
   }
 
@@ -138,13 +154,16 @@ const FormManagement = () => {
   }
 
   const handlePublish = async (formId) => {
-    if (!window.confirm('Publish this form? Once published, users can submit for this quarter.')) return
+    setConfirmLoading(true)
     try {
       await api.put(`/ihthisabi/application-forms/${formId}/publish`)
       toast.success('Form published successfully')
       fetchForms()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to publish form')
+    } finally {
+      setConfirmLoading(false)
+      setConfirmAction(null)
     }
   }
 
@@ -349,7 +368,7 @@ const FormManagement = () => {
 
   if (view === 'editor' && editingForm) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+      <div className="ih-screen bg-gray-50 p-4 sm:p-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -365,7 +384,7 @@ const FormManagement = () => {
                 <span className="hidden sm:inline">{savingForm ? 'Saving...' : 'Save Form'}</span>
               </button>
               {editingForm._id && editingForm.status === 'draft' && (
-                <button onClick={() => handlePublish(editingForm._id)} title="Publish"
+                <button onClick={() => setConfirmAction({ type: 'publish', formId: editingForm._id })} title="Publish"
                   className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
                   <Send className="w-4 h-4" />
                   <span className="hidden sm:inline">Publish</span>
@@ -430,15 +449,15 @@ const FormManagement = () => {
                   <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full mr-2 flex-shrink-0">
                     {ANSWER_TYPES.find(t => t.value === question.answerType)?.label || question.answerType}
                   </span>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-4 flex-shrink-0">
                     <button onClick={(e) => { e.stopPropagation(); moveQuestion(qIndex, -1) }} disabled={qIndex === 0}
-                      className="p-1.5 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
+                      className="p-2 -m-2 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
                     <button onClick={(e) => { e.stopPropagation(); moveQuestion(qIndex, 1) }} disabled={qIndex === editingForm.questions.length - 1}
-                      className="p-1.5 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
+                      className="p-2 -m-2 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
                     <button onClick={(e) => { e.stopPropagation(); duplicateQuestion(qIndex) }}
-                      className="p-1.5 text-gray-400 hover:text-blue-600"><Copy className="w-4 h-4" /></button>
+                      className="p-2 -m-2 text-gray-400 hover:text-blue-600"><Copy className="w-4 h-4" /></button>
                     <button onClick={(e) => { e.stopPropagation(); removeQuestion(qIndex) }}
-                      className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      className="p-2 -m-2 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                     {expandedQuestion === qIndex ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                   </div>
                 </div>
@@ -610,7 +629,7 @@ const FormManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell max-w-5xl">
         {/* Header */}
         {/* Title is hidden on mobile — the sticky app bar already names the page. */}
@@ -620,7 +639,7 @@ const FormManagement = () => {
             <p className="ih-page-subtitle">Create and manage quarterly submission forms</p>
           </div>
           <button onClick={handleCreateNew}
-            className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:px-4 sm:py-2.5 sm:text-sm">
+            className="flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:min-h-0 sm:px-4 sm:py-2.5 sm:text-sm">
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="sm:hidden">New form</span>
             <span className="hidden sm:inline">Create New Form</span>
@@ -658,7 +677,7 @@ const FormManagement = () => {
             <h3 className="text-sm font-medium text-gray-900 mb-1">No forms created yet</h3>
             <p className="text-xs text-gray-500 mb-4">Create your first dynamic form to get started</p>
             <button onClick={handleCreateNew}
-              className="inline-flex items-center rounded-full bg-[#161F2F] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1a2538]">
+              className="inline-flex min-h-[44px] sm:min-h-0 items-center rounded-full bg-[#161F2F] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1a2538]">
               <Plus className="w-4 h-4 mr-2" /> Create Form
             </button>
           </div>
@@ -703,12 +722,12 @@ const FormManagement = () => {
                     <Copy className="w-3.5 h-3.5" />
                   </button>
                   {!published && (
-                    <button onClick={() => handlePublish(form._id)} title="Publish"
+                    <button onClick={() => setConfirmAction({ type: 'publish', formId: form._id })} title="Publish"
                       className="ih-icon-btn hover:bg-green-50 hover:text-green-600">
                       <Send className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  <button onClick={() => handleDelete(form._id)} title="Delete"
+                  <button onClick={() => setConfirmAction({ type: 'delete', formId: form._id })} title="Delete"
                     className="ih-icon-btn hover:bg-red-50 hover:text-red-600">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -722,8 +741,11 @@ const FormManagement = () => {
 
       {/* Clone Modal */}
       {showCloneModal && cloneSource && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowCloneModal(false)}
+        >
+          <div className="bg-white rounded-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Clone Form</h3>
             <p className="text-sm text-gray-500 mb-4">
               Clone "{cloneSource.title}" to a new quarter
@@ -746,18 +768,34 @@ const FormManagement = () => {
               </div>
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setShowCloneModal(false)}
-                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+              <button onClick={() => setShowCloneModal(false)} className="btn-ghost">
                 Cancel
               </button>
-              <button onClick={confirmClone}
-                className="px-4 py-2 text-sm text-white bg-black rounded-lg hover:bg-primary/90 transition-colors">
+              <button onClick={confirmClone} className="btn-secondary">
                 Clone Form
               </button>
             </div>
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={() => {
+          if (confirmAction?.type === 'delete') handleDelete(confirmAction.formId)
+          else if (confirmAction?.type === 'publish') handlePublish(confirmAction.formId)
+        }}
+        title={confirmAction?.type === 'delete' ? 'Delete Form' : 'Publish Form'}
+        message={
+          confirmAction?.type === 'delete'
+            ? 'Are you sure you want to delete this form? This action cannot be undone.'
+            : 'Publish this form? Once published, users can submit for this quarter.'
+        }
+        confirmText={confirmAction?.type === 'delete' ? 'Delete' : 'Publish'}
+        variant={confirmAction?.type === 'delete' ? 'danger' : 'info'}
+        isLoading={confirmLoading}
+      />
     </div>
   )
 }

@@ -97,6 +97,7 @@ export default function FormsPage() {
       <PageHeader
         title="Form Builder"
         subtitle="Configure the Rukn and Karkoon application forms, including each role's comment sections."
+        hideTitleOnMobile
         actions={
           <Button onClick={() => navigate('/members/forms/new')}>
             <Plus size={16} /> New form
@@ -169,6 +170,7 @@ export default function FormsPage() {
                   <div className="mt-2.5 flex items-center gap-1 border-t border-gray-100 pt-2">
                     <button
                       title="View submissions"
+                      aria-label="View submissions"
                       onClick={() => navigate(`/members/applications?formType=${template.formType}`)}
                       className={`${mobileIconBtn} active:text-blue-600 active:bg-blue-50`}
                     >
@@ -176,6 +178,7 @@ export default function FormsPage() {
                     </button>
                     <button
                       title="Edit"
+                      aria-label="Edit"
                       onClick={() => navigate(`/members/forms/${template._id}`)}
                       className={`${mobileIconBtn} active:text-green-600 active:bg-green-50`}
                     >
@@ -183,6 +186,7 @@ export default function FormsPage() {
                     </button>
                     <button
                       title="Clone to a new draft"
+                      aria-label="Clone to a new draft"
                       onClick={() => act(template, 'clone')}
                       className={`${mobileIconBtn} active:text-indigo-600 active:bg-indigo-50`}
                     >
@@ -190,6 +194,7 @@ export default function FormsPage() {
                     </button>
                     <button
                       title={template.isPublished ? 'Unpublish' : 'Publish'}
+                      aria-label={template.isPublished ? 'Unpublish' : 'Publish'}
                       onClick={() => act(template, template.isPublished ? 'unpublish' : 'publish')}
                       className={`${mobileIconBtn} active:text-[#5b21b6] active:bg-violet-50`}
                     >
@@ -197,6 +202,7 @@ export default function FormsPage() {
                     </button>
                     <button
                       title="Delete"
+                      aria-label="Delete"
                       onClick={() => setToDelete(template)}
                       className={`${mobileIconBtn} active:text-red-600 active:bg-red-50`}
                     >
@@ -248,6 +254,7 @@ export default function FormsPage() {
                       <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                         <button
                           title="View submissions"
+                          aria-label="View submissions"
                           onClick={() => navigate(`/members/applications?formType=${template.formType}`)}
                           className={`${iconBtn} hover:text-blue-600 hover:bg-blue-50`}
                         >
@@ -255,6 +262,7 @@ export default function FormsPage() {
                         </button>
                         <button
                           title="Edit"
+                          aria-label="Edit"
                           onClick={() => navigate(`/members/forms/${template._id}`)}
                           className={`${iconBtn} hover:text-green-600 hover:bg-green-50`}
                         >
@@ -262,6 +270,7 @@ export default function FormsPage() {
                         </button>
                         <button
                           title="Clone to a new draft"
+                          aria-label="Clone to a new draft"
                           onClick={() => act(template, 'clone')}
                           className={`${iconBtn} hover:text-indigo-600 hover:bg-indigo-50`}
                         >
@@ -269,6 +278,7 @@ export default function FormsPage() {
                         </button>
                         <button
                           title={template.isPublished ? 'Unpublish' : 'Publish'}
+                          aria-label={template.isPublished ? 'Unpublish' : 'Publish'}
                           onClick={() => act(template, template.isPublished ? 'unpublish' : 'publish')}
                           className={`${iconBtn} hover:text-[#5b21b6] hover:bg-violet-50`}
                         >
@@ -276,6 +286,7 @@ export default function FormsPage() {
                         </button>
                         <button
                           title="Delete"
+                          aria-label="Delete"
                           onClick={() => setToDelete(template)}
                           className={`${iconBtn} hover:text-red-600 hover:bg-red-50`}
                         >
