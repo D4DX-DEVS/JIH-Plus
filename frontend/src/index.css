@@ -94,7 +94,7 @@
   unicode-range: U+0D00-0D7F, U+0964-0965, U+200C-200D, U+25CC;
 }
 
-/* Apply Malayalam font globally - works for Rukn and Karkun forms */
+/* Apply Malayalam font globally */
 html, body {
   font-family: 'MalayalamUI', 'Noto Sans Malayalam', 'NotoSansMalayalam', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif !important;
   /* Hide scrollbar for Chrome, Safari and Opera */
@@ -107,6 +107,18 @@ html, body {
 @media (max-width: 639px) {
   html {
     font-size: 14px;
+  }
+
+  /* iOS Safari zooms the page when a focused text control's computed font-size
+     is under 16px. The 14px rem base above drags every rem-sized input below
+     that threshold, so force real text-entry controls up to 16px on phones.
+     Checkboxes/radios are excluded — they open native pickers and never trigger
+     the zoom. Selects DO trigger it on iOS Safari when focused, so they are
+     included; their pills are `truncate`d so the larger text never overflows. */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):not([type='button']):not([type='submit']),
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }
 
@@ -215,7 +227,7 @@ input[type="number"] {
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-white;
+    @apply inline-flex min-h-[44px] sm:min-h-0 items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-white;
     background-color: #178582;
     box-shadow: 0 1px 2px rgba(23, 133, 130, 0.24), 0 4px 12px rgba(23, 133, 130, 0.18);
   }
@@ -228,7 +240,7 @@ input[type="number"] {
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-white;
+    @apply inline-flex min-h-[44px] sm:min-h-0 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-white;
     background-color: #0A1828;
   }
   .btn-secondary:hover {
@@ -239,7 +251,7 @@ input[type="number"] {
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed border;
+    @apply inline-flex min-h-[44px] sm:min-h-0 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed border;
     border-color: #178582;
     color: #178582;
   }
@@ -252,7 +264,7 @@ input[type="number"] {
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 hover:bg-gray-200 hover:text-gray-900 focus:ring-gray-500;
+    @apply inline-flex min-h-[44px] sm:min-h-0 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 hover:bg-gray-200 hover:text-gray-900 focus:ring-gray-500;
   }
 
   /* Form styles — filled surfaces, ring on focus instead of a resting outline. */
@@ -328,31 +340,6 @@ input[type="number"] {
   .table td {
     @apply px-4 py-3 text-sm text-gray-900 border-b border-gray-100;
   }
-
-/* Karkun Form Inputs */
-.karkun-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-.karkun-form select,
-.karkun-form textarea {
-  border: 1px solid #d1d5db !important;
-  border-radius: 0.5rem;
-  padding: 0.45rem 0.75rem;
-  font-size: 0.875rem;
-  background-color: #fff;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.karkun-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
-.karkun-form select:focus,
-.karkun-form textarea:focus {
-  border-color: #002349 !important;
-  box-shadow: 0 0 0 2px rgba(0, 35, 73, 0.15);
-  outline: none;
-}
-
-.karkun-form input[readonly],
-.karkun-form textarea[readonly] {
-  background-color: #f3f4f6;
-}
 
   .table tbody tr:hover {
     @apply bg-gray-50;
@@ -443,8 +430,10 @@ input[type="number"] {
     border-top: 1px solid var(--color-hairline);
   }
 
+  /* One record per row. 56px minimum on phones so a thumb lands on exactly one
+     row — the same finger-friendly density the dashboard listings use. */
   .ih-list-row {
-    @apply relative flex items-center gap-2.5 px-3 py-2.5 sm:px-4 sm:py-3;
+    @apply relative flex min-h-[56px] items-center gap-2.5 px-3 py-3 sm:min-h-0 sm:px-4 sm:py-3;
     transition: background-color 0.2s ease;
   }
 
@@ -488,7 +477,7 @@ input[type="number"] {
 
   /* Icon-only action button sized for touch without eating the row. */
   .ih-icon-btn {
-    @apply inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full text-gray-400 transition-colors shrink-0;
+    @apply inline-flex h-[40px] w-[40px] sm:h-8 sm:w-8 items-center justify-center rounded-full text-gray-400 transition-colors shrink-0;
   }
 
   /* Filter grid — two controls per row on phones instead of one. */
@@ -500,7 +489,13 @@ input[type="number"] {
      A ring appears only on focus. */
   .ih-filter-select,
   .ih-field {
-    @apply block w-full appearance-none rounded-full border-0 py-[7px] pl-8 pr-7 text-[11px] sm:text-sm text-gray-700;
+    @apply block w-full appearance-none rounded-full border-0 py-[7px] pl-8 pr-7 text-[13px] sm:text-sm text-gray-700;
+  }
+
+  /* A select is a tap target in its own right: 44px tall on phones (the 14px
+     root font makes py-[7px] + 13px text only ~30px), compact from sm: up. */
+  .ih-filter-select {
+    @apply min-h-[44px] sm:min-h-0;
     background-color: rgba(16, 24, 40, 0.04);
     transition: background-color 0.2s ease, box-shadow 0.2s ease;
   }
@@ -520,14 +515,23 @@ input[type="number"] {
     @apply pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400;
   }
 
-  /* Segmented view switcher — a pill track with a floating active pill. */
+  /* Segmented view switcher — a pill track with a floating active pill.
+     Scrolls sideways when the pills outgrow the track instead of clipping them. */
   .ih-segment {
-    @apply flex items-center gap-0.5 rounded-full p-1;
+    @apply flex items-center gap-0.5 rounded-full p-1 overflow-x-auto;
     background-color: rgba(16, 24, 40, 0.045);
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
+  .ih-segment::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* flex: 1 0 auto — pills grow to share spare width but never shrink below
+     their own label, so a long label (e.g. "District Replies") is never cut off. */
   .ih-segment-btn {
-    @apply inline-flex flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-[11px] font-medium text-gray-500 whitespace-nowrap sm:text-xs;
+    @apply inline-flex flex-[1_0_auto] min-h-[44px] sm:min-h-0 items-center justify-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-medium text-gray-500 whitespace-nowrap sm:text-xs;
     transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
   }
 
@@ -558,12 +562,79 @@ input[type="number"] {
     background-color: #178582;
   }
 
+  /* Full-height page shell inside the ihthisabi Layout. `min-h-screen` on a page
+     that sits under the app bar and above the fixed bottom nav always over-
+     shoots the viewport by header + nav height, so every short page scrolls
+     ~130px into empty space. Subtract both on phones; full height on lg+. */
+  .ih-screen {
+    min-height: calc(100dvh - 4.125rem - 4.5rem - env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 1024px) {
+    .ih-screen {
+      min-height: 100vh;
+    }
+  }
+
   .ih-mobile-bottom-safe {
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
   }
 
   .ih-mobile-nav-safe {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Floating add button — phones only, parked above the fixed bottom nav.
+     Below z-30 so the "More" sheet and its backdrop still cover it. */
+  .ih-fab {
+    @apply fixed right-4 z-20 inline-flex h-[52px] w-[52px] items-center justify-center rounded-full text-white transition-colors sm:hidden;
+    bottom: calc(4.5rem + env(safe-area-inset-bottom) + 0.75rem);
+    background-color: #178582;
+    box-shadow: 0 4px 12px rgba(23, 133, 130, 0.32), 0 8px 24px rgba(16, 24, 40, 0.12);
+  }
+
+  .ih-fab:active {
+    background-color: #0d9488;
+  }
+
+  .ih-fab:disabled {
+    @apply opacity-50;
+  }
+
+  /* JIH expansion-portal variants of the toolbar primitives — same shapes, navy
+     accent. Its bottom nav runs to lg, so the FAB hides at lg rather than sm. */
+  .jih-toolbar .ih-field:focus,
+  .jih-toolbar .ih-filter-select:focus {
+    box-shadow: 0 0 0 2px rgba(0, 35, 73, 0.3), var(--shadow-soft);
+  }
+
+  .jih-toolbar .ih-filter-select {
+    @apply py-[10px] sm:py-[7px];
+  }
+
+  .jih-fab {
+    @apply fixed right-4 z-20 inline-flex h-[52px] w-[52px] items-center justify-center rounded-full text-white transition-colors lg:hidden;
+    bottom: calc(4.5rem + env(safe-area-inset-bottom) + 0.75rem);
+    background-color: #002349;
+    box-shadow: 0 4px 12px rgba(0, 35, 73, 0.32), 0 8px 24px rgba(16, 24, 40, 0.12);
+  }
+
+  .jih-fab:active {
+    background-color: #1a3a5c;
+  }
+
+  .jih-fab:disabled {
+    @apply opacity-50;
+  }
+
+  /* "More" panel unfolding upward out of the bottom bar. */
+  .ih-more-sheet {
+    animation: ihMoreSheetUp 0.2s ease both;
+  }
+
+  @keyframes ihMoreSheetUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .badge-error {

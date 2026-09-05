@@ -1,24 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Target as TargetIcon,
-  Plus,
-  ChevronRight,
-  ArrowLeft,
-  Check,
-  AlertTriangle,
-  TrendingUp,
-  X,
-  Trash2,
-  RefreshCw,
-  Users,
-  Sliders,
-  LayoutList,
-  Building2,
-  CheckCircle2,
-  Send,
-  MapPin
-} from 'lucide-react';
+import { ChevronRight, ArrowLeft, Check, AlertTriangle, TrendingUp, X, Trash2, RefreshCw, Users, Sliders, LayoutList, Building2, CheckCircle2, Send, MapPin, Target as TargetIcon } from 'lucide-react';
 import axios from 'axios';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
@@ -37,6 +19,7 @@ import {
 } from '../services/targetService';
 import jihLogo from '../assets/LogoColor.png';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import { JihFab, JihAddButton } from '../components/JihToolbar';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -164,13 +147,27 @@ function CreateTargetModal({ districts, onClose, onCreated }) {
     setBulkCounts(next);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl flex flex-col max-h-[92vh]">
+    <div
+      className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-xl flex flex-col max-h-[92vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0">
           <h2 className="text-base font-bold text-[#002349]">Create New Target</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 p-1"><X size={18} /></button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 p-2 -m-1"><X size={18} /></button>
         </div>
 
         <form onSubmit={mode === 'single' ? handleSingle : handleBulk} className="flex flex-col flex-1 min-h-0">
@@ -185,7 +182,7 @@ function CreateTargetModal({ districts, onClose, onCreated }) {
                 value={form.title}
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="e.g. Membership Drive 2026"
-                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#002349]/30"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-base outline-none focus:ring-2 focus:ring-[#002349]/30"
               />
             </div>
 
@@ -197,7 +194,7 @@ function CreateTargetModal({ districts, onClose, onCreated }) {
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                 rows={2}
                 placeholder="Optional..."
-                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#002349]/30 resize-none"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-base outline-none focus:ring-2 focus:ring-[#002349]/30 resize-none"
               />
             </div>
 
@@ -241,7 +238,7 @@ function CreateTargetModal({ districts, onClose, onCreated }) {
                     value={form.targetCount}
                     onChange={e => setForm(f => ({ ...f, targetCount: e.target.value }))}
                     placeholder="e.g. 5000"
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#002349]/30"
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2 text-base outline-none focus:ring-2 focus:ring-[#002349]/30"
                   />
                 </div>
                 <div>
@@ -249,7 +246,7 @@ function CreateTargetModal({ districts, onClose, onCreated }) {
                   <select
                     value={form.districtId}
                     onChange={e => setForm(f => ({ ...f, districtId: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#002349]/30"
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2 text-base outline-none focus:ring-2 focus:ring-[#002349]/30"
                   >
                     <option value="">Select district...</option>
                     {districts.map(d => (
@@ -272,12 +269,12 @@ function CreateTargetModal({ districts, onClose, onCreated }) {
                       value={form.targetCount}
                       onChange={e => setForm(f => ({ ...f, targetCount: e.target.value }))}
                       placeholder="Total to split"
-                      className="w-32 border border-gray-300 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-[#002349]/30 text-right"
+                      className="w-32 border border-gray-300 rounded-lg px-2 py-1 text-base outline-none focus:ring-2 focus:ring-[#002349]/30 text-right"
                     />
                     <button
                       type="button"
                       onClick={handleEqualFill}
-                      className="flex items-center gap-1 text-xs text-[#002349] font-semibold border border-[#002349]/30 rounded-lg px-2 py-1 hover:bg-[#002349]/5"
+                      className="flex items-center gap-1 text-xs text-[#002349] font-semibold border border-[#002349]/30 rounded-lg px-2.5 py-2 hover:bg-[#002349]/5"
                     >
                       <Users size={11} /> Equal split
                     </button>
@@ -300,7 +297,7 @@ function CreateTargetModal({ districts, onClose, onCreated }) {
                           value={bulkCounts[d._id] ?? ''}
                           onChange={e => setBulkCounts(c => ({ ...c, [d._id]: e.target.value }))}
                           placeholder="0"
-                          className="w-28 border border-gray-200 rounded-lg px-2 py-1 text-sm text-right outline-none focus:ring-2 focus:ring-[#002349]/30"
+                          className="w-28 border border-gray-200 rounded-lg px-2 py-1 text-base text-right outline-none focus:ring-2 focus:ring-[#002349]/30"
                         />
                       </div>
                     ))}
@@ -421,7 +418,7 @@ function AllocateAreasPanel({ target, districtAlloc, onDone }) {
           const equalVal = distributeEqually(districtAlloc.allocatedCount, areas.length)[i];
           return (
             <div key={a._id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5">
-              <span className="flex-1 text-sm font-medium text-gray-800 truncate">{a.name}</span>
+              <span className="min-w-0 flex-1 text-sm font-medium text-gray-800 truncate">{a.name}</span>
               {mode === 'equal' ? (
                 <span className="text-sm font-semibold text-[#002349] w-20 text-right">{equalVal.toLocaleString()}</span>
               ) : (
@@ -430,7 +427,7 @@ function AllocateAreasPanel({ target, districtAlloc, onDone }) {
                   min={0}
                   value={custom[a._id] ?? 0}
                   onChange={e => setCustom(c => ({ ...c, [a._id]: e.target.value }))}
-                  className="w-24 border border-gray-300 rounded-lg px-2 py-1 text-sm text-right outline-none focus:ring-2 focus:ring-[#002349]/30"
+                  className="w-24 border border-gray-300 rounded-lg px-2 py-1 text-base text-right outline-none focus:ring-2 focus:ring-[#002349]/30"
                 />
               )}
             </div>
@@ -531,7 +528,7 @@ function AllocateUnitsPanel({ target, areaAlloc, onDone }) {
           const equalVal = distributeEqually(areaAlloc.allocatedCount, units.length)[i];
           return (
             <div key={u._id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5">
-              <span className="flex-1 text-sm font-medium text-gray-800 truncate">{u.name}</span>
+              <span className="min-w-0 flex-1 text-sm font-medium text-gray-800 truncate">{u.name}</span>
               {mode === 'equal' ? (
                 <span className="text-sm font-semibold text-[#002349] w-20 text-right">{equalVal.toLocaleString()}</span>
               ) : (
@@ -540,7 +537,7 @@ function AllocateUnitsPanel({ target, areaAlloc, onDone }) {
                   min={0}
                   value={custom[u._id] ?? 0}
                   onChange={e => setCustom(c => ({ ...c, [u._id]: e.target.value }))}
-                  className="w-24 border border-gray-300 rounded-lg px-2 py-1 text-sm text-right outline-none focus:ring-2 focus:ring-[#002349]/30"
+                  className="w-24 border border-gray-300 rounded-lg px-2 py-1 text-base text-right outline-none focus:ring-2 focus:ring-[#002349]/30"
                 />
               )}
             </div>
@@ -679,7 +676,7 @@ function TargetDetailView({ targetId, role, onBack }) {
 
   return (
     <div className="space-y-6">
-      <button onClick={onBack} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 -ml-2 text-sm font-medium text-gray-500 hover:bg-white hover:text-[#002349] transition-colors">
+      <button onClick={onBack} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 -ml-2 text-sm font-medium text-gray-500 hover:bg-white hover:text-[#002349] transition-colors">
         <ArrowLeft size={15} /> Back to targets
       </button>
 
@@ -736,7 +733,7 @@ function TargetDetailView({ targetId, role, onBack }) {
             <h3 className="flex items-center gap-2 text-sm font-semibold text-[#002349]"><LayoutList className="w-4 h-4" /> Allocate to Areas</h3>
             <button
               onClick={() => setActivePanel(activePanel === 'allocate-areas' ? null : 'allocate-areas')}
-              className="flex-shrink-0 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-[#002349] hover:bg-gray-50 transition-colors"
+              className="flex-shrink-0 rounded-lg border border-gray-200 px-2.5 py-2 text-xs font-semibold text-[#002349] hover:bg-gray-50 transition-colors"
             >
               {activePanel === 'allocate-areas' ? 'Hide' : 'Open allocation panel'}
             </button>
@@ -774,7 +771,7 @@ function TargetDetailView({ targetId, role, onBack }) {
                 </div>
                 <button
                   onClick={() => setActivePanel(activePanel === 'allocate-units' ? null : 'allocate-units')}
-                  className="flex-shrink-0 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-[#002349] hover:bg-gray-50 transition-colors"
+                  className="flex-shrink-0 rounded-lg border border-gray-200 px-2.5 py-2 text-xs font-semibold text-[#002349] hover:bg-gray-50 transition-colors"
                 >
                   {activePanel === 'allocate-units' ? 'Hide' : 'Open allocation panel'}
                 </button>
@@ -931,21 +928,14 @@ const TargetsPage = ({ onLogout }) => {
         <MobileTopBar
           title="ടാർഗറ്റ്"
           actions={
-            <>
-              {role === 'admin' && !selectedTargetId && (
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="flex items-center gap-1 rounded-lg bg-[#002349] px-2.5 py-1.5 text-xs font-semibold text-white"
-                >
-                  <Plus size={14} /> New
-                </button>
-              )}
-              <button onClick={() => loadTargets()} className="rounded-lg p-1.5 text-gray-400 hover:text-[#002349]" title="Refresh">
-                <RefreshCw size={16} />
-              </button>
-            </>
+            <button onClick={() => loadTargets()} className="ih-icon-btn hover:text-[#002349]" title="Refresh" aria-label="Refresh">
+              <RefreshCw size={16} />
+            </button>
           }
         />
+        {role === 'admin' && !selectedTargetId && (
+          <JihFab onClick={() => setShowCreateModal(true)} label="New Target" />
+        )}
 
         {/* Desktop header */}
         <div className="hidden lg:flex bg-white border-b px-6 py-3 items-center gap-3 flex-shrink-0 z-10 shadow-sm">
@@ -954,12 +944,7 @@ const TargetsPage = ({ onLogout }) => {
             <h1 className="text-lg font-bold text-[#002349] truncate">ടാർഗറ്റുകൾ</h1>
           </div>
           {role === 'admin' && !selectedTargetId && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-1.5 bg-[#002349] text-white px-3 py-1.5 rounded-xl text-sm font-semibold hover:bg-[#1a3a5c]"
-            >
-              <Plus size={15} /> New Target
-            </button>
+            <JihAddButton onClick={() => setShowCreateModal(true)}>New Target</JihAddButton>
           )}
           <button onClick={() => loadTargets()} className="p-1.5 text-gray-400 hover:text-[#002349] rounded-lg" title="Refresh">
             <RefreshCw size={16} />
@@ -983,7 +968,7 @@ const TargetsPage = ({ onLogout }) => {
                     <TargetIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#002349]" />
                   </div>
                   <div className="min-w-0">
-                    <h1 className="text-base sm:text-xl lg:text-3xl font-bold text-[#002349] leading-tight">ടാർഗറ്റുകൾ</h1>
+                    <h1 className="hidden lg:block lg:text-3xl font-bold text-[#002349] leading-tight">ടാർഗറ്റുകൾ</h1>
                     <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
                       {loading ? 'Loading...' : `${targets.length} target${targets.length === 1 ? '' : 's'}`}
                     </p>
@@ -1005,7 +990,7 @@ const TargetsPage = ({ onLogout }) => {
                   {role === 'admin' && (
                     <button
                       onClick={() => setShowCreateModal(true)}
-                      className="mt-4 px-6 py-2.5 bg-[#002349] text-white rounded-xl font-semibold text-sm hover:bg-[#1a3a5c] transition-colors"
+                      className="mt-4 min-h-[44px] px-6 py-2.5 bg-[#002349] text-white rounded-xl font-semibold text-sm hover:bg-[#1a3a5c] transition-colors"
                     >
                       Create the first target
                     </button>
@@ -1047,7 +1032,7 @@ const TargetsPage = ({ onLogout }) => {
                         <div className="mt-3 flex justify-end border-t border-gray-100 pt-2.5">
                           <button
                             onClick={e => { e.stopPropagation(); setTargetToDelete(t); setShowDeleteModal(true); }}
-                            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                            className="inline-flex items-center gap-1.5 rounded-lg min-h-[44px] px-2.5 py-2 text-xs font-semibold text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                           >
                             <Trash2 size={14} /> Delete
                           </button>

@@ -254,6 +254,31 @@ router.get('/monthly-surveys/all-levels', adminAuth, async (req, res) => {
 
 
 
+// Get one monthly survey by level + id. Lets the detail pages survive a page
+// refresh / direct link instead of depending on router state from the list.
+router.get('/monthly-surveys/:level/:id', adminAuth, async (req, res) => {
+  try {
+    const { level, id } = req.params;
+    const Model = { district: DistrictSurvey, area: AreaSurvey, unit: UnitSurvey }[level];
+    if (!Model) {
+      return res.status(400).json({ message: 'Invalid survey level' });
+    }
+    const doc = await Model.findById(id);
+    if (!doc) {
+      return res.status(404).json({ message: 'Monthly survey not found' });
+    }
+    const s = doc.toObject();
+    const survey =
+      level === 'district' ? { ...s, submissionLevel: 'district', submittedByName: s.district }
+      : level === 'area' ? { ...s, submissionLevel: 'area', submittedByName: s.area || `Area Admin (${s.submittedBy})`, areaName: s.area }
+      : { ...s, submissionLevel: 'unit', submittedByName: s.component, unitName: s.component, areaName: s.area };
+    res.json({ message: 'Monthly survey retrieved successfully', survey });
+  } catch (error) {
+    console.error('Get monthly survey by id error:', error);
+    res.status(500).json({ message: 'Server error while retrieving monthly survey' });
+  }
+});
+
 // Delete a specific monthly survey by ID (Admin can delete any monthly survey)
 router.delete('/monthly-surveys/:id', adminAuth, async (req, res) => {
   try {

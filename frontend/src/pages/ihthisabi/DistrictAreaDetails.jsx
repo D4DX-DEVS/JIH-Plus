@@ -141,17 +141,17 @@ const DistrictAreaDetails = () => {
       <div className="flex items-start gap-2 mb-3 sm:mb-4">
         <button
           onClick={() => navigate('/ihthisabi/districtadmin')}
-          className="mt-0.5 p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 shrink-0"
+          className="mt-0.5 h-[44px] w-[44px] sm:h-8 sm:w-8 inline-flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 shrink-0"
           aria-label="Back to dashboard"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="min-w-0">
-          <h1 className="ih-page-title truncate">{area}</h1>
+          <h1 className="hidden lg:block ih-page-title truncate">{area}</h1>
           <p className="ih-page-subtitle flex items-center gap-1">
             <MapPin className="w-3 h-3 shrink-0 text-[#7B4FF2]" />
             <span className="truncate">
-              {data?.district || '…'}{period ? ` · ${getQuarterName(period.quarter)} ${period.year}` : ''}
+              {area}{data?.district ? ` · ${data.district}` : ''}{period ? ` · ${getQuarterName(period.quarter)} ${period.year}` : ''}
             </span>
           </p>
         </div>
@@ -163,7 +163,7 @@ const DistrictAreaDetails = () => {
           value={period?.quarter || ''}
           onChange={(e) => changePeriod(Number(e.target.value), period?.year)}
           disabled={initialLoading}
-          className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+          className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-2 py-1.5 border border-gray-200 rounded-lg text-[13px] sm:text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
         >
           {getAvailableQuarters().map((q) => (
             <option key={q} value={q}>{getQuarterName(q)}</option>
@@ -173,7 +173,7 @@ const DistrictAreaDetails = () => {
           value={period?.year || ''}
           onChange={(e) => changePeriod(period?.quarter, Number(e.target.value))}
           disabled={initialLoading}
-          className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+          className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-2 py-1.5 border border-gray-200 rounded-lg text-[13px] sm:text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
         >
           {Array.from({ length: 4 }, (_, i) => new Date().getFullYear() - i).map((y) => (
             <option key={y} value={y}>{y}</option>
@@ -210,18 +210,18 @@ const DistrictAreaDetails = () => {
             ))}
           </div>
 
-          {/* Section tabs */}
-          <div className="ih-segment mb-3">
+          {/* Section tabs — swipeable on phones so labels + counts never clip */}
+          <div className="ih-segment mb-3 overflow-x-auto scrollbar-hide">
             {SECTIONS.map((s) => {
               const Icon = s.icon
               return (
                 <button
                   key={s.key}
                   onClick={() => changeSection(s.key)}
-                  className={`ih-segment-btn ${section === s.key ? 'bg-[#7B4FF2] text-white shadow-sm' : ''}`}
+                  className={`ih-segment-btn py-2.5 sm:py-1.5 ${section === s.key ? 'bg-[#7B4FF2] text-white shadow-sm' : ''}`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">{s.label}</span>
+                  <span>{s.label}</span>
                   <span className={`text-[10px] font-semibold ${section === s.key ? 'text-white/80' : 'text-gray-400'}`}>{sectionCounts[s.key]}</span>
                 </button>
               )
@@ -236,7 +236,7 @@ const DistrictAreaDetails = () => {
               placeholder="Search by name, RUKN ID, unit…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-base sm:text-sm bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
             />
           </div>
 
@@ -256,7 +256,7 @@ const DistrictAreaDetails = () => {
                 {items.map((member) => {
                   const submission = member.submission
                   return (
-                    <div key={member._id} className="px-3 sm:px-4 py-2.5 flex items-center gap-3">
+                    <div key={member._id} className="px-3 sm:px-4 py-3 sm:py-2.5 min-h-[56px] flex items-center gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-medium text-gray-900 truncate">{member.name}</p>
@@ -279,7 +279,7 @@ const DistrictAreaDetails = () => {
                           <span className="font-mono">{member.ruknId}</span> · {member.unit}
                         </p>
                         {section === 'pending' && member.contactNo && (
-                          <a href={`tel:${member.contactNo}`} className="inline-flex items-center gap-1 text-[11px] text-[#7B4FF2] mt-0.5">
+                          <a href={`tel:${member.contactNo}`} className="inline-flex items-center gap-1 text-[11px] text-[#7B4FF2] mt-0.5 py-1.5 -my-1">
                             <Phone className="w-3 h-3" /> {member.contactNo}
                           </a>
                         )}
@@ -287,7 +287,7 @@ const DistrictAreaDetails = () => {
                       {submission && submission.type === 'regular' && (
                         <button
                           onClick={() => openSubmission(member)}
-                          className="text-[#7B4FF2] hover:underline inline-flex items-center gap-1 text-xs font-medium shrink-0"
+                          className="text-[#7B4FF2] hover:underline inline-flex items-center gap-1 text-xs font-medium shrink-0 p-2 -m-2"
                         >
                           <Eye className="w-3.5 h-3.5" /> Report
                         </button>
@@ -315,7 +315,7 @@ const DistrictAreaDetails = () => {
               <h3 className="text-lg font-semibold text-gray-900">Submission Report</h3>
               <button
                 onClick={() => { setSelectedSubmission(null); setFormSchema(null) }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-2 -m-2 rounded-full"
               >
                 <CloseIcon className="w-5 h-5" />
               </button>
@@ -327,9 +327,9 @@ const DistrictAreaDetails = () => {
                 </div>
               ) : selectedSubmission?._id ? (
                 <div className="space-y-4 text-sm">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-bold text-gray-900">{selectedSubmission.ruknName}</h4>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[selectedSubmission.status] || 'bg-gray-100 text-gray-800'}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-lg font-bold text-gray-900 min-w-0 break-words">{selectedSubmission.ruknName}</h4>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium shrink-0 ${STATUS_COLORS[selectedSubmission.status] || 'bg-gray-100 text-gray-800'}`}>
                       {selectedSubmission.status}
                     </span>
                   </div>

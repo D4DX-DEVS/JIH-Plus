@@ -8,7 +8,7 @@ const ProfilePage = () => {
   const { user: authUser } = useAuth()
   const [user, setUser] = useState(authUser)
   const [loading, setLoading] = useState(true)
-  const [copied, setCopied] = useState(false)
+  const [copiedField, setCopiedField] = useState(null)
 
   useEffect(() => {
     fetchUserData()
@@ -55,13 +55,13 @@ const ProfilePage = () => {
     }
   }
 
-  const handleCopy = async (text, label) => {
+  const handleCopy = async (text, label, field) => {
     if (!text) return
     try {
       await navigator.clipboard.writeText(String(text))
-      setCopied(true)
+      setCopiedField(field)
       toast.success(`${label} copied to clipboard`)
-      setTimeout(() => setCopied(false), 2000)
+      setTimeout(() => setCopiedField(null), 2000)
     } catch (e) {
       console.error('Failed to copy')
       toast.error('Failed to copy')
@@ -131,7 +131,7 @@ const ProfilePage = () => {
         <div className="bg-primary/5 px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-2 sm:gap-3">
             <div className="text-center sm:text-left">
-              <h1 className="text-base sm:text-2xl font-semibold text-gray-900">
+              <h1 className="hidden lg:block text-base sm:text-2xl font-semibold text-gray-900">
                 {user?.name || user?.username || 'User'}
               </h1>
             </div>
@@ -177,11 +177,11 @@ const ProfilePage = () => {
                   <label className="text-xs sm:text-sm font-semibold text-gray-600">{isAdmin ? 'Admin ID' : 'RUKN ID'}</label>
                 </div>
                 <button
-                  onClick={() => handleCopy(user?.ruknId || user?.id, isAdmin ? 'Admin ID' : 'RUKN ID')}
-                  className="p-1.5 hover:bg-white rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  onClick={() => handleCopy(user?.ruknId || user?.id, isAdmin ? 'Admin ID' : 'RUKN ID', 'ruknId')}
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center -my-2 -mr-1 p-1.5 hover:bg-white rounded-lg transition-colors lg:min-h-0 lg:min-w-0 lg:my-0 lg:mr-0 lg:opacity-0 lg:group-hover:opacity-100"
                   title={`Copy ${isAdmin ? 'Admin ID' : 'RUKN ID'}`}
                 >
-                  {copied ? (
+                  {copiedField === 'ruknId' ? (
                     <Check className="h-4 w-4 text-green-600" />
                   ) : (
                     <Copy className="h-4 w-4 text-gray-400" />
@@ -257,11 +257,11 @@ const ProfilePage = () => {
                   <label className="text-xs sm:text-sm font-semibold text-gray-600">Contact Number</label>
                 </div>
                 <button
-                  onClick={() => handleCopy(user?.contactNo, 'Contact Number')}
-                  className="p-1.5 hover:bg-white rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  onClick={() => handleCopy(user?.contactNo, 'Contact Number', 'contactNo')}
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center -my-2 -mr-1 p-1.5 hover:bg-white rounded-lg transition-colors lg:min-h-0 lg:min-w-0 lg:my-0 lg:mr-0 lg:opacity-0 lg:group-hover:opacity-100"
                   title="Copy Contact Number"
                 >
-                  {copied ? (
+                  {copiedField === 'contactNo' ? (
                     <Check className="h-4 w-4 text-green-600" />
                   ) : (
                     <Copy className="h-4 w-4 text-gray-400" />
@@ -283,11 +283,11 @@ const ProfilePage = () => {
                   <label className="text-xs sm:text-sm font-semibold text-gray-600">Email</label>
                 </div>
                 <button
-                  onClick={() => handleCopy(user?.email || user?.emailId, 'Email')}
-                  className="p-1.5 hover:bg-white rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                  onClick={() => handleCopy(user?.email || user?.emailId, 'Email', 'email')}
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center -my-2 -mr-1 p-1.5 hover:bg-white rounded-lg transition-colors lg:min-h-0 lg:min-w-0 lg:my-0 lg:mr-0 lg:opacity-0 lg:group-hover:opacity-100"
                   title="Copy Email"
                 >
-                  {copied ? (
+                  {copiedField === 'email' ? (
                     <Check className="h-4 w-4 text-green-600" />
                   ) : (
                     <Copy className="h-4 w-4 text-gray-400" />

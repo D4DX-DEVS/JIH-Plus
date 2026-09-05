@@ -20,7 +20,9 @@
     "migrate:locations": "node scripts/migrateLocationFromJson.js",
     "migrate:locations:dry": "node scripts/migrateLocationFromJson.js --dry-run",
     "ihtisabi:migrate:districtadmins": "node scripts/migrateDistrictAdminsFromJson.js",
-    "ihtisabi:migrate:districtadmins:dry": "node scripts/migrateDistrictAdminsFromJson.js --dry-run"
+    "ihtisabi:migrate:districtadmins:dry": "node scripts/migrateDistrictAdminsFromJson.js --dry-run",
+    "members:migrate": "node scripts/migrateMembersFromJih.js",
+    "members:migrate:dry": "node scripts/migrateMembersFromJih.js --dry-run"
   },
   "keywords": [
     "jih",

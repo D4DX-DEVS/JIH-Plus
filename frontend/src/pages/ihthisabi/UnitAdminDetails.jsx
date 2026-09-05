@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../../utils/ihthisabi/api'
+import toast from 'react-hot-toast'
 import {
   ArrowLeft,
   Users,
@@ -86,6 +87,7 @@ const UnitAdminDetails = () => {
       if (response.data?.success) setData(response.data.data)
     } catch (error) {
       console.error('Error fetching unit details:', error)
+      toast.error('Failed to load details')
     } finally {
       setInitialLoading(false)
       setListLoading(false)
@@ -145,13 +147,14 @@ const UnitAdminDetails = () => {
       <div className="flex items-start gap-2 mb-3 sm:mb-4">
         <button
           onClick={() => navigate('/ihthisabi/unitadmin')}
-          className="mt-0.5 p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 shrink-0"
+          className="mt-0.5 inline-flex h-[44px] w-[44px] items-center justify-center lg:h-8 lg:w-8 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 shrink-0"
           aria-label="Back to dashboard"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="min-w-0">
-          <h1 className="ih-page-title truncate">Unit Members &amp; Submissions</h1>
+          {/* The mobile app bar already names this screen ("Unit Details"), so the big title is desktop-only. */}
+          <h1 className="ih-page-title truncate hidden lg:block">Unit Members &amp; Submissions</h1>
           <p className="ih-page-subtitle flex items-center gap-1">
             <MapPin className="w-3 h-3 shrink-0 text-[#7B4FF2]" />
             <span className="truncate">
@@ -167,7 +170,7 @@ const UnitAdminDetails = () => {
           value={period?.quarter || ''}
           onChange={(e) => changePeriod(Number(e.target.value), period?.year)}
           disabled={initialLoading}
-          className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+          className="flex-1 sm:flex-none px-2 py-2.5 lg:py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
         >
           {getAvailableQuarters().map((q) => (
             <option key={q} value={q}>{getQuarterName(q)}</option>
@@ -177,7 +180,7 @@ const UnitAdminDetails = () => {
           value={period?.year || ''}
           onChange={(e) => changePeriod(period?.quarter, Number(e.target.value))}
           disabled={initialLoading}
-          className="flex-1 sm:flex-none px-2 py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+          className="flex-1 sm:flex-none px-2 py-2.5 lg:py-1.5 border border-gray-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
         >
           {Array.from({ length: 4 }, (_, i) => new Date().getFullYear() - i).map((y) => (
             <option key={y} value={y}>{y}</option>
@@ -222,7 +225,7 @@ const UnitAdminDetails = () => {
                 <button
                   key={s.key}
                   onClick={() => changeSection(s.key)}
-                  className={`ih-segment-btn ${section === s.key ? 'bg-[#7B4FF2] text-white shadow-sm' : ''}`}
+                  className={`ih-segment-btn min-h-[44px] lg:min-h-0 ${section === s.key ? 'bg-[#7B4FF2] text-white shadow-sm' : ''}`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">{s.label}</span>
@@ -240,7 +243,7 @@ const UnitAdminDetails = () => {
               placeholder="Search by name, RUKN ID…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
+              className="w-full pl-9 pr-3 py-2.5 lg:py-2 border border-gray-200 rounded-lg text-base lg:text-sm bg-white focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2]"
             />
           </div>
 
@@ -281,7 +284,7 @@ const UnitAdminDetails = () => {
                         </div>
                         <p className="text-[11px] text-gray-500 truncate font-mono">{member.ruknId}</p>
                         {section === 'pending' && member.contactNo && (
-                          <a href={`tel:${member.contactNo}`} className="inline-flex items-center gap-1 text-[11px] text-[#7B4FF2] mt-0.5">
+                          <a href={`tel:${member.contactNo}`} className="inline-flex items-center gap-1 text-[11px] text-[#7B4FF2] mt-0.5 py-1.5">
                             <Phone className="w-3 h-3" /> {member.contactNo}
                           </a>
                         )}
@@ -289,7 +292,7 @@ const UnitAdminDetails = () => {
                       {submission && submission.type === 'regular' && (
                         <button
                           onClick={() => openSubmission(member)}
-                          className="text-[#7B4FF2] hover:underline inline-flex items-center gap-1 text-xs font-medium shrink-0"
+                          className="text-[#7B4FF2] hover:underline inline-flex items-center gap-1 text-xs font-medium shrink-0 min-h-[44px] px-2 -mr-2"
                         >
                           <Eye className="w-3.5 h-3.5" /> Report
                         </button>
@@ -317,7 +320,7 @@ const UnitAdminDetails = () => {
               <h3 className="text-lg font-semibold text-gray-900">Submission Report</h3>
               <button
                 onClick={() => { setSelectedSubmission(null); setFormSchema(null) }}
-                className="text-gray-400 hover:text-gray-600"
+                className="p-2 -m-2 rounded-lg text-gray-400 hover:text-gray-600"
               >
                 <CloseIcon className="w-5 h-5" />
               </button>
@@ -329,9 +332,9 @@ const UnitAdminDetails = () => {
                 </div>
               ) : selectedSubmission?._id ? (
                 <div className="space-y-4 text-sm">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-bold text-gray-900">{selectedSubmission.ruknName}</h4>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[selectedSubmission.status] || 'bg-gray-100 text-gray-800'}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-lg font-bold text-gray-900 min-w-0 break-words">{selectedSubmission.ruknName}</h4>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium shrink-0 ${STATUS_COLORS[selectedSubmission.status] || 'bg-gray-100 text-gray-800'}`}>
                       {selectedSubmission.status}
                     </span>
                   </div>

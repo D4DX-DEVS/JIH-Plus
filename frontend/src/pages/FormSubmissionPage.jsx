@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Plus, Trash2, Edit } from 'lucide-react';
+import { FileText, Trash2, Edit } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { JihFab, JihAddButton } from '../components/JihToolbar';
 import axios from 'axios';
 import FormPage from './FormPage';
 import FormDetailPage from './FormDetailPage';
@@ -13,6 +15,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
   const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [formToDelete, setFormToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editingForm, setEditingForm] = useState(null);
 
   useEffect(() => {
@@ -64,6 +67,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
   };
 
   const handleFormSubmit = (formData) => {
+    toast.success(editingForm ? 'Form updated successfully' : 'Form submitted successfully');
     setShowForm(false);
     setEditingForm(null);
     // Reload forms after submission
@@ -109,17 +113,24 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
 
   const confirmDeleteForm = async () => {
     try {
+      setIsDeleting(true);
       const token = localStorage.getItem('userToken');
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/user/forms/${formToDelete._id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
+      toast.success('Form deleted successfully');
       loadUserForms();
       setFormToDelete(null);
+      setShowDeleteModal(false);
     } catch (error) {
       console.error('Error deleting form:', error);
       setError('Failed to delete form');
+      toast.error('Failed to delete form');
+      setShowDeleteModal(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -148,7 +159,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-[60vh] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#002349] mx-auto mb-4"></div>
           <p className="text-gray-600 font-medium">Loading your dashboard...</p>
@@ -170,13 +181,10 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
           </p>
         </div>
         {onCreateNew && (
-          <button
-            onClick={handleCreateForm}
-            className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all duration-300 hover:shadow-md"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New Form</span>
-          </button>
+          <>
+            <JihAddButton onClick={handleCreateForm}>Create New Form</JihAddButton>
+            <JihFab onClick={handleCreateForm} label="Create New Form" />
+          </>
         )}
       </div>
 
@@ -196,62 +204,112 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
             <FileText className="w-7 h-7 text-gray-400" />
           </div>
           <h3 className="text-lg font-bold text-[#002349] mb-2">No forms submitted yet</h3>
-          <p className="text-gray-600 mb-1 text-sm">
-            Get started by creating your first form submission from the top button.
+          <p className="text-gray-600 mb-4 text-sm">
+            Get started by creating your first form submission.
           </p>
+          {onCreateNew && (
+            <JihAddButton onClick={handleCreateForm} className="inline-flex min-h-[44px]">Create New Form</JihAddButton>
+          )}
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-[#002349] border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Submission Date</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {forms.map((form) => (
-                <tr 
-                  key={form._id} 
-                  className="hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => handleViewForm(form)}
-                >
-                  <td className="px-4 py-3 text-sm font-semibold text-[#002349]">
-                    {form.district || 'Unnamed District'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
-                    {new Date(form.submittedAt).toLocaleDateString()} at {new Date(form.submittedAt).toLocaleTimeString()}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditForm(form);
-                        }}
-                        className="p-2 text-gray-400 hover:text-[#002349] hover:bg-gray-100 rounded-lg transition-all duration-300"
-                        title="Edit Form"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteForm(form);
-                        }}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
-                        title="Delete Form"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        <>
+          {/* Mobile card list */}
+          <div className="lg:hidden space-y-2.5">
+            {forms.map((form) => (
+              <div
+                key={form._id}
+                onClick={() => handleViewForm(form)}
+                className="bg-white rounded-lg border border-gray-200 p-3.5 active:bg-gray-50 transition-colors cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-[#002349] break-words">
+                      {form.district || 'Unnamed District'}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {new Date(form.submittedAt).toLocaleDateString()} at {new Date(form.submittedAt).toLocaleTimeString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditForm(form);
+                      }}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-[#002349] hover:bg-gray-100 rounded-lg transition-all duration-300"
+                      title="Edit Form"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteForm(form);
+                      }}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
+                      title="Delete Form"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden lg:block bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-[#002349] border-b border-gray-200">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Submission Date</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {forms.map((form) => (
+                  <tr
+                    key={form._id}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => handleViewForm(form)}
+                  >
+                    <td className="px-4 py-3 text-sm font-semibold text-[#002349]">
+                      {form.district || 'Unnamed District'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {new Date(form.submittedAt).toLocaleDateString()} at {new Date(form.submittedAt).toLocaleTimeString()}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditForm(form);
+                          }}
+                          className="p-2 text-gray-400 hover:text-[#002349] hover:bg-gray-100 rounded-lg transition-all duration-300"
+                          title="Edit Form"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteForm(form);
+                          }}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
+                          title="Delete Form"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Confirmation Modals */}
@@ -264,6 +322,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
         confirmText="Delete"
         cancelText="Cancel"
         type="danger"
+        loading={isDeleting}
       />
     </>
   );

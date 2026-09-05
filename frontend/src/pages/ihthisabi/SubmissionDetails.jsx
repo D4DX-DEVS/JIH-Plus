@@ -3,16 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { api } from '../../utils/ihthisabi/api'
 import ConfirmationModal from '../../components/ihthisabi/ConfirmationModal'
-import { 
-  ArrowLeft, 
-  Calendar, 
-  User, 
-  MapPin, 
-  CheckCircle, 
+import {
+  ArrowLeft,
+  Calendar,
+  User,
+  MapPin,
+  CheckCircle,
   Trash2,
   Edit,
   Star,
-  X as CloseIcon
+  X as CloseIcon,
+  AlertCircle
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -115,13 +116,29 @@ const SubmissionDetails = ({ userRole }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
   }
 
-  if (!submission) return null
+  if (!submission) {
+    return (
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center px-4">
+          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Submission Not Found</h3>
+          <p className="text-gray-600 mb-6">The submission you're looking for doesn't exist.</p>
+          <button
+            onClick={() => navigate(backPath)}
+            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const form = submission.form || {}
   const isDynamicSubmission = !!(submission.dynamicFormId && submission.dynamicFormData)
@@ -147,8 +164,8 @@ const SubmissionDetails = ({ userRole }) => {
               {question.subFields?.map((sf, sfIdx) => {
                 const effectiveFieldId = sf.fieldId || `field_${sfIdx}`
                 return (
-                  <div key={effectiveFieldId} className="bg-gray-50 rounded-xl px-4 py-3 text-center">
-                    <p className="text-xs text-gray-500 mb-1">{sf.labelMl || sf.label}</p>
+                  <div key={effectiveFieldId} className="bg-gray-50 rounded-xl px-2 py-3 text-center sm:px-4">
+                    <p className="text-xs text-gray-500 mb-1 break-words leading-relaxed">{sf.labelMl || sf.label}</p>
                     <p className="font-bold text-2xl text-gray-900">{(value || {})[effectiveFieldId] ?? 0}</p>
                   </div>
                 )
@@ -222,7 +239,7 @@ const SubmissionDetails = ({ userRole }) => {
       }
       return (
         <div key={key} className="p-5">
-          <h3 className="font-medium text-gray-900 mb-2">{index + 1}. {key}</h3>
+          <h3 className="font-medium text-gray-900 mb-2 leading-relaxed break-words">{index + 1}. {key}</h3>
           <div className="bg-gray-50 rounded px-4 py-2.5">
             <span className="font-semibold text-gray-900">{String(displayValue)}</span>
           </div>
@@ -232,34 +249,36 @@ const SubmissionDetails = ({ userRole }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 px-4">
+    <div className="ih-screen bg-gray-50 py-4 sm:py-6 px-4">
       <div className="max-w-5xl mx-auto relative">
+        {/* Below the sticky mobile app bar (~56px) so it never overlaps the account button */}
         <button
           onClick={() => navigate(backPath)}
-          className="fixed top-4 right-4 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+          className="fixed top-16 lg:top-4 right-4 z-50 flex items-center justify-center w-11 h-11 lg:w-10 lg:h-10 rounded-full bg-white shadow-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
           aria-label="Close"
         >
           <CloseIcon className="w-5 h-5" />
         </button>
         {/* Header Card */}
-        <div className="bg-white border border-gray-200 rounded-3xl shadow-lg p-6 mb-6 space-y-6">
+        <div className="bg-white border border-gray-200 rounded-3xl shadow-lg p-4 sm:p-6 mb-6 space-y-4 sm:space-y-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900 brand-font">സമർപ്പണ വിവരങ്ങൾ</h1>
-              <p className="text-sm text-gray-500 mt-1">പ്രതിമാസ പ്രവർത്തന റിപ്പോർട്ട്: {submission.periodDisplay}</p>
+            <div className="min-w-0">
+              {/* App bar already titles this screen on mobile */}
+              <h1 className="hidden lg:block text-2xl font-semibold text-gray-900 brand-font">സമർപ്പണ വിവരങ്ങൾ</h1>
+              <p className="text-sm text-gray-500 mt-1 break-words leading-relaxed">പ്രതിമാസ പ്രവർത്തന റിപ്പോർട്ട്: {submission.periodDisplay}</p>
             </div>
             <div className="flex items-center gap-2">
-              
+
               <button
                 onClick={() => navigate(editPath)}
-                className="px-4 py-2 bg-[#161F2F] text-white rounded-lg text-xs font-semibold flex items-center gap-1 hover:bg-[#1a2538]"
+                className="min-h-[44px] lg:min-h-0 flex-1 sm:flex-none px-4 py-2 bg-[#161F2F] text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1 hover:bg-[#1a2538]"
               >
                 <Edit className="w-4 h-4" />
                 Edit
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-xs font-semibold flex items-center gap-1 hover:border-red-300"
+                className="min-h-[44px] lg:min-h-0 flex-1 sm:flex-none px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 hover:border-red-300"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete
@@ -320,19 +339,19 @@ const SubmissionDetails = ({ userRole }) => {
 
           {/* Question 2 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-3">2. ഹദീസ് പഠനം : (എണ്ണം)</h3>
+            <h3 className="font-medium text-gray-900 mb-3 leading-relaxed break-words">2. ഹദീസ് പഠനം : (എണ്ണം)</h3>
             <p className="text-4xl font-bold text-primary">{form.hadithCount || 0}</p>
           </div>
 
           {/* Question 3 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-3">3. പുസ്തക വായന</h3>
+            <h3 className="font-medium text-gray-900 mb-3 leading-relaxed break-words">3. പുസ്തക വായന</h3>
             <div className="space-y-2">
-              <div className="flex items-center justify-between bg-gray-50 rounded px-4 py-2.5 text-sm">
+              <div className="flex items-center justify-between gap-3 bg-gray-50 rounded px-4 py-2.5 text-sm">
                 <span className="text-gray-700">A. മുസ്‌ലിം വനിതകളും ഇസ്‌ലാമിക പ്രബോധനവും</span>
                 <span className="font-semibold text-gray-900">{getLabel(form.bookReading?.islami)}</span>
               </div>
-              <div className="flex items-center justify-between bg-gray-50 rounded px-4 py-2.5 text-sm">
+              <div className="flex items-center justify-between gap-3 bg-gray-50 rounded px-4 py-2.5 text-sm">
                 <span className="text-gray-700">B. മദീനയിലെ ഏടുകളിൽ നിന്ന്</span>
                 <span className="font-semibold text-gray-900">{getLabel(form.bookReading?.atma)}</span>
               </div>
@@ -347,18 +366,18 @@ const SubmissionDetails = ({ userRole }) => {
 
           {/* Question 4 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-3">4. പ്രതിവാരയോഗം :</h3>
+            <h3 className="font-medium text-gray-900 mb-3 leading-relaxed break-words">4. പ്രതിവാരയോഗം :</h3>
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-gray-50 rounded px-4 py-3 text-center">
-                <p className="text-xs text-gray-600 mb-1">ഹാജർ</p>
+              <div className="bg-gray-50 rounded px-2 py-3 text-center sm:px-4">
+                <p className="text-xs text-gray-600 mb-1 break-words">ഹാജർ</p>
                 <p className="font-bold text-2xl text-gray-900">{form.weeklyMeeting?.hadir || 0}</p>
               </div>
-              <div className="bg-gray-50 rounded px-4 py-3 text-center">
-                <p className="text-xs text-gray-600 mb-1">ലീവ്</p>
+              <div className="bg-gray-50 rounded px-2 py-3 text-center sm:px-4">
+                <p className="text-xs text-gray-600 mb-1 break-words">ലീവ്</p>
                 <p className="font-bold text-2xl text-gray-900">{form.weeklyMeeting?.leave || 0}</p>
               </div>
-              <div className="bg-gray-50 rounded px-4 py-3 text-center">
-                <p className="text-xs text-gray-600 mb-1">ആബ്സന്റ്</p>
+              <div className="bg-gray-50 rounded px-2 py-3 text-center sm:px-4">
+                <p className="text-xs text-gray-600 mb-1 break-words">ആബ്സന്റ്</p>
                 <p className="font-bold text-2xl text-gray-900">{form.weeklyMeeting?.absent || 0}</p>
               </div>
             </div>
@@ -366,18 +385,18 @@ const SubmissionDetails = ({ userRole }) => {
 
           {/* Question 5 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-3">5. പ്രാദേശിക ജമാഅത്തെ യോഗം:</h3>
+            <h3 className="font-medium text-gray-900 mb-3 leading-relaxed break-words">5. പ്രാദേശിക ജമാഅത്തെ യോഗം:</h3>
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-gray-50 rounded px-4 py-3 text-center">
-                <p className="text-xs text-gray-600 mb-1">ഹാജർ</p>
+              <div className="bg-gray-50 rounded px-2 py-3 text-center sm:px-4">
+                <p className="text-xs text-gray-600 mb-1 break-words">ഹാജർ</p>
                 <p className="font-bold text-2xl text-gray-900">{form.jamaathMeeting?.hadir || 0}</p>
               </div>
-              <div className="bg-gray-50 rounded px-4 py-3 text-center">
-                <p className="text-xs text-gray-600 mb-1">ലീവ്</p>
+              <div className="bg-gray-50 rounded px-2 py-3 text-center sm:px-4">
+                <p className="text-xs text-gray-600 mb-1 break-words">ലീവ്</p>
                 <p className="font-bold text-2xl text-gray-900">{form.jamaathMeeting?.leave || 0}</p>
               </div>
-              <div className="bg-gray-50 rounded px-4 py-3 text-center">
-                <p className="text-xs text-gray-600 mb-1">ആബ്സന്റ്</p>
+              <div className="bg-gray-50 rounded px-2 py-3 text-center sm:px-4">
+                <p className="text-xs text-gray-600 mb-1 break-words">ആബ്സന്റ്</p>
                 <p className="font-bold text-2xl text-gray-900">{form.jamaathMeeting?.absent || 0}</p>
               </div>
             </div>
@@ -385,50 +404,50 @@ const SubmissionDetails = ({ userRole }) => {
 
           {/* Question 6 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-2">6. ഗൃഹയോഗങ്ങൾ :</h3>
+            <h3 className="font-medium text-gray-900 mb-2 leading-relaxed break-words">6. ഗൃഹയോഗങ്ങൾ :</h3>
             <p className="text-2xl font-bold text-gray-900">{form.grihameetings || 0}</p>
           </div>
 
           {/* Question 7 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-2">7. തഹ്രീകീ യോഗം - പങ്കാളിത്തം</h3>
+            <h3 className="font-medium text-gray-900 mb-2 leading-relaxed break-words">7. തഹ്രീകീ യോഗം - പങ്കാളിത്തം</h3>
             <p className="text-2xl font-bold text-gray-900">{form.thahreekiMeetings || 0}</p>
           </div>
 
           {/* Question 8 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-2">8. ബൈതുല്മാല് (2%) നല്കിയത്:</h3>
+            <h3 className="font-medium text-gray-900 mb-2 leading-relaxed break-words">8. ബൈതുല്മാല് (2%) നല്കിയത്:</h3>
             <p className="text-lg font-semibold text-gray-900">{getLabel(form.baithulmaal)}</p>
           </div>
 
           {/* Question 9 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-2">9. സകാത്ത് ബൈതുല്മാലിൽ അടച്ചോ?</h3>
+            <h3 className="font-medium text-gray-900 mb-2 leading-relaxed break-words">9. സകാത്ത് ബൈതുല്മാലിൽ അടച്ചോ?</h3>
             <p className="text-lg font-semibold text-gray-900">{getLabel(form.zakatPaid)}</p>
           </div>
 
 
           {/* Question 10 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-2">10. പുതുതായി സംഘടനയിലേക്ക് കൊണ്ടുവന്ന വ്യക്തികൾ: (എണ്ണം)</h3>
+            <h3 className="font-medium text-gray-900 mb-2 leading-relaxed break-words">10. പുതുതായി സംഘടനയിലേക്ക് കൊണ്ടുവന്ന വ്യക്തികൾ: (എണ്ണം)</h3>
             <p className="text-2xl font-bold text-gray-900">{form.newMembers || 0}</p>
           </div>
 
           {/* Question 11 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-2">11. മുസ്‌ലിം വ്യക്തിബന്ധങ്ങൾ : (എണ്ണം)</h3>
+            <h3 className="font-medium text-gray-900 mb-2 leading-relaxed break-words">11. മുസ്‌ലിം വ്യക്തിബന്ധങ്ങൾ : (എണ്ണം)</h3>
             <p className="text-2xl font-bold text-gray-900">{form.muslimRelations || 0}</p>
           </div>
 
           {/* Question 12 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-2">12. സഹോദര സമുദായങ്ങളുമായുള്ള വ്യക്തിബന്ധം : (എണ്ണം)</h3>
+            <h3 className="font-medium text-gray-900 mb-2 leading-relaxed break-words">12. സഹോദര സമുദായങ്ങളുമായുള്ള വ്യക്തിബന്ധം : (എണ്ണം)</h3>
             <p className="text-2xl font-bold text-gray-900">{form.communityRelations || 0}</p>
           </div>
 
           {/* Question 13 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-2">13. ഈ ത്രൈമാസത്തിൽ നടത്തിയ സ്കോഡുകൾ : (എണ്ണം)</h3>
+            <h3 className="font-medium text-gray-900 mb-2 leading-relaxed break-words">13. ഈ ത്രൈമാസത്തിൽ നടത്തിയ സ്കോഡുകൾ : (എണ്ണം)</h3>
             <p className="text-2xl font-bold text-gray-900">{form.scoreCount || 0}</p>
           </div>
 
@@ -446,7 +465,7 @@ const SubmissionDetails = ({ userRole }) => {
 
           {/* Question 16 */}
           <div className="p-5">
-            <h3 className="font-medium text-gray-900 mb-2">16. പ്രാദേശിക ജമാഅത്തെ യോഗം താങ്കളിൽ സ്വാധീനം ചെലുത്താറുണ്ടോ?</h3>
+            <h3 className="font-medium text-gray-900 mb-2 leading-relaxed break-words">16. പ്രാദേശിക ജമാഅത്തെ യോഗം താങ്കളിൽ സ്വാധീനം ചെലുത്താറുണ്ടോ?</h3>
             <div className="flex items-center space-x-2 mt-3">
               {form.jamaathInfluence && (
                 <div className="flex items-center">

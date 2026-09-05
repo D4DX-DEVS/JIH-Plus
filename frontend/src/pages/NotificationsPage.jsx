@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Plus, Calendar, AlertCircle, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bell, Calendar, AlertCircle, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 import CreateNotificationModal from '../components/modals/CreateNotificationModal';
 import NotificationDetailModal from '../components/modals/NotificationDetailModal';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
@@ -10,6 +11,7 @@ import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
 import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
 import axios from 'axios';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import { JihFab, JihAddButton } from '../components/JihToolbar';
 
 const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLogout }) => {
   const navigate = useNavigate();
@@ -29,6 +31,9 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   const [districtSidebarOpen, setDistrictSidebarOpen] = useState(false);
   const [adminData, setAdminData] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [notificationToDelete, setNotificationToDelete] = useState(null);
+  const [showDeleteNotifModal, setShowDeleteNotifModal] = useState(false);
+  const [isDeletingNotif, setIsDeletingNotif] = useState(false);
 
   // Load userData synchronously on mount if not provided as prop
   const [loadedUserData] = useState(() => {
@@ -223,10 +228,6 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
     const isDistrictUser = userRole === 'district';
     const districtDashboardPath = userData?.districtId ? `/district-dashboard/${userData.districtId}` : '/district-dashboard';
 
-    if (tabId === 'membership') {
-      navigate('/membership', { state: { roleHint: isDistrictUser ? 'district' : 'admin' } });
-      return;
-    }
 
     if (isDistrictUser) {
       const viewMap = {
@@ -250,17 +251,6 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
     navigate('/view-reports');
   };
 
-  const handleNavigateToMembership = () => {
-    const roleHint =
-      userRole === 'district'
-        ? 'district'
-        : userRole === 'unit'
-        ? 'unit'
-        : userRole === 'area'
-        ? 'area'
-        : 'admin';
-    navigate('/membership', { state: { roleHint } });
-  };
 
   const handleDownloadCSV = () => {
     // Download CSV functionality
@@ -314,8 +304,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   const areaTabStateMap = {
     monthly: { initialTab: 'monthly' },
     units: { initialTab: 'units' },
-    stats: { initialTab: 'stats' },
-    membership: { initialTab: 'membership' }
+    stats: { initialTab: 'stats' }
   };
 
   const goToAreaDashboard = (tabId) => {
@@ -329,10 +318,6 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   const handleAreaSidebarNavigate = (viewId) => {
     setAreaSidebarOpen(false);
     if (viewId === 'notifications') {
-      return;
-    }
-    if (viewId === 'membership') {
-      navigate('/membership', { state: { roleHint: 'area' } });
       return;
     }
     if (viewId === 'dynamic-reports') {
@@ -367,10 +352,6 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
     if (viewId === 'notifications') {
       return;
     }
-    if (viewId === 'membership') {
-      handleNavigateToMembership();
-      return;
-    }
     if (viewId === 'dynamic-reports') {
       navigate('/user-reports');
       return;
@@ -397,10 +378,6 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       navigate('/user-reports');
       return;
     }
-    if (viewId === 'membership') {
-      navigate('/membership', { state: { roleHint: 'district' } });
-      return;
-    }
     navigate(districtDashboardPath, { state: { activeView: viewId } });
   };
 
@@ -423,7 +400,6 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         activeTab="notifications"
         onTabChange={handleTabChange}
         onNavigateToReports={handleNavigateToReports}
-        onNavigateToMembership={handleNavigateToMembership}
         onDownloadCSV={handleDownloadCSV}
         onNavigateToNotifications={handleNavigateToNotifications}
         onLogout={handleLogoutClick}
@@ -435,6 +411,9 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <MobileTopBar
+          title="നോട്ടിഫിക്കേഷൻ"
+        />
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
           {content}
         </div>
@@ -450,7 +429,6 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         onLogout={handleLogoutClick}
         onNotifications={handleAreaNotificationsShortcut}
         onDynamicReports={handleAreaDynamicShortcut}
-        onNavigateToMembership={handleNavigateToMembership}
         areaName={areaName}
         districtName={districtName}
         isMobileOpen={areaSidebarOpen}
@@ -476,7 +454,6 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         onLogout={handleLogoutClick}
         onNotifications={handleUnitNotificationsShortcut}
         onDynamicReports={handleUnitDynamicShortcut}
-        onNavigateToMembership={handleNavigateToMembership}
         unitName={unitName}
         areaName={unitAreaName}
         districtName={districtName}
@@ -503,7 +480,6 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         onLogout={handleLogoutClick}
         onNotifications={handleDistrictNotificationsShortcut}
         onDynamicReports={handleDistrictDynamicShortcut}
-        onNavigateToMembership={handleNavigateToMembership}
         districtName={districtName}
         isMobileOpen={districtSidebarOpen}
         onMobileToggle={() => setDistrictSidebarOpen((prev) => !prev)}
@@ -545,17 +521,18 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       );
       
       setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      // Silent fail
+    } catch {
+      toast.error('Failed to mark notification as read');
     }
   };
 
   const deleteNotification = async (notificationId) => {
     try {
+      setIsDeletingNotif(true);
       let token = (userData?.role === 'admin' || userData?.role === 'superadmin')
-        ? localStorage.getItem('adminToken') 
+        ? localStorage.getItem('adminToken')
         : localStorage.getItem('userToken');
-      
+
       if (!token && (userData?.role === 'admin' || userData?.role === 'superadmin')) {
         token = localStorage.getItem('userToken');
       }
@@ -566,8 +543,24 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       );
 
       setNotifications(prev => prev.filter(n => n._id !== notificationId));
-    } catch (error) {
-      // Silent fail
+      toast.success('Notification deleted');
+    } catch {
+      toast.error('Failed to delete notification');
+    } finally {
+      setIsDeletingNotif(false);
+      setShowDeleteNotifModal(false);
+      setNotificationToDelete(null);
+    }
+  };
+
+  const handleDeleteNotificationClick = (notification) => {
+    setNotificationToDelete(notification);
+    setShowDeleteNotifModal(true);
+  };
+
+  const confirmDeleteNotification = () => {
+    if (notificationToDelete) {
+      deleteNotification(notificationToDelete._id);
     }
   };
 
@@ -685,30 +678,22 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
     return 'You don\'t have any notifications at the moment. Notifications from administrators will appear here.';
   };
 
+  const canCreate = ['admin', 'superadmin', 'district', 'area'].includes(userData?.role);
+
   const pageContent = (
     <div className="space-y-6 pb-10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg sm:text-xl lg:text-3xl font-bold text-[#002349]">നോട്ടിഫിക്കേഷൻ</h1>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          {unreadCount > 0 && (
-            <div className="bg-[#957C3D] text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center">
-              <Bell className="w-4 h-4 mr-1" />
-              {unreadCount} unread
-            </div>
-          )}
-          {(userData?.role === 'admin' || userData?.role === 'superadmin' || userData?.role === 'district' || userData?.role === 'area') && (
-            <button
-              onClick={openCreateModal}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#002349] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1a3a5c]"
-            >
-              <Plus className="w-4 h-4" />
-              {showCreateModal ? 'Hide Form' : 'Create Notification'}
-            </button>
-          )}
-        </div>
+      {/* Desktop-only header: below lg the MobileTopBar owns the title, the
+          add action is the FAB, and the unread badge sits in the tab row so
+          no vertical space is spent on a header. */}
+      <div className="hidden lg:flex flex-wrap items-center justify-between gap-3">
+        <h1 className="lg:text-3xl font-bold text-[#002349]">നോട്ടിഫിക്കേഷൻ</h1>
+        {canCreate && (
+          <JihAddButton onClick={openCreateModal}>
+            {showCreateModal ? 'Hide Form' : 'Create Notification'}
+          </JihAddButton>
+        )}
       </div>
+      {canCreate && !showCreateModal && <JihFab onClick={openCreateModal} label="Create Notification" />}
 
       {showCreateModal ? (
         <CreateNotificationModal
@@ -720,23 +705,29 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         />
       ) : (
         <>
-          {showReceivedTab && showSentTab && (
-            <div className="flex gap-2 text-sm font-semibold text-gray-500">
-              {showReceivedTab && (
+          {(showReceivedTab && showSentTab || unreadCount > 0) && (
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-500">
+              {showReceivedTab && showSentTab && (
                 <button
                   onClick={() => setActiveTab('received')}
-                  className={`rounded-full px-4 py-1.5 transition ${activeTab === 'received' ? 'bg-[#002349] text-white' : 'bg-white shadow-sm'}`}
+                  className={`rounded-full px-4 py-2 min-h-[44px] sm:min-h-0 transition ${activeTab === 'received' ? 'bg-[#002349] text-white' : 'bg-white shadow-sm'}`}
                 >
                   Received
                 </button>
               )}
-              {showSentTab && (
+              {showReceivedTab && showSentTab && (
                 <button
                   onClick={() => setActiveTab('sent')}
-                  className={`rounded-full px-4 py-1.5 transition ${activeTab === 'sent' ? 'bg-[#957C3D] text-white' : 'bg-white shadow-sm'}`}
+                  className={`rounded-full px-4 py-2 min-h-[44px] sm:min-h-0 transition ${activeTab === 'sent' ? 'bg-[#957C3D] text-white' : 'bg-white shadow-sm'}`}
                 >
                   Sent
                 </button>
+              )}
+              {unreadCount > 0 && (
+                <div className="ml-auto inline-flex items-center gap-1 rounded-full bg-[#957C3D] px-3 py-1 text-xs font-semibold text-white">
+                  <Bell className="w-3.5 h-3.5" />
+                  {unreadCount} unread
+                </div>
               )}
             </div>
           )}
@@ -775,19 +766,27 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
                 <div
                   key={notification._id}
                   onClick={() => setSelectedNotification(notification)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedNotification(notification);
+                    }
+                  }}
                   className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm transition hover:shadow-md cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className={`mt-1 flex h-9 w-9 items-center justify-center rounded-full ${notification.hasRead ? 'bg-gray-100 text-gray-500' : 'bg-[#002349] text-white'}`}>
+                    <div className="flex min-w-0 items-start gap-3">
+                      <div className={`mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${notification.hasRead ? 'bg-gray-100 text-gray-500' : 'bg-[#002349] text-white'}`}>
                         <Bell className="h-4 w-4" />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold text-[#002349]">{notification.title}</p>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="break-words text-sm font-semibold text-[#002349]">{notification.title}</p>
                           {!notification.hasRead && <span className="rounded-full bg-[#957C3D]/10 px-2 py-0.5 text-[10px] font-semibold text-[#957C3D]">New</span>}
                         </div>
-                        <p className="text-sm text-gray-600 line-clamp-2">{notification.description}</p>
+                        <p className="break-words text-sm text-gray-600 line-clamp-2">{notification.description}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-500 flex-shrink-0">
@@ -795,25 +794,25 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
                       {formatDate(notification.createdAt)}
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
                     {activeTab === 'sent' ? (
-                      <span>To: {getRecipientsText(notification.recipients)}</span>
+                      <span className="min-w-0 break-words">To: {getRecipientsText(notification.recipients)}</span>
                     ) : (
-                      <span>From: {notification.senderName}</span>
+                      <span className="min-w-0 break-words">From: {notification.senderName}</span>
                     )}
                     <div className="flex items-center gap-2">
                       {activeTab === 'sent' && (
                         <>
                           <button
                             onClick={(e) => { e.stopPropagation(); openEditModal(notification); }}
-                            className="inline-flex items-center gap-1 rounded-md border border-[#002349]/30 px-2 py-1 text-xs font-semibold text-[#002349] hover:bg-[#002349]/5"
+                            className="inline-flex items-center gap-1 rounded-md border border-[#002349]/30 px-2.5 py-2 min-h-[44px] text-xs font-semibold text-[#002349] hover:bg-[#002349]/5"
                           >
                             <Pencil className="h-3 w-3" />
                             Edit
                           </button>
                           <button
-                            onClick={(e) => { e.stopPropagation(); deleteNotification(notification._id); }}
-                            className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteNotificationClick(notification); }}
+                            className="rounded-md border border-red-200 px-2.5 py-2 min-h-[44px] text-xs font-semibold text-red-600 hover:bg-red-50"
                           >
                             Delete
                           </button>
@@ -822,7 +821,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
                       {activeTab === 'received' && !notification.hasRead && (
                         <button
                           onClick={(e) => { e.stopPropagation(); markAsRead(notification._id); }}
-                          className="rounded-md border border-[#002349] px-2 py-1 text-xs font-semibold text-[#002349] hover:bg-[#002349]/5"
+                          className="rounded-md border border-[#002349] px-2.5 py-2 min-h-[44px] text-xs font-semibold text-[#002349] hover:bg-[#002349]/5"
                         >
                           Mark as read
                         </button>
@@ -843,7 +842,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
                 <button
                   onClick={() => goToPage(page - 1)}
                   disabled={pagination.currentPage <= 1}
-                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 min-h-[44px] text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                   Previous
@@ -851,7 +850,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
                 <button
                   onClick={() => goToPage(page + 1)}
                   disabled={pagination.currentPage >= pagination.totalPages}
-                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 min-h-[44px] text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
                   Next
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -882,6 +881,18 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         confirmText={isUnitUser || isAreaUser ? "ലോഗൗട്ട്" : "Logout"}
         cancelText={isUnitUser || isAreaUser ? "റദ്ദാക്കുക" : "Cancel"}
         type="logout"
+      />
+
+      <ConfirmationModal
+        isOpen={showDeleteNotifModal}
+        onClose={() => { setShowDeleteNotifModal(false); setNotificationToDelete(null); }}
+        onConfirm={confirmDeleteNotification}
+        title="Delete Notification"
+        message={`Are you sure you want to delete "${notificationToDelete?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        loading={isDeletingNotif}
       />
     </div>
   );

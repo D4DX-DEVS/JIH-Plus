@@ -11,7 +11,6 @@ import {
   BarChart2,
   MapPin,
   Menu,
-  X,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -29,7 +28,6 @@ const AdminSidebar = ({
   onTabChange,
   onNavigateToReports,
   onNavigateToNotifications,
-  onNavigateToMembership,
   onLogout,
   adminEmail,
   adminData,
@@ -147,18 +145,12 @@ const AdminSidebar = ({
       onClick: () => navigate('/admin/master-data') },
     { key: 'notifications', label: 'Alerts', icon: Bell, active: isNotificationsRoute,
       onClick: () => { if (onNavigateToNotifications) onNavigateToNotifications(); else navigate('/notifications'); } },
-    { key: 'more', label: 'More', icon: Menu, active: false,
-      onClick: () => { if (toggleSidebar) toggleSidebar(); } },
+    { key: 'more', label: 'More', icon: Menu, action: 'more' },
   ];
 
   const handleTabChangeSafe = (tabId) => {
     if (onTabChange) {
       onTabChange(tabId);
-      return;
-    }
-
-    if (tabId === 'membership') {
-      navigate('/membership', { state: { roleHint: 'admin' } });
       return;
     }
 
@@ -177,22 +169,42 @@ const AdminSidebar = ({
     }
   };
 
+  // "More" sheet lists only what the bottom bar doesn't already carry —
+  // dashboard, reports, notifications and master data are one tap away.
+  const barIds = new Set(['dashboard', 'view-reports', 'notifications', 'master-data']);
+  const moreItems = [];
+  navItems.forEach((item) => {
+    if (item.type === 'group') {
+      item.children.forEach((child) => {
+        const meta = DYNAMIC_REPORT_META[child.reportType];
+        moreItems.push({
+          key: child.id,
+          label: `${item.label} · ${meta.label}`,
+          icon: child.icon,
+          active: location.pathname === `/admin/dynamic-submissions/${child.id.replace('dynamic-submissions-', '')}`,
+          onClick: child.onClick,
+        });
+      });
+    } else if (!barIds.has(item.id)) {
+      moreItems.push({
+        key: item.id,
+        label: item.label,
+        icon: item.icon,
+        active:
+          item.id === 'stats' ? activeTab === 'stats' :
+          item.id === 'targets' ? location.pathname.startsWith('/targets') :
+          false,
+        onClick: item.onClick || (() => handleTabChangeSafe(item.id)),
+      });
+    }
+  });
+
   return (
     <>
-      {/* Mobile backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-gray-900/50 backdrop-blur-sm lg:hidden"
-          onClick={toggleSidebar}
-        />
-      )}
-
-      {/* Sidebar */}
+      {/* Sidebar — desktop only; phones navigate via the bottom bar and its
+          "More" sheet, so this never slides in on mobile. */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-[min(18rem,85vw)] sm:w-72 ${SIDEBAR_THEME.bg} shadow-2xl border-r ${SIDEBAR_THEME.border} transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:translate-x-0 lg:flex-shrink-0 ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72'} ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        style={{ willChange: 'transform' }}
+        className={`hidden lg:block fixed inset-y-0 left-0 z-40 w-[min(18rem,85vw)] sm:w-72 ${SIDEBAR_THEME.bg} shadow-2xl border-r ${SIDEBAR_THEME.border} transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:bottom-auto lg:h-screen lg:translate-x-0 lg:flex-shrink-0 ${isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72'}`}
       >
         <div className="flex flex-col h-full overflow-hidden">
           {/* Sidebar Header */}
@@ -207,12 +219,6 @@ const AdminSidebar = ({
                 <h2 className="text-base font-bold text-white whitespace-nowrap" style={{ fontFamily: 'Cinzel, serif' }}>Admin Dashboard</h2>
               </div>
             </div>
-            <button
-              onClick={toggleSidebar}
-              className="lg:hidden text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors flex-shrink-0"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
 
           {/* User Info */}
@@ -223,7 +229,7 @@ const AdminSidebar = ({
 
           {/* Navigation Tabs */}
           <nav className="flex-1 px-3 py-4 overflow-y-auto">
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
 
@@ -245,7 +251,7 @@ const AdminSidebar = ({
                         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} text-white/40 ${isDesktopCollapsed ? 'lg:hidden' : ''}`} />
                       </button>
                       {isOpen && !isDesktopCollapsed && (
-                        <div className="mt-1 ml-3 space-y-1">
+                        <div className="mt-1 ml-3 space-y-2">
                           {(item.children || []).map(child => {
                             const ChildIcon = child.icon;
                             const isChildActive = location.pathname === `/admin/dynamic-submissions/${child.id.replace('dynamic-submissions-', '')}`;
@@ -258,7 +264,7 @@ const AdminSidebar = ({
                                   child.onClick?.();
                                   if (toggleSidebar) toggleSidebar();
                                 }}
-                                className={`w-full flex items-center pl-3 pr-2 py-2 text-xs font-medium rounded-lg transition-colors ${
+                                className={`w-full flex items-center pl-3 pr-2 py-3 text-xs font-medium rounded-lg transition-colors ${
                                   isChildActive ? style.active : style.base
                                 }`}
                               >
@@ -310,7 +316,7 @@ const AdminSidebar = ({
           </nav>
 
           {/* Powered by and Logout Buttons */}
-          <div className="p-3 space-y-1.5 border-t border-white/10">
+          <div className="p-3 space-y-1.5 border-t border-white/10 ih-mobile-nav-safe">
             <PoweredByD4DX collapsed={isDesktopCollapsed} dark />
 
             {/* Logout Button */}
@@ -338,7 +344,7 @@ const AdminSidebar = ({
         </button>
       </aside>
 
-      <MobileBottomNav items={bottomNavItems} hidden={sidebarOpen} />
+      <MobileBottomNav items={bottomNavItems} hidden={sidebarOpen} moreItems={moreItems} onLogout={onLogout} />
     </>
   );
 };

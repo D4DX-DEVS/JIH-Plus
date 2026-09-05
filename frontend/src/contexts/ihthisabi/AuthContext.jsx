@@ -4,13 +4,16 @@ import toast from 'react-hot-toast'
 
 const AuthContext = createContext()
 
-const initialState = {
+// Built fresh on every provider mount. Must NOT be a module-level constant:
+// the token would then be frozen at page load, so remounting the provider
+// (leaving /ihthisabi and coming back) would resurrect a logged-out token.
+const createInitialState = () => ({
   user: null,
   token: localStorage.getItem('token'),
   isAuthenticated: false,
   loading: true,
   error: null
-}
+})
 
 const authReducer = (state, action) => {
   switch (action.type) {
@@ -63,7 +66,7 @@ const authReducer = (state, action) => {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, initialState)
+  const [state, dispatch] = useReducer(authReducer, undefined, createInitialState)
   // True only while the one-time stored-token check on app boot is running.
   // Kept separate from state.loading, which also toggles on every login()
   // call — routing must not unmount the login page mid-request just
@@ -224,18 +227,13 @@ export const AuthProvider = ({ children }) => {
               payload: null
             })
           } else {
-            // Other errors - keep token but show as unauthenticated
-            console.log('Auth check failed with non-401 error, keeping token')
+            // Other errors (e.g. 500) are not genuine network failures - treat
+            // as an auth failure so the user sees the login page instead of a
+            // half-authenticated shell with an unrecognized 'unknown' role.
+            console.log('Auth check failed with non-401 error, treating as auth failure')
             dispatch({
-              type: 'AUTH_SUCCESS',
-              payload: {
-                user: { 
-                  username: 'User', 
-                  role: 'unknown',
-                  isOffline: true 
-                },
-                token: state.token
-              }
+              type: 'AUTH_FAILURE',
+              payload: null
             })
           }
         }
@@ -325,7 +323,11 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       const message = error.response?.data?.message || 'Login failed'
       dispatch({ type: 'AUTH_FAILURE', payload: message })
-      toast.error(message)
+      // Expected auth failures (wrong RUKN ID/password, etc.) are shown inline
+      // by the caller (LoginPage) — only toast for unexpected/network errors.
+      if (!error.response) {
+        toast.error(message)
+      }
       return { success: false, error: message }
     }
   }

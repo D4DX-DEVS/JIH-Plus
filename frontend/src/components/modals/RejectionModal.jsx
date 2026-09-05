@@ -48,7 +48,8 @@ const RejectionModal = ({
             </div>
             <button
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-2"
             >
               <X className="w-5 h-5" />
             </button>
@@ -78,13 +79,13 @@ const RejectionModal = ({
           <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200">
             <button
               onClick={handleClose}
-              className="px-4 py-2 rounded-lg font-medium transition-colors bg-gray-200 hover:bg-gray-300 text-gray-800"
+              className="min-h-[44px] px-4 py-2.5 rounded-lg font-medium transition-colors bg-gray-200 hover:bg-gray-300 text-gray-800"
             >
               {cancelText}
             </button>
             <button
               onClick={handleConfirm}
-              className="px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 hover:bg-red-700 text-white"
+              className="min-h-[44px] px-4 py-2.5 rounded-lg font-medium transition-colors bg-red-600 hover:bg-red-700 text-white"
             >
               {confirmText}
             </button>

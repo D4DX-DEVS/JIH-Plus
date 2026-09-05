@@ -1,21 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import {
-  Search,
-  X,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Calendar,
-  CalendarDays,
-  Star,
-  ClipboardList,
-  BarChart2,
-  Filter,
-  RefreshCw,
-  Download,
-  ArrowDownUp
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, CalendarDays, Star, ClipboardList, BarChart2, RefreshCw, Download, ArrowDownUp, MapPin, FileText } from 'lucide-react';
+import { JihFilterBar, JihFilterSelect } from '../components/JihToolbar';
 import axios from 'axios';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
@@ -119,7 +105,6 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
   const [currentPage, setCurrentPage] = useState(1);
   // On phones the filter panel ate more than half the viewport, so it starts
   // collapsed behind its own toggle. Desktop keeps it permanently open.
-  const [showFilters, setShowFilters] = useState(false);
 
   const validType = ['monthly', 'yearly', 'special', 'quarterly'].includes(type) ? type : 'monthly';
   const TypeIcon = TYPE_ICONS[validType] || ClipboardList;
@@ -376,7 +361,6 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
           activeView={`submissions-${validType}`}
           districtName={userData?.district || userData?.districtName || '—'}
           onNotifications={() => navigate('/notifications')}
-          onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'district' } })}
         />
       );
     }
@@ -388,7 +372,6 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
           areaName={userData?.area || userData?.areaName || '—'}
           districtName={userData?.district || userData?.districtName || ''}
           onNotifications={() => navigate('/notifications')}
-          onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'area' } })}
         />
       );
     }
@@ -397,7 +380,6 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
         {...commonMobile}
         activeTab="dynamic-submissions"
         onNavigateToReports={() => navigate('/view-reports')}
-        onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'admin' } })}
         onNavigateToNotifications={() => navigate('/notifications')}
         adminEmail={adminData?.email || 'Admin'}
         totalForms={0}
@@ -414,7 +396,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
         <MobileTopBar
           title={`${TYPE_LABELS[validType]} സബ്മിഷൻ`}
           actions={
-            <button onClick={fetchSubmissions} className="rounded-lg p-1.5 text-gray-400 hover:text-[#002349]" title="Refresh">
+            <button onClick={fetchSubmissions} className="ih-icon-btn hover:text-[#002349]" title="Refresh" aria-label="Refresh">
               <RefreshCw className="w-4 h-4" />
             </button>
           }
@@ -428,7 +410,9 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
                 <TypeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#002349]" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-xl lg:text-3xl font-bold text-[#002349] leading-tight">
+                {/* MobileTopBar already names this screen below lg; avoid a
+                    second big title on mobile. */}
+                <h1 className="hidden lg:block text-3xl font-bold text-[#002349] leading-tight">
                   സബ്മിഷനുകൾ — {TYPE_LABELS[validType]}
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
@@ -437,15 +421,16 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
               </div>
             </div>
 
-            {/* Type switcher tabs */}
-            <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4">
+            {/* Type switcher tabs — horizontally swipeable so it never wraps
+                or clips on narrow phones. */}
+            <div className="flex flex-nowrap gap-2 overflow-x-auto scrollbar-hide pb-1 mt-3 sm:mt-4">
               {(['monthly', 'yearly', 'quarterly', 'special']).map(t => {
                 const TIcon = TYPE_ICONS[t];
                 return (
                   <button
                     key={t}
                     onClick={() => navigate(`${config.basePath}/${t}`)}
-                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all ${
+                    className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all ${
                       validType === t
                         ? 'bg-[#002349] text-white shadow-md'
                         : 'bg-white text-gray-600 border border-gray-200 hover:border-[#002349]/40 hover:text-[#002349]'
@@ -467,159 +452,59 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
             </div>
           </div>
 
-          {/* Search bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <input
-              type="text"
-              placeholder="ഏരിയ, യൂണിറ്റ്, റിപ്പോർട്ട് തലക്കെട്ട്... എന്നിവ തിരഞ്ഞ് നോക്കൂ"
-              value={searchTerm}
-              onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent bg-white shadow-sm"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
+          <JihFilterBar
+            className="mb-4 lg:mb-5"
+            search={searchTerm}
+            onSearchChange={(v) => { setSearchTerm(v); setCurrentPage(1); }}
+            placeholder="ഏരിയ, യൂണിറ്റ്, റിപ്പോർട്ട് തലക്കെട്ട്... എന്നിവ തിരഞ്ഞ് നോക്കൂ"
+            activeFilterCount={activeFilterCount}
+            onClear={clearAllFilters}
+            gridClass="sm:grid-cols-3 lg:grid-cols-4"
+          >
+            {config.showDistrictFilter && (
+              <JihFilterSelect icon={MapPin} value={districtFilter} onChange={e => setDistrictFilter(e.target.value)}>
+                <option value="">എല്ലാ ജില്ലകളും</option>
+                {allDistricts.map(d => <option key={d} value={d}>{d}</option>)}
+              </JihFilterSelect>
             )}
-          </div>
-
-          {/* Filter bar — collapsed behind its toggle on phones */}
-          <div className="mb-4 lg:mb-5 bg-white border border-gray-200 rounded-2xl p-3 sm:p-4 shadow-sm">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowFilters(v => !v)}
-                aria-expanded={showFilters}
-                className="flex items-center gap-2 rounded-lg text-[#002349] lg:pointer-events-none"
-              >
-                <Filter className="w-4 h-4" />
-                <span className="text-xs font-semibold uppercase tracking-wide">ഫിൽട്ടർ</span>
-                {activeFilterCount > 0 && (
-                  <span className="rounded-full bg-[#002349] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    {activeFilterCount}
-                  </span>
-                )}
-                <ChevronDown className={`w-4 h-4 lg:hidden transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-              </button>
-              <span className="ml-auto text-xs font-semibold text-[#002349] lg:hidden">
-                {filteredSubmissions.length} submissions
-              </span>
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="hidden lg:block ml-auto text-xs text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
-            <div className={`${showFilters ? 'flex' : 'hidden'} lg:flex flex-wrap gap-2 sm:gap-3 mt-3`}>
-              {/* District (admin only) */}
-              {config.showDistrictFilter && (
-                <select
-                  value={districtFilter}
-                  onChange={e => setDistrictFilter(e.target.value)}
-                  className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[160px] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                >
-                  <option value="">എല്ലാ ജില്ലകളും</option>
-                  {allDistricts.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
-              )}
-
-              {/* Area */}
-              {config.showAreaFilter && (!config.showDistrictFilter || districtFilter) && (
-                <select
-                  value={areaFilter}
-                  onChange={e => { setAreaFilter(e.target.value); setUnitFilter(''); setCurrentPage(1); }}
-                  className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[150px] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                >
-                  <option value="">എല്ലാ ഏരിയകളും</option>
-                  {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
-                </select>
-              )}
-
-              {/* Unit */}
-              {config.showUnitFilter && (
-                <select
-                  value={unitFilter}
-                  onChange={e => { setUnitFilter(e.target.value); setCurrentPage(1); }}
-                  className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[150px] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                >
-                  <option value="">എല്ലാ യൂണിറ്റുകളും</option>
-                  {allUnits.map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
-              )}
-
-              {/* Report For (user type) */}
-              {config.showUserTypeFilter && (
-                <select
-                  value={reportForFilter}
-                  onChange={e => { setReportForFilter(e.target.value); setCurrentPage(1); }}
-                  className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                >
-                  <option value="">എല്ലാ ലെവലുകളും</option>
-                  <option value="district">ജില്ല</option>
-                  <option value="area">ഏരിയ</option>
-                  <option value="unit">യൂണിറ്റ്</option>
-                </select>
-              )}
-
-              {/* Specific Report */}
-              <select
-                value={reportIdFilter}
-                onChange={e => { setReportIdFilter(e.target.value); setCurrentPage(1); }}
-                className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[180px] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-              >
-                <option value="">എല്ലാ റിപ്പോർട്ടുകളും</option>
-                {reportList.map(r => (
-                  <option key={r._id} value={r._id}>{r.title}</option>
-                ))}
-              </select>
-
-              {/* Status */}
-              <select
-                value={statusFilter}
-                onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-              >
-                <option value="">എല്ലാ സ്റ്റാറ്റസും</option>
-                <option value="submitted">Submitted</option>
-                <option value="pending">Pending</option>
-              </select>
-
-              {/* Sort */}
-              <div className="flex flex-1 min-w-[45%] lg:flex-none items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 bg-white">
-                <ArrowDownUp className="w-3.5 h-3.5 text-gray-400" />
-                <select
-                  value={sortBy}
-                  onChange={e => { setSortBy(e.target.value); setCurrentPage(1); }}
-                  className="text-sm text-gray-700 bg-transparent focus:outline-none"
-                >
-                  <option value="newest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
-                  <option value="title">Title (A–Z)</option>
-                  <option value="status">Status</option>
-                </select>
-              </div>
-
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="lg:hidden px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-500 hover:text-red-500"
-                >
-                  Clear all
-                </button>
-              )}
-
-              <span className="ml-auto self-center hidden lg:block text-sm font-semibold text-[#002349]">
-                {filteredSubmissions.length} submissions
-              </span>
-            </div>
-          </div>
+            {config.showAreaFilter && (!config.showDistrictFilter || districtFilter) && (
+              <JihFilterSelect icon={MapPin} value={areaFilter} onChange={e => { setAreaFilter(e.target.value); setUnitFilter(''); setCurrentPage(1); }}>
+                <option value="">എല്ലാ ഏരിയകളും</option>
+                {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
+              </JihFilterSelect>
+            )}
+            {config.showUnitFilter && (
+              <JihFilterSelect icon={MapPin} value={unitFilter} onChange={e => { setUnitFilter(e.target.value); setCurrentPage(1); }}>
+                <option value="">എല്ലാ യൂണിറ്റുകളും</option>
+                {allUnits.map(u => <option key={u} value={u}>{u}</option>)}
+              </JihFilterSelect>
+            )}
+            {config.showUserTypeFilter && (
+              <JihFilterSelect value={reportForFilter} onChange={e => { setReportForFilter(e.target.value); setCurrentPage(1); }}>
+                <option value="">എല്ലാ ലെവലുകളും</option>
+                <option value="district">ജില്ല</option>
+                <option value="area">ഏരിയ</option>
+                <option value="unit">യൂണിറ്റ്</option>
+              </JihFilterSelect>
+            )}
+            <JihFilterSelect icon={FileText} value={reportIdFilter} onChange={e => { setReportIdFilter(e.target.value); setCurrentPage(1); }}>
+              <option value="">എല്ലാ റിപ്പോർട്ടുകളും</option>
+              {reportList.map(r => (
+                <option key={r._id} value={r._id}>{r.title}</option>
+              ))}
+            </JihFilterSelect>
+            <JihFilterSelect value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
+              <option value="">എല്ലാ സ്റ്റാറ്റസും</option>
+              <option value="submitted">Submitted</option>
+              <option value="pending">Pending</option>
+            </JihFilterSelect>
+            <JihFilterSelect icon={ArrowDownUp} value={sortBy} onChange={e => { setSortBy(e.target.value); setCurrentPage(1); }}>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="title">Title (A–Z)</option>
+              <option value="status">Status</option>
+            </JihFilterSelect>
+          </JihFilterBar>
 
           {/* Content */}
           {isLoading ? (
@@ -634,7 +519,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
               <p>{error}</p>
               <button
                 onClick={fetchSubmissions}
-                className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+                className="mt-3 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
               >
                 Retry
               </button>
@@ -669,7 +554,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
                         <p className="min-w-0 flex-1 text-sm font-semibold text-[#002349] leading-snug break-words">
                           {sub.reportId?.title || '—'}
                         </p>
-                        <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[sub.status] || 'bg-gray-100 text-gray-700'}`}>
+                        <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE[sub.status] || 'bg-gray-100 text-gray-700'}`}>
                           {sub.status === 'submitted' ? 'Submitted' : sub.status === 'pending' ? 'Pending' : sub.status || '—'}
                         </span>
                       </div>
@@ -677,14 +562,14 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
                       <div className="mt-2.5 flex items-center gap-2">
                         <button
                           onClick={() => setPreviewSub(sub)}
-                          className="flex-1 rounded-lg bg-[#002349]/10 px-3 py-2 text-xs font-semibold text-[#002349]"
+                          className="flex-1 rounded-lg bg-[#002349]/10 px-3 py-2.5 text-xs font-semibold text-[#002349]"
                         >
                           View
                         </button>
                         <button
                           onClick={() => handleExport(sub)}
                           disabled={!canExport || isDownloading}
-                          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 disabled:opacity-40"
+                          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-50 px-3 py-2.5 text-xs font-semibold text-emerald-700 disabled:opacity-40"
                         >
                           {isDownloading ? (
                             <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
@@ -782,15 +667,16 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-200">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mt-4 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-200">
                   <p className="text-xs text-gray-500">
                     {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredSubmissions.length)} of {filteredSubmissions.length}
                   </p>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2 self-center sm:self-auto">
                     <button
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      className="min-h-[44px] min-w-[44px] lg:min-h-0 lg:min-w-0 p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                      aria-label="Previous page"
                     >
                       <ChevronLeft className="w-4 h-4 text-gray-600" />
                     </button>
@@ -809,7 +695,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
                         <button
                           key={page}
                           onClick={() => setCurrentPage(page)}
-                          className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${
+                          className={`min-h-[44px] min-w-[44px] lg:h-9 lg:w-9 lg:min-h-0 lg:min-w-0 rounded-lg text-xs font-semibold transition-colors ${
                             currentPage === page
                               ? 'bg-[#002349] text-white shadow'
                               : 'border border-gray-200 hover:bg-gray-50 text-gray-700'
@@ -822,7 +708,8 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
                     <button
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      className="min-h-[44px] min-w-[44px] lg:min-h-0 lg:min-w-0 p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                      aria-label="Next page"
                     >
                       <ChevronRight className="w-4 h-4 text-gray-600" />
                     </button>

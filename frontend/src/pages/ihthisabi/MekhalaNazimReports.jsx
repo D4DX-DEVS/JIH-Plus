@@ -64,7 +64,7 @@ function Spinner() {
 function BackLink({ onClick, children }) {
   return (
     <button onClick={onClick}
-      className="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition-colors hover:text-gray-900 sm:text-sm">
+      className="-ml-2 mb-1 inline-flex items-center gap-1.5 px-2 py-2.5 text-xs font-medium text-gray-500 transition-colors hover:text-gray-900 sm:text-sm">
       <ArrowLeft className="w-4 h-4" /> {children}
     </button>
   )
@@ -104,9 +104,9 @@ function ReportsList() {
   }, [mySubs])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell max-w-3xl">
-        <div className="mb-2 hidden min-w-0 sm:mb-3 sm:block">
+        <div className="mb-2 hidden min-w-0 lg:mb-3 lg:block">
           <h1 className="ih-page-title">My Reports</h1>
           <p className="ih-page-subtitle">
             {user?.mekhalaName ? `${user.mekhalaName} — ` : ''}reports assigned to you by the admin
@@ -260,10 +260,10 @@ function ReportForm() {
     }
   }
 
-  if (loading) return <div className="min-h-screen bg-gray-50"><Spinner /></div>
+  if (loading) return <div className="ih-screen bg-gray-50"><Spinner /></div>
   if (!report) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="ih-screen bg-gray-50">
         <div className="ih-page-shell max-w-3xl">
           <div className="ih-surface px-4 py-12 text-center">
             <p className="text-sm text-gray-500">Report not found</p>
@@ -277,7 +277,7 @@ function ReportForm() {
   const isEditingSubmitted = submission?.status === 'submitted'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell max-w-3xl">
         <BackLink onClick={() => navigate('/ihthisabi/mekhalanazim')}>Back to Reports</BackLink>
 
@@ -335,10 +335,10 @@ function SubmissionView() {
     load()
   }, [submissionId])
 
-  if (loading) return <div className="min-h-screen bg-gray-50"><Spinner /></div>
+  if (loading) return <div className="ih-screen bg-gray-50"><Spinner /></div>
   if (!submission) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="ih-screen bg-gray-50">
         <div className="ih-page-shell max-w-3xl">
           <div className="ih-surface px-4 py-12 text-center">
             <p className="text-sm text-gray-500">Submission not found</p>
@@ -354,7 +354,7 @@ function SubmissionView() {
   const usesFormData = pages.length > 0 && submission.formData && Object.keys(submission.formData).length > 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell max-w-3xl">
         <BackLink onClick={() => navigate('/ihthisabi/mekhalanazim')}>Back to Reports</BackLink>
 
@@ -383,7 +383,7 @@ function SubmissionView() {
             <p className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-gray-900">
               <MessageSquare className="w-4 h-4 text-primary" /> Admin Reply
             </p>
-            <p className="whitespace-pre-wrap text-[13px] text-gray-700 sm:text-sm">{submission.reply.message}</p>
+            <p className="whitespace-pre-wrap break-words text-[13px] text-gray-700 sm:text-sm">{submission.reply.message}</p>
             {submission.reply.repliedAt && (
               <p className="ih-list-meta mt-2">{new Date(submission.reply.repliedAt).toLocaleString()}</p>
             )}
@@ -405,8 +405,8 @@ function SubmissionView() {
               {(submission.answers || []).map((a, i) => (
                 <div key={i} className="py-3 first:pt-0 last:pb-0">
                   {a.partName && <p className="ih-list-meta">{a.partName}</p>}
-                  <p className="text-[13px] font-medium text-gray-900 sm:text-sm">{a.questionText}</p>
-                  <p className="mt-0.5 text-[13px] text-gray-600 sm:text-sm">
+                  <p className="break-words text-[13px] font-medium text-gray-900 sm:text-sm">{a.questionText}</p>
+                  <p className="mt-0.5 break-words text-[13px] text-gray-600 sm:text-sm">
                     {Array.isArray(a.value) ? a.value.join(', ') : String(a.value ?? '') || '—'}
                   </p>
                 </div>

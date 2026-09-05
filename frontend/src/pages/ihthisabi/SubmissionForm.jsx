@@ -5,6 +5,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { api } from '../../utils/ihthisabi/api'
 import locationService from '../../services/locationService'
 import QuarterlySelection from '../../components/ihthisabi/QuarterlySelection'
+import ConfirmationModal from '../../components/ihthisabi/ConfirmationModal'
 import { 
   FORM_OPTIONS, 
   GRIHA_MEETINGS_OPTIONS,
@@ -55,15 +56,20 @@ const SubmissionForm = ({ userRole }) => {
   const [hoveredStar, setHoveredStar] = useState(null)
   const [dynamicForm, setDynamicForm] = useState(null)
   const [dynamicFormData, setDynamicFormData] = useState({})
+  const [dynamicErrors, setDynamicErrors] = useState({})
   const [loadingDynamicForm, setLoadingDynamicForm] = useState(false)
   const savedDynamicDataRef = useRef(null)
+  const dynamicFieldRefs = useRef({})
+  const jamaathSectionRef = useRef(null)
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false)
+  const pendingNavigationRef = useRef(null)
   // Holds a user's area that isn't in the external API so it survives repeated loadAreas calls.
   const userFallbackAreaRef = useRef(null)
 
   // Use empty strings for district/area so the watcher doesn't fire with the raw
   // district name on mount (which would hit the area API with a name instead of an ObjectId).
   // populateUserData resolves the correct ObjectId and sets these properly.
-  const { register, handleSubmit, formState: { errors }, watch, setValue, control, reset } = useForm({
+  const { register, handleSubmit, formState: { errors, isDirty }, watch, setValue, control, reset } = useForm({
     defaultValues: {
       district: '',
       area: '',
@@ -809,6 +815,69 @@ const SubmissionForm = ({ userRole }) => {
     setValue('form.jamaathInfluence', backendValue || '', { shouldValidate: true })
   }
 
+  // Local autosave of the hardcoded form's answers, scoped to this member +
+  // quarter/year so a dropped connection or backgrounded app never loses a
+  // half-filled quarterly report. Only for new (non-edit) submissions — an
+  // edit already loads the real saved answers from the server.
+  const draftKey = (!editMode && user?.id && selectedQuarter && selectedYear)
+    ? `ih_submission_draft_${user.id}_${selectedQuarter}_${selectedYear}`
+    : null
+
+  useEffect(() => {
+    if (!draftKey) return
+    try {
+      const saved = localStorage.getItem(draftKey)
+      if (!saved) return
+      const parsed = JSON.parse(saved)
+      const applyDraftValues = (obj, prefix) => {
+        Object.entries(obj || {}).forEach(([key, val]) => {
+          const path = `${prefix}.${key}`
+          if (val && typeof val === 'object' && !Array.isArray(val)) {
+            applyDraftValues(val, path)
+          } else {
+            setValue(path, val)
+          }
+        })
+      }
+      applyDraftValues(parsed, 'form')
+      if (parsed.jamaathInfluence) {
+        setJamaathInfluenceRating(mapBackendValueToStarRating(parsed.jamaathInfluence))
+      }
+      toast.success('Draft restored')
+    } catch (e) {
+      console.error('Failed to restore draft:', e)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey])
+
+  useEffect(() => {
+    if (!draftKey) return
+    const subscription = watch((value) => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify(value.form))
+      } catch {
+        // Storage full/unavailable — autosave is best-effort only
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [draftKey, watch])
+
+  // Guard against losing a half-filled form: confirm before navigating away
+  // once the member has actually changed something.
+  const attemptNavigateAway = (path) => {
+    if (isDirty) {
+      pendingNavigationRef.current = path
+      setShowUnsavedModal(true)
+    } else {
+      navigate(path)
+    }
+  }
+
+  const confirmDiscardAndLeave = () => {
+    setShowUnsavedModal(false)
+    if (pendingNavigationRef.current) navigate(pendingNavigationRef.current)
+  }
+
   // Check for dynamic form when quarter is selected
   useEffect(() => {
     const checkDynamicForm = async () => {
@@ -859,6 +928,15 @@ const SubmissionForm = ({ userRole }) => {
     }
     checkDynamicForm()
   }, [selectedQuarter, selectedYear, editMode])
+
+  // The Jamaath Influence rating is backed by a hidden input, so RHF's default
+  // focus-on-error can't put a visible cursor there — scroll the section into
+  // view instead so the error message below the stars is actually seen.
+  useEffect(() => {
+    if (errors.form?.jamaathInfluence) {
+      jamaathSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [errors.form?.jamaathInfluence])
 
   // Handle quarter selection
   const handleQuarterSelect = (quarter, year) => {
@@ -933,6 +1011,7 @@ const SubmissionForm = ({ userRole }) => {
         await api.post(submissionCreateEndpoint, transformedData)
       toast.success('Form submitted successfully!')
       }
+      if (draftKey) localStorage.removeItem(draftKey)
       navigate(dashboardPath)
     } catch (error) {
       console.error('Submission error:', error)
@@ -952,9 +1031,20 @@ const SubmissionForm = ({ userRole }) => {
     }
   }
 
+  // Clears a question's inline error once the member starts fixing it
+  const clearDynamicError = (questionId) => {
+    setDynamicErrors(prev => {
+      if (!prev[questionId]) return prev
+      const next = { ...prev }
+      delete next[questionId]
+      return next
+    })
+  }
+
   // Dynamic form field change handler
   const handleDynamicFieldChange = (questionId, value) => {
     setDynamicFormData(prev => ({ ...prev, [questionId]: value }))
+    clearDynamicError(questionId)
   }
 
   const handleDynamicGroupFieldChange = (questionId, fieldId, value) => {
@@ -962,6 +1052,7 @@ const SubmissionForm = ({ userRole }) => {
       ...prev,
       [questionId]: { ...(prev[questionId] || {}), [fieldId]: value }
     }))
+    clearDynamicError(questionId)
   }
 
   const handleDynamicCheckboxChange = (questionId, optionValue, checked) => {
@@ -972,6 +1063,7 @@ const SubmissionForm = ({ userRole }) => {
         [questionId]: checked ? [...current, optionValue] : current.filter(v => v !== optionValue)
       }
     })
+    clearDynamicError(questionId)
   }
 
   // Submit dynamic form
@@ -979,7 +1071,9 @@ const SubmissionForm = ({ userRole }) => {
     e.preventDefault()
     if (Q3_DISABLED && selectedQuarter === 3) { toast.error('Q3 submissions are currently disabled.'); return }
 
-    // Validate required fields
+    // Validate required fields — collect all failures so every missing
+    // field gets an inline error under it, instead of stopping at the first.
+    const newDynamicErrors = {}
     for (const question of dynamicForm.questions) {
       if (question.isRequired) {
         const val = dynamicFormData[question.questionId]
@@ -990,18 +1084,28 @@ const SubmissionForm = ({ userRole }) => {
             const sf = subFields[sfIdx]
             const effectiveFieldId = sf.fieldId || `field_${sfIdx}`
             if (sf.type === 'number' && (groupVal[effectiveFieldId] === undefined || groupVal[effectiveFieldId] === '')) {
-              toast.error(`Please fill in ${question.questionTextMl || question.questionText} - ${sf.labelMl || sf.label}`)
-              return
+              newDynamicErrors[question.questionId] = `${sf.labelMl || sf.label} is required`
+              break
             }
           }
         } else if (question.answerType === 'checkbox') {
-          if (!val || val.length === 0) { toast.error(`Please select at least one option for: ${question.questionTextMl || question.questionText}`); return }
+          if (!val || val.length === 0) newDynamicErrors[question.questionId] = 'Please select at least one option'
         } else if (val === undefined || val === '' || val === null) {
-          toast.error(`Please fill in: ${question.questionTextMl || question.questionText}`)
-          return
+          newDynamicErrors[question.questionId] = 'This field is required'
         }
       }
     }
+
+    if (Object.keys(newDynamicErrors).length > 0) {
+      setDynamicErrors(newDynamicErrors)
+      toast.error('Please fill all required fields')
+      const firstQuestionId = dynamicForm.questions.find(q => newDynamicErrors[q.questionId])?.questionId
+      if (firstQuestionId) {
+        dynamicFieldRefs.current[firstQuestionId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      return
+    }
+    setDynamicErrors({})
 
     setLoading(true)
     try {
@@ -1089,6 +1193,7 @@ const SubmissionForm = ({ userRole }) => {
         await api.post(submissionCreateEndpoint, payload)
         toast.success('Form submitted successfully!')
       }
+      if (draftKey) localStorage.removeItem(draftKey)
       navigate(dashboardPath)
     } catch (error) {
       console.error('Dynamic submission error:', error)
@@ -1103,9 +1208,14 @@ const SubmissionForm = ({ userRole }) => {
     const qId = question.questionId
     const value = dynamicFormData[qId]
     const label = question.questionTextMl || question.questionText
+    const fieldError = dynamicErrors[qId]
 
     return (
-      <div key={qId} className="card bg-white border border-gray-200 rounded-3xl shadow-sm">
+      <div
+        key={qId}
+        ref={(el) => { dynamicFieldRefs.current[qId] = el }}
+        className="card bg-white border border-gray-200 rounded-3xl shadow-sm"
+      >
         <div className="card-header rounded-t-2xl bg-[#161F2F] px-3 py-2.5 sm:rounded-t-3xl sm:px-6 sm:py-4">
           <h3 className="text-[13px] font-semibold leading-snug text-white sm:text-lg">
             {qIndex + 1}. {label}
@@ -1115,27 +1225,27 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card-body p-3 sm:p-6">
           {question.answerType === 'text' && (
             <input type="text" value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-input w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3"
+              className="form-input w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
               placeholder={question.placeholder || ''} maxLength={question.maxLength || 500} />
           )}
 
           {question.answerType === 'textarea' && (
             <textarea value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-input min-h-[76px] w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:min-h-[100px] sm:rounded-xl sm:px-4 sm:py-3"
+              className="form-input min-h-[76px] w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:min-h-[100px] sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
               placeholder={question.placeholder || ''} maxLength={question.maxLength || 1000} rows={4} />
           )}
 
           {question.answerType === 'number' && (
             <input type="number" value={value ?? ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-input w-full max-w-[9rem] rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-xs sm:rounded-xl sm:px-4 sm:py-3"
+              className="form-input w-full max-w-[9rem] rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-xs sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
               placeholder={question.placeholder || '0'}
               min={question.min ?? 0} max={question.max ?? 100000} />
           )}
 
           {question.answerType === 'radio' && (
-            <div className="space-y-1.5 sm:space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {question.options?.map(opt => (
-                <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5">
+                <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5 py-1 sm:py-0">
                   <input type="radio" name={qId} value={opt.value} checked={value === opt.value}
                     onChange={() => handleDynamicFieldChange(qId, opt.value)}
                     className="h-4 w-4 shrink-0 border-gray-300 text-primary focus:ring-primary sm:h-5 sm:w-5" />
@@ -1147,7 +1257,7 @@ const SubmissionForm = ({ userRole }) => {
 
           {question.answerType === 'dropdown' && (
             <select value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
-              className="form-select w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-sm sm:rounded-xl sm:px-4 sm:py-3">
+              className="form-select w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-sm sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm">
               <option value="">Select...</option>
               {question.options?.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.labelMl || opt.label}</option>
@@ -1156,9 +1266,9 @@ const SubmissionForm = ({ userRole }) => {
           )}
 
           {question.answerType === 'checkbox' && (
-            <div className="space-y-1.5 sm:space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {question.options?.map(opt => (
-                <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5">
+                <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5 py-1 sm:py-0">
                   <input type="checkbox" checked={Array.isArray(value) && value.includes(opt.value)}
                     onChange={(e) => handleDynamicCheckboxChange(qId, opt.value, e.target.checked)}
                     className="h-4 w-4 shrink-0 rounded border-gray-300 text-primary focus:ring-primary sm:h-5 sm:w-5" />
@@ -1169,10 +1279,10 @@ const SubmissionForm = ({ userRole }) => {
           )}
 
           {question.answerType === 'star' && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2 sm:gap-1">
               {Array.from({ length: question.max || 5 }, (_, i) => i + 1).map(star => (
                 <button key={star} type="button" onClick={() => handleDynamicFieldChange(qId, star)}
-                  className="focus:outline-none transition-colors">
+                  className="p-2 sm:p-0 focus:outline-none transition-colors">
                   <Star className={`h-7 w-7 sm:h-8 sm:w-8 ${star <= (value || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
                 </button>
               ))}
@@ -1190,7 +1300,7 @@ const SubmissionForm = ({ userRole }) => {
                     <input type={sf.type === 'number' ? 'number' : 'text'}
                       value={(value || {})[effectiveFieldId] ?? ''}
                       onChange={(e) => handleDynamicGroupFieldChange(qId, effectiveFieldId, e.target.value)}
-                      className="form-input w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3"
+                      className="form-input w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
                       placeholder={sf.placeholder || (sf.type === 'number' ? '0' : '')}
                       min={sf.type === 'number' ? (sf.min ?? 0) : undefined}
                       max={sf.type === 'number' ? (sf.max ?? 100000) : undefined} />
@@ -1199,6 +1309,7 @@ const SubmissionForm = ({ userRole }) => {
               })}
             </div>
           )}
+          {fieldError && <p className="form-error mt-2">{fieldError}</p>}
         </div>
       </div>
     )
@@ -1231,14 +1342,14 @@ const SubmissionForm = ({ userRole }) => {
   const quarterLabel = selectedQuarter && selectedYear
     ? `${getQuarterInfo(selectedQuarter).name} ${selectedYear}`
     : new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })
-  const quarterDetail = selectedQuarter && selectedYear
+  const quarterDetail = (editMode ? 'Editing · ' : '') + (selectedQuarter && selectedYear
     ? `${getQuarterInfo(selectedQuarter).name} ${selectedYear} - ${getQuarterInfo(selectedQuarter).period}`
-    : new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })
+    : new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long' }))
 
   // Show loading while user data is being fetched
   if (authLoading || loadingDynamicForm) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading form...</p>
@@ -1251,8 +1362,8 @@ const SubmissionForm = ({ userRole }) => {
   if (dynamicForm) {
     return (
       <>
-        <button onClick={() => navigate(dashboardPath)}
-          className="fixed top-14 right-2.5 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
+        <button onClick={() => attemptNavigateAway(dashboardPath)}
+          className="fixed top-14 right-2.5 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
           title="Close">
           <X className="w-5 h-5" />
         </button>
@@ -1261,7 +1372,7 @@ const SubmissionForm = ({ userRole }) => {
           <div className="space-y-3 rounded-2xl border border-gray-200 bg-white px-3.5 py-3 shadow-sm sm:space-y-4 sm:rounded-3xl sm:px-8 sm:py-8 sm:shadow-lg">
             <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h1 className="text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
+                <h1 className="hidden lg:block text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
                   {dynamicForm.title || 'ത്രൈമാസ പ്രവർത്തന റിപ്പോർട്ട്'}
                 </h1>
                 <p className="mt-0.5 text-[11px] text-gray-500 sm:mt-1 sm:text-sm">{quarterDetail}</p>
@@ -1286,14 +1397,14 @@ const SubmissionForm = ({ userRole }) => {
                     <div>
                       <label className="form-label">Name of Rukn</label>
                       <input {...register('ruknName', { required: 'Rukn name is required' })} type="text"
-                        className="form-input" placeholder="Enter name in English" readOnly />
+                        className="form-input text-base py-2 sm:text-sm" placeholder="Enter name in English" readOnly />
                       {errors.ruknName && <p className="form-error">{errors.ruknName.message}</p>}
                     </div>
                     <div>
                       <label className="form-label">Country</label>
                       <input
                         type="text"
-                        className="form-input bg-gray-50"
+                        className="form-input bg-gray-50 text-base py-2 sm:text-sm"
                         value={user?.abroadCountry?.title || user?.country || ''}
                         readOnly
                       />
@@ -1309,14 +1420,14 @@ const SubmissionForm = ({ userRole }) => {
                     <div>
                       <label className="form-label">Name of Rukn</label>
                       <input {...register('ruknName', { required: 'Rukn name is required' })} type="text"
-                        className="form-input" placeholder="Enter name in English" />
+                        className="form-input text-base py-2 sm:text-sm" placeholder="Enter name in English" />
                       {errors.ruknName && <p className="form-error">{errors.ruknName.message}</p>}
                     </div>
                     <div>
                       <label className="form-label">District</label>
                       <Controller name="district" control={control} rules={{ required: 'District is required' }}
                         render={({ field }) => (
-                          <select {...field} value={field.value || ''} className="form-select" disabled={loadingDistricts}
+                          <select {...field} value={field.value || ''} className="form-select text-base py-2 sm:text-sm" disabled={loadingDistricts}
                             onChange={(e) => { field.onChange(e); setValue('area', '') }}>
                             <option value="">Select District</option>
                             {districts.map(d => (
@@ -1330,7 +1441,7 @@ const SubmissionForm = ({ userRole }) => {
                       <label className="form-label">Area</label>
                       <Controller name="area" control={control} rules={{ required: 'Area is required' }}
                         render={({ field }) => (
-                          <select {...field} value={field.value || ''} className="form-select" disabled={loadingAreas || !watch('district')}>
+                          <select {...field} value={field.value || ''} className="form-select text-base py-2 sm:text-sm" disabled={loadingAreas || !watch('district')}>
                             <option value="">Select Area</option>
                             {areas.map(a => (
                               <option key={a._id || a.id} value={a._id || a.id}>{a.title || a.name}</option>
@@ -1342,7 +1453,7 @@ const SubmissionForm = ({ userRole }) => {
                     <div>
                       <label className="form-label">Unit</label>
                       <input {...register('unit', { required: 'Unit is required' })} type="text"
-                        className="form-input" placeholder="Enter unit name" />
+                        className="form-input text-base py-2 sm:text-sm" placeholder="Enter unit name" />
                       {errors.unit && <p className="form-error">{errors.unit.message}</p>}
                     </div>
                   </div>
@@ -1374,6 +1485,16 @@ const SubmissionForm = ({ userRole }) => {
             </div>
           </form>
         </div>
+        <ConfirmationModal
+          isOpen={showUnsavedModal}
+          onClose={() => setShowUnsavedModal(false)}
+          onConfirm={confirmDiscardAndLeave}
+          title="Discard changes?"
+          message="You have unsaved changes in this report. Are you sure you want to leave without submitting?"
+          confirmText="Leave"
+          cancelText="Keep editing"
+          variant="warning"
+        />
       </>
     )
   }
@@ -1382,8 +1503,8 @@ const SubmissionForm = ({ userRole }) => {
     <>
       {/* Fixed Close Button - Top Right Corner */}
       <button
-        onClick={() => navigate(dashboardPath)}
-        className="fixed top-14 right-2.5 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
+        onClick={() => attemptNavigateAway(dashboardPath)}
+        className="fixed top-14 right-2.5 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
         title="Close"
       >
         <X className="w-5 h-5" />
@@ -1393,7 +1514,7 @@ const SubmissionForm = ({ userRole }) => {
         <div className="space-y-3 rounded-2xl border border-gray-200 bg-white px-3.5 py-3 shadow-sm sm:space-y-4 sm:rounded-3xl sm:px-8 sm:py-8 sm:shadow-lg">
           <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
+              <h1 className="hidden lg:block text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
                 {editMode ? 'തിരുത്തുക' : 'ത്രൈമാസ പ്രവർത്തന റിപ്പോർട്ട്'}
               </h1>
               <p className="mt-0.5 text-[11px] text-gray-500 sm:mt-1 sm:text-sm">
@@ -1434,7 +1555,7 @@ const SubmissionForm = ({ userRole }) => {
                       }
                     })}
                     type="text"
-                    className="form-input"
+                    className="form-input text-base py-2 sm:text-sm"
                     placeholder="Enter name in English"
                     readOnly
                   />
@@ -1446,7 +1567,7 @@ const SubmissionForm = ({ userRole }) => {
                   <label className="form-label">Country</label>
                   <input
                     type="text"
-                    className="form-input bg-gray-50"
+                    className="form-input bg-gray-50 text-base py-2 sm:text-sm"
                     value={user?.abroadCountry?.title || user?.country || ''}
                     readOnly
                   />
@@ -1471,7 +1592,7 @@ const SubmissionForm = ({ userRole }) => {
                         }
                       })}
                       type="text"
-                      className="form-input"
+                      className="form-input text-base py-2 sm:text-sm"
                       placeholder="Enter name in English"
                     />
                     {errors.ruknName && (
@@ -1489,7 +1610,7 @@ const SubmissionForm = ({ userRole }) => {
                         <select 
                           {...field}
                           value={field.value || ''}
-                          className="form-select"
+                          className="form-select text-base py-2 sm:text-sm"
                           disabled={loadingDistricts}
                           onChange={(e) => {
                             console.log('District changed to:', e.target.value)
@@ -1525,7 +1646,7 @@ const SubmissionForm = ({ userRole }) => {
                         <select 
                           {...field}
                           value={field.value || ''}
-                          className="form-select"
+                          className="form-select text-base py-2 sm:text-sm"
                           disabled={!selectedDistrict || loadingAreas}
                           onChange={(e) => {
                             console.log('Area changed to:', e.target.value)
@@ -1558,7 +1679,7 @@ const SubmissionForm = ({ userRole }) => {
                     <input
                       {...register('unit', { required: 'Unit is required' })}
                       type="text"
-                      className="form-input"
+                      className="form-input text-base py-2 sm:text-sm"
                       placeholder="Enter unit"
                     />
                     {errors.unit && (
@@ -1575,11 +1696,11 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. ഖുർആൻ പഠനം : സൂറ അന്നിസാഅ് (87 ആയഹ്)- തഫ്സീർ മുന്നിൽ വെച്ചുള്ള പഠനം :
+              {nextQuestionNumber()}. ഖുർആൻ പഠനം : സൂറ അന്നിസാഅ് (87 ആയഹ്)- തഫ്സീർ മുന്നിൽ വെച്ചുള്ള പഠനം : <span className="text-red-400 ml-1">*</span>
             </h3>
             <div className="space-y-1.5 sm:space-y-3">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                <label className="flex items-center">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <label className="flex min-h-[44px] items-center py-1.5 sm:min-h-0 sm:py-0">
                   <input
                     type="radio"
                     value="complete"
@@ -1588,7 +1709,7 @@ const SubmissionForm = ({ userRole }) => {
                   />
                   <span className="ml-2 text-[13px] sm:text-base">പൂർണം</span>
                 </label>
-                <label className="flex items-center">
+                <label className="flex min-h-[44px] items-center py-1.5 sm:min-h-0 sm:py-0">
                   <input
                     type="radio"
                     value="partial"
@@ -1602,7 +1723,7 @@ const SubmissionForm = ({ userRole }) => {
                 <label className="form-label">മറ്റു ഭാഗങ്ങൾ : (സൂറത്ത്, ആയത്തുകൾ)</label>
                 <textarea
                   {...register('form.quranStudy.others')}
-                  className="form-textarea"
+                  className="form-textarea text-base py-2 sm:text-sm"
                   rows="2"
                   placeholder="Enter other chapters/verses studied"
                 />
@@ -1615,7 +1736,7 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. ഹദീസ് പഠനം : (എണ്ണം)
+              {nextQuestionNumber()}. ഹദീസ് പഠനം : (എണ്ണം) <span className="text-red-400 ml-1">*</span>
             </h3>
             <input
               {...register('form.hadithCount', { 
@@ -1627,7 +1748,7 @@ const SubmissionForm = ({ userRole }) => {
               type="number"
               min="0"
              
-                className="form-input w-32"
+                className="form-input w-32 text-base py-2 sm:text-sm"
                 placeholder="0"
                 onInput={handleNumberInput}
               onPaste={handleNumberPaste}
@@ -1642,14 +1763,14 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. പുസ്തക വായന
+              {nextQuestionNumber()}. പുസ്തക വായന <span className="text-red-400 ml-1">*</span>
             </h3>
             <div className="space-y-2.5 sm:space-y-4">
               <div>
                 <label className="form-label">A. മുസ്‌ലിം വനിതകളും ഇസ്‌ലാമിക പ്രബോധനവും</label>
-                <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
                   {FORM_OPTIONS.bookReading.map((option) => (
-                    <label key={option.value} className="flex items-center">
+                    <label key={option.value} className="flex min-h-[44px] items-center py-1.5 sm:min-h-0 sm:py-0">
                       <input
                         type="radio"
                         value={option.value}
@@ -1667,9 +1788,9 @@ const SubmissionForm = ({ userRole }) => {
 
               <div>
                 <label className="form-label">B. മദീനയിലെ ഏടുകളിൽ നിന്ന്</label>
-                <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
                   {FORM_OPTIONS.bookReading.map((option) => (
-                    <label key={option.value} className="flex items-center">
+                    <label key={option.value} className="flex min-h-[44px] items-center py-1.5 sm:min-h-0 sm:py-0">
                       <input
                         type="radio"
                         value={option.value}
@@ -1689,7 +1810,7 @@ const SubmissionForm = ({ userRole }) => {
                 <label className="form-label">മറ്റു സാഹിത്യങ്ങൾ (പേരെഴുതുക)</label>
                 <textarea
                   {...register('form.bookReading.others')}
-                  className="form-textarea"
+                  className="form-textarea text-base py-2 sm:text-sm"
                   rows="2"
                   placeholder="Enter other literature read"
                 />
@@ -1702,7 +1823,7 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. പ്രതിവാരയോഗം :
+              {nextQuestionNumber()}. പ്രതിവാരയോഗം : <span className="text-red-400 ml-1">*</span>
             </h3>
             <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-3">
               <div>
@@ -1717,7 +1838,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1738,7 +1859,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1759,7 +1880,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1776,7 +1897,7 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. പ്രാദേശിക ജമാഅത്തെ യോഗം:
+              {nextQuestionNumber()}. പ്രാദേശിക ജമാഅത്തെ യോഗം: <span className="text-red-400 ml-1">*</span>
             </h3>
             <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-3">
               <div>
@@ -1791,7 +1912,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1812,7 +1933,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1833,7 +1954,7 @@ const SubmissionForm = ({ userRole }) => {
                   type="number"
                   min="0"
                   max="100"
-                  className="form-input"
+                  className="form-input text-base py-2 sm:text-sm"
                   placeholder="0"
                   onInput={handleNumberInput}
                   onPaste={handleNumberPaste}
@@ -1850,11 +1971,11 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. ഗൃഹയോഗങ്ങൾ :
+              {nextQuestionNumber()}. ഗൃഹയോഗങ്ങൾ : <span className="text-red-400 ml-1">*</span>
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {GRIHA_MEETINGS_OPTIONS.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex min-h-[44px] items-center py-1.5 sm:min-h-0 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -1875,11 +1996,11 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. തഹ്‌രീകീ യോഗം - പങ്കാളിത്തം
+              {nextQuestionNumber()}. തഹ്‌രീകീ യോഗം - പങ്കാളിത്തം <span className="text-red-400 ml-1">*</span>
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {THAHREEKI_MEETINGS_OPTIONS.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex min-h-[44px] items-center py-1.5 sm:min-h-0 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -1900,11 +2021,11 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. ബൈതുല്‍മാല്‍ (2%) നല്‍കിയത്:
+              {nextQuestionNumber()}. ബൈതുല്‍മാല്‍ (2%) നല്‍കിയത്: <span className="text-red-400 ml-1">*</span>
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {FORM_OPTIONS.baithulmaal.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex min-h-[44px] items-center py-1.5 sm:min-h-0 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -1925,11 +2046,11 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. സകാത്ത് ബൈതുല്‍മാലില്‍ അടച്ചോ?
+              {nextQuestionNumber()}. സകാത്ത് ബൈതുല്‍മാലില്‍ അടച്ചോ? <span className="text-red-400 ml-1">*</span>
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {FORM_OPTIONS.zakatPaid.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex min-h-[44px] items-center py-1.5 sm:min-h-0 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -1950,11 +2071,11 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. പുതുതായി സംഘടനയിലേക്ക് കൊണ്ടുവന്ന വ്യക്തികൾ: (എണ്ണം)
+              {nextQuestionNumber()}. പുതുതായി സംഘടനയിലേക്ക് കൊണ്ടുവന്ന വ്യക്തികൾ: (എണ്ണം) <span className="text-red-400 ml-1">*</span>
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {[0, 1, 2, 3].map((value) => (
-                <label key={value} className="flex items-center">
+                <label key={value} className="flex min-h-[44px] items-center py-1.5 sm:min-h-0 sm:py-0">
                   <input
                     type="radio"
                     value={value.toString()}
@@ -1977,7 +2098,7 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. മുസ്‌ലിം വ്യക്തിബന്ധങ്ങൾ : (എണ്ണം)
+              {nextQuestionNumber()}. മുസ്‌ലിം വ്യക്തിബന്ധങ്ങൾ : (എണ്ണം) <span className="text-red-400 ml-1">*</span>
             </h3>
             <input
               {...register('form.muslimRelations', { 
@@ -1989,7 +2110,7 @@ const SubmissionForm = ({ userRole }) => {
               type="number"
               min="0"
               max="100"
-              className="form-input w-32"
+              className="form-input w-32 text-base py-2 sm:text-sm"
               placeholder="0"
               onInput={handleNumberInput}
               onPaste={handleNumberPaste}
@@ -2004,7 +2125,7 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. സഹോദര സമുദായങ്ങളുമായുള്ള വ്യക്തിബന്ധം : (എണ്ണം)
+              {nextQuestionNumber()}. സഹോദര സമുദായങ്ങളുമായുള്ള വ്യക്തിബന്ധം : (എണ്ണം) <span className="text-red-400 ml-1">*</span>
             </h3>
             <input
               {...register('form.communityRelations', { 
@@ -2016,7 +2137,7 @@ const SubmissionForm = ({ userRole }) => {
               type="number"
               min="0"
               max="100"
-              className="form-input w-32"
+              className="form-input w-32 text-base py-2 sm:text-sm"
               placeholder="0"
               onInput={handleNumberInput}
               onPaste={handleNumberPaste}
@@ -2031,7 +2152,7 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. ഈ ത്രൈമാസത്തിൽ നടത്തിയ സ്കോഡുകൾ : (എണ്ണം)
+              {nextQuestionNumber()}. ഈ ത്രൈമാസത്തിൽ നടത്തിയ സ്കോഡുകൾ : (എണ്ണം) <span className="text-red-400 ml-1">*</span>
             </h3>
             <input
               {...register('form.scoreCount', { 
@@ -2043,7 +2164,7 @@ const SubmissionForm = ({ userRole }) => {
               type="number"
               min="0"
               max="100"
-              className="form-input w-32"
+              className="form-input w-32 text-base py-2 sm:text-sm"
               placeholder="0"
               onInput={handleNumberInput}
               onPaste={handleNumberPaste}
@@ -2058,11 +2179,11 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. 100പേര്‍ക്ക് സേവനം ലഭ്യമാക്കുക എന്ന മീഖാത്തീ ടാര്‍ഗറ്റ് മുന്നില്‍ വെച്ച് ഈ ത്രൈമാസത്തിലെ സേവന പ്രവര്‍ത്തനം തൃപ്തികരമാണോ ?
+              {nextQuestionNumber()}. 100പേര്‍ക്ക് സേവനം ലഭ്യമാക്കുക എന്ന മീഖാത്തീ ടാര്‍ഗറ്റ് മുന്നില്‍ വെച്ച് ഈ ത്രൈമാസത്തിലെ സേവന പ്രവര്‍ത്തനം തൃപ്തികരമാണോ ? <span className="text-red-400 ml-1">*</span>
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {FORM_OPTIONS.meqathService.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex min-h-[44px] items-center py-1.5 sm:min-h-0 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -2083,11 +2204,11 @@ const SubmissionForm = ({ userRole }) => {
         <div className="card">
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. എഴുത്ത്, പ്രഭാഷണം, സംഭാഷണം തുടങ്ങിയ വ്യക്തിഗത കഴിവുകള്‍ ദീനീമാര്‍ഗത്തില്‍ സാധ്യമാകുന്ന അളവില്‍ ഉപയോഗപ്പെടുത്തിയിട്ടുണ്ടോ?
+              {nextQuestionNumber()}. എഴുത്ത്, പ്രഭാഷണം, സംഭാഷണം തുടങ്ങിയ വ്യക്തിഗത കഴിവുകള്‍ ദീനീമാര്‍ഗത്തില്‍ സാധ്യമാകുന്ന അളവില്‍ ഉപയോഗപ്പെടുത്തിയിട്ടുണ്ടോ? <span className="text-red-400 ml-1">*</span>
             </h3>
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {FORM_OPTIONS.skillUsage.map((option) => (
-                <label key={option.value} className="flex items-center">
+                <label key={option.value} className="flex min-h-[44px] items-center py-1.5 sm:min-h-0 sm:py-0">
                   <input
                     type="radio"
                     value={option.value}
@@ -2105,10 +2226,10 @@ const SubmissionForm = ({ userRole }) => {
         </div>
 
         {/* Question: Jamaath Influence */}
-        <div className="card">
+        <div className="card" ref={jamaathSectionRef}>
           <div className="card-body p-3 sm:px-6 sm:py-4">
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
-              {nextQuestionNumber()}. പ്രാദേശിക ജമാഅത്തെ യോഗം താങ്കളിൽ സ്വാധീനം ചെലുത്താറുണ്ടോ?
+              {nextQuestionNumber()}. പ്രാദേശിക ജമാഅത്തെ യോഗം താങ്കളിൽ സ്വാധീനം ചെലുത്താറുണ്ടോ? <span className="text-red-400 ml-1">*</span>
             </h3>
             <div 
               className="flex items-center space-x-2"
@@ -2125,7 +2246,7 @@ const SubmissionForm = ({ userRole }) => {
                     type="button"
                     onClick={() => handleStarRatingChange(star)}
                     onMouseEnter={() => setHoveredStar(star)}
-                    className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded transition-all p-1"
+                    className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded transition-all p-1.5"
                     aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
                   >
                     <Star
@@ -2152,8 +2273,8 @@ const SubmissionForm = ({ userRole }) => {
         <div className="flex flex-wrap justify-end gap-3 mt-8">
           <button
             type="button"
-            onClick={() => navigate('/ihthisabi/dashboard')}
-            className="px-5 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition"
+            onClick={() => attemptNavigateAway(dashboardPath)}
+            className="btn-outline"
           >
             Cancel
           </button>
@@ -2161,7 +2282,7 @@ const SubmissionForm = ({ userRole }) => {
             type="submit"
             form="submissionForm"
             disabled={loading}
-            className="inline-flex items-center px-6 py-2 text-sm font-semibold text-white bg-[#161F2F] rounded-lg shadow-lg hover:bg-[#1a2538] transition disabled:opacity-60 disabled:cursor-not-allowed"
+            className="btn-primary"
           >
             {loading ? (
               <div className="flex items-center gap-2">
@@ -2178,6 +2299,16 @@ const SubmissionForm = ({ userRole }) => {
         </div>
       </form>
       </div>
+      <ConfirmationModal
+        isOpen={showUnsavedModal}
+        onClose={() => setShowUnsavedModal(false)}
+        onConfirm={confirmDiscardAndLeave}
+        title="Discard changes?"
+        message="You have unsaved changes in this report. Are you sure you want to leave without submitting?"
+        confirmText="Leave"
+        cancelText="Keep editing"
+        variant="warning"
+      />
     </>
   )
 }

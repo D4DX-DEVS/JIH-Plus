@@ -332,7 +332,7 @@ const QuarterlySelection = ({ submissions = [], alternativeSubmissions = [], onQ
 
   return (
     <div className="max-w-4xl mx-auto px-3 py-3 sm:px-4 sm:py-8">
-      <div className="mb-3 text-center sm:mb-6">
+      <div className="hidden lg:block mb-3 text-center sm:mb-6">
         <h1 className="text-base font-bold text-gray-900 sm:text-2xl">
           {title || 'Quarterly Report Submission'}
         </h1>
@@ -372,14 +372,14 @@ const QuarterlySelection = ({ submissions = [], alternativeSubmissions = [], onQ
             >
               {/* Available Quarter Badge */}
               {isAvailableQuarter && (
-                <div className="absolute -top-1.5 right-1.5 rounded-full bg-blue-500 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm">
+                <div className="absolute -top-1.5 right-1.5 rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
                   Available
                 </div>
               )}
               
               {/* Upcoming Quarter Badge */}
               {isCurrentQuarter && (
-                <div className="absolute -top-1.5 left-1.5 rounded-full bg-amber-400 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm">
+                <div className="absolute -top-1.5 left-1.5 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
                   Upcoming
                 </div>
               )}
@@ -446,7 +446,7 @@ const QuarterlySelection = ({ submissions = [], alternativeSubmissions = [], onQ
                             e.stopPropagation()
                             navigate(`/ihthisabi/alternative-submission?quarter=${quarter}&year=${year}`)
                           }}
-                          className="inline-flex w-full items-center justify-center gap-1 rounded-full px-2 py-1.5 text-[10px] font-medium text-white shadow-sm transition-opacity hover:opacity-90 sm:text-xs"
+                          className="inline-flex w-full min-h-[44px] sm:min-h-0 items-center justify-center gap-1 rounded-full px-2 py-2 text-[10px] font-medium text-white shadow-sm transition-opacity hover:opacity-90 sm:py-1.5 sm:text-xs"
                           style={{ backgroundColor: '#1A3A5C' }}
                           title="Submit alternative submission if unable to complete regular report"
                         >

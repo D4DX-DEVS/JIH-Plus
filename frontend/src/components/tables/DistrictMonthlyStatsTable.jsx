@@ -74,10 +74,10 @@ export default function DistrictMonthlyStatsTable({ surveys, onRowClick }) {
 					<h3 className="text-lg font-bold text-[#002349]">{title}</h3>
 				</div>
 				<div className="overflow-x-auto">
-					<table className="w-full">
+					<table className="ih-table-compact w-full">
 						<thead className="bg-gray-50">
 							<tr>
-								<th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Month</th>
+								<th className="sticky left-0 bg-white z-[1] px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Month</th>
 								<th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Year</th>
 								{columns.map((col, idx) => (
 									<th key={idx} className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -91,7 +91,7 @@ export default function DistrictMonthlyStatsTable({ surveys, onRowClick }) {
 								const candidates = (surveys || []).filter(s => s.month === monthName);
 								const survey = candidates.sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
 								const data = getData(survey);
-								
+
 								const handleRowClick = (e) => {
 									if (!onRowClick || !survey) return;
 									e.preventDefault();
@@ -100,7 +100,7 @@ export default function DistrictMonthlyStatsTable({ surveys, onRowClick }) {
 								};
 
 								return (
-									<tr 
+									<tr
 										key={`${monthName}-${rIdx}`}
 										className="hover:bg-gradient-to-br hover:from-white hover:to-gray-50 cursor-pointer transition-all duration-200 group"
 										onClick={handleRowClick}
@@ -109,7 +109,7 @@ export default function DistrictMonthlyStatsTable({ surveys, onRowClick }) {
 											if (e.key === 'Enter') handleRowClick(e);
 										}}
 									>
-										<td className="px-4 py-4 whitespace-nowrap text-sm font-semibold text-[#002349]">
+										<td className="sticky left-0 bg-white z-[1] px-4 py-4 whitespace-nowrap text-sm font-semibold text-[#002349]">
 											{monthName}
 										</td>
 										<td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
@@ -224,12 +224,12 @@ export default function DistrictMonthlyStatsTable({ surveys, onRowClick }) {
 		<div className="space-y-6">
 			{/* Part Selection Buttons */}
 			<div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-3">
-				<div className="flex flex-wrap gap-3">
+				<div className="flex gap-3 overflow-x-auto pb-1">
 					{partButtons.map((part) => (
 						<button
 							key={part.key}
 							onClick={() => setActivePart(part.key)}
-							className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
+							className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
 								activePart === part.key
 									? 'bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white shadow-md'
 									: 'bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-100 hover:shadow-sm'

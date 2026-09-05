@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { api } from '../../utils/ihthisabi/api'
-import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, User, Globe, MapPin, Building2, Phone, Mail, X, Loader2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, User, Globe, MapPin, Building2, Phone, Mail, X, Loader2, SlidersHorizontal } from 'lucide-react'
 import toast from 'react-hot-toast'
 import ConfirmationModal from './ConfirmationModal'
 
@@ -118,13 +118,13 @@ function MemberModal({ member, onClose, onSaved }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0">
           <h2 className="text-lg font-semibold text-gray-900">{member ? 'Edit Abroad Member' : 'Add Abroad Member'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} aria-label="Close" className="shrink-0 p-2 -m-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"><X className="w-5 h-5" /></button>
         </div>
         <form onSubmit={handleSubmit} className="px-6 py-5 overflow-y-auto space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Rukn ID <span className="text-red-500">*</span></label>
-              <input className="form-input text-sm w-full" value={form.ruknId} onChange={e => set('ruknId', e.target.value)} placeholder="e.g. 109500" required disabled={!!member} />
+              <input className="form-input text-base w-full lg:text-sm" value={form.ruknId} onChange={e => set('ruknId', e.target.value)} placeholder="e.g. 109500" required disabled={!!member} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
@@ -136,16 +136,16 @@ function MemberModal({ member, onClose, onSaved }) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Full Name <span className="text-red-500">*</span></label>
-            <input className="form-input text-sm w-full" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Member full name" required />
+            <input className="form-input text-base w-full lg:text-sm" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Member full name" required />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Contact No.</label>
-              <input className="form-input text-sm w-full" value={form.contactNo} onChange={e => set('contactNo', e.target.value)} placeholder="+966..." />
+              <input className="form-input text-base w-full lg:text-sm" value={form.contactNo} onChange={e => set('contactNo', e.target.value)} placeholder="+966..." />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input type="email" className="form-input text-sm w-full" value={form.emailId} onChange={e => set('emailId', e.target.value)} placeholder="email@example.com" />
+              <input type="email" className="form-input text-base w-full lg:text-sm" value={form.emailId} onChange={e => set('emailId', e.target.value)} placeholder="email@example.com" />
             </div>
           </div>
 
@@ -182,7 +182,7 @@ function MemberModal({ member, onClose, onSaved }) {
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+            <button type="button" onClick={onClose} className="btn-ghost">Cancel</button>
             <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {member ? 'Save Changes' : 'Add Member'}
@@ -205,6 +205,7 @@ const AbroadMemberManagement = () => {
   const [expanded, setExpanded] = useState({})
   const [searchText, setSearchText] = useState('')
   const [filterCountry, setFilterCountry] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [countries, setCountries] = useState([])
 
   const loadMembers = useCallback(async () => {
@@ -261,7 +262,7 @@ const AbroadMemberManagement = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="hidden items-center justify-between gap-2 sm:flex">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Abroad Members</h2>
           <p className="text-sm text-gray-500 mt-1">Members grouped by Country → Area → Unit</p>
@@ -270,16 +271,37 @@ const AbroadMemberManagement = () => {
           <Plus className="w-4 h-4" /> Add Member
         </button>
       </div>
+      <button
+        onClick={() => { setEditMember(null); setShowModal(true) }}
+        title="Add Member"
+        aria-label="Add Member"
+        className="ih-fab"
+      >
+        <Plus className="w-5 h-5" />
+      </button>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-2">
         <input
           type="text"
           placeholder="Search by name or Rukn ID..."
           value={searchText}
           onChange={e => setSearchText(e.target.value)}
-          className="form-input max-w-xs"
+          className="form-input flex-1 min-w-0 text-base sm:text-sm sm:max-w-xs"
         />
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(v => !v)}
+          className="ih-icon-btn border border-gray-300 bg-white hover:bg-gray-50 sm:hidden relative"
+          aria-expanded={filtersOpen}
+          title="Filters"
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          {filterCountry && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary" />}
+        </button>
+        <span className="hidden sm:inline text-sm text-gray-400 ml-auto">{filtered.length} member{filtered.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div className={`${filtersOpen ? 'flex' : 'hidden'} items-center gap-3 flex-wrap sm:flex`}>
         <select value={filterCountry} onChange={e => setFilterCountry(e.target.value)} className="form-input max-w-xs">
           <option value="">All Countries</option>
           {countries.map(c => <option key={c._id} value={c._id}>{c.title}</option>)}
@@ -287,7 +309,7 @@ const AbroadMemberManagement = () => {
         {(searchText || filterCountry) && (
           <button onClick={() => { setSearchText(''); setFilterCountry('') }} className="text-sm text-gray-500 hover:text-gray-700 underline">Clear</button>
         )}
-        <span className="text-sm text-gray-400 ml-auto">{filtered.length} member{filtered.length !== 1 ? 's' : ''}</span>
+        <span className="sm:hidden text-sm text-gray-400 ml-auto">{filtered.length} member{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Grouped list */}
@@ -314,12 +336,12 @@ const AbroadMemberManagement = () => {
                   onClick={() => toggleExpand(cKey)}
                   className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center"><Globe className="w-4 h-4 text-blue-600" /></div>
-                    <span className="font-semibold text-gray-900">{country.title}</span>
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">{totalMembers} member{totalMembers !== 1 ? 's' : ''}</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0"><Globe className="w-4 h-4 text-blue-600" /></div>
+                    <span className="font-semibold text-gray-900 truncate">{country.title}</span>
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium shrink-0">{totalMembers} member{totalMembers !== 1 ? 's' : ''}</span>
                   </div>
-                  {cExpanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                  {cExpanded ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
                 </button>
 
                 {cExpanded && Object.entries(country.areas).map(([aKey, area]) => {
@@ -330,11 +352,11 @@ const AbroadMemberManagement = () => {
                       {/* Area header */}
                       <button
                         onClick={() => toggleExpand(`${cKey}-${aKey}`)}
-                        className="w-full flex items-center justify-between px-5 py-2.5 pl-10 hover:bg-gray-50 transition-colors"
+                        className="w-full flex items-center justify-between px-5 py-2.5 pl-6 sm:pl-10 hover:bg-gray-50 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center"><MapPin className="w-3.5 h-3.5 text-green-600" /></div>
-                          <span className="font-medium text-gray-800 text-sm">{area.title}</span>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center shrink-0"><MapPin className="w-3.5 h-3.5 text-green-600" /></div>
+                          <span className="font-medium text-gray-800 text-sm truncate">{area.title}</span>
                           <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">{areaTotal}</span>
                         </div>
                         {aExpanded ? <ChevronDown className="w-3.5 h-3.5 text-gray-400" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
@@ -347,11 +369,11 @@ const AbroadMemberManagement = () => {
                             {/* Unit header */}
                             <button
                               onClick={() => toggleExpand(`${cKey}-${aKey}-${uKey}`)}
-                              className="w-full flex items-center justify-between px-5 py-2 pl-16 hover:bg-gray-50 transition-colors"
+                              className="w-full flex items-center justify-between px-5 py-2 pl-9 sm:pl-16 hover:bg-gray-50 transition-colors"
                             >
-                              <div className="flex items-center gap-3">
-                                <div className="w-6 h-6 rounded-md bg-purple-50 flex items-center justify-center"><Building2 className="w-3 h-3 text-purple-600" /></div>
-                                <span className="text-sm font-medium text-gray-700">{unit.title}</span>
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-6 h-6 rounded-md bg-purple-50 flex items-center justify-center shrink-0"><Building2 className="w-3 h-3 text-purple-600" /></div>
+                                <span className="text-sm font-medium text-gray-700 truncate">{unit.title}</span>
                                 <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">{unit.members.length}</span>
                               </div>
                               {uExpanded ? <ChevronDown className="w-3.5 h-3.5 text-gray-400" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
@@ -361,33 +383,33 @@ const AbroadMemberManagement = () => {
                             {uExpanded && (
                               <div className="border-t border-gray-100">
                                 {unit.members.map(m => (
-                                  <div key={m._id} className="flex items-center justify-between px-5 py-3 pl-20 border-b border-gray-50 last:border-0 hover:bg-gray-50">
+                                  <div key={m._id} className="flex items-center justify-between gap-2 px-5 py-3 pl-11 sm:pl-20 border-b border-gray-50 last:border-0 hover:bg-gray-50">
                                     <div className="flex items-center gap-3 min-w-0">
                                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                                         <User className="w-4 h-4 text-gray-500" />
                                       </div>
                                       <div className="min-w-0">
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-medium text-gray-900 text-sm">{m.name}</span>
-                                          {!m.isActive && <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded">Inactive</span>}
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <span className="font-medium text-gray-900 text-sm truncate">{m.name}</span>
+                                          {!m.isActive && <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded shrink-0">Inactive</span>}
                                         </div>
-                                        <div className="flex items-center gap-3 mt-0.5">
-                                          <span className="text-xs text-gray-500">ID: {m.ruknId}</span>
-                                          {m.contactNo && <span className="text-xs text-gray-400 flex items-center gap-1"><Phone className="w-3 h-3" />{m.contactNo}</span>}
+                                        <div className="flex items-center gap-3 mt-0.5 min-w-0">
+                                          <span className="text-xs text-gray-500 shrink-0">ID: {m.ruknId}</span>
+                                          {m.contactNo && <span className="text-xs text-gray-400 flex items-center gap-1 truncate"><Phone className="w-3 h-3 shrink-0" /><span className="truncate">{m.contactNo}</span></span>}
                                         </div>
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-2 flex-shrink-0">
                                       <button
                                         onClick={() => { setEditMember(m); setShowModal(true) }}
-                                        className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 text-xs"
+                                        className="p-2.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 text-xs"
                                         title="Edit"
                                       >
                                         <Pencil className="w-3.5 h-3.5" />
                                       </button>
                                       <button
                                         onClick={() => setDeleteModal({ isOpen: true, id: m._id, name: m.name })}
-                                        className="p-1.5 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 text-xs"
+                                        className="p-2.5 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 text-xs"
                                         title="Delete"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />

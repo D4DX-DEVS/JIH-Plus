@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, FileText, Search, Edit, Trash2, Download, Bell, X, Eye, Plus, MapPin, Calendar, TrendingUp, Check, Clock, ArrowLeft, ChevronRight } from 'lucide-react';
+import { FileText, Trash2, Download, MapPin, Calendar, TrendingUp, ArrowLeft, ChevronRight, LogOut, Edit, Bell, X, Eye, Plus, Check, Clock } from 'lucide-react';
+import { JihFilterBar, JihFilterSelect, JihToolbarAction } from '../components/JihToolbar';
 import axios from 'axios';
 import FormDetailPage from './FormDetailPage';
 
@@ -12,15 +13,12 @@ console.log('API_BASE_URL:', API_BASE_URL);
 import FormPage from './FormPage';
 import { FormProvider } from '../contexts/FormContext';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
-import RejectionModal from '../components/modals/RejectionModal';
 import jihLogo from '../assets/LogoColor.png';
 import SurveyBarChart from '../components/charts/SurveyBarChart';
 import SurveyPieChart from '../components/charts/SurveyPieChart';
 import StatisticsCard from '../components/charts/StatisticsCard';
 import DistrictMonthlyStatsTable from '../components/tables/DistrictMonthlyStatsTable';
 import { downloadAllFormsPDF } from '../utils/newPdfGenerator.jsx';
-import KarkunForm from '../components/forms/membership/KarkunForm.jsx';
-import RuknForm from '../components/forms/membership/RuknForm.jsx';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import ConsolidationTab from '../components/admin/ConsolidationTab';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
@@ -45,11 +43,12 @@ const AdminDashboardPage = ({ onLogout }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showMonthlyDetail, setShowMonthlyDetail] = useState(false);
   const [viewingMonthlySurvey, setViewingMonthlySurvey] = useState(null);
-  const [activeTab, setActiveTab] = useState('stats'); // 'membership', 'stats' (legacy 'yearly'/'monthly' pages removed)
+  const [activeTab, setActiveTab] = useState('stats'); // 'stats' (legacy 'yearly'/'monthly' pages removed)
   const DISTRICT_PAGE_SIZE = 10;
   const [districtPage, setDistrictPage] = useState(1);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [selectedArea, setSelectedArea] = useState(null);
+  const [selectedUnit, setSelectedUnit] = useState(null);
   const [districtFilterValue, setDistrictFilterValue] = useState('all');
   const [areaFilterValue, setAreaFilterValue] = useState('all');
   const [unitFilterValue, setUnitFilterValue] = useState('all');
@@ -67,21 +66,6 @@ const AdminDashboardPage = ({ onLogout }) => {
   const [totalForms, setTotalForms] = useState(0);
   const [totalSurveys, setTotalSurveys] = useState(0);
 
-  // Membership (State-level verification)
-  const [membershipTab, setMembershipTab] = useState('karkun'); // 'karkun' | 'rukn'
-  const [membershipData, setMembershipData] = useState({ karkun: [], rukn: [] });
-  const [showRejectionModal, setShowRejectionModal] = useState(false);
-  const [rejectionData, setRejectionData] = useState(null);
-  // Membership deletion modals
-  const [showDeleteKarkunModal, setShowDeleteKarkunModal] = useState(false);
-  const [showDeleteRuknModal, setShowDeleteRuknModal] = useState(false);
-  const [memberToDelete, setMemberToDelete] = useState(null); // { id, name }
-  
-  // Membership search and filter
-  const [membershipSearchTerm, setMembershipSearchTerm] = useState('');
-  const [membershipDistrictFilter, setMembershipDistrictFilter] = useState('');
-  const [membershipStatusFilter, setMembershipStatusFilter] = useState('');
-
   // Statistics tab state
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -89,95 +73,6 @@ const AdminDashboardPage = ({ onLogout }) => {
   const [summary, setSummary] = useState('');
   const [activeSubTab, setActiveSubTab] = useState('summary'); // 'summary' | 'table' | 'consolidation'
   const [districtMonthlySurveys, setDistrictMonthlySurveys] = useState([]);
-
-  // ===== Membership filtering functions =====
-  const getFilteredMembershipData = (data, type) => {
-    if (!data || data.length === 0) return [];
-    
-    return data.filter(form => {
-      // Search term filter (name, mobile, district)
-      const searchMatch = !membershipSearchTerm || 
-        form.name?.toLowerCase().includes(membershipSearchTerm.toLowerCase()) ||
-        form.mobile?.toLowerCase().includes(membershipSearchTerm.toLowerCase()) ||
-        form.district?.toLowerCase().includes(membershipSearchTerm.toLowerCase());
-      
-      // District filter
-      const districtMatch = !membershipDistrictFilter || 
-        form.district?.toLowerCase().includes(membershipDistrictFilter.toLowerCase());
-      
-      // Status filter
-      const statusMatch = !membershipStatusFilter || 
-        form.status?.toLowerCase() === membershipStatusFilter.toLowerCase() ||
-        (membershipStatusFilter === 'pending' && form.status === 'state_review') ||
-        (membershipStatusFilter === 'approved' && form.status === 'approved') ||
-        (membershipStatusFilter === 'rejected' && form.status === 'rejected');
-      
-      return searchMatch && districtMatch && statusMatch;
-    });
-  };
-
-  const clearMembershipFilters = () => {
-    setMembershipSearchTerm('');
-    setMembershipDistrictFilter('');
-    setMembershipStatusFilter('');
-  };
-
-  // ===== Membership delete functions =====
-  const handleDeleteKarkun = (formIdOrForm) => {
-    const id = typeof formIdOrForm === 'object' ? formIdOrForm._id : formIdOrForm;
-    const name = typeof formIdOrForm === 'object' ? formIdOrForm.name : '';
-    setMemberToDelete({ id, name, type: 'karkun' });
-    setShowDeleteKarkunModal(true);
-  };
-
-  const confirmDeleteKarkun = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      if (!memberToDelete?.id) return;
-      const response = await axios.delete(`${API_BASE_URL}/api/karkun/${memberToDelete.id}/admin`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data.success) {
-        setMembershipData(prev => ({
-          ...prev,
-          karkun: prev.karkun.filter(form => form._id !== memberToDelete.id)
-        }));
-      }
-    } catch (error) {
-      console.error('Frontend: Delete Karkun error:', error);
-    } finally {
-      setShowDeleteKarkunModal(false);
-      setMemberToDelete(null);
-    }
-  };
-
-  const handleDeleteRukn = (formIdOrForm) => {
-    const id = typeof formIdOrForm === 'object' ? formIdOrForm._id : formIdOrForm;
-    const name = typeof formIdOrForm === 'object' ? formIdOrForm.name : '';
-    setMemberToDelete({ id, name, type: 'rukn' });
-    setShowDeleteRuknModal(true);
-  };
-
-  const confirmDeleteRukn = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      if (!memberToDelete?.id) return;
-      const response = await axios.delete(`${API_BASE_URL}/api/rukn/${memberToDelete.id}/admin`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data.success) {
-        setMembershipData(prev => ({
-          ...prev,
-          rukn: prev.rukn.filter(form => form._id !== memberToDelete.id)
-        }));
-      }
-    } catch (error) {
-      console.error('Frontend: Delete Rukn error:', error);
-    } finally {
-      setShowDeleteRuknModal(false);
-      setMemberToDelete(null);
-    }
-  };
 
   // ===== Helpers for monthly detail rendering =====
   const formatLabel = (key) => {
@@ -272,14 +167,6 @@ const AdminDashboardPage = ({ onLogout }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [districtFilter, userFilter, monthFilter, activeTab]);
 
-  // Load membership data whenever the Membership tab is opened
-  useEffect(() => {
-    if (activeTab === 'membership') {
-      loadMembershipData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
   // Separate effect for yearly forms pagination
   useEffect(() => {
     if (activeTab === 'yearly') {
@@ -288,14 +175,28 @@ const AdminDashboardPage = ({ onLogout }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
+  // Yearly forms search: backend has no free-text search across district/submittedBy/id,
+  // so widen the page size while a search term is active instead of only matching the
+  // current 10-record page (debounced to avoid a fetch per keystroke).
+  useEffect(() => {
+    if (activeTab !== 'yearly') return;
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      loadAllForms();
+    }, 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
+
   const loadAllForms = async () => {
     try {
       const token = localStorage.getItem('adminToken');
+      const hasSearch = searchTerm.trim().length > 0;
       const params = new URLSearchParams({
-        page: currentPage,
-        limit: 10
+        page: hasSearch ? 1 : currentPage,
+        limit: hasSearch ? 500 : 10
       });
-      
+
       if (districtFilter) params.append('district', districtFilter);
       if (userFilter) params.append('submittedBy', userFilter);
 
@@ -313,82 +214,6 @@ const AdminDashboardPage = ({ onLogout }) => {
       setError('Failed to load forms');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // ===== Membership loaders and actions =====
-  const loadMembershipData = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const [karkunRes, ruknRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/api/karkun/state/mine`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${import.meta.env.VITE_API_URL}/api/rukn/state/mine`, { headers: { Authorization: `Bearer ${token}` } })
-      ]);
-      setMembershipData({
-        karkun: karkunRes.data?.data || [],
-        rukn: ruknRes.data?.data || []
-      });
-    } catch (e) {
-      console.error('Load membership (state) failed', e);
-    }
-  };
-
-  const handleViewKarkunForm = (form) => { 
-    navigate(`/karkun/${form._id || form.id}`);
-  };
-  const handleViewRuknForm = (form) => { 
-    navigate(`/rukn/${form._id || form.id}`);
-  };
-
-  const handleVerifyKarkunState = async (formId, status) => {
-    if (status === 'rejected') {
-      setRejectionData({ formId, type: 'karkun' });
-      setShowRejectionModal(true);
-      return;
-    }
-    
-    try {
-      const token = localStorage.getItem('adminToken');
-      await axios.put(`${API_BASE_URL}/api/karkun/${formId}/verify/state`, { status }, { headers: { Authorization: `Bearer ${token}` } });
-      await loadMembershipData();
-    } catch (e) {
-      console.error('Karkun state verify failed', e);
-      alert('Failed to update status');
-    }
-  };
-
-  const handleVerifyRuknState = async (formId, status) => {
-    if (status === 'rejected') {
-      setRejectionData({ formId, type: 'rukn' });
-      setShowRejectionModal(true);
-      return;
-    }
-    
-    try {
-      const token = localStorage.getItem('adminToken');
-      await axios.put(`${API_BASE_URL}/api/rukn/${formId}/verify/state`, { status }, { headers: { Authorization: `Bearer ${token}` } });
-      await loadMembershipData();
-    } catch (e) {
-      console.error('Rukn state verify failed', e);
-      alert('Failed to update status');
-    }
-  };
-
-  const handleConfirmRejection = async (comments) => {
-    if (!rejectionData) return;
-    
-    try {
-      const token = localStorage.getItem('adminToken');
-      
-      const endpoint = rejectionData.type === 'karkun' 
-        ? `${API_BASE_URL}/api/karkun/${rejectionData.formId}/verify/state`
-        : `${API_BASE_URL}/api/rukn/${rejectionData.formId}/verify/state`;
-      
-      await axios.put(endpoint, { status: 'rejected', comments }, { headers: { Authorization: `Bearer ${token}` } });
-      await loadMembershipData();
-    } catch (e) {
-      console.error('Rejection error', e);
-      alert('Rejection failed');
     }
   };
 
@@ -426,35 +251,6 @@ const AdminDashboardPage = ({ onLogout }) => {
       setDistrictMonthlySurveys(response.data.surveys || []);
     } catch (error) {
       console.error('Error loading district monthly surveys:', error);
-    }
-  };
-
-  // ===== CSV Export Handler =====
-  const handleDownloadCSV = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/user/users/export-csv`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          responseType: 'blob'
-        }
-      );
-
-      // Create a blob URL and trigger download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('CSV download error:', error);
-      alert('Failed to download CSV. Please try again.');
     }
   };
 
@@ -534,9 +330,6 @@ const AdminDashboardPage = ({ onLogout }) => {
     navigate('/notifications');
   };
 
-  const handleNavigateToMembership = () => {
-    navigate('/membership', { state: { roleHint: 'admin' } });
-  };
 
   const handleViewForm = (form) => {
     setSelectedFormId(form._id);
@@ -954,6 +747,17 @@ const AdminDashboardPage = ({ onLogout }) => {
     return `${monthLabel} • ${submittedDate} • ${unitName} • ${areaName} • ${districtName}`;
   };
 
+  // Mobile top bar should name whichever tab is actually showing instead of a
+  // static label, since the tab-specific headings below are hidden on mobile.
+  // (showDetailView/showFormEdit render FormDetailPage/FormPage, which own
+  // their own in-page titles, so the bar keeps the generic label there.)
+  const mobileHeaderTitle = showDetailView || showFormEdit
+    ? 'Admin Dashboard'
+    : activeTab === 'yearly'
+    ? 'Yearly Report'
+    : activeTab === 'monthly'
+    ? 'Monthly Report'
+    : 'Statistics';
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
@@ -962,9 +766,7 @@ const AdminDashboardPage = ({ onLogout }) => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onNavigateToReports={() => navigate('/view-reports')}
-        onDownloadCSV={handleDownloadCSV}
         onNavigateToNotifications={handleNavigateToNotifications}
-        onNavigateToMembership={handleNavigateToMembership}
         onLogout={handleLogout}
         adminEmail={adminData?.email || 'Admin'}
         totalForms={totalForms}
@@ -976,7 +778,7 @@ const AdminDashboardPage = ({ onLogout }) => {
       {/* Main Content Area */}
       <div className="flex-1 relative z-10 box-border flex flex-col min-w-0 overflow-hidden">
         <MobileTopBar
-          title="Admin Dashboard"
+          title={mobileHeaderTitle}
         />
 
       {/* Main Content */}
@@ -1005,30 +807,35 @@ const AdminDashboardPage = ({ onLogout }) => {
         {activeTab === 'yearly' && (
           <>
             {/* Header with Title, Download Button, and Search */}
-        {activeTab !== 'membership' && (
-              <div className="mb-6 flex items-center justify-between gap-4">
-                <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">വാർഷിക റിപ്പോർട്ട്</h2>
-                <div className="flex items-center gap-3">
+        {(
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                <h2 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">വാർഷിക റിപ്പോർട്ട്</h2>
+                <div className="w-full lg:w-auto lg:flex lg:items-center lg:gap-3">
                   <button
                     onClick={handleDownloadAllForms}
                     disabled={isDownloading || forms.length === 0}
-                    className="bg-gradient-to-r from-[#957C3D] to-[#8A6F35] hover:from-[#8A6F35] hover:to-[#957C3D] disabled:from-gray-400 disabled:to-gray-400 text-white px-3 py-2 rounded-xl transition-all duration-500 flex items-center space-x-1.5 text-sm font-semibold hover:shadow-md transform hover:scale-105 ease-out hover:shadow-[#957C3D]/50 disabled:transform-none"
+                    className="hidden lg:flex bg-gradient-to-r from-[#957C3D] to-[#8A6F35] hover:from-[#8A6F35] hover:to-[#957C3D] disabled:from-gray-400 disabled:to-gray-400 text-white px-3 py-2 rounded-xl transition-all duration-500 items-center space-x-1.5 text-sm font-semibold hover:shadow-md"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>{isDownloading ? 'Generating...' : 'Download All PDF'}</span>
                   </button>
-                  <div className="relative max-w-xs">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Search by district, user, or ID..."
-                      className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 bg-white shadow-sm"
-                />
-                    <Search className="absolute left-2.5 top-1.5 h-4 w-4 text-gray-400" />
+                  <JihFilterBar
+                    className="lg:w-96"
+                    search={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    placeholder="Search by district, user, or ID..."
+                    actions={
+                      <JihToolbarAction
+                        icon={Download}
+                        label={isDownloading ? 'Generating...' : 'Download All PDF'}
+                        onClick={handleDownloadAllForms}
+                        disabled={isDownloading || forms.length === 0}
+                        className="lg:hidden"
+                      />
+                    }
+                  />
+                </div>
               </div>
-            </div>
-        </div>
         )}
 
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 mt-8">
@@ -1051,7 +858,7 @@ const AdminDashboardPage = ({ onLogout }) => {
             </div>
           ) : (
             <>
-              <div>
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -1071,8 +878,8 @@ const AdminDashboardPage = ({ onLogout }) => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredForms.map((form) => (
-                      <tr 
-                        key={form._id} 
+                      <tr
+                        key={form._id}
                         className="hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#957C3D]/5 cursor-pointer transition-all duration-300 group border-l-4 border-transparent hover:border-[#002349]"
                         onClick={() => handleViewForm(form)}
                       >
@@ -1089,7 +896,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                           <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => handleDeleteForm(form)}
-                              className="text-red-600 hover:text-white p-1.5 hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 rounded-lg transition-all duration-500 transform hover:scale-110 hover:shadow-md"
+                              className="text-red-600 hover:text-white p-2.5 hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 rounded-lg transition-all duration-500 transform hover:scale-110 hover:shadow-md"
                               title="Delete"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -1100,6 +907,30 @@ const AdminDashboardPage = ({ onLogout }) => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              <div className="lg:hidden divide-y divide-gray-100">
+                {filteredForms.map((form) => (
+                  <div
+                    key={form._id}
+                    className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer active:bg-gray-50"
+                    onClick={() => handleViewForm(form)}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-[#002349] truncate">{form.district}</p>
+                      <p className="text-sm text-gray-600 truncate">{form.submittedBy}</p>
+                      <p className="text-xs text-gray-400">{new Date(form.submittedAt).toLocaleDateString()}</p>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteForm(form); }}
+                      className="shrink-0 inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-red-600 hover:bg-red-50 rounded-lg"
+                      title="Delete"
+                      aria-label="Delete form"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
 
               {/* Pagination */}
@@ -1113,14 +944,14 @@ const AdminDashboardPage = ({ onLogout }) => {
                       <button
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className="px-3 py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
+                        className="px-3 py-1 min-h-[44px] border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
                       >
                         Previous
                       </button>
                       <button
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-1 border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
+                        className="px-3 py-1 min-h-[44px] border border-gray-300 rounded-2xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-300 font-medium"
                       >
                         Next
                       </button>
@@ -1139,70 +970,35 @@ const AdminDashboardPage = ({ onLogout }) => {
           <>
             <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
               <div>
-                <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">പ്രതിമാസ റിപ്പോർട്ട്</h2>
+                <h2 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">പ്രതിമാസ റിപ്പോർട്ട്</h2>
                 <p className="text-sm text-gray-600">Browse monthly reports by district, area, and unit.</p>
               </div>
-              <div className="relative w-full lg:w-80">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by district, area, unit, or ID..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 bg-white shadow-sm"
-                />
-                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              </div>
             </div>
 
-            {/* Filter bar */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">District</label>
-                <select
-                  value={districtFilterValue}
-                  onChange={(e) => handleDistrictFilterChange(e.target.value)}
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                >
-                  {districtOptions.map((d) => (
-                    <option key={d} value={d}>
-                      {d === 'all' ? 'All Districts' : d}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">Area</label>
-                <select
-                  value={areaFilterValue}
-                  onChange={(e) => handleAreaFilterChange(e.target.value)}
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                  disabled={areaOptions.length <= 1}
-                >
-                  {areaOptions.map((a) => (
-                    <option key={a} value={a}>
-                      {a === 'all' ? 'All Areas' : a}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">Unit</label>
-                <select
-                  value={unitFilterValue}
-                  onChange={(e) => handleUnitFilterChange(e.target.value)}
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                  disabled={unitOptions.length <= 1}
-                >
-                  {unitOptions.map((u) => (
-                    <option key={u} value={u}>
-                      {u === 'all' ? 'All Units' : u}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <JihFilterBar
+              className="mb-4"
+              search={searchTerm}
+              onSearchChange={setSearchTerm}
+              placeholder="Search by district, area, unit, or ID..."
+              activeFilterCount={[districtFilterValue, areaFilterValue, unitFilterValue].filter(v => v && v !== 'all').length}
+              gridClass="sm:grid-cols-3"
+            >
+              <JihFilterSelect icon={MapPin} value={districtFilterValue} onChange={(e) => handleDistrictFilterChange(e.target.value)}>
+                {districtOptions.map((d) => (
+                  <option key={d} value={d}>{d === 'all' ? 'All Districts' : d}</option>
+                ))}
+              </JihFilterSelect>
+              <JihFilterSelect icon={MapPin} value={areaFilterValue} onChange={(e) => handleAreaFilterChange(e.target.value)} disabled={areaOptions.length <= 1}>
+                {areaOptions.map((a) => (
+                  <option key={a} value={a}>{a === 'all' ? 'All Areas' : a}</option>
+                ))}
+              </JihFilterSelect>
+              <JihFilterSelect icon={MapPin} value={unitFilterValue} onChange={(e) => handleUnitFilterChange(e.target.value)} disabled={unitOptions.length <= 1}>
+                {unitOptions.map((u) => (
+                  <option key={u} value={u}>{u === 'all' ? 'All Units' : u}</option>
+                ))}
+              </JihFilterSelect>
+            </JihFilterBar>
 
             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
               {isLoading ? (
@@ -1222,7 +1018,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                 <>
                   {/* Hierarchical table rendering */}
                   {!selectedDistrict && areaFilterValue === 'all' && unitFilterValue === 'all' ? (
-                    <div className="overflow-x-auto">
+                    <div className="hidden lg:block overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-[#002349] text-white">
                           <tr>
@@ -1260,7 +1056,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                                                 [district.district]: !prev[district.district]
                                               }));
                                             }}
-                                            className="text-gray-500 hover:text-[#002349] transition-colors"
+                                            className="text-gray-500 hover:text-[#002349] transition-colors p-2 -m-2"
                                             title="Toggle district reports"
                                           >
                                             <ChevronRight
@@ -1279,7 +1075,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                                       <div className="flex flex-wrap items-center gap-2">
                                         <button
                                           onClick={() => handleDistrictSelect(district.district)}
-                                          className="text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
+                                          className="text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold transition-colors"
                                         >
                                           View Areas
                                         </button>
@@ -1313,7 +1109,74 @@ const AdminDashboardPage = ({ onLogout }) => {
                         </tbody>
                       </table>
                     </div>
-                  ) : selectedDistrict && (selectedArea || areaFilterValue !== 'all' || unitFilterValue !== 'all') ? (
+                  ) : null}
+
+                  {!selectedDistrict && areaFilterValue === 'all' && unitFilterValue === 'all' && (
+                    <div className="lg:hidden divide-y divide-gray-100">
+                      {paginatedDistricts.length === 0 ? (
+                        <p className="px-4 py-6 text-center text-sm text-gray-500">No districts found.</p>
+                      ) : (
+                        paginatedDistricts.map((district) => {
+                          const reports = [...(district.districtReports || [])].sort(
+                            (a, b) =>
+                              new Date(b.updatedAt || b.submittedAt) - new Date(a.updatedAt || a.submittedAt)
+                          );
+                          const hasReports = reports.length > 0;
+                          const isExpanded = expandedDistrictReports[district.district];
+
+                          return (
+                            <div key={district.district} className="px-4 py-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  {hasReports && (
+                                    <button
+                                      onClick={() =>
+                                        setExpandedDistrictReports((prev) => ({
+                                          ...prev,
+                                          [district.district]: !prev[district.district]
+                                        }))
+                                      }
+                                      className="shrink-0 text-gray-500 hover:text-[#002349] p-2 -m-2"
+                                      aria-label="Toggle district reports"
+                                    >
+                                      <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                    </button>
+                                  )}
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-gray-900 truncate">{district.district}</p>
+                                    <p className="text-xs text-gray-500">
+                                      {Object.keys(district.areas || {}).length} areas · {hasReports ? `${reports.length} report${reports.length > 1 ? 's' : ''}` : 'no reports'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handleDistrictSelect(district.district)}
+                                  className="shrink-0 text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold transition-colors"
+                                >
+                                  View Areas
+                                </button>
+                              </div>
+                              {isExpanded && hasReports && (
+                                <div className="mt-3 space-y-2">
+                                  {reports.map((report) => (
+                                    <div
+                                      key={report._id}
+                                      onClick={() => handleReportNavigate(report._id)}
+                                      className="px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-[#002349] hover:bg-blue-50 cursor-pointer transition-colors"
+                                    >
+                                      <p className="text-sm font-medium text-gray-900">{formatReportOptionLabel(report)}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+
+                  {selectedDistrict && (selectedArea || areaFilterValue !== 'all' || unitFilterValue !== 'all') ? (
                     // Units table
                     <div className="overflow-x-auto">
                       <div className="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center gap-3">
@@ -1333,6 +1196,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                           Units in <span className="font-semibold text-[#002349]">{selectedArea || areaFilterValue}</span> — {selectedDistrict}
                         </div>
                       </div>
+                      <div className="hidden lg:block overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-[#002349] text-white">
                           <tr>
@@ -1394,6 +1258,51 @@ const AdminDashboardPage = ({ onLogout }) => {
                           )}
                         </tbody>
                       </table>
+                      </div>
+                      <div className="lg:hidden divide-y divide-gray-100">
+                        {filteredUnits.length === 0 ? (
+                          <p className="px-4 py-6 text-center text-sm text-gray-500">No unit reports found for this area.</p>
+                        ) : (
+                          filteredUnits.map((unit) => {
+                            const unitReports = [...(unit.unitReports || [])].sort(
+                              (a, b) =>
+                                new Date(b.updatedAt || b.submittedAt) - new Date(a.updatedAt || a.submittedAt)
+                            );
+                            return (
+                              <div key={`${unit.unit}-${selectedArea || areaFilterValue}-card`} className="px-4 py-3">
+                                <p className="text-sm font-semibold text-gray-900">{unit.unit}</p>
+                                <p className="text-xs text-gray-500 mb-2">
+                                  {unitReports.length ? `${unitReports.length} report${unitReports.length > 1 ? 's' : ''}` : 'No reports'}
+                                </p>
+                                {unitReports.length > 0 && (
+                                  <select
+                                    defaultValue=""
+                                    className="w-full border border-gray-200 rounded-xl px-3 py-2 min-h-[44px] text-base focus:outline-none focus:ring-2 focus:ring-[#002349] bg-white shadow-sm"
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        handleReportNavigate(e.target.value);
+                                        e.target.value = '';
+                                      }
+                                    }}
+                                  >
+                                    <option value="">Select unit report...</option>
+                                    {unitReports.map((report) => (
+                                      <option key={report._id} value={report._id}>
+                                        {formatUnitReportOptionLabel(
+                                          report,
+                                          unit.unit,
+                                          selectedArea || areaFilterValue,
+                                          selectedDistrict
+                                        )}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
                   ) : (
                     // Area table
@@ -1418,6 +1327,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                           Areas in <span className="font-semibold text-[#002349]">{selectedDistrict}</span>
                         </div>
                       </div>
+                      <div className="hidden lg:block overflow-x-auto">
                       <table className="w-full">
                         <thead className="bg-[#002349] text-white">
                           <tr>
@@ -1458,7 +1368,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                                                 [areaKey]: !prev[areaKey]
                                               }));
                                             }}
-                                            className="text-gray-500 hover:text-[#002349] transition-colors"
+                                            className="text-gray-500 hover:text-[#002349] transition-colors p-2 -m-2"
                                             title="Toggle area reports"
                                           >
                                             <ChevronRight
@@ -1479,7 +1389,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                                       <div className="flex flex-wrap items-center gap-2">
                                         <button
                                           onClick={() => handleAreaSelect(area.area)}
-                                          className="text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
+                                          className="text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold transition-colors"
                                         >
                                           View Units
                                         </button>
@@ -1512,6 +1422,70 @@ const AdminDashboardPage = ({ onLogout }) => {
                           )}
                         </tbody>
                       </table>
+                      </div>
+                      <div className="lg:hidden divide-y divide-gray-100">
+                        {filteredAreas.length === 0 ? (
+                          <p className="px-4 py-6 text-center text-sm text-gray-500">No areas found for this district.</p>
+                        ) : (
+                          filteredAreas.map((area) => {
+                            const areaReports = [...(area.areaReports || [])].sort(
+                              (a, b) =>
+                                new Date(b.updatedAt || b.submittedAt) - new Date(a.updatedAt || a.submittedAt)
+                            );
+                            const hasReports = areaReports.length > 0;
+                            const areaKey = `${selectedDistrict}-${area.area}-card`;
+                            const isExpanded = expandedAreaReports[areaKey];
+
+                            return (
+                              <div key={areaKey} className="px-4 py-3">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {hasReports && (
+                                      <button
+                                        onClick={() =>
+                                          setExpandedAreaReports((prev) => ({
+                                            ...prev,
+                                            [areaKey]: !prev[areaKey]
+                                          }))
+                                        }
+                                        className="shrink-0 text-gray-500 hover:text-[#002349] p-2 -m-2"
+                                        aria-label="Toggle area reports"
+                                      >
+                                        <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                      </button>
+                                    )}
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-semibold text-gray-900 truncate">{area.area}</p>
+                                      <p className="text-xs text-gray-500">
+                                        {Object.keys(area.units || {}).length} units · {hasReports ? `${areaReports.length} report${areaReports.length > 1 ? 's' : ''}` : 'no reports'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => handleAreaSelect(area.area)}
+                                    className="shrink-0 text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold transition-colors"
+                                  >
+                                    View Units
+                                  </button>
+                                </div>
+                                {isExpanded && hasReports && (
+                                  <div className="mt-3 space-y-2">
+                                    {areaReports.map((report) => (
+                                      <div
+                                        key={report._id}
+                                        onClick={() => handleReportNavigate(report._id)}
+                                        className="px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-[#002349] hover:bg-blue-50 cursor-pointer transition-colors"
+                                      >
+                                        <p className="text-sm font-medium text-gray-900">{formatReportOptionLabel(report)}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -1525,14 +1499,14 @@ const AdminDashboardPage = ({ onLogout }) => {
                         <button
                           onClick={() => setDistrictPage((prev) => Math.max(1, prev - 1))}
                           disabled={districtPage === 1}
-                          className="px-3 py-1 border border-gray-300 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200"
+                          className="px-3 py-1 min-h-[44px] border border-gray-300 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200"
                         >
                           Previous
                         </button>
                         <button
                           onClick={() => setDistrictPage((prev) => Math.min(totalDistrictPages, prev + 1))}
                           disabled={districtPage === totalDistrictPages}
-                          className="px-3 py-1 border border-gray-300 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200"
+                          className="px-3 py-1 min-h-[44px] border border-gray-300 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200"
                         >
                           Next
                         </button>
@@ -1545,146 +1519,15 @@ const AdminDashboardPage = ({ onLogout }) => {
           </>
         )}
 
-        {/* Membership Tab */}
-        {activeTab === 'membership' && (
-          <div className="space-y-4">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-              <div>
-                <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">അംഗത്വം</h2>
-                <p className="text-sm text-gray-600">Review and manage Karkun and Rukn applications.</p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setMembershipTab('karkun')}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    membershipTab === 'karkun'
-                      ? 'bg-[#002349] text-white'
-                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  Karkun
-                </button>
-                <button
-                  onClick={() => setMembershipTab('rukn')}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    membershipTab === 'rukn'
-                      ? 'bg-[#002349] text-white'
-                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  Rukn
-                </button>
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">Search</label>
-                <input
-                  value={membershipSearchTerm}
-                  onChange={(e) => setMembershipSearchTerm(e.target.value)}
-                  placeholder="Name, mobile, district..."
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">District</label>
-                <input
-                  value={membershipDistrictFilter}
-                  onChange={(e) => setMembershipDistrictFilter(e.target.value)}
-                  placeholder="Filter by district"
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm font-semibold text-[#002349]">Status</label>
-                <select
-                  value={membershipStatusFilter}
-                  onChange={(e) => setMembershipStatusFilter(e.target.value)}
-                  className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-200"
-                >
-                  <option value="">All</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Membership list */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">District</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Mobile</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {getFilteredMembershipData(membershipData[membershipTab] || [], membershipTab).map((form) => (
-                    <tr key={form._id || form.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-5 py-3 text-sm font-semibold text-[#002349]">{form.name || '—'}</td>
-                      <td className="px-5 py-3 text-sm text-gray-700">{form.district || '—'}</td>
-                      <td className="px-5 py-3 text-sm text-gray-700">{form.mobile || '—'}</td>
-                      <td className="px-5 py-3 whitespace-nowrap">
-                        <span
-                          className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                            form.status === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : form.status === 'rejected'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {form.status || 'pending'}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-sm font-medium space-x-2">
-                        <button
-                          onClick={() =>
-                            membershipTab === 'karkun' ? handleViewKarkunForm(form) : handleViewRuknForm(form)
-                          }
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={() =>
-                            membershipTab === 'karkun' ? handleDeleteKarkun(form) : handleDeleteRukn(form)
-                          }
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {getFilteredMembershipData(membershipData[membershipTab] || [], membershipTab).length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-5 py-6 text-center text-sm text-gray-500">
-                        No applications found for this filter.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
         {/* Statistics Tab */}
         {activeTab === 'stats' && (
           <div className="space-y-4">
             {/* Sub-tab bar — always visible */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-              <div className="flex space-x-1">
+              <div className="flex gap-1 overflow-x-auto">
                 <button
                   onClick={() => setActiveSubTab('summary')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 ${
                     activeSubTab === 'summary'
                       ? 'bg-[#002349] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1694,7 +1537,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                 </button>
                 <button
                   onClick={() => setActiveSubTab('table')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 ${
                     activeSubTab === 'table'
                       ? 'bg-[#002349] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1704,7 +1547,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                 </button>
                 <button
                   onClick={() => setActiveSubTab('consolidation')}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 ${
                     activeSubTab === 'consolidation'
                       ? 'bg-[#002349] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1752,7 +1595,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                 {activeSubTab === 'summary' && (
                   <>
                     {/* Overview Statistics Cards */}
-                    <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                       <StatisticsCard
                         title="Total Districts"
                         value={stats.overall?.totalDistricts || 0}
@@ -1856,7 +1699,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                       <div className="px-4 py-3 border-b border-gray-200">
                         <h3 className="text-lg font-semibold text-[#002349]">District-wise Details</h3>
                       </div>
-                      <div className="overflow-x-auto">
+                      <div className="hidden lg:block overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                           <thead className="bg-gray-50">
                             <tr>
@@ -1879,8 +1722,8 @@ const AdminDashboardPage = ({ onLogout }) => {
                                 </td>
                                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                    district.yearlySubmitted 
-                                      ? 'bg-green-100 text-green-800' 
+                                    district.yearlySubmitted
+                                      ? 'bg-green-100 text-green-800'
                                       : 'bg-red-100 text-red-800'
                                   }`}>
                                     {district.yearlySubmitted ? 'Submitted' : 'Pending'}
@@ -1893,6 +1736,23 @@ const AdminDashboardPage = ({ onLogout }) => {
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                      <div className="lg:hidden divide-y divide-gray-100">
+                        {stats.overall?.districtComparison?.map((district, index) => (
+                          <div key={index} className="flex items-center justify-between gap-3 px-4 py-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-[#002349] truncate">{district.district}</p>
+                              <p className="text-xs text-gray-500">Monthly: {district.monthlyCount}</p>
+                            </div>
+                            <span className={`shrink-0 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              district.yearlySubmitted
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {district.yearlySubmitted ? 'Submitted' : 'Pending'}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </>
@@ -1952,44 +1812,6 @@ const AdminDashboardPage = ({ onLogout }) => {
         type="logout"
       />
 
-      <RejectionModal
-        isOpen={showRejectionModal}
-        onClose={() => {
-          setShowRejectionModal(false);
-          setRejectionData(null);
-        }}
-        onConfirm={handleConfirmRejection}
-        title="Reject Application"
-        message="Please enter the reason for rejection:"
-        confirmText="Reject"
-        cancelText="Cancel"
-      />
-
-      <ConfirmationModal
-        isOpen={showDeleteKarkunModal}
-        onClose={() => {
-          setShowDeleteKarkunModal(false);
-          setMemberToDelete(null);
-        }}
-        onConfirm={confirmDeleteKarkun}
-        title="Delete Karkun Application"
-        message={`Are you sure you want to delete the Karkun application${memberToDelete?.name ? ` for ${memberToDelete.name}` : ''}? This action cannot be undone.`}
-        confirmText="Delete"
-        confirmColor="red"
-      />
-
-      <ConfirmationModal
-        isOpen={showDeleteRuknModal}
-        onClose={() => {
-          setShowDeleteRuknModal(false);
-          setMemberToDelete(null);
-        }}
-        onConfirm={confirmDeleteRukn}
-        title="Delete Rukn Application"
-        message={`Are you sure you want to delete the Rukn application${memberToDelete?.name ? ` for ${memberToDelete.name}` : ''}? This action cannot be undone.`}
-        confirmText="Delete"
-        confirmColor="red"
-      />
     </div>
   );
 };

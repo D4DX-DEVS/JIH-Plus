@@ -85,35 +85,44 @@ const DistrictSurveyView = ({ survey, onBack, onEdit }) => {
   ];
 
   return (
-    <div className="p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
+    <div className="p-4 sm:p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
       {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-[#002349] mb-2">
+            {/* Name hidden on mobile: the parent MobileTopBar already shows the screen title there. */}
+            <h2 className="hidden lg:block text-2xl font-bold text-[#002349] mb-2">
               ജില്ലാ തലം റിപ്പോർട്ട് - {survey.month}
             </h2>
             <p className="text-gray-600 font-medium">
+              {/* Month lives in the desktop-only h2 above, so surface it here on mobile. */}
+              <span className="lg:hidden">മാസം: {survey.month} | </span>
               ജില്ല: {survey.district} | സമർപ്പിച്ചത്: {survey.submittedByName || survey.submittedBy} | തിയ്യതി: {new Date(survey.submittedAt).toLocaleDateString()}
             </p>
           </div>
           <div className="flex space-x-2">
             <button
               onClick={onBack}
-              className="p-2 hover:opacity-70 transition-opacity"
+              aria-label="തിരികെ"
+              title="തിരികെ"
+              className="p-2 min-h-[44px] min-w-[44px] hover:opacity-70 transition-opacity"
             >
               <ArrowLeft className="w-5 h-5 text-gray-700" />
             </button>
             <button
               onClick={handleDownloadPDF}
-              className="p-2 hover:opacity-70 transition-opacity"
+              aria-label="ഡൗൺലോഡ്"
+              title="ഡൗൺലോഡ്"
+              className="p-2 min-h-[44px] min-w-[44px] hover:opacity-70 transition-opacity"
             >
               <Download className="w-5 h-5 text-gray-700" />
             </button>
             {onEdit && (
               <button
                 onClick={onEdit}
-                className="p-2 hover:opacity-70 transition-opacity"
+                aria-label="എഡിറ്റ്"
+                title="എഡിറ്റ്"
+                className="p-2 min-h-[44px] min-w-[44px] hover:opacity-70 transition-opacity"
               >
                 <Edit className="w-5 h-5 text-gray-700" />
               </button>
@@ -129,10 +138,10 @@ const DistrictSurveyView = ({ survey, onBack, onEdit }) => {
         </h3>
         
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="w-full border-collapse">
+          <table className="ih-table-compact w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
+                <th className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">ഹാജർ</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">ലീവ്</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">ആബ്‌സന്റ്</th>
@@ -141,7 +150,7 @@ const DistrictSurveyView = ({ survey, onBack, onEdit }) => {
             <tbody>
               {wings.map((wing) => (
                 <tr key={wing.key} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
+                  <td className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
                   <td className="border border-gray-200 px-4 py-3 text-center font-medium text-gray-700">
                     {survey.partA?.attendance?.[wing.key]?.present || 0}
                   </td>
@@ -201,10 +210,10 @@ const DistrictSurveyView = ({ survey, onBack, onEdit }) => {
         </h3>
         
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="w-full border-collapse">
+          <table className="ih-table-compact w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
+                <th className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">ഘടക സന്ദർശനങ്ങൾ</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">ഏരിയ സന്ദർശനങ്ങൾ</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">പുതിയ ഘടക ശ്രമങ്ങൾ</th>
@@ -214,7 +223,7 @@ const DistrictSurveyView = ({ survey, onBack, onEdit }) => {
             <tbody>
               {wings.map((wing) => (
                 <tr key={wing.key} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
+                  <td className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
                   <td className="border border-gray-200 px-4 py-3 text-center font-medium text-gray-700">
                     {survey.partC?.activities?.[wing.key]?.componentVisits || 0}
                   </td>
@@ -342,10 +351,10 @@ const DistrictSurveyView = ({ survey, onBack, onEdit }) => {
         </h3>
         
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="w-full border-collapse">
+          <table className="ih-table-compact w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
+                <th className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">പുതിയ ഘടകങ്ങൾ എണ്ണം</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">പുതുതായി വന്നവർ</th>
               </tr>
@@ -353,7 +362,7 @@ const DistrictSurveyView = ({ survey, onBack, onEdit }) => {
             <tbody>
               {growthWings.map((wing) => (
                 <tr key={wing.key} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
+                  <td className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
                   <td className="border border-gray-200 px-4 py-3 text-center font-medium text-gray-700">
                     {survey.partE?.wingGrowth?.[wing.key]?.newComponents || 0}
                   </td>

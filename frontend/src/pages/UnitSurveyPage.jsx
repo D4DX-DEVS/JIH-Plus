@@ -9,6 +9,7 @@ import { getAuthToken, isAdminUser } from '../utils/auth';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => {
   const { unitId } = useParams();
@@ -130,7 +131,8 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unit, setUnit] = useState(null);
   const [area, setArea] = useState(null);
-  
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+
   useEffect(() => {
     if (isAdmin) {
       const storedAdminData = localStorage.getItem('adminData');
@@ -600,8 +602,6 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
         navigate('/notifications');
       } else if (tabId === 'view-reports') {
         navigate('/view-reports');
-      } else if (tabId === 'membership') {
-        navigate('/membership', { state: { roleHint: 'admin' } });
       }
       return;
     }
@@ -610,8 +610,6 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
       navigate(`/unit-dashboard/${unitId}`);
     } else if (tabId === 'stats') {
       navigate(`/unit-dashboard/${unitId}`, { state: { initialTab: 'stats' } });
-    } else if (tabId === 'membership') {
-      navigate('/membership', { state: { roleHint: 'unit' } });
     }
   };
 
@@ -624,6 +622,14 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
       onBack();
     } else {
       navigate(`/unit-dashboard/${unitId}`);
+    }
+  };
+
+  const handleCloseClick = () => {
+    if (currentStep > 1) {
+      setShowDiscardModal(true);
+    } else {
+      handleClose();
     }
   };
 
@@ -664,7 +670,6 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
       onNavigateToReports={() => navigate('/view-reports')}
       onDownloadCSV={() => {}}
       onNavigateToNotifications={() => navigate('/notifications')}
-      onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'admin' } })}
       onLogout={handleLogout}
       adminEmail={adminData?.email || 'Admin'}
       totalForms={0}
@@ -679,7 +684,6 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
       onLogout={handleLogout}
       onNotifications={() => navigate('/notifications')}
       onDynamicReports={() => navigate('/user-reports')}
-      onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'unit' } })}
       unitName={unit?.name || '—'}
       areaName={area?.name || ''}
       isMobileOpen={isSidebarOpen}
@@ -698,14 +702,14 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
           {/* Header with Close Button on same horizontal level */}
-          <div className="mb-6 flex items-start justify-between">
-            <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
+          <div className="mb-6 flex items-start justify-end lg:justify-between">
+            <h1 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
               {editingSurvey ? 'യൂണിറ്റ് തലം പ്രതിമാസ റിപ്പോർട്ട് എഡിറ്റ്' : 'യൂണിറ്റ് തലം പ്രതിമാസ റിപ്പോർട്ട്'}
             </h1>
             {/* Close Button - Top Right */}
             <button
-              onClick={handleClose}
-              className="text-gray-600 hover:text-[#002349] transition-all duration-500 flex items-center justify-center w-10 h-10 border border-gray-300 hover:border-[#002349] rounded-full hover:shadow-md transform hover:-translate-y-1 hover:scale-105 ease-out hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#002349]/10"
+              onClick={handleCloseClick}
+              className="text-gray-600 hover:text-[#002349] transition-all duration-500 flex items-center justify-center w-11 h-11 lg:w-10 lg:h-10 border border-gray-300 hover:border-[#002349] rounded-full hover:shadow-md transform hover:-translate-y-1 hover:scale-105 ease-out hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#002349]/10"
               title="Close and return to monthly reports"
             >
               <X className="w-5 h-5" />
@@ -721,7 +725,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
                 <select
                   value={formData.month}
                   onChange={(e) => setFormData(prev => ({ ...prev, month: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 font-medium"
+                  className="w-full px-3 py-2 text-base border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 font-medium"
                 >
                   <option value="">Select Month</option>
                   {['January', 'February', 'March', 'April', 'May', 'June', 
@@ -737,7 +741,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
                   type="number"
                   value={formData.year}
                   onChange={(e) => setFormData(prev => ({ ...prev, year: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 font-medium"
+                  className="w-full px-3 py-2 text-base border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 font-medium"
                   min="2020"
                   max="2030"
                 />
@@ -752,7 +756,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
                 }`}>
                   1
                 </div>
-                <span className="text-sm font-semibold">Unit Page A</span>
+                <span className="text-sm font-semibold">അടിസ്ഥാന വിവരങ്ങൾ</span>
               </div>
               
               <div className={`w-8 h-0.5 rounded-full transition-all duration-500 ${currentStep >= 2 ? 'bg-[#002349] shadow-md' : 'bg-gray-200'}`}></div>
@@ -763,7 +767,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
                 }`}>
                   2
                 </div>
-                <span className="text-sm font-semibold">Unit Page B</span>
+                <span className="text-sm font-semibold">അധിക വിവരങ്ങൾ</span>
               </div>
             </div>
           </div>
@@ -810,6 +814,15 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
                 </div>
               </div>
             )}
+
+            <ConfirmationModal
+              isOpen={showDiscardModal}
+              onClose={() => setShowDiscardModal(false)}
+              onConfirm={() => { setShowDiscardModal(false); handleClose(); }}
+              title="Discard Report"
+              message="ഈ റിപ്പോർട്ട് ഉപേക്ഷിക്കണോ? Discard this report and its progress?"
+              confirmText="Discard"
+            />
 
             {/* Custom CSS Animations */}
             <style>{`

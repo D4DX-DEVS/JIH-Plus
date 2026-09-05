@@ -23,8 +23,6 @@ const areaRoutes = require('./routes/areaRoutes');
 const districtRoutes = require('./routes/districtRoutes');
 const unitRoutes = require('./routes/unitRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-const karkunRoutes = require('./routes/karkunRoutes');
-const ruknRoutes = require('./routes/ruknRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const targetRoutes = require('./routes/targetRoutes');
 
@@ -39,6 +37,17 @@ const ihthisabiDistrictAdminRoutes = require('./routes/ihthisabi/districtAdmin')
 const ihthisabiDynamicReportRoutes = require('./routes/ihthisabi/dynamicReports');
 const ihthisabiApplicationFormRoutes = require('./routes/ihthisabi/applicationForm');
 const ihthisabiMasterDataRoutes = require('./routes/ihthisabi/masterData');
+
+// Import MEMBERS APPLICATION routes (Rukn / Karkoon)
+const membersAuthRoutes = require('./routes/members/auth');
+const membersAccessRoutes = require('./routes/members/access');
+const membersAdminRoutes = require('./routes/members/admin');
+const membersMasterDataRoutes = require('./routes/members/masterData');
+const membersFormRoutes = require('./routes/members/forms');
+const membersWorkflowRoutes = require('./routes/members/workflows');
+const membersAccessLinkRoutes = require('./routes/members/accessLinks');
+const membersApplicationRoutes = require('./routes/members/applications');
+const membersNotificationRoutes = require('./routes/members/notifications');
 
 // MongoDB Connection - JIH Database
 mongoose.connect(process.env.MONGODB_URI, {
@@ -73,6 +82,21 @@ ihthisabiConnection.on('connected', async () => {
   }
 });
 
+// MongoDB Connection - MEMBERS APPLICATION Database (Rukn / Karkoon)
+const membersConnection = require('./config/membersConnection');
+const { seedMembersDefaults } = require('./utils/members/seed');
+
+membersConnection.on('connected', async () => {
+  console.log('Connected to MEMBERS MongoDB');
+  try {
+    // Roles and the two approval workflows are seeded once, then owned by the
+    // admin panel. Seeding is idempotent, so existing edits survive restarts.
+    await seedMembersDefaults();
+  } catch (seedErr) {
+    console.error('Error seeding MEMBERS defaults:', seedErr);
+  }
+});
+
 // Health check route for DigitalOcean
 app.get("/", (req, res) => {
   res.status(200).send("OK");
@@ -94,8 +118,6 @@ app.use('/api/area', areaRoutes);
 app.use('/api/district', districtRoutes);
 app.use('/api/unit', unitRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/karkun', karkunRoutes);
-app.use('/api/rukn', ruknRoutes);
 app.use('/api', reportRoutes);
 app.use('/api/targets', targetRoutes);
 
@@ -111,6 +133,18 @@ app.use('/api/location', ihthisabiLocationRoutes);
 app.use('/api/unitadmin', ihthisabiUnitAdminRoutes);
 app.use('/api/districtadmin', ihthisabiDistrictAdminRoutes);
 app.use('/api/admin', ihthisabiAdminRoutes);
+
+// MEMBERS APPLICATION Routes — a single prefix, deliberately not overlapping the
+// JIH or IHTHISABI mounts above.
+app.use('/api/members/auth', membersAuthRoutes);
+app.use('/api/members/access', membersAccessRoutes);
+app.use('/api/members/admin/master-data', membersMasterDataRoutes);
+app.use('/api/members/admin', membersAdminRoutes);
+app.use('/api/members/forms', membersFormRoutes);
+app.use('/api/members/workflows', membersWorkflowRoutes);
+app.use('/api/members/access-links', membersAccessLinkRoutes);
+app.use('/api/members/applications', membersApplicationRoutes);
+app.use('/api/members/notifications', membersNotificationRoutes);
 
 // PORT fix for DigitalOcean
 const PORT = process.env.PORT || 3000;

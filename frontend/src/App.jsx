@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ErrorProvider } from './contexts/ErrorContext';
 import LandingPage from './pages/LandingPage';
@@ -16,15 +16,10 @@ import { validateUserToken, validateAdminToken } from './utils/auth';
 import DistrictMonthlyDetailPage from './pages/DistrictMonthlyDetailPage';
 import AreaMonthlyDetailPage from './pages/AreaMonthlyDetailPage';
 import UnitMonthlyDetailPage from './pages/UnitMonthlyDetailPage';
-import RuknForm from './components/forms/membership/RuknForm';
-import KarkunForm from './components/forms/membership/KarkunForm';
-import KarkunDetailPage from './pages/KarkunDetailPage';
-import RuknDetailPage from './pages/RuknDetailPage';
 import ReportsPage from './pages/ReportsPage';
 import UserReportsPage from './pages/UserReportsPage';
 import ReportSubmissionsPage from './pages/ReportSubmissionsPage';
 import NotificationsPage from './pages/NotificationsPage';
-import MembershipPage from './pages/MembershipPage';
 import HelpDeskPage from './pages/HelpDeskPage';
 import LocationMasterPage from './pages/LocationMasterPage';
 import DynamicSubmissionsPage from './pages/DynamicSubmissionsPage';
@@ -54,6 +49,25 @@ import DynamicFormsAdmin from './pages/ihthisabi/DynamicFormsAdmin';
 import MekhalaNazimManagement from './pages/ihthisabi/MekhalaNazimManagement';
 import MekhalaNazimReports from './pages/ihthisabi/MekhalaNazimReports';
 import IhthisabiHelpDeskPage from './pages/ihthisabi/HelpDeskPage';
+
+// Members Application (Rukn / Karkoon) — the third section, with its own DB,
+// admin, auth context and token key.
+import { AuthProvider as MembersAuthProvider } from './contexts/members/AuthContext';
+import MembersLayout from './components/members/Layout';
+import MembersProtectedRoute from './components/members/ProtectedRoute';
+import MembersLoginPage from './pages/members/LoginPage';
+import MembersApplicantAccessPage from './pages/members/ApplicantAccessPage';
+import MembersDashboard from './pages/members/Dashboard';
+import MembersApplicationsPage from './pages/members/ApplicationsPage';
+import MembersApplicationDetailPage from './pages/members/ApplicationDetailPage';
+import MembersAccessLinksPage from './pages/members/AccessLinksPage';
+import MembersFormsPage from './pages/members/FormsPage';
+import MembersFormBuilderPage from './pages/members/FormBuilderPage';
+import MembersWorkflowBuilderPage from './pages/members/WorkflowBuilderPage';
+import MembersRolesPage from './pages/members/RolesPage';
+import MembersAccountsPage from './pages/members/AccountsPage';
+import MembersMasterDataPage from './pages/members/MasterDataPage';
+import MembersNotificationsPage from './pages/members/NotificationsPage';
 import ExpansionPortalLoginPage from './pages/ExpansionPortalLoginPage';
 import ExpansionPortalDashboardPage from './pages/ExpansionPortalDashboardPage';
 
@@ -381,16 +395,6 @@ function App() {
           }
         />
         <Route
-          path="/membership"
-          element={
-            isAuthenticated || isAdminAuthenticated ? (
-              <MembershipPage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
           path="/help-desk"
           element={<HelpDeskPage />}
         />
@@ -465,44 +469,22 @@ function App() {
             )
           }
         />
-        <Route
-          path="/rukn-form"
-          element={
-            <RuknForm />
-          }
-        />
-        <Route
-          path="/karkun-form"
-          element={
-            <KarkunForm />
-          }
-        />
-        <Route
-          path="/karkun/:id"
-          element={
-            isAuthenticated || isAdminAuthenticated ? (
-              <KarkunDetailPage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/rukn/:id"
-          element={
-            isAuthenticated || isAdminAuthenticated ? (
-              <RuknDetailPage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
         
         {/* IHTHISABI Routes - Wrapped in AuthProvider */}
         <Route path="/ihthisabi/*" element={
           <IhthisabiAuthProvider>
             <IhthisabiRoutes />
           </IhthisabiAuthProvider>
+        } />
+
+        {/* MEMBERS APPLICATION Routes.
+            The applicant flow sits outside the provider: it runs on a temporary
+            access-link session, not a members admin login. */}
+        <Route path="/members/apply/:token" element={<MembersApplicantAccessPage />} />
+        <Route path="/members/*" element={
+          <MembersAuthProvider>
+            <MembersRoutes />
+          </MembersAuthProvider>
         } />
         
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -914,5 +896,62 @@ const IhthisabiRoutes = () => {
     </Routes>
   );
 };
+
+// Unmatched /members/* deep links land here instead of silently bouncing to
+// the dashboard, matching the ihthisabi routes' NotFound behavior.
+const MembersNotFound = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="text-center max-w-sm">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Page not found</h2>
+        <p className="text-gray-600 mb-4">This page doesn't exist or has moved.</p>
+        <button onClick={() => navigate('/members')} className="px-4 py-2 rounded-lg bg-[#5b21b6] text-white">
+          Go to dashboard
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// MEMBERS APPLICATION Routes Component
+const MembersRoutes = () => (
+  <Routes>
+    <Route path="/login" element={<MembersLoginPage />} />
+
+    <Route
+      path="/"
+      element={
+        <MembersProtectedRoute>
+          <MembersLayout />
+        </MembersProtectedRoute>
+      }
+    >
+      <Route index element={<MembersDashboard />} />
+      <Route path="applications" element={<MembersApplicationsPage />} />
+      <Route path="applications/:id" element={<MembersApplicationDetailPage />} />
+      <Route path="notifications" element={<MembersNotificationsPage />} />
+
+      <Route
+        path="access-links"
+        element={
+          <MembersProtectedRoute canCreateAccessLinksOnly>
+            <MembersAccessLinksPage />
+          </MembersProtectedRoute>
+        }
+      />
+
+      {/* Configuration — super admin only */}
+      <Route path="forms" element={<MembersProtectedRoute superAdminOnly><MembersFormsPage /></MembersProtectedRoute>} />
+      <Route path="forms/:id" element={<MembersProtectedRoute superAdminOnly><MembersFormBuilderPage /></MembersProtectedRoute>} />
+      <Route path="workflows" element={<MembersProtectedRoute superAdminOnly><MembersWorkflowBuilderPage /></MembersProtectedRoute>} />
+      <Route path="roles" element={<MembersProtectedRoute superAdminOnly><MembersRolesPage /></MembersProtectedRoute>} />
+      <Route path="accounts" element={<MembersProtectedRoute superAdminOnly><MembersAccountsPage /></MembersProtectedRoute>} />
+      <Route path="master-data" element={<MembersProtectedRoute superAdminOnly><MembersMasterDataPage /></MembersProtectedRoute>} />
+    </Route>
+
+    <Route path="*" element={<MembersNotFound />} />
+  </Routes>
+);
 
 export default App;

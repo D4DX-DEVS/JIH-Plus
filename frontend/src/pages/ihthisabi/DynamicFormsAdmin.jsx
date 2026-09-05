@@ -118,6 +118,7 @@ const DynamicFormsAdmin = () => {
   });
   const [pages, setPages] = useState([makeNewPage(0)]);
   const [activePage, setActivePage] = useState(0);
+  const [pendingRemovePageIndex, setPendingRemovePageIndex] = useState(null);
   const [showFieldSelector, setShowFieldSelector] = useState(false);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -295,11 +296,18 @@ const DynamicFormsAdmin = () => {
     setActivePage(pages.length);
   };
 
-  const handleRemovePage = (i) => {
+  const requestRemovePage = (i) => {
     if (pages.length <= 1) return;
+    setPendingRemovePageIndex(i);
+  };
+
+  const handleRemovePage = () => {
+    const i = pendingRemovePageIndex;
+    if (i == null || pages.length <= 1) { setPendingRemovePageIndex(null); return; }
     const np = pages.filter((_, pi) => pi !== i);
     setPages(np);
     setActivePage(Math.min(activePage, np.length - 1));
+    setPendingRemovePageIndex(null);
   };
 
   const handleSave = async (publish) => {
@@ -369,7 +377,7 @@ const DynamicFormsAdmin = () => {
 
   // ── Editor ──────────────────────────────────────────────────────────────────
   if (mode === 'editor') {
-    if (loading) return <div className="min-h-screen bg-gray-50"><Loader /></div>;
+    if (loading) return <div className="ih-screen bg-gray-50"><Loader /></div>;
 
     const ConfigContent = () => (
       <div className="p-4 space-y-6">
@@ -411,7 +419,7 @@ const DynamicFormsAdmin = () => {
 
         <div>
           <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2.5">Settings</p>
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className="flex items-center gap-3 py-2.5 cursor-pointer">
             <Toggle value={reportMeta.isActive} onChange={(v) => setReportMeta((m) => ({ ...m, isActive: v }))} />
             <span className="text-sm text-gray-700">Active (visible to users)</span>
           </label>
@@ -434,14 +442,14 @@ const DynamicFormsAdmin = () => {
                 className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer text-sm transition-colors ${
                   pi === activePage ? 'bg-[#161F2F] text-white' : 'text-gray-700 hover:bg-gray-100 border border-gray-100'
                 }`}>
-                <span className="truncate flex-1">{p.title || `Page ${pi + 1}`}</span>
+                <span className="truncate flex-1 min-w-0">{p.title || `Page ${pi + 1}`}</span>
                 <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
                   <span className={`text-xs ${pi === activePage ? 'text-white/60' : 'text-gray-400'}`}>
                     {(p.fields || []).length} field{(p.fields || []).length !== 1 ? 's' : ''}
                   </span>
                   {pages.length > 1 && !lockedStructure && (
-                    <button type="button" onClick={(e) => { e.stopPropagation(); handleRemovePage(pi); }}
-                      className={`p-0.5 rounded ${pi === activePage ? 'text-red-300 hover:text-red-100' : 'text-gray-300 hover:text-red-400'}`}>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); requestRemovePage(pi); }}
+                      className={`p-1.5 rounded ${pi === activePage ? 'text-red-300 hover:text-red-100' : 'text-gray-300 hover:text-red-400'}`}>
                       <Trash2 size={12} />
                     </button>
                   )}
@@ -454,7 +462,7 @@ const DynamicFormsAdmin = () => {
     );
 
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="ih-screen bg-gray-50 flex flex-col">
         {/* Builder header */}
         <header className="bg-white border-b px-3 sm:px-4 py-2.5 flex items-center gap-2 shadow-sm flex-shrink-0">
           <button onClick={() => navigate('/ihthisabi/admin/dynamic-forms')}
@@ -473,7 +481,7 @@ const DynamicFormsAdmin = () => {
             <Settings size={15} />
           </button>
 
-          <div className="flex items-stretch rounded-lg border border-gray-300 overflow-hidden flex-shrink-0">
+          <div className="hidden lg:flex items-stretch rounded-lg border border-gray-300 overflow-hidden flex-shrink-0">
             <button onClick={() => { setPreviewScope('page'); setShowPreview(true); }}
               title={`Preview this page only (${pages[activePage]?.title || `Page ${activePage + 1}`})`}
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
@@ -499,6 +507,18 @@ const DynamicFormsAdmin = () => {
             <Globe size={14} /><span className="hidden sm:inline">{isPublished ? 'Published' : 'Publish'}</span>
           </button>
         </header>
+
+        {/* Mobile-only preview row — keeps the title field from being squeezed in the header above */}
+        <div className="lg:hidden flex items-center gap-2 px-3 py-2 border-b bg-gray-50 flex-shrink-0">
+          <button onClick={() => { setPreviewScope('page'); setShowPreview(true); }}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-medium text-gray-600">
+            <Eye size={13} /> Preview Page
+          </button>
+          <button onClick={() => { setPreviewScope('all'); setShowPreview(true); }}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-medium text-gray-600">
+            <FileStack size={13} /> Preview All
+          </button>
+        </div>
 
         {lockedStructure && (
           <div className="px-4 py-2 text-sm bg-amber-50 text-amber-700 border-b border-amber-200 flex-shrink-0">
@@ -547,8 +567,8 @@ const DynamicFormsAdmin = () => {
                       {(p.fields || []).length}
                     </span>
                     {pages.length > 1 && (
-                      <span role="button" onClick={(e) => { e.stopPropagation(); handleRemovePage(pi); }}
-                        className={`ml-0.5 rounded hover:text-red-400 ${pi === activePage ? 'text-gray-400' : 'text-gray-300'}`}>
+                      <span role="button" onClick={(e) => { e.stopPropagation(); requestRemovePage(pi); }}
+                        className={`ml-0.5 p-1 rounded hover:text-red-400 ${pi === activePage ? 'text-gray-400' : 'text-gray-300'}`}>
                         <X size={12} />
                       </span>
                     )}
@@ -584,6 +604,16 @@ const DynamicFormsAdmin = () => {
           />
         )}
 
+        <ConfirmationModal
+          isOpen={pendingRemovePageIndex != null}
+          onClose={() => setPendingRemovePageIndex(null)}
+          onConfirm={handleRemovePage}
+          title="Delete Page"
+          message="This removes the page and all of its fields. This action cannot be undone."
+          confirmText="Delete"
+          variant="danger"
+        />
+
         {showPreview && (
           <div className="fixed inset-0 z-50 flex flex-col bg-gray-100">
             <div className="bg-white border-b px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3 shadow-sm flex-shrink-0">
@@ -603,7 +633,7 @@ const DynamicFormsAdmin = () => {
                 ))}
               </div>
               <div className="flex-1 min-w-0" />
-              <span className="hidden lg:inline text-xs text-gray-400 border border-dashed border-gray-300 px-2 py-1 rounded-lg flex-shrink-0">
+              <span className="text-[10px] sm:text-xs text-gray-400 border border-dashed border-gray-300 px-2 py-1 rounded-lg flex-shrink-0">
                 Preview only — not submitted
               </span>
             </div>
@@ -638,22 +668,24 @@ const DynamicFormsAdmin = () => {
       : formDetail?.parts?.length ? partsToPages(formDetail.parts) : [];
 
     return (
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+      <div className="ih-screen bg-gray-50 p-4 sm:p-6">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between gap-2 mb-4">
             <button onClick={() => navigate('/ihthisabi/admin/dynamic-forms')}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+              className="flex items-center py-2 text-gray-600 hover:text-gray-900 transition-colors">
               <ArrowLeft className="w-5 h-5 mr-2" /> Back to Reports
             </button>
             {formDetail && (
               <div className="flex gap-2">
                 <button onClick={() => navigate(`/ihthisabi/admin/dynamic-forms/${formId}/edit`)}
-                  className="flex items-center px-3 py-2 text-sm border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                  <Edit2 className="w-4 h-4 mr-1.5" /> Edit
+                  title="Edit"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                  <Edit2 className="w-4 h-4" /> <span className="hidden sm:inline">Edit</span>
                 </button>
                 <button onClick={() => navigate(`/ihthisabi/admin/dynamic-forms/${formId}/submissions`)}
-                  className="flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-primary/90 transition-colors">
-                  <Inbox className="w-4 h-4 mr-2" /> Submissions
+                  title="Submissions"
+                  className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-primary/90 transition-colors">
+                  <Inbox className="w-4 h-4" /> <span className="hidden sm:inline">Submissions</span>
                 </button>
               </div>
             )}
@@ -716,15 +748,15 @@ const DynamicFormsAdmin = () => {
   // ── Submissions list ────────────────────────────────────────────────────────
   if (mode === 'submissions') {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="ih-screen bg-gray-50">
         <div className="ih-page-shell max-w-5xl">
           <button onClick={() => navigate('/ihthisabi/admin/dynamic-forms')}
-            className="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition-colors hover:text-gray-900 sm:text-sm">
+            className="mb-3 inline-flex items-center gap-1.5 py-2 text-xs font-medium text-gray-500 transition-colors hover:text-gray-900 sm:text-sm">
             <ArrowLeft className="w-4 h-4" /> Back to Reports
           </button>
 
           <div className="mb-3 flex items-center justify-between gap-2">
-            <div className="hidden min-w-0 sm:block">
+            <div className="hidden min-w-0 lg:block">
               <h1 className="ih-page-title">Submissions</h1>
               <p className="ih-page-subtitle">{submissions.length} submitted</p>
             </div>
@@ -756,7 +788,7 @@ const DynamicFormsAdmin = () => {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
-                        <span className="ih-list-title">{s.submittedBy?.name || s.submittedBy?.ruknId || 'Unknown'}</span>
+                        <span className="ih-list-title min-w-0">{s.submittedBy?.name || s.submittedBy?.ruknId || 'Unknown'}</span>
                         <span className="ih-chip bg-gray-100 text-gray-600">{ROLE_LABEL[s.submittedRole] || s.submittedRole}</span>
                       </span>
                       <span className="ih-list-meta mt-1 block">
@@ -788,10 +820,10 @@ const DynamicFormsAdmin = () => {
     const scope = submission?.submittedBy?.mekhala || submission?.submittedBy?.unit;
 
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="ih-screen bg-gray-50">
         <div className="ih-page-shell max-w-3xl">
           <button onClick={() => navigate(-1)}
-            className="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition-colors hover:text-gray-900 sm:text-sm">
+            className="mb-3 inline-flex items-center gap-1.5 py-2 text-xs font-medium text-gray-500 transition-colors hover:text-gray-900 sm:text-sm">
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
 
@@ -901,15 +933,15 @@ const DynamicFormsAdmin = () => {
 
   // ── List ────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell max-w-5xl">
         <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
-          <div className="hidden min-w-0 sm:block">
+          <div className="hidden min-w-0 lg:block">
             <h1 className="ih-page-title">Report Management</h1>
             <p className="ih-page-subtitle">Build reports and assign them to a role</p>
           </div>
           <button onClick={() => navigate('/ihthisabi/admin/dynamic-forms/create')}
-            className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:px-4 sm:py-2.5 sm:text-sm">
+            className="flex min-h-[44px] sm:min-h-0 shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:px-4 sm:py-2.5 sm:text-sm">
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="sm:hidden">New report</span>
             <span className="hidden sm:inline">Create New Report</span>
@@ -922,7 +954,7 @@ const DynamicFormsAdmin = () => {
             <h3 className="text-sm font-medium text-gray-900 mb-1">No reports created yet</h3>
             <p className="text-xs text-gray-500 mb-4">Create your first report to get started</p>
             <button onClick={() => navigate('/ihthisabi/admin/dynamic-forms/create')}
-              className="inline-flex items-center rounded-full bg-[#161F2F] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1a2538]">
+              className="inline-flex min-h-[44px] sm:min-h-0 items-center rounded-full bg-[#161F2F] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1a2538]">
               <Plus className="w-4 h-4 mr-2" /> Create Report
             </button>
           </div>
@@ -940,7 +972,7 @@ const DynamicFormsAdmin = () => {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <h3 className="ih-list-title">{f.title}</h3>
+                      <h3 className="ih-list-title min-w-0">{f.title}</h3>
                       <span className={`ih-chip ih-chip-dot ${
                         published ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
                       }`}>

@@ -16,14 +16,14 @@ function useDebounced(value, delay = 400) {
 
 function SearchBox({ value, onChange, placeholder }) {
   return (
-    <div className="relative">
+    <div className="relative min-w-0 flex-1 sm:flex-initial">
       <Search className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="text-sm border rounded-lg pl-8 pr-3 py-1.5 w-48 focus:outline-none focus:ring-2 focus:ring-[#002349]"
+        className="text-base sm:text-sm border rounded-lg pl-8 pr-3 py-2 w-full sm:w-48 focus:outline-none focus:ring-2 focus:ring-[#002349]"
       />
     </div>
   );
@@ -32,12 +32,23 @@ function SearchBox({ value, onChange, placeholder }) {
 // ── Shared UI Primitives ──────────────────────────────────────────────────────
 
 function Modal({ title, onClose, children }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0">
-          <h2 className="text-lg font-semibold text-[#002349]">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between gap-2 px-6 py-4 border-b flex-shrink-0">
+          <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-[#002349]">{title}</h2>
+          <button onClick={onClose} className="shrink-0 text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -98,7 +109,7 @@ function MekhalaForm({ value, onChange, districts, error }) {
             return (
               <label
                 key={d.name}
-                className={`flex items-center gap-2 px-3 py-2 ${
+                className={`flex min-h-[44px] items-center gap-2 px-3 py-2 ${
                   disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'
                 }`}
               >
@@ -210,7 +221,47 @@ function MekhalasTab() {
       {loading ? <p className="text-center py-8 text-gray-400">Loading…</p> : error ? (
         <p className="text-red-500 text-sm">{error}</p>
       ) : (
-        <table className="w-full text-sm">
+        <>
+          {/* Mobile: roomy tappable rows — one full-width target per record */}
+          <div className="lg:hidden">
+            {mekhalas.length === 0 ? (
+              <p className="py-8 text-center text-sm text-gray-400">No mekhalas found</p>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {mekhalas.map((m) => (
+                  <div key={m._id} className="min-h-[56px] flex items-center gap-2 px-1 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">{m.name}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5 break-words">
+                        {m.districtCount} district(s){m.districts.length > 0 ? `: ${m.districts.join(', ')}` : ''}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {m.nazim ? (
+                          <span className={m.nazim.isActive ? '' : 'text-gray-400 line-through'}>
+                            {m.nazim.name} ({m.nazim.ruknId})
+                          </span>
+                        ) : (
+                          <span className="text-amber-600">Nazim not assigned</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button title="Edit mekhala" onClick={() => openForm(m)}
+                        className="ih-icon-btn text-blue-600 hover:bg-blue-50">
+                        <Pencil className="w-3.5 h-3.5" /></button>
+                      <button
+                        title={m.nazim ? 'Cannot delete: a nazim is assigned' : 'Delete mekhala'}
+                        onClick={() => { setDeleteError(''); setDeleteItem(m); }}
+                        className="ih-icon-btn text-red-600 hover:bg-red-50">
+                        <Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Desktop: table */}
+          <table className="hidden lg:table w-full text-sm">
           <thead>
             <tr className="bg-gray-50 text-gray-600">
               <th className="text-left px-4 py-2 font-medium">#</th>
@@ -242,14 +293,14 @@ function MekhalasTab() {
                     <span className="text-xs text-amber-600">Not assigned</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right space-x-1 whitespace-nowrap">
+                <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                   <button title="Edit mekhala" onClick={() => openForm(m)}
-                    className="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">
+                    className="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded">
                     <Pencil className="w-3.5 h-3.5" /></button>
                   <button
                     title={m.nazim ? 'Cannot delete: a nazim is assigned' : 'Delete mekhala'}
                     onClick={() => { setDeleteError(''); setDeleteItem(m); }}
-                    className="inline-flex items-center px-2 py-1 text-red-600 hover:bg-red-50 rounded">
+                    className="inline-flex items-center p-2 text-red-600 hover:bg-red-50 rounded">
                     <Trash2 className="w-3.5 h-3.5" /></button>
                 </td>
               </tr>
@@ -259,6 +310,7 @@ function MekhalasTab() {
             )}
           </tbody>
         </table>
+        </>
       )}
       <Pagination pagination={pagination} onPageChange={load} loading={loading} itemLabel="mekhalas" />
 
@@ -266,9 +318,9 @@ function MekhalasTab() {
         <Modal title={editItem ? `Edit Mekhala: ${editItem.name}` : 'Add Mekhala'} onClose={() => setFormOpen(false)}>
           <MekhalaForm value={form} onChange={setForm} districts={districtOptions} error={formError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setFormOpen(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setFormOpen(false)} className="btn-ghost">Cancel</button>
             <button onClick={handleSave} disabled={working}
-              className="flex items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
               {working ? <Spinner /> : null} {editItem ? 'Save' : 'Add'}
             </button>
           </div>
@@ -289,9 +341,9 @@ function MekhalasTab() {
           )}
           <ErrorMsg msg={deleteError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setDeleteItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleDeleteConfirm} disabled={working || Boolean(deleteItem.nazim)}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
               {working ? <Spinner /> : null} Delete
             </button>
           </div>
@@ -423,7 +475,42 @@ function DistrictsTab() {
       {loading ? <p className="text-center py-8 text-gray-400">Loading…</p> : error ? (
         <p className="text-red-500 text-sm">{error}</p>
       ) : (
-        <table className="w-full text-sm">
+        <>
+          {/* Mobile: roomy tappable rows — one full-width target per record */}
+          <div className="lg:hidden">
+            {districts.length === 0 ? (
+              <p className="py-8 text-center text-sm text-gray-400">No districts found</p>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {districts.map((d) => (
+                  <div key={d.name} className="min-h-[56px] flex items-center gap-2 px-1 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">{d.name}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{d.count} member(s)</p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button title="Rename district" onClick={() => { setTxError(''); setRenameItem(d); setRenameValue(d.name); }}
+                        className="ih-icon-btn text-blue-600 hover:bg-blue-50">
+                        <Pencil className="w-3.5 h-3.5" /></button>
+                      <button title="Split district" onClick={() => handleSplitOpen(d)}
+                        className="ih-icon-btn text-purple-600 hover:bg-purple-50">
+                        <Scissors className="w-3.5 h-3.5" /></button>
+                      <button title="Merge into another district" onClick={() => { setTxError(''); setMergeItem(d); setMergeSurvivor(''); }}
+                        className="ih-icon-btn text-indigo-600 hover:bg-indigo-50">
+                        <GitMerge className="w-3.5 h-3.5" /></button>
+                      <button
+                        title={d.count > 0 ? `Cannot delete: ${d.count} member(s) assigned` : 'Delete district'}
+                        onClick={() => { setTxError(''); setDeleteItem(d); }}
+                        className="ih-icon-btn text-red-600 hover:bg-red-50">
+                        <Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Desktop: table */}
+          <table className="hidden lg:table w-full text-sm">
           <thead>
             <tr className="bg-gray-50 text-gray-600">
               <th className="text-left px-4 py-2 font-medium">#</th>
@@ -438,20 +525,20 @@ function DistrictsTab() {
                 <td className="px-4 py-3 text-gray-400">{i + 1}</td>
                 <td className="px-4 py-3 font-medium text-gray-800">{d.name}</td>
                 <td className="px-4 py-3 text-gray-600">{d.count}</td>
-                <td className="px-4 py-3 text-right space-x-1">
+                <td className="px-4 py-3 text-right space-x-2">
                   <button title="Rename district" onClick={() => { setTxError(''); setRenameItem(d); setRenameValue(d.name); }}
-                    className="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">
+                    className="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded">
                     <Pencil className="w-3.5 h-3.5" /></button>
                   <button title="Split district" onClick={() => handleSplitOpen(d)}
-                    className="inline-flex items-center px-2 py-1 text-purple-600 hover:bg-purple-50 rounded">
+                    className="inline-flex items-center p-2 text-purple-600 hover:bg-purple-50 rounded">
                     <Scissors className="w-3.5 h-3.5" /></button>
                   <button title="Merge into another district" onClick={() => { setTxError(''); setMergeItem(d); setMergeSurvivor(''); }}
-                    className="inline-flex items-center px-2 py-1 text-indigo-600 hover:bg-indigo-50 rounded">
+                    className="inline-flex items-center p-2 text-indigo-600 hover:bg-indigo-50 rounded">
                     <GitMerge className="w-3.5 h-3.5" /></button>
                   <button
                     title={d.count > 0 ? `Cannot delete: ${d.count} member(s) assigned` : 'Delete district'}
                     onClick={() => { setTxError(''); setDeleteItem(d); }}
-                    className="inline-flex items-center px-2 py-1 text-red-600 hover:bg-red-50 rounded">
+                    className="inline-flex items-center p-2 text-red-600 hover:bg-red-50 rounded">
                     <Trash2 className="w-3.5 h-3.5" /></button>
                 </td>
               </tr>
@@ -461,6 +548,7 @@ function DistrictsTab() {
             )}
           </tbody>
         </table>
+        </>
       )}
       <Pagination pagination={pagination} onPageChange={load} loading={loading} itemLabel="districts" />
 
@@ -485,7 +573,7 @@ function DistrictsTab() {
                 </label>
                 <div className="max-h-40 overflow-y-auto border rounded-lg divide-y text-sm">
                   {splitAreas.map((a) => (
-                    <label key={a.name} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                    <label key={a.name} className="flex min-h-[44px] items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer">
                       <input type="checkbox"
                         checked={splitSelected.includes(a.name)}
                         onChange={(e) => setSplitSelected((prev) =>
@@ -500,9 +588,9 @@ function DistrictsTab() {
             )}
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setSplitItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setSplitItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleSplitConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Split
               </button>
             </div>
@@ -526,9 +614,9 @@ function DistrictsTab() {
           </select>
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setMergeItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setMergeItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleMergeConfirm} disabled={txWorking || !mergeSurvivor}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Merge
             </button>
           </div>
@@ -550,9 +638,9 @@ function DistrictsTab() {
             </div>
             <ErrorMsg msg={addError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setAddOpen(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setAddOpen(false)} className="btn-ghost">Cancel</button>
               <button onClick={handleAddConfirm} disabled={addWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
                 {addWorking ? <Spinner /> : null} Add
               </button>
             </div>
@@ -570,9 +658,9 @@ function DistrictsTab() {
             </div>
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setRenameItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setRenameItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleRenameConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Rename
               </button>
             </div>
@@ -591,9 +679,9 @@ function DistrictsTab() {
           )}
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setDeleteItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleDeleteConfirm} disabled={txWorking || deleteItem.count > 0}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Delete
             </button>
           </div>
@@ -746,10 +834,10 @@ function AreasTab() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <label className="text-sm text-gray-600">Filter by district:</label>
         <select value={selectedDistrict} onChange={(e) => { setSelectedDistrict(e.target.value); setPage(1); }}
-          className="text-sm border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#002349]">
+          className="min-h-[44px] sm:min-h-0 text-sm border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]">
           <option value="">All Districts</option>
           {districts.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
         </select>
@@ -767,7 +855,44 @@ function AreasTab() {
         <p className="text-red-500 text-sm">{error}</p>
       ) : (
         <>
-          <table className="w-full text-sm">
+          {/* Mobile: roomy tappable rows — one full-width target per record */}
+          <div className="lg:hidden">
+            {areas.length === 0 ? (
+              <p className="py-8 text-center text-sm text-gray-400">No areas found</p>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {areas.map((a) => (
+                  <div key={`${a.district}-${a.name}`} className="min-h-[56px] flex items-center gap-2 px-1 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">{a.name}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{a.district} · {a.count} member(s)</p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                      <button title="Rename area" onClick={() => { setTxError(''); setRenameItem(a); setRenameValue(a.name); }}
+                        className="ih-icon-btn text-blue-600 hover:bg-blue-50">
+                        <Pencil className="w-3.5 h-3.5" /></button>
+                      <button title="Split area" onClick={() => handleSplitOpen(a)}
+                        className="ih-icon-btn text-purple-600 hover:bg-purple-50">
+                        <Scissors className="w-3.5 h-3.5" /></button>
+                      <button title="Merge into another area" onClick={() => { setTxError(''); setMergeItem(a); setMergeSurvivorKey(''); }}
+                        className="ih-icon-btn text-indigo-600 hover:bg-indigo-50">
+                        <GitMerge className="w-3.5 h-3.5" /></button>
+                      <button title="Transfer to another district" onClick={() => { setTxError(''); setTransferItem(a); setTransferTarget(''); }}
+                        className="ih-icon-btn text-teal-600 hover:bg-teal-50">
+                        <ArrowRightLeft className="w-3.5 h-3.5" /></button>
+                      <button
+                        title={a.count > 0 ? `Cannot delete: ${a.count} member(s) assigned` : 'Delete area'}
+                        onClick={() => { setTxError(''); setDeleteItem(a); }}
+                        className="ih-icon-btn text-red-600 hover:bg-red-50">
+                        <Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Desktop: table */}
+          <table className="hidden lg:table w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -784,23 +909,23 @@ function AreasTab() {
                   <td className="px-4 py-3 font-medium text-gray-800">{a.name}</td>
                   <td className="px-4 py-3 text-gray-600">{a.district}</td>
                   <td className="px-4 py-3 text-gray-600">{a.count}</td>
-                  <td className="px-4 py-3 text-right space-x-1">
+                  <td className="px-4 py-3 text-right space-x-2">
                     <button title="Rename area" onClick={() => { setTxError(''); setRenameItem(a); setRenameValue(a.name); }}
-                      className="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">
+                      className="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded">
                       <Pencil className="w-3.5 h-3.5" /></button>
                     <button title="Split area" onClick={() => handleSplitOpen(a)}
-                      className="inline-flex items-center px-2 py-1 text-purple-600 hover:bg-purple-50 rounded">
+                      className="inline-flex items-center p-2 text-purple-600 hover:bg-purple-50 rounded">
                       <Scissors className="w-3.5 h-3.5" /></button>
                     <button title="Merge into another area" onClick={() => { setTxError(''); setMergeItem(a); setMergeSurvivorKey(''); }}
-                      className="inline-flex items-center px-2 py-1 text-indigo-600 hover:bg-indigo-50 rounded">
+                      className="inline-flex items-center p-2 text-indigo-600 hover:bg-indigo-50 rounded">
                       <GitMerge className="w-3.5 h-3.5" /></button>
                     <button title="Transfer to another district" onClick={() => { setTxError(''); setTransferItem(a); setTransferTarget(''); }}
-                      className="inline-flex items-center px-2 py-1 text-teal-600 hover:bg-teal-50 rounded">
+                      className="inline-flex items-center p-2 text-teal-600 hover:bg-teal-50 rounded">
                       <ArrowRightLeft className="w-3.5 h-3.5" /></button>
                     <button
                       title={a.count > 0 ? `Cannot delete: ${a.count} member(s) assigned` : 'Delete area'}
                       onClick={() => { setTxError(''); setDeleteItem(a); }}
-                      className="inline-flex items-center px-2 py-1 text-red-600 hover:bg-red-50 rounded">
+                      className="inline-flex items-center p-2 text-red-600 hover:bg-red-50 rounded">
                       <Trash2 className="w-3.5 h-3.5" /></button>
                   </td>
                 </tr>
@@ -821,7 +946,7 @@ function AreasTab() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-3 py-2.5 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   ← Previous
                 </button>
@@ -829,7 +954,7 @@ function AreasTab() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-3 py-2.5 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Next →
                 </button>
@@ -860,7 +985,7 @@ function AreasTab() {
                 </label>
                 <div className="max-h-40 overflow-y-auto border rounded-lg divide-y text-sm">
                   {splitUnits.map((u) => (
-                    <label key={u.name} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                    <label key={u.name} className="flex min-h-[44px] items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer">
                       <input type="checkbox"
                         checked={splitSelected.includes(u.name)}
                         onChange={(e) => setSplitSelected((prev) =>
@@ -874,9 +999,9 @@ function AreasTab() {
             )}
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setSplitItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setSplitItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleSplitConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Split
               </button>
             </div>
@@ -900,9 +1025,9 @@ function AreasTab() {
           </select>
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setMergeItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setMergeItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleMergeConfirm} disabled={txWorking || !mergeSurvivorKey}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Merge
             </button>
           </div>
@@ -923,9 +1048,9 @@ function AreasTab() {
           </select>
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setTransferItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setTransferItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleTransferConfirm} disabled={txWorking || !transferTarget}
-              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Transfer
             </button>
           </div>
@@ -956,9 +1081,9 @@ function AreasTab() {
             </div>
             <ErrorMsg msg={addError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setAddOpen(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setAddOpen(false)} className="btn-ghost">Cancel</button>
               <button onClick={handleAddConfirm} disabled={addWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
                 {addWorking ? <Spinner /> : null} Add
               </button>
             </div>
@@ -976,9 +1101,9 @@ function AreasTab() {
             </div>
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setRenameItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setRenameItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleRenameConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Rename
               </button>
             </div>
@@ -997,9 +1122,9 @@ function AreasTab() {
           )}
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setDeleteItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleDeleteConfirm} disabled={txWorking || deleteItem.count > 0}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Delete
             </button>
           </div>
@@ -1185,13 +1310,13 @@ function UnitsTab() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <label className="text-sm text-gray-600">District:</label>
         <select value={selectedDistrict} onChange={(e) => { setSelectedDistrict(e.target.value); setSelectedArea(''); setPage(1); }}
-          className="text-sm border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#002349]">
+          className="min-h-[44px] sm:min-h-0 text-sm border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]">
           <option value="">All</option>
           {districts.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
         </select>
         <label className="text-sm text-gray-600">Area:</label>
         <select value={selectedArea} onChange={(e) => { setSelectedArea(e.target.value); setPage(1); }}
-          className="text-sm border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#002349]">
+          className="min-h-[44px] sm:min-h-0 text-sm border rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#002349]">
           <option value="">All</option>
           {filteredAreas.map((a) => <option key={`${a.district}-${a.name}`} value={a.name}>{a.name}</option>)}
         </select>
@@ -1209,7 +1334,44 @@ function UnitsTab() {
         <p className="text-red-500 text-sm">{error}</p>
       ) : (
         <>
-          <table className="w-full text-sm">
+          {/* Mobile: roomy tappable rows — one full-width target per record */}
+          <div className="lg:hidden">
+            {units.length === 0 ? (
+              <p className="py-8 text-center text-sm text-gray-400">No units found</p>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {units.map((u) => (
+                  <div key={`${u.district}-${u.area}-${u.name}`} className="min-h-[56px] flex items-center gap-2 px-1 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">{u.name}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{u.area} · {u.district} · {u.count} member(s)</p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                      <button title="Rename unit" onClick={() => { setTxError(''); setRenameItem(u); setRenameValue(u.name); }}
+                        className="ih-icon-btn text-blue-600 hover:bg-blue-50">
+                        <Pencil className="w-3.5 h-3.5" /></button>
+                      <button title="Split unit" onClick={() => { setTxError(''); setSplitSideA(u.name); setSplitSideB(''); setSplitItem(u); }}
+                        className="ih-icon-btn text-purple-600 hover:bg-purple-50">
+                        <Scissors className="w-3.5 h-3.5" /></button>
+                      <button title="Merge into another unit" onClick={() => { setTxError(''); setMergeItem(u); setMergeSurvivorKey(''); }}
+                        className="ih-icon-btn text-indigo-600 hover:bg-indigo-50">
+                        <GitMerge className="w-3.5 h-3.5" /></button>
+                      <button title="Transfer to another area" onClick={() => { setTxError(''); setTransferItem(u); setTransferDistrictFilter(''); setTransferTargetKey(''); }}
+                        className="ih-icon-btn text-teal-600 hover:bg-teal-50">
+                        <ArrowRightLeft className="w-3.5 h-3.5" /></button>
+                      <button
+                        title={u.count > 0 ? `Cannot delete: ${u.count} member(s) assigned` : 'Delete unit'}
+                        onClick={() => { setTxError(''); setDeleteItem(u); }}
+                        className="ih-icon-btn text-red-600 hover:bg-red-50">
+                        <Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Desktop: table */}
+          <table className="hidden lg:table w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -1228,23 +1390,23 @@ function UnitsTab() {
                   <td className="px-4 py-3 text-gray-600">{u.area}</td>
                   <td className="px-4 py-3 text-gray-600">{u.district}</td>
                   <td className="px-4 py-3 text-gray-600">{u.count}</td>
-                  <td className="px-4 py-3 text-right space-x-1">
+                  <td className="px-4 py-3 text-right space-x-2">
                     <button title="Rename unit" onClick={() => { setTxError(''); setRenameItem(u); setRenameValue(u.name); }}
-                      className="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">
+                      className="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded">
                       <Pencil className="w-3.5 h-3.5" /></button>
                     <button title="Split unit" onClick={() => { setTxError(''); setSplitSideA(u.name); setSplitSideB(''); setSplitItem(u); }}
-                      className="inline-flex items-center px-2 py-1 text-purple-600 hover:bg-purple-50 rounded">
+                      className="inline-flex items-center p-2 text-purple-600 hover:bg-purple-50 rounded">
                       <Scissors className="w-3.5 h-3.5" /></button>
                     <button title="Merge into another unit" onClick={() => { setTxError(''); setMergeItem(u); setMergeSurvivorKey(''); }}
-                      className="inline-flex items-center px-2 py-1 text-indigo-600 hover:bg-indigo-50 rounded">
+                      className="inline-flex items-center p-2 text-indigo-600 hover:bg-indigo-50 rounded">
                       <GitMerge className="w-3.5 h-3.5" /></button>
                     <button title="Transfer to another area" onClick={() => { setTxError(''); setTransferItem(u); setTransferDistrictFilter(''); setTransferTargetKey(''); }}
-                      className="inline-flex items-center px-2 py-1 text-teal-600 hover:bg-teal-50 rounded">
+                      className="inline-flex items-center p-2 text-teal-600 hover:bg-teal-50 rounded">
                       <ArrowRightLeft className="w-3.5 h-3.5" /></button>
                     <button
                       title={u.count > 0 ? `Cannot delete: ${u.count} member(s) assigned` : 'Delete unit'}
                       onClick={() => { setTxError(''); setDeleteItem(u); }}
-                      className="inline-flex items-center px-2 py-1 text-red-600 hover:bg-red-50 rounded">
+                      className="inline-flex items-center p-2 text-red-600 hover:bg-red-50 rounded">
                       <Trash2 className="w-3.5 h-3.5" /></button>
                   </td>
                 </tr>
@@ -1265,7 +1427,7 @@ function UnitsTab() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-3 py-2.5 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   ← Previous
                 </button>
@@ -1273,7 +1435,7 @@ function UnitsTab() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-3 py-2.5 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Next →
                 </button>
@@ -1299,9 +1461,9 @@ function UnitsTab() {
             </div>
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setSplitItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setSplitItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleSplitConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Split
               </button>
             </div>
@@ -1325,9 +1487,9 @@ function UnitsTab() {
           </select>
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setMergeItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setMergeItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleMergeConfirm} disabled={txWorking || !mergeSurvivorKey}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Merge
             </button>
           </div>
@@ -1356,9 +1518,9 @@ function UnitsTab() {
           </select>
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setTransferItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setTransferItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleTransferConfirm} disabled={txWorking || !transferTargetKey}
-              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Transfer
             </button>
           </div>
@@ -1400,9 +1562,9 @@ function UnitsTab() {
             </div>
             <ErrorMsg msg={addError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setAddOpen(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setAddOpen(false)} className="btn-ghost">Cancel</button>
               <button onClick={handleAddConfirm} disabled={addWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-[#002349] text-white rounded-lg hover:bg-[#002349]/90 disabled:opacity-50">
                 {addWorking ? <Spinner /> : null} Add
               </button>
             </div>
@@ -1420,9 +1582,9 @@ function UnitsTab() {
             </div>
             <ErrorMsg msg={txError} />
             <div className="flex gap-3 justify-end mt-2">
-              <button onClick={() => setRenameItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setRenameItem(null)} className="btn-ghost">Cancel</button>
               <button onClick={handleRenameConfirm} disabled={txWorking}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
                 {txWorking ? <Spinner /> : null} Rename
               </button>
             </div>
@@ -1441,9 +1603,9 @@ function UnitsTab() {
           )}
           <ErrorMsg msg={txError} />
           <div className="flex gap-3 justify-end mt-4">
-            <button onClick={() => setDeleteItem(null)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+            <button onClick={() => setDeleteItem(null)} className="btn-ghost">Cancel</button>
             <button onClick={handleDeleteConfirm} disabled={txWorking || deleteItem.count > 0}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+              className="flex min-h-[44px] sm:min-h-0 items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
               {txWorking ? <Spinner /> : null} Delete
             </button>
           </div>
@@ -1459,18 +1621,19 @@ export default function MasterDataManagement() {
 
   return (
     <div>
-      <div className="mb-4">
+      {/* Title hidden on mobile — the app bar already names this screen there. */}
+      <div className="hidden lg:block mb-4">
         <h2 className="text-lg font-semibold text-[#002349]">മാസ്റ്റർ ഡാറ്റ — Locations</h2>
         <p className="text-sm text-gray-500">Derived from member data. Use Add, Split, Merge, Transfer to manage locations.</p>
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
+      <div className="flex w-fit max-w-full gap-1 overflow-x-auto bg-gray-100 rounded-xl p-1 mb-6">
         {TABS.map(({ id, label }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`shrink-0 whitespace-nowrap min-h-[44px] sm:min-h-0 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
               activeTab === id ? 'bg-white text-[#002349] shadow' : 'text-gray-600 hover:bg-gray-200'
             }`}
           >

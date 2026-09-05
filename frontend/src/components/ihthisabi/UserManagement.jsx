@@ -4,7 +4,7 @@ import { useLocation as useHierarchyLocation } from '../../hooks/useLocation'
 import UnitAdminProfileModal from './UnitAdminProfileModal'
 import UserProfileModal from './UserProfileModal'
 import ConfirmationModal from './ConfirmationModal'
-import MemberFormModal from './MemberFormModal'
+import MemberFormModal, { LocationSelects } from './MemberFormModal'
 import Pagination from './Pagination'
 import {
   Upload,
@@ -65,12 +65,7 @@ const UserManagement = () => {
   // Transfer modal state
   const [transferModal, setTransferModal] = useState({ isOpen: false, user: null })
   const [transferMode, setTransferMode] = useState('location') // 'location' | 'abroad'
-  const [transferDistricts, setTransferDistricts] = useState([])
-  const [transferAreas, setTransferAreas] = useState([])
-  const [transferUnits, setTransferUnits] = useState([])
-  const [transferDistrict, setTransferDistrict] = useState('')
-  const [transferArea, setTransferArea] = useState('')
-  const [transferUnit, setTransferUnit] = useState('')
+  const [transferLoc, setTransferLoc] = useState({ district: '', area: '', unit: '' })
   const [abroadCountries, setAbroadCountries] = useState([])
   const [abroadAreas, setAbroadAreas] = useState([])
   const [abroadUnits, setAbroadUnits] = useState([])
@@ -222,42 +217,17 @@ const UserManagement = () => {
     e.stopPropagation()
     setTransferError('')
     setTransferMode('location')
-    setTransferDistrict(''); setTransferArea(''); setTransferUnit('')
-    setTransferDistricts([]); setTransferAreas([]); setTransferUnits([])
+    setTransferLoc({ district: '', area: '', unit: '' })
     setTransferAbroadCountry(''); setTransferAbroadArea(''); setTransferAbroadUnit('')
     setAbroadAreas([]); setAbroadUnits([])
     setTransferModal({ isOpen: true, user })
-    // Fetch districts and abroad countries in parallel
+    // Fetch abroad countries
     try {
-      const [distRes, countryRes] = await Promise.all([
-        api.get('/ihthisabi/admin/master-data/districts'),
-        api.get('/ihthisabi/admin/abroad-countries')
-      ])
-      setTransferDistricts(distRes.data.data || [])
+      const countryRes = await api.get('/ihthisabi/admin/abroad-countries')
       setAbroadCountries(countryRes.data.data?.countries || [])
     } catch (err) {
       setTransferError(err.response?.data?.message || 'Failed to load locations')
     }
-  }
-
-  const handleTransferDistrictChange = async (districtName) => {
-    setTransferDistrict(districtName); setTransferArea(''); setTransferUnit(''); setTransferAreas([]); setTransferUnits([])
-    if (!districtName) return
-    try {
-      const res = await api.get('/ihthisabi/admin/master-data/areas', { params: { district: districtName } })
-      setTransferAreas(res.data.data || [])
-    } catch { /* ignore */ }
-  }
-
-  const handleTransferAreaChange = async (areaName) => {
-    setTransferArea(areaName); setTransferUnit(''); setTransferUnits([])
-    if (!areaName || !transferDistrict) return
-    try {
-      const res = await api.get('/ihthisabi/admin/master-data/units', {
-        params: { district: transferDistrict, area: areaName }
-      })
-      setTransferUnits(res.data.data || [])
-    } catch { /* ignore */ }
   }
 
   const handleTransferAbroadCountryChange = async (countryId) => {
@@ -298,11 +268,11 @@ const UserManagement = () => {
       } catch (e) { setTransferError(e.response?.data?.message || 'Transfer failed') }
       setTransferWorking(false)
     } else {
-      if (!transferDistrict || !transferArea || !transferUnit) return setTransferError('Please select district, area and unit')
+      if (!transferLoc.district || !transferLoc.area || !transferLoc.unit) return setTransferError('Please select district, area and unit')
       setTransferWorking(true)
       try {
         await api.put(`/ihthisabi/admin/users/${user._id}/transfer`, {
-          isAbroad: false, district: transferDistrict, area: transferArea, unit: transferUnit
+          isAbroad: false, district: transferLoc.district, area: transferLoc.area, unit: transferLoc.unit
         })
         toast.success('User transferred successfully')
         setTransferModal({ isOpen: false, user: null })
@@ -410,25 +380,25 @@ const UserManagement = () => {
       {/* Header — title hidden on mobile, the app bar already names the page.
           Actions collapse to icons so they stay on one row. */}
       <div className="flex items-center justify-between gap-2">
-        <div className="hidden min-w-0 sm:block">
+        <div className="hidden min-w-0 lg:block">
           <h2 className="ih-page-title">User Management</h2>
           <p className="ih-page-subtitle">
             {showUnitAdminsOnly ? 'Manage unit admins' : 'Manage users uploaded from Excel files'}
           </p>
         </div>
 
-        <div className="flex w-full items-center gap-1.5 sm:w-auto">
+        <div className="flex w-full items-center gap-2 lg:w-auto">
           <button
             onClick={() => {
               setShowUnitAdminsOnly(!showUnitAdminsOnly)
               resetFilters()
             }}
-            className={`inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-full px-3 py-[7px] text-[11px] font-medium transition-colors sm:flex-none sm:px-4 sm:py-2 sm:text-sm ${
+            className={`inline-flex h-[44px] min-w-0 flex-1 items-center justify-center gap-1 rounded-full px-3 text-[11px] font-medium transition-colors sm:h-9 sm:flex-none sm:px-4 sm:text-sm ${
               showUnitAdminsOnly ? 'bg-primary text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
             }`}
             style={showUnitAdminsOnly ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
           >
-            <Settings className="w-3.5 h-3.5 shrink-0" />
+            <Settings className="h-4 w-4 shrink-0" />
             <span className="truncate">{showUnitAdminsOnly ? 'Regular Users' : 'Unit Admins'}</span>
           </button>
 
@@ -436,26 +406,26 @@ const UserManagement = () => {
             <button
               onClick={() => setShowDeleteAllModal(true)}
               title="Delete all users"
-              className="ih-icon-btn bg-red-50 text-red-500 hover:bg-red-100"
+              className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-red-50 text-red-500 transition-colors hover:bg-red-100 sm:h-9 sm:w-9"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="h-4 w-4" />
             </button>
           )}
           {!showUnitAdminsOnly && (
             <>
               <button
                 onClick={() => setShowAddMemberModal(true)}
-                className="btn-primary shrink-0 gap-1 px-2 py-1.5 text-[11px] sm:px-4 sm:py-2 sm:text-sm"
+                className="btn-primary h-[44px] shrink-0 gap-1 px-3 text-[11px] sm:h-9 sm:px-4 sm:text-sm"
               >
-                <UserPlus className="w-3.5 h-3.5" />
+                <UserPlus className="h-4 w-4" />
                 <span className="sm:hidden">Add</span>
                 <span className="hidden sm:inline">Add Member</span>
               </button>
               <button
                 onClick={() => { setUploadResult(null); setShowUploadModal(true) }}
-                className="btn-ghost shrink-0 gap-1 border border-gray-300 px-2 py-1.5 text-[11px] sm:px-4 sm:py-2 sm:text-sm"
+                className="btn-ghost h-[44px] shrink-0 gap-1 rounded-full border border-gray-300 px-3 text-[11px] sm:h-9 sm:px-4 sm:text-sm"
               >
-                <Upload className="w-3.5 h-3.5" />
+                <Upload className="h-4 w-4" />
                 Upload
               </button>
             </>
@@ -499,19 +469,19 @@ const UserManagement = () => {
       <div className="ih-surface p-2 sm:p-3">
         <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+            <Search className="ih-filter-icon" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search name or RUKN ID..."
-              className="block w-full rounded-lg border border-gray-300 py-1.5 pl-8 pr-2 text-[11px] shadow-sm placeholder-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 sm:text-sm"
+              className="ih-field h-[44px] pr-3 text-base sm:h-9 sm:text-sm"
             />
           </div>
           {(searchTerm || districtFilter || areaFilter || unitFilter) && (
             <button
               onClick={resetFilters}
-              className="shrink-0 rounded-lg border border-gray-200 px-2 py-1.5 text-[11px] text-gray-500 hover:text-gray-700"
+              className="inline-flex h-[44px] shrink-0 items-center rounded-full px-3 text-[11px] font-medium text-gray-500 transition-colors hover:text-gray-800 sm:h-9"
             >
               Reset
             </button>
@@ -781,7 +751,7 @@ const UserManagement = () => {
                     {row.isActive ? 'Active' : 'Inactive'}
                   </span>
                   {!showUnitAdminsOnly && (
-                    <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={(e) => openTransferModal(e, row)}
                         title="Transfer user"
@@ -948,62 +918,16 @@ const UserManagement = () => {
       )}
 
       {/* Delete All Users Confirmation Modal */}
-      {showDeleteAllModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Delete All Users</h3>
-              <button
-                onClick={() => setShowDeleteAllModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <AlertCircle className="w-6 h-6 text-red-600 mr-3" />
-                  <div>
-                    <h4 className="font-medium text-red-800">Warning!</h4>
-                    <p className="text-sm text-red-700 mt-1">
-                      This action will permanently delete ALL {Math.max(meta.totalUsers, users.length)} users from the database. 
-                      This cannot be undone.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-sm text-gray-600">
-                <p className="font-medium mb-2">This will delete:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>All user records</li>
-                  <li>All user data including names, districts, units, etc.</li>
-                  <li>Associated submissions and data</li>
-                </ul>
-              </div>
-
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleDeleteAllUsers}
-                  disabled={deleteAllLoading}
-                  className="btn-primary bg-red-600 hover:bg-red-700 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {deleteAllLoading ? 'Deleting...' : 'Yes, Delete All Users'}
-                </button>
-                <button
-                  onClick={() => setShowDeleteAllModal(false)}
-                  disabled={deleteAllLoading}
-                  className="btn-ghost flex-1 disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={showDeleteAllModal}
+        onClose={() => setShowDeleteAllModal(false)}
+        onConfirm={handleDeleteAllUsers}
+        title="Delete All Users"
+        message={`This action will permanently delete ALL ${Math.max(meta.totalUsers, users.length)} users from the database — all user records, their data (names, districts, units, etc.) and associated submissions. This cannot be undone.`}
+        confirmText="Yes, Delete All Users"
+        variant="danger"
+        isLoading={deleteAllLoading}
+      />
 
       {/* Add Member Modal */}
       <MemberFormModal
@@ -1051,12 +975,12 @@ const UserManagement = () => {
       {/* Transfer User Modal */}
       {transferModal.isOpen && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h3 className="min-w-0 flex-1 truncate text-lg font-semibold text-gray-900">
                 Transfer: {transferModal.user?.name}
               </h3>
-              <button onClick={() => setTransferModal({ isOpen: false, user: null })} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setTransferModal({ isOpen: false, user: null })} className="shrink-0 text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1078,49 +1002,7 @@ const UserManagement = () => {
             </div>
 
             {transferMode === 'location' && (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
-                  <select
-                    value={transferDistrict}
-                    onChange={(e) => handleTransferDistrictChange(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                  >
-                    <option value="">Select district</option>
-                    {transferDistricts.map((d) => (
-                      <option key={d.name} value={d.name}>{d.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Area</label>
-                  <select
-                    value={transferArea}
-                    onChange={(e) => handleTransferAreaChange(e.target.value)}
-                    disabled={!transferDistrict}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
-                  >
-                    <option value="">Select area</option>
-                    {transferAreas.map((a) => (
-                      <option key={`${a.district}-${a.name}`} value={a.name}>{a.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                  <select
-                    value={transferUnit}
-                    onChange={(e) => setTransferUnit(e.target.value)}
-                    disabled={!transferArea}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
-                  >
-                    <option value="">Select unit</option>
-                    {transferUnits.map((u) => (
-                      <option key={`${u.district}-${u.area}-${u.name}`} value={u.name}>{u.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              <LocationSelects value={transferLoc} onChange={setTransferLoc} required />
             )}
 
             {transferMode === 'abroad' && (
@@ -1130,7 +1012,7 @@ const UserManagement = () => {
                   <select
                     value={transferAbroadCountry}
                     onChange={(e) => handleTransferAbroadCountryChange(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    className="form-select text-[13px] sm:text-sm"
                   >
                     <option value="">Select country</option>
                     {abroadCountries.map((c) => (
@@ -1144,7 +1026,7 @@ const UserManagement = () => {
                     value={transferAbroadArea}
                     onChange={(e) => handleTransferAbroadAreaChange(e.target.value)}
                     disabled={!transferAbroadCountry || abroadAreas.length === 0}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
+                    className="form-select text-[13px] sm:text-sm"
                   >
                     <option value="">{!transferAbroadCountry ? 'Select country first' : abroadAreas.length === 0 ? 'No areas available' : 'Select area'}</option>
                     {abroadAreas.map((a) => (
@@ -1158,7 +1040,7 @@ const UserManagement = () => {
                     value={transferAbroadUnit}
                     onChange={(e) => setTransferAbroadUnit(e.target.value)}
                     disabled={!transferAbroadArea || abroadUnits.length === 0}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
+                    className="form-select text-[13px] sm:text-sm"
                   >
                     <option value="">{!transferAbroadArea ? 'Select area first' : abroadUnits.length === 0 ? 'No units available' : 'Select unit'}</option>
                     {abroadUnits.map((u) => (

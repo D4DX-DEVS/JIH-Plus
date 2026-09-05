@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Edit, Trash2, Calendar, Search, FileText, Users, Building, Eye, X } from 'lucide-react';
+import { Edit, Calendar, FileText, Users, Building, Eye, X, ArrowLeft, Trash2 } from 'lucide-react';
+import { JihFilterBar, JihFilterSelect, JihFab, JihAddButton } from '../components/JihToolbar';
 import axios from 'axios';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import jihLogo from '../assets/LogoColor.png';
@@ -109,7 +110,28 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
 
   useEffect(() => {
     fetchSurveys();
-  }, [currentPage, levelFilter, monthFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  // Reset to page 1 whenever a filter changes so the newly-filtered result
+  // set isn't sliced against a stale page number.
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchSurveys();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [levelFilter, monthFilter, focusAreaFilter, areaFocusFilter]);
+
+  // The backend has no free-text search and the focus-area filters are
+  // client-side only, so widen the fetched page instead of only matching
+  // the current 10-record server page (debounced to avoid a fetch per keystroke).
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      fetchSurveys();
+    }, 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
   // Clear focus area filters when level changes
   useEffect(() => {
@@ -125,11 +147,12 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('userToken');
+      const hasClientFilter = searchTerm.trim().length > 0 || !!focusAreaFilter || !!areaFocusFilter;
       const params = new URLSearchParams({
-        page: currentPage,
-        limit: 10,
+        page: hasClientFilter ? 1 : currentPage,
+        limit: hasClientFilter ? 500 : 10,
       });
-      
+
       if (monthFilter) params.append('month', monthFilter);
 
       let endpoint = '';
@@ -797,7 +820,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                             type="number"
                             value={maleCount || 0}
                             readOnly
-                            className="w-full px-2 py-1.5 border border-blue-300 rounded-lg bg-blue-50 text-xs"
+                            className="w-full px-2 py-1.5 border border-blue-300 rounded-lg bg-blue-50 text-base sm:text-xs"
                             placeholder="എണ്ണം"
                           />
                         )}
@@ -819,7 +842,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                             type="number"
                             value={femaleCount || 0}
                             readOnly
-                            className="w-full px-2 py-1.5 border border-pink-300 rounded-lg bg-pink-50 text-xs"
+                            className="w-full px-2 py-1.5 border border-pink-300 rounded-lg bg-pink-50 text-base sm:text-xs"
                             placeholder="എണ്ണം"
                           />
                         )}
@@ -1382,14 +1405,14 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349] mb-2">ഏരിയ തലം റിപ്പോർട്ട്</h1>
+                <h1 className="hidden lg:block text-2xl lg:text-4xl font-bold text-[#002349] mb-2">ഏരിയ തലം റിപ്പോർട്ട്</h1>
               </div>
               <button
                 onClick={() => {
                   setShowDetailView(false);
                   setViewingSurvey(null);
                 }}
-                className="p-2 text-gray-600 border border-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-gray-500 hover:to-gray-600 hover:text-white transition-all duration-300 hover:shadow-md"
+                className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2 text-gray-600 border border-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-gray-500 hover:to-gray-600 hover:text-white transition-all duration-300 hover:shadow-md"
                 title="Close"
               >
                 <X className="w-4 h-4" />
@@ -1439,7 +1462,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
           <div className="max-w-5xl mx-auto ml-15 px-0 py-1">
             <div className="mb-2 flex items-start justify-between">
               <div>
-                <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">യൂണിറ്റ് റിപ്പോർട്ടുകളുടെ വിശദാംശങ്ങൾ</h1>
+                <h1 className="hidden lg:block text-2xl lg:text-4xl font-bold text-[#002349]">യൂണിറ്റ് റിപ്പോർട്ടുകളുടെ വിശദാംശങ്ങൾ</h1>
                 <p className="text-sm text-gray-600 font-medium mt-1">
                   <span className="font-bold">{viewingSurvey.month}</span> {viewingSurvey.year} - {viewingSurvey.component || viewingSurvey.unitName}
                 </p>
@@ -1449,7 +1472,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                   setShowDetailView(false);
                   setViewingSurvey(null);
                 }}
-                className="p-2 text-gray-600 border border-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-gray-500 hover:to-gray-600 hover:text-white transition-all duration-300 hover:shadow-md -mr-4"
+                className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2 text-gray-600 border border-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-gray-500 hover:to-gray-600 hover:text-white transition-all duration-300 hover:shadow-md -mr-4"
                 title="Close"
               >
                 <X className="w-4 h-4" />
@@ -1509,14 +1532,14 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349] mb-2">ജില്ലാ തലം റിപ്പോർട്ട്</h1>
+              <h1 className="hidden lg:block text-2xl lg:text-4xl font-bold text-[#002349] mb-2">ജില്ലാ തലം റിപ്പോർട്ട്</h1>
             </div>
             <button
               onClick={() => {
                 setShowDetailView(false);
                 setViewingSurvey(null);
               }}
-              className="p-2 text-gray-600 border border-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-gray-500 hover:to-gray-600 hover:text-white transition-all duration-300 hover:shadow-md"
+              className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] p-2 text-gray-600 border border-gray-300 rounded-xl hover:bg-gradient-to-r hover:from-gray-500 hover:to-gray-600 hover:text-white transition-all duration-300 hover:shadow-md"
               title="Close"
             >
               <X className="w-4 h-4" />
@@ -1562,7 +1585,8 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
       {/* Page Heading */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
+          {/* MobileTopBar (rendered by the parent dashboard shell) already names this screen on mobile. */}
+          <h1 className="hidden lg:block text-2xl lg:text-4xl font-bold text-[#002349]">
             {getDashboardTitle()}
           </h1>
           <p className="text-sm text-gray-600">
@@ -1570,89 +1594,52 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
           </p>
         </div>
         {canCreate && (
-          <button
-            onClick={onCreateNew}
-            className="bg-[#957C3D] hover:bg-[#8A6F35] text-white px-6 py-3 rounded-2xl transition-all duration-500 flex items-center space-x-2 text-sm font-semibold hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New District Report</span>
-          </button>
+          <>
+            <JihAddButton onClick={onCreateNew}>New District Report</JihAddButton>
+            <JihFab onClick={onCreateNew} label="New District Report" />
+          </>
         )}
       </div>
 
-      {/* Inline Search & Filters (no container card) */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${(levelFilter === 'district' || levelFilter === 'area') ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-3 mb-4`}>
-        <div>
-          <label className="block text-xs font-semibold text-[#002349] mb-1">Search</label>
-          <div className="relative group">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search reports..."
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-sm"
-            />
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 group-hover:text-[#002349] transition-colors duration-300" />
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-[#002349] mb-1">Level</label>
-          <select
-            value={levelFilter}
-            onChange={(e) => setLevelFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-sm"
-          >
-            <option value="">All Levels</option>
-            <option value="district">District</option>
-            <option value="area">Area</option>
-            <option value="unit">Unit</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-[#002349] mb-1">Month</label>
-          <select
-            value={monthFilter}
-            onChange={(e) => setMonthFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-sm"
-          >
-            <option value="">All Months</option>
-            {['January', 'February', 'March', 'April', 'May', 'June', 
-              'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
-              <option key={month} value={month}>{month}</option>
-            ))}
-          </select>
-        </div>
-        {levelFilter === 'district' && (
-          <div>
-            <label className="block text-xs font-semibold text-[#002349] mb-1">Focus Area</label>
-            <select
-              value={focusAreaFilter}
-              onChange={(e) => setFocusAreaFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-sm"
-            >
-              <option value="">All Focus Areas</option>
-              {focusAreaOptions.map(option => (
-                <option key={option.key} value={option.key}>{option.label}</option>
+      <JihFilterBar
+        className="mb-4"
+        search={searchTerm}
+        onSearchChange={setSearchTerm}
+        placeholder="Search reports..."
+        activeFilterCount={[levelFilter, monthFilter, levelFilter === 'district' && focusAreaFilter, levelFilter === 'area' && areaFocusFilter].filter(Boolean).length}
+        onClear={() => { setLevelFilter(''); setMonthFilter(''); setFocusAreaFilter(''); setAreaFocusFilter(''); }}
+        gridClass="sm:grid-cols-3 lg:grid-cols-4"
+      >
+        <JihFilterSelect icon={Building} value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
+          <option value="">All Levels</option>
+          <option value="district">District</option>
+          <option value="area">Area</option>
+          <option value="unit">Unit</option>
+        </JihFilterSelect>
+        <JihFilterSelect icon={Calendar} value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}>
+          <option value="">All Months</option>
+          {['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
+                <option key={month} value={month}>{month}</option>
               ))}
-            </select>
-          </div>
+        </JihFilterSelect>
+        {levelFilter === 'district' && (
+          <JihFilterSelect value={focusAreaFilter} onChange={(e) => setFocusAreaFilter(e.target.value)}>
+            <option value="">All Focus Areas</option>
+            {focusAreaOptions.map(option => (
+              <option key={option.key} value={option.key}>{option.label}</option>
+            ))}
+          </JihFilterSelect>
         )}
         {levelFilter === 'area' && (
-          <div>
-            <label className="block text-xs font-semibold text-[#002349] mb-1">Focus Area</label>
-            <select
-              value={areaFocusFilter}
-              onChange={(e) => setAreaFocusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 text-sm"
-            >
-              <option value="">All Focus Areas</option>
-              {areaFocusOptions.map(option => (
-                <option key={option.key} value={option.key}>{option.label}</option>
-              ))}
-            </select>
-          </div>
+          <JihFilterSelect value={areaFocusFilter} onChange={(e) => setAreaFocusFilter(e.target.value)}>
+            <option value="">All Focus Areas</option>
+            {areaFocusOptions.map(option => (
+              <option key={option.key} value={option.key}>{option.label}</option>
+            ))}
+          </JihFilterSelect>
         )}
-      </div>
+      </JihFilterBar>
 
       {error && (
         <div className="mb-4 bg-red-50 border-2 border-red-200 rounded-2xl p-3 animate-fade-in text-sm">
@@ -1679,7 +1666,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
               {canCreate && (
                 <button
                   onClick={onCreateNew}
-                  className="bg-[#957C3D] hover:bg-[#8A6F35] text-white px-4 py-2 rounded-xl transition-all duration-300 text-xs font-semibold hover:shadow-md"
+                  className="bg-[#957C3D] hover:bg-[#8A6F35] text-white px-4 py-2.5 sm:py-2 rounded-xl transition-all duration-300 text-xs font-semibold hover:shadow-md"
                 >
                   Create District Report
                 </button>
@@ -1687,8 +1674,65 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
             </div>
           ) : (
             <>
+              {/* Mobile: roomy tappable rows — one full-width target per record */}
+              <div className="lg:hidden divide-y divide-gray-100">
+                {filteredSurveys.map((survey) => (
+                  <div key={survey._id} className="min-h-[56px] flex items-center gap-2 px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${getSubmissionLevelColor(
+                            survey.submissionLevel
+                          )} shadow-sm`}
+                        >
+                          {getSubmissionLevelIcon(survey.submissionLevel)}
+                          <span className="ml-1 capitalize">{survey.submissionLevel}</span>
+                        </span>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#957C3D] text-white shadow-sm">
+                          {survey.month}
+                        </span>
+                      </div>
+                      <p className="text-[13px] font-semibold text-[#002349] break-words leading-snug mt-1">
+                        {survey.submissionLevel === 'district' && survey.district}
+                        {survey.submissionLevel === 'area' && (survey.areaName || survey.area || 'Unknown Area')}
+                        {survey.submissionLevel === 'unit' && (survey.unitName || survey.component || 'Unknown Unit')}
+                      </p>
+                      {survey.submissionLevel === 'area' && (
+                        <p className="text-[11px] text-gray-500">{survey.district}</p>
+                      )}
+                      {survey.submissionLevel === 'unit' && (
+                        <p className="text-[11px] text-gray-500">
+                          {survey.areaName || survey.area} • {survey.district}
+                        </p>
+                      )}
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {survey.submittedByName || survey.submittedBy} · {formatDate(survey.submittedAt)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        onClick={() => handleViewSurvey(survey)}
+                        className="text-[#002349] active:text-[#1a3a5c] p-2 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                        title="View"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      {survey.submissionLevel === 'district' && canEdit && (
+                        <button
+                          onClick={() => handleEditSurvey(survey)}
+                          className="text-[#957C3D] active:text-[#8A6F35] p-2 hover:bg-amber-50 rounded-lg transition-all duration-200"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop: table */}
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="hidden lg:table w-full text-sm">
                   <thead className="bg-[#002349] border-b border-gray-200">
                     <tr>
                       <th className="px-4 py-2 text-left text-[11px] font-semibold text-white uppercase tracking-wide">
@@ -1766,10 +1810,10 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                           {formatDate(survey.submittedAt)}
                         </td>
                         <td className="px-4 py-1 whitespace-nowrap text-[13px] font-medium text-right align-middle">
-                          <div className="inline-flex items-center space-x-1.5">
+                          <div className="inline-flex items-center space-x-2">
                             <button
                               onClick={() => handleViewSurvey(survey)}
-                              className="text-[#002349] hover:text-[#1a3a5c] p-1.5 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                              className="text-[#002349] hover:text-[#1a3a5c] p-2 hover:bg-gray-100 rounded-lg transition-all duration-200"
                               title="View"
                             >
                               <Eye className="w-4 h-4" />
@@ -1777,7 +1821,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                             {survey.submissionLevel === 'district' && canEdit && (
                               <button
                                 onClick={() => handleEditSurvey(survey)}
-                                className="text-[#957C3D] hover:text-[#8A6F35] p-1.5 hover:bg-amber-50 rounded-lg transition-all duration-200"
+                                className="text-[#957C3D] hover:text-[#8A6F35] p-2 hover:bg-amber-50 rounded-lg transition-all duration-200"
                                 title="Edit"
                               >
                                 <Edit className="w-4 h-4" />
@@ -1802,14 +1846,14 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                       <button
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className="px-3 py-1.5 border border-gray-300 rounded-xl text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:border-[#002349] hover:text-[#002349] hover:bg-gray-50 transition-all duration-200"
+                        className="px-3 py-2.5 sm:py-1.5 border border-gray-300 rounded-xl text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:border-[#002349] hover:text-[#002349] hover:bg-gray-50 transition-all duration-200"
                       >
                         Previous
                       </button>
                       <button
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-1.5 border border-gray-300 rounded-xl text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:border-[#002349] hover:text-[#002349] hover:bg-gray-50 transition-all duration-200"
+                        className="px-3 py-2.5 sm:py-1.5 border border-gray-300 rounded-xl text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:border-[#002349] hover:text-[#002349] hover:bg-gray-50 transition-all duration-200"
                       >
                         Next
                       </button>

@@ -151,15 +151,22 @@ const Consolidation = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600 text-sm">ലോഡ് ചെയ്യുന്നു…</div>
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center gap-2 text-gray-600 text-sm">
+          <RefreshCcw className="w-4 h-4 animate-spin" />
+          ലോഡ് ചെയ്യുന്നു…
+        </div>
       </div>
     )
   }
   if (!isAuthenticated || !user || user.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex flex-col items-center justify-center gap-3">
+        <AlertCircle className="w-10 h-10 text-gray-300" />
         <div className="text-gray-600 text-sm">Access denied</div>
+        <button onClick={() => navigate(-1)} className="btn-ghost">
+          Go Back
+        </button>
       </div>
     )
   }
@@ -289,30 +296,47 @@ const Consolidation = () => {
     const invalidTotal = numericFields.reduce((s, sf) => s + (sums[`${sf.fieldId}_invalid`] || 0), 0)
 
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Field</th>
-              <th className="text-right py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {numericFields.map(sf => (
-              <tr key={sf.fieldId} className="border-b border-gray-100 last:border-0">
-                <td className="py-2.5 pr-4 text-gray-700">
-                  <span className="font-medium">{sf.label}</span>
-                  {sf.labelMl && sf.labelMl !== sf.label && (
-                    <span className="text-gray-500"> · {sf.labelMl}</span>
-                  )}
-                </td>
-                <td className="py-2.5 text-right font-bold text-gray-900">
-                  {sums[`${sf.fieldId}_sum`] ?? 0}
-                </td>
+      <div>
+        {/* Mobile: roomy rows — one full-width row per field */}
+        <div className="lg:hidden divide-y divide-gray-100">
+          {numericFields.map(sf => (
+            <div key={sf.fieldId} className="min-h-[44px] flex items-center justify-between gap-3 py-2.5">
+              <div className="min-w-0 text-[13px] text-gray-700">
+                <span className="font-medium">{sf.label}</span>
+                {sf.labelMl && sf.labelMl !== sf.label && (
+                  <span className="text-gray-500"> · {sf.labelMl}</span>
+                )}
+              </div>
+              <span className="shrink-0 font-bold text-gray-900">{sums[`${sf.fieldId}_sum`] ?? 0}</span>
+            </div>
+          ))}
+        </div>
+        {/* Desktop: table */}
+        <div className="hidden lg:block overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Field</th>
+                <th className="text-right py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {numericFields.map(sf => (
+                <tr key={sf.fieldId} className="border-b border-gray-100 last:border-0">
+                  <td className="py-2.5 pr-4 text-gray-700">
+                    <span className="font-medium">{sf.label}</span>
+                    {sf.labelMl && sf.labelMl !== sf.label && (
+                      <span className="text-gray-500"> · {sf.labelMl}</span>
+                    )}
+                  </td>
+                  <td className="py-2.5 text-right font-bold text-gray-900">
+                    {sums[`${sf.fieldId}_sum`] ?? 0}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {invalidTotal > 0 && (
           <p className="mt-2 text-[11px] text-amber-600">
             {invalidTotal} invalid {invalidTotal === 1 ? 'entry' : 'entries'} (out-of-range values) ignored.
@@ -387,12 +411,12 @@ const Consolidation = () => {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell">
         <div className="mb-4">
           <div className="ih-page-header">
             <div>
-              <h1 className="ih-page-title">Consolidation</h1>
+              <h1 className="ih-page-title hidden lg:block">Consolidation</h1>
               <p className="ih-page-subtitle">Select a year and quarter to see the combined results of every answer</p>
             </div>
           </div>
@@ -410,7 +434,7 @@ const Consolidation = () => {
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
-                className="form-select text-sm"
+                className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
               >
                 <option value="">Select year</option>
                 {years.map(y => (
@@ -423,7 +447,7 @@ const Consolidation = () => {
               <select
                 value={selectedQuarter}
                 onChange={(e) => setSelectedQuarter(e.target.value)}
-                className="form-select text-sm"
+                className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
               >
                 <option value="">Select quarter</option>
                 {quarters.map(q => (
@@ -486,7 +510,7 @@ const Consolidation = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">District</label>
-                  <select value={district} onChange={(e) => setDistrict(e.target.value)} className="form-select text-sm">
+                  <select value={district} onChange={(e) => setDistrict(e.target.value)} className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm">
                     <option value="all">All Districts</option>
                     {districts.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
@@ -496,7 +520,7 @@ const Consolidation = () => {
                   <select
                     value={area}
                     onChange={(e) => setArea(e.target.value)}
-                    className="form-select text-sm"
+                    className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
                     disabled={district === 'all'}
                   >
                     <option value="all">All Areas</option>
@@ -508,7 +532,7 @@ const Consolidation = () => {
                   <select
                     value={unit}
                     onChange={(e) => setUnit(e.target.value)}
-                    className="form-select text-sm"
+                    className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
                     disabled={district === 'all' || area === 'all'}
                   >
                     <option value="all">All Units</option>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { api } from '../../utils/ihthisabi/api'
+import ConfirmationModal from '../../components/ihthisabi/ConfirmationModal'
 import toast from 'react-hot-toast'
 import {
   Plus, Edit2, Trash2, Copy, Eye, ChevronDown, ChevronUp,
@@ -52,6 +53,8 @@ const FormManagement = () => {
   const [cloneTarget, setCloneTarget] = useState({ quarter: 1, year: 2026 })
   const [savingForm, setSavingForm] = useState(false)
   const [expandedQuestion, setExpandedQuestion] = useState(null)
+  const [confirmAction, setConfirmAction] = useState(null) // { type: 'delete' | 'publish', formId }
+  const [confirmLoading, setConfirmLoading] = useState(false)
 
   const fetchForms = useCallback(async () => {
     try {
@@ -79,6 +82,16 @@ const FormManagement = () => {
     fetchNextQuarter()
   }, [fetchForms, fetchNextQuarter])
 
+  // Close clone modal on Escape
+  useEffect(() => {
+    if (!showCloneModal) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowCloneModal(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showCloneModal])
+
   const handleCreateNew = () => {
     const defaultQ = nextQuarterInfo?.nextQuarter?.quarter || 1
     const defaultY = nextQuarterInfo?.nextQuarter?.year || new Date().getFullYear()
@@ -105,13 +118,16 @@ const FormManagement = () => {
   }
 
   const handleDelete = async (formId) => {
-    if (!window.confirm('Are you sure you want to delete this form?')) return
+    setConfirmLoading(true)
     try {
       await api.delete(`/ihthisabi/application-forms/${formId}`)
       toast.success('Form deleted')
       fetchForms()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete form')
+    } finally {
+      setConfirmLoading(false)
+      setConfirmAction(null)
     }
   }
 
@@ -138,13 +154,16 @@ const FormManagement = () => {
   }
 
   const handlePublish = async (formId) => {
-    if (!window.confirm('Publish this form? Once published, users can submit for this quarter.')) return
+    setConfirmLoading(true)
     try {
       await api.put(`/ihthisabi/application-forms/${formId}/publish`)
       toast.success('Form published successfully')
       fetchForms()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to publish form')
+    } finally {
+      setConfirmLoading(false)
+      setConfirmAction(null)
     }
   }
 
@@ -349,26 +368,26 @@ const FormManagement = () => {
 
   if (view === 'editor' && editingForm) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+      <div className="ih-screen bg-gray-50 p-4 sm:p-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <button onClick={() => { setView('list'); setEditingForm(null) }}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+              className="flex items-center py-2 text-gray-600 hover:text-gray-900 transition-colors">
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Forms
             </button>
             <div className="flex gap-2">
-              <button onClick={handleSave} disabled={savingForm}
-                className="flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors">
-                <Save className="w-4 h-4 mr-2" />
-                {savingForm ? 'Saving...' : 'Save Form'}
+              <button onClick={handleSave} disabled={savingForm} title="Save Form"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-black text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors">
+                <Save className="w-4 h-4" />
+                <span className="hidden sm:inline">{savingForm ? 'Saving...' : 'Save Form'}</span>
               </button>
               {editingForm._id && editingForm.status === 'draft' && (
-                <button onClick={() => handlePublish(editingForm._id)}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                  <Send className="w-4 h-4 mr-2" />
-                  Publish
+                <button onClick={() => setConfirmAction({ type: 'publish', formId: editingForm._id })} title="Publish"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                  <Send className="w-4 h-4" />
+                  <span className="hidden sm:inline">Publish</span>
                 </button>
               )}
             </div>
@@ -424,21 +443,21 @@ const FormManagement = () => {
                   onClick={() => setExpandedQuestion(expandedQuestion === qIndex ? null : qIndex)}>
                   <GripVertical className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
                   <span className="text-sm font-medium text-gray-500 mr-3 flex-shrink-0">#{qIndex + 1}</span>
-                  <span className="text-sm font-medium text-gray-900 truncate flex-1">
+                  <span className="text-sm font-medium text-gray-900 truncate flex-1 min-w-0">
                     {question.questionText || 'Untitled Question'}
                   </span>
                   <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full mr-2 flex-shrink-0">
                     {ANSWER_TYPES.find(t => t.value === question.answerType)?.label || question.answerType}
                   </span>
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex items-center gap-4 flex-shrink-0">
                     <button onClick={(e) => { e.stopPropagation(); moveQuestion(qIndex, -1) }} disabled={qIndex === 0}
-                      className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
+                      className="p-2 -m-2 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronUp className="w-4 h-4" /></button>
                     <button onClick={(e) => { e.stopPropagation(); moveQuestion(qIndex, 1) }} disabled={qIndex === editingForm.questions.length - 1}
-                      className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
+                      className="p-2 -m-2 text-gray-400 hover:text-gray-600 disabled:opacity-30"><ChevronDown className="w-4 h-4" /></button>
                     <button onClick={(e) => { e.stopPropagation(); duplicateQuestion(qIndex) }}
-                      className="p-1 text-gray-400 hover:text-blue-600"><Copy className="w-4 h-4" /></button>
+                      className="p-2 -m-2 text-gray-400 hover:text-blue-600"><Copy className="w-4 h-4" /></button>
                     <button onClick={(e) => { e.stopPropagation(); removeQuestion(qIndex) }}
-                      className="p-1 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      className="p-2 -m-2 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                     {expandedQuestion === qIndex ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                   </div>
                 </div>
@@ -518,23 +537,23 @@ const FormManagement = () => {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <label className="block text-sm font-medium text-gray-700">Options</label>
-                          <button onClick={() => addOption(qIndex)} className="flex items-center text-sm text-primary hover:text-primary/80">
+                          <button onClick={() => addOption(qIndex)} className="flex items-center py-1.5 text-sm text-primary hover:text-primary/80">
                             <Plus className="w-3 h-3 mr-1" /> Add Option
                           </button>
                         </div>
                         <div className="space-y-2">
                           {question.options?.map((opt, oIndex) => (
-                            <div key={oIndex} className="flex items-center gap-2">
+                            <div key={oIndex} className="flex flex-wrap items-center gap-2">
                               <input type="text" value={opt.label} onChange={(e) => updateOption(qIndex, oIndex, 'label', e.target.value)}
-                                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="w-full sm:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Option label" />
                               <input type="text" value={opt.value} onChange={(e) => updateOption(qIndex, oIndex, 'value', e.target.value)}
-                                className="w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="w-24 sm:w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Value" />
                               <input type="text" value={opt.labelMl || ''} onChange={(e) => updateOption(qIndex, oIndex, 'labelMl', e.target.value)}
-                                className="w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="w-32 sm:w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Malayalam" />
-                              <button onClick={() => removeOption(qIndex, oIndex)} className="p-1 text-gray-400 hover:text-red-600">
+                              <button onClick={() => removeOption(qIndex, oIndex)} className="shrink-0 p-1.5 text-gray-400 hover:text-red-600">
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
@@ -551,28 +570,28 @@ const FormManagement = () => {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <label className="block text-sm font-medium text-gray-700">Sub-Fields</label>
-                          <button onClick={() => addSubField(qIndex)} className="flex items-center text-sm text-primary hover:text-primary/80">
+                          <button onClick={() => addSubField(qIndex)} className="flex items-center py-1.5 text-sm text-primary hover:text-primary/80">
                             <Plus className="w-3 h-3 mr-1" /> Add Sub-Field
                           </button>
                         </div>
                         <div className="space-y-2">
                           {question.subFields?.map((sf, sfIndex) => (
-                            <div key={sfIndex} className="flex items-center gap-2">
+                            <div key={sfIndex} className="flex flex-wrap items-center gap-2">
                               <input type="text" value={sf.label} onChange={(e) => updateSubField(qIndex, sfIndex, 'label', e.target.value)}
-                                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="w-full sm:flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Field label" />
                               <input type="text" value={sf.fieldId} onChange={(e) => updateSubField(qIndex, sfIndex, 'fieldId', e.target.value)}
-                                className="w-28 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="w-full sm:w-28 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Field ID" />
                               <select value={sf.type} onChange={(e) => updateSubField(qIndex, sfIndex, 'type', e.target.value)}
-                                className="w-24 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                                className="w-full sm:w-24 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary">
                                 <option value="number">Number</option>
                                 <option value="text">Text</option>
                               </select>
                               <input type="text" value={sf.labelMl || ''} onChange={(e) => updateSubField(qIndex, sfIndex, 'labelMl', e.target.value)}
-                                className="w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                className="flex-1 sm:w-32 sm:flex-none px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 placeholder="Malayalam" />
-                              <button onClick={() => removeSubField(qIndex, sfIndex)} className="p-1 text-gray-400 hover:text-red-600">
+                              <button onClick={() => removeSubField(qIndex, sfIndex)} className="shrink-0 p-1.5 text-gray-400 hover:text-red-600">
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
@@ -610,17 +629,17 @@ const FormManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell max-w-5xl">
         {/* Header */}
         {/* Title is hidden on mobile — the sticky app bar already names the page. */}
         <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
-          <div className="hidden min-w-0 sm:block">
+          <div className="hidden min-w-0 lg:block">
             <h1 className="ih-page-title">Form Management</h1>
             <p className="ih-page-subtitle">Create and manage quarterly submission forms</p>
           </div>
           <button onClick={handleCreateNew}
-            className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:px-4 sm:py-2.5 sm:text-sm">
+            className="flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:min-h-0 sm:px-4 sm:py-2.5 sm:text-sm">
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="sm:hidden">New form</span>
             <span className="hidden sm:inline">Create New Form</span>
@@ -658,7 +677,7 @@ const FormManagement = () => {
             <h3 className="text-sm font-medium text-gray-900 mb-1">No forms created yet</h3>
             <p className="text-xs text-gray-500 mb-4">Create your first dynamic form to get started</p>
             <button onClick={handleCreateNew}
-              className="inline-flex items-center rounded-full bg-[#161F2F] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1a2538]">
+              className="inline-flex min-h-[44px] sm:min-h-0 items-center rounded-full bg-[#161F2F] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1a2538]">
               <Plus className="w-4 h-4 mr-2" /> Create Form
             </button>
           </div>
@@ -677,7 +696,7 @@ const FormManagement = () => {
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <h3 className="truncate text-[13px] font-semibold text-gray-900 sm:text-sm">{form.title}</h3>
+                    <h3 className="min-w-0 truncate text-[13px] font-semibold text-gray-900 sm:text-sm">{form.title}</h3>
                     <span className={`ih-chip ih-chip-dot ${
                       published ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
                     }`}>
@@ -703,12 +722,12 @@ const FormManagement = () => {
                     <Copy className="w-3.5 h-3.5" />
                   </button>
                   {!published && (
-                    <button onClick={() => handlePublish(form._id)} title="Publish"
+                    <button onClick={() => setConfirmAction({ type: 'publish', formId: form._id })} title="Publish"
                       className="ih-icon-btn hover:bg-green-50 hover:text-green-600">
                       <Send className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  <button onClick={() => handleDelete(form._id)} title="Delete"
+                  <button onClick={() => setConfirmAction({ type: 'delete', formId: form._id })} title="Delete"
                     className="ih-icon-btn hover:bg-red-50 hover:text-red-600">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -722,8 +741,11 @@ const FormManagement = () => {
 
       {/* Clone Modal */}
       {showCloneModal && cloneSource && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowCloneModal(false)}
+        >
+          <div className="bg-white rounded-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Clone Form</h3>
             <p className="text-sm text-gray-500 mb-4">
               Clone "{cloneSource.title}" to a new quarter
@@ -746,18 +768,34 @@ const FormManagement = () => {
               </div>
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setShowCloneModal(false)}
-                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+              <button onClick={() => setShowCloneModal(false)} className="btn-ghost">
                 Cancel
               </button>
-              <button onClick={confirmClone}
-                className="px-4 py-2 text-sm text-white bg-black rounded-lg hover:bg-primary/90 transition-colors">
+              <button onClick={confirmClone} className="btn-secondary">
                 Clone Form
               </button>
             </div>
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={!!confirmAction}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={() => {
+          if (confirmAction?.type === 'delete') handleDelete(confirmAction.formId)
+          else if (confirmAction?.type === 'publish') handlePublish(confirmAction.formId)
+        }}
+        title={confirmAction?.type === 'delete' ? 'Delete Form' : 'Publish Form'}
+        message={
+          confirmAction?.type === 'delete'
+            ? 'Are you sure you want to delete this form? This action cannot be undone.'
+            : 'Publish this form? Once published, users can submit for this quarter.'
+        }
+        confirmText={confirmAction?.type === 'delete' ? 'Delete' : 'Publish'}
+        variant={confirmAction?.type === 'delete' ? 'danger' : 'info'}
+        isLoading={confirmLoading}
+      />
     </div>
   )
 }

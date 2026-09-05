@@ -101,13 +101,59 @@ router.get('/submissions', async (req, res) => {
     if (district) resolvedMatch.district = district;
     if (area) resolvedMatch.area = area;
     if (unit) resolvedMatch.unit = unit;
+    let searchRegex = null;
     if (search) {
-      const searchRegex = { $regex: escapeRegexSubmissions(search), $options: 'i' };
+      searchRegex = { $regex: escapeRegexSubmissions(search), $options: 'i' };
       resolvedMatch.$or = [{ ruknName: searchRegex }, { ruknId: searchRegex }];
     }
 
-    const pipeline = [
-      { $match: match }, // Q3 submissions are visible in admin list view
+    // The resolved-location filters can only be applied AFTER the lookups, and running
+    // the lookups over every submission is what made this route slow (~3s on 10k docs).
+    // These pre-filters run on the small users/unitadmins collections and cut the
+    // candidate set down before the lookups. Each is a deliberate SUPERSET of the
+    // resolved filter — a submission's resolved value comes from users, else
+    // unitadmins, else its own stored field, so covering all three sources cannot drop
+    // a match. The exact $match on resolvedMatch below still decides the final result.
+    const idsOf = (docs) => docs.map(d => d._id);
+    const prefilters = [];
+
+    for (const [field, value] of Object.entries({ district, area, unit })) {
+      if (!value) continue;
+      const [users, unitAdmins] = await Promise.all([
+        User.find({ [field]: value }).select('_id').lean(),
+        UnitAdmin.find({ [field]: value }).select('_id').lean()
+      ]);
+      prefilters.push({
+        $or: [
+          { userId: { $in: [...idsOf(users), ...idsOf(unitAdmins)] } },
+          { [field]: value }
+        ]
+      });
+    }
+
+    if (searchRegex) {
+      const [users, unitAdmins] = await Promise.all([
+        User.find({ $or: [{ name: searchRegex }, { username: searchRegex }, { ruknId: searchRegex }] })
+          .select('_id').lean(),
+        UnitAdmin.find({ $or: [{ name: searchRegex }, { ruknId: searchRegex }] })
+          .select('_id').lean()
+      ]);
+      prefilters.push({
+        $or: [
+          { ruknName: searchRegex },
+          { ruknId: searchRegex },
+          { userId: { $in: [...idsOf(users), ...idsOf(unitAdmins)] } }
+        ]
+      });
+    }
+
+    if (prefilters.length > 0) {
+      match.$and = [...(match.$and || []), ...prefilters];
+    }
+
+    // Resolve each submission's current location/name. Static stages — both paths
+    // below reuse them so the two share identical resolution semantics.
+    const resolutionStages = [
       // Minimal lookup for current rukn location (no deep population)
       {
         $lookup: {
@@ -213,41 +259,69 @@ router.get('/submissions', async (req, res) => {
             ]
           }
         }
-      },
-      // Filter on resolved (post-lookup) district/area/unit/name, matching the
-      // semantics the frontend used to apply client-side over the full dataset.
-      ...(Object.keys(resolvedMatch).length > 0 ? [{ $match: resolvedMatch }] : []),
-      { $sort: { createdAt: -1 } },
-      {
-        $facet: {
-          data: [
-            { $skip: (pageNum - 1) * limitNum },
-            { $limit: limitNum },
-            {
-              $project: {
-                _id: 0,
-                id: '$_id',
-                ruknName: 1,
-                ruknId: 1,
-                district: 1,
-                area: 1,
-                unit: 1,
-                location: 1,
-                submissionPeriod: 1,
-                periodDisplay: 1,
-                status: { $ifNull: ['$status', 'submitted'] },
-                submittedAt: '$createdAt'
-              }
-            }
-          ],
-          total: [{ $count: 'count' }]
-        }
       }
     ];
 
-    const [result] = await Submission.aggregate(pipeline);
-    const total = result?.total?.[0]?.count || 0;
-    const submissions = result?.data || [];
+    // Only the fields the list view renders — the full submission body (all form
+    // answers, ~1.3KB/doc) is fetched lazily by the details drawer instead.
+    const projectStage = {
+      $project: {
+        _id: 0,
+        id: '$_id',
+        ruknName: 1,
+        ruknId: 1,
+        district: 1,
+        area: 1,
+        unit: 1,
+        location: 1,
+        submissionPeriod: 1,
+        periodDisplay: 1,
+        status: { $ifNull: ['$status', 'submitted'] },
+        submittedAt: '$createdAt'
+      }
+    };
+
+    let submissions;
+    let total;
+
+    if (Object.keys(resolvedMatch).length === 0) {
+      // Fast path (the default list view): nothing filters on resolved values, so
+      // page first and resolve only the rows actually returned. Keeps the lookups at
+      // `limit` documents instead of the whole collection.
+      [submissions, total] = await Promise.all([
+        Submission.aggregate([
+          { $match: match }, // Q3 submissions are visible in admin list view
+          { $sort: { createdAt: -1 } },
+          { $skip: (pageNum - 1) * limitNum },
+          { $limit: limitNum },
+          ...resolutionStages,
+          projectStage
+        ]),
+        Submission.countDocuments(match)
+      ]);
+    } else {
+      // Filtered path: the resolved values are needed before the filter can be
+      // applied, so resolution runs first — but only over the candidates left by the
+      // pre-filters above, not the full collection.
+      const [result] = await Submission.aggregate([
+        { $match: match },
+        ...resolutionStages,
+        { $match: resolvedMatch },
+        { $sort: { createdAt: -1 } },
+        {
+          $facet: {
+            data: [
+              { $skip: (pageNum - 1) * limitNum },
+              { $limit: limitNum },
+              projectStage
+            ],
+            total: [{ $count: 'count' }]
+          }
+        }
+      ]);
+      total = result?.total?.[0]?.count || 0;
+      submissions = result?.data || [];
+    }
 
     res.json({
       success: true,

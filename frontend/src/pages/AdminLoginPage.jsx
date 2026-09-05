@@ -39,18 +39,18 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
       {/* Home Icon - Floating */}
       <button
         onClick={() => navigate('/')}
-        className="fixed top-6 right-6 z-50 text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
+        className="fixed top-3.5 right-3.5 z-50 inline-flex h-[44px] w-[44px] items-center justify-center text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
         aria-label="Back to Home"
       >
         <Home className="w-6 h-6" />
       </button>
 
       {/* Main Content */}
-      <main className="h-full overflow-hidden max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         {/* Logo and Heading Section */}
         <div className="text-center mb-16">
           <div className="flex justify-center mb-4">
@@ -76,8 +76,9 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
-                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-sm transition-all duration-200 bg-gray-50 hover:bg-white"
+                className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                 disabled={isLoading}
+                autoComplete="username"
                 required
               />
             </div>
@@ -93,13 +94,15 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
-                  className="w-full px-4 py-2.5 pr-12 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-sm transition-all duration-200 bg-gray-50 hover:bg-white"
+                  className="w-full px-4 py-2.5 pr-12 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                   disabled={isLoading}
+                  autoComplete="current-password"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   {showPassword ? (
@@ -121,7 +124,7 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="mx-auto max-w-xs bg-[#002349] hover:bg-[#1a3a5c] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 text-sm shadow-md hover:shadow-lg"
+                className="mx-auto max-w-xs bg-[#002349] hover:bg-[#1a3a5c] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold min-h-[44px] py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 text-sm shadow-md hover:shadow-lg"
               >
               {isLoading ? (
                 <>

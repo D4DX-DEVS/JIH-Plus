@@ -146,6 +146,7 @@ userSchema.index({ district: 1, area: 1, unit: 1 });
 userSchema.index({ ruknId: 1, district: 1, area: 1, unit: 1 }); // Composite index for login validation
 userSchema.index({ contactNo: 1 }, { sparse: true }); // Index for contact number queries
 userSchema.index({ emailId: 1 }, { sparse: true }); // Index for email queries
+userSchema.index({ isAbroad: 1 }); // Admin submission lists split abroad/domestic on every request
 
 // Hash password before saving (only for admin users)
 userSchema.pre('save', async function(next) {

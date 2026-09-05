@@ -1,9 +1,10 @@
 import React from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, user, loading } = useAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -17,7 +18,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/ihthisabi/login" replace />
+    return <Navigate to="/ihthisabi/login" replace state={{ from: location }} />
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {

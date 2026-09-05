@@ -19,7 +19,7 @@ const MobileTopBar = ({ title, actions = null }) => (
       ) : (
         <div className="flex-1" />
       )}
-      {actions && <div className="flex flex-shrink-0 items-center gap-1.5">{actions}</div>}
+      {actions && <div className="flex flex-shrink-0 items-center gap-2">{actions}</div>}
     </div>
   </header>
 );

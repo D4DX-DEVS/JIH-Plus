@@ -14,7 +14,7 @@ const HelpDeskPage = () => {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#002349] shadow-sm transition-colors duration-200 hover:bg-slate-50"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#002349] shadow-sm transition-colors duration-200 hover:bg-slate-50"
           >
             <ChevronLeft className="h-4 w-4" />
             <span>Back to Home</span>
@@ -30,7 +30,7 @@ const HelpDeskPage = () => {
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Support Contacts</h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                Use the contacts below for portal help, membership application support, and Ihthisabi reporting queries. Each contact includes direct call and message actions.
+                Use the contacts below for portal help, member application support, and Ihthisabi reporting queries. Each contact includes direct call and message actions.
               </p>
             </div>
             <div className="rounded-2xl border border-[#957C3D]/20 bg-[#957C3D]/10 px-5 py-4 text-sm text-[#6f5a2a]">

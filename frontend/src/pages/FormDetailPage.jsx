@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Calendar, User, Edit, Trash2, Download } from 'lucide-react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import { downloadSingleFormPDF } from '../utils/pdfGenerator.jsx';
 
@@ -11,6 +12,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
   const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadFormDetails();
@@ -41,18 +43,25 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
 
   const confirmDelete = async () => {
     try {
+      setIsDeleting(true);
       const token = isAdmin ? localStorage.getItem('adminToken') : localStorage.getItem('userToken');
       const endpoint = isAdmin ? `/api/admin/forms/${formId}` : `/api/user/forms/${formId}`;
-      
+
       await axios.delete(`${import.meta.env.VITE_API_URL}${endpoint}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
+      toast.success('Form deleted successfully');
+      setShowDeleteModal(false);
       onDelete();
     } catch (error) {
       console.error('Error deleting form:', error);
       setError('Failed to delete form');
+      toast.error('Failed to delete form');
+      setShowDeleteModal(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -72,7 +81,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-[60vh] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#002349] mx-auto mb-4"></div>
           <p className="text-gray-600 font-medium">ഫോം വിവരങ്ങൾ ലോഡ് ചെയ്യുന്നു...</p>
@@ -83,16 +92,24 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
 
   if (error) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-[60vh] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 max-w-md shadow-lg">
             <p className="text-red-600 mb-6 font-semibold">{error}</p>
-            <button
-              onClick={onBack}
-              className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out"
-            >
-              തിരികെ പോകുക
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                onClick={() => { setError(''); setIsLoading(true); loadFormDetails(); }}
+                className="min-h-[44px] bg-[#957C3D] hover:bg-[#8A6F35] text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out"
+              >
+                വീണ്ടും ശ്രമിക്കുക
+              </button>
+              <button
+                onClick={onBack}
+                className="min-h-[44px] bg-[#002349] hover:bg-[#1a3a5c] text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out"
+              >
+                തിരികെ പോകുക
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -101,7 +118,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
 
   if (!form) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-[60vh] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-8 max-w-md shadow-lg">
             <p className="text-yellow-700 mb-6 font-semibold">ഫോം കണ്ടെത്തിയില്ല</p>
@@ -217,17 +234,17 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
       <div className="mb-6">
         <h4 className="font-semibold text-[#002349] mb-4">വിദ്യാഭ്യാസ സ്ഥാപനങ്ങൾ</h4>
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="w-full min-w-full">
+          <table className="ih-table-compact w-full min-w-full">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-[#002349]">വിവരങ്ങൾ</th>
+                <th className="sticky left-0 z-10 bg-gray-50 border border-gray-200 px-4 py-3 text-left font-semibold text-[#002349]">വിവരങ്ങൾ</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-[#002349]">എണ്ണം</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-[#002349]">കുട്ടികളുടെ എണ്ണം</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-[#002349]" colSpan="2">Staff</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-[#002349]" colSpan="2">Non Teaching Staff</th>
               </tr>
               <tr className="bg-gray-100">
-                <th className="border border-gray-200 px-4 py-3 text-left font-medium text-gray-600"></th>
+                <th className="sticky left-0 z-10 bg-gray-100 border border-gray-200 px-4 py-3 text-left font-medium text-gray-600"></th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-medium text-gray-600"></th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-medium text-gray-600"></th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-medium text-gray-600">പ്രവർത്തകർ</th>
@@ -239,7 +256,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
             <tbody>
               {/* Madrasas */}
               <tr className="hover:bg-gray-50 transition-colors duration-300">
-                <td className="border border-gray-200 px-4 py-3 font-semibold text-gray-700">9. മദ്റസകളുടെ എണ്ണം</td>
+                <td className="sticky left-0 z-10 bg-white border border-gray-200 px-4 py-3 font-semibold text-gray-700">9. മദ്റസകളുടെ എണ്ണം</td>
                 <td className="border border-gray-200 px-4 py-3 text-center font-bold text-[#957C3D]">{form.partB?.institutions?.madrasas?.count || 0}</td>
                 <td className="border border-gray-200 px-4 py-3 text-center font-bold text-gray-700">{form.partB?.institutions?.madrasas?.studentsCount || 0}</td>
                 <td className="border border-gray-200 px-4 py-3 text-center font-bold text-gray-700">{form.partB?.institutions?.madrasas?.staffWorkers || 0}</td>
@@ -250,7 +267,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
               
               {/* Schools */}
               <tr>
-                <td className="border border-gray-300 px-4 py-3 font-medium">10. സ്കൂളുകൾ (വിദ്യാകൗൺസിൽ)</td>
+                <td className="sticky left-0 z-10 bg-white border border-gray-300 px-4 py-3 font-medium">10. സ്കൂളുകൾ (വിദ്യാകൗൺസിൽ)</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.schools?.count || 0}</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.schools?.studentsCount || 0}</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.schools?.staffWorkers || 0}</td>
@@ -261,7 +278,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
               
               {/* Heavens */}
               <tr>
-                <td className="border border-gray-300 px-4 py-3 font-medium">11. ഹെവൻസ്</td>
+                <td className="sticky left-0 z-10 bg-white border border-gray-300 px-4 py-3 font-medium">11. ഹെവൻസ്</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.heavens?.count || 0}</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.heavens?.studentsCount || 0}</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.heavens?.staffWorkers || 0}</td>
@@ -272,7 +289,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
               
               {/* Arabic Colleges */}
               <tr>
-                <td className="border border-gray-300 px-4 py-3 font-medium">12. അറബി കോളേജുകൾ</td>
+                <td className="sticky left-0 z-10 bg-white border border-gray-300 px-4 py-3 font-medium">12. അറബി കോളേജുകൾ</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.arabicColleges?.count || 0}</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.arabicColleges?.studentsCount || 0}</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.arabicColleges?.staffWorkers || 0}</td>
@@ -283,7 +300,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
               
               {/* Arts Colleges */}
               <tr>
-                <td className="border border-gray-300 px-4 py-3 font-medium">13. ആർട്സ് കോളേജുകൾ</td>
+                <td className="sticky left-0 z-10 bg-white border border-gray-300 px-4 py-3 font-medium">13. ആർട്സ് കോളേജുകൾ</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.artsColleges?.count || 0}</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.artsColleges?.studentsCount || 0}</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.artsColleges?.staffWorkers || 0}</td>
@@ -294,7 +311,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
               
               {/* Main Campuses */}
               <tr>
-                <td className="border border-gray-300 px-4 py-3 font-medium">14. പ്രധാന കാമ്പസുകൾ (SIO, GIO സാന്നിധ്യമുള്ളത്)</td>
+                <td className="sticky left-0 z-10 bg-white border border-gray-300 px-4 py-3 font-medium">14. പ്രധാന കാമ്പസുകൾ (SIO, GIO സാന്നിധ്യമുള്ളത്)</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.mainCampuses?.count || 0}</td>
                 <td className="border border-gray-300 px-4 py-3 text-center">{form.partB?.institutions?.mainCampuses?.studentsCount || 0}</td>
                 <td className="border border-gray-300 px-4 py-3 text-center bg-gray-100">-</td>
@@ -634,10 +651,6 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
               <span className="text-gray-600">മലർവാടി:</span>
               <span className="font-medium">{form.partE?.componentsToFormIn6Months?.malarvadi || 0}</span>
             </div>
-            <div className="flex justify-between">
-                              <span className="text-gray-600">മലർവാടി:</span>
-                              <span className="font-medium">{form.partE?.componentsToFormIn6Months?.malarvadi || 0}</span>
-            </div>
           </div>
         </div>
       </div>
@@ -647,16 +660,16 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
   return (
     <>
       {/* Page Header with Action Buttons */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">ഫോം വിവരങ്ങൾ</h1>
+          <h1 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">ഫോം വിവരങ്ങൾ</h1>
           <p className="text-lg text-gray-600 font-normal mt-1">District: <span className="font-bold">{form.district}</span></p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleDownloadPDF}
             disabled={isDownloading}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 min-h-[44px] rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
           >
             <Download className="w-4 h-4" />
             <span>{isDownloading ? 'ഡൗൺലോഡ് ചെയ്യുന്നു...' : 'PDF ഡൗൺലോഡ്'}</span>
@@ -664,7 +677,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
           {!isAdmin && (
             <button
               onClick={() => onEdit(form)}
-              className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-4 py-2 rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
+              className="bg-[#002349] hover:bg-[#1a3a5c] text-white px-4 py-2 min-h-[44px] rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
             >
               <Edit className="w-4 h-4" />
               <span>Edit</span>
@@ -672,7 +685,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
           )}
           <button
             onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 min-h-[44px] rounded-xl font-semibold flex items-center space-x-2 transition-all duration-300 text-sm"
           >
             <Trash2 className="w-4 h-4" />
             <span>Delete</span>
@@ -692,14 +705,14 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
                 <span className="text-lg text-gray-600 font-medium">District:</span>
                 <h2 className="text-xl font-bold text-[#002349]">{form.district}</h2>
               </div>
-              <div className="flex items-center space-x-4 text-sm text-gray-600 font-medium mt-2">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 font-medium mt-2">
                 <div className="flex items-center space-x-1">
                   <Calendar className="w-4 h-4" />
                   <span>സമർപ്പിച്ചത് {new Date(form.submittedAt).toLocaleDateString()}</span>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <User className="w-4 h-4" />
-                  <span>ആക്സസ് കോഡ്: {form.submittedBy}</span>
+                <div className="flex items-center space-x-1 min-w-0">
+                  <User className="w-4 h-4 flex-shrink-0" />
+                  <span className="break-words">ആക്സസ് കോഡ്: {form.submittedBy}</span>
                 </div>
               </div>
             </div>
@@ -724,6 +737,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
         confirmText="Delete"
         cancelText="Cancel"
         type="danger"
+        loading={isDeleting}
       />
     </>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Download, Edit, Trash2, FileText, Calendar, User } from 'lucide-react';
 import { downloadMonthlyDetailPDF } from '../utils/monthlyPdfGenerator.jsx';
 import axios from 'axios';
@@ -11,12 +11,29 @@ import MobileTopBar from '../components/sidebars/MobileTopBar';
 const AreaMonthlyDetailPage = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const survey = state?.survey || null;
+  const { id } = useParams();
+  // Opened from the list we already have the record; on a refresh / direct link
+  // we only have the id, so fetch it instead of dead-ending.
+  const [survey, setSurvey] = useState(state?.survey || null);
+  const [surveyLoading, setSurveyLoading] = useState(!state?.survey && Boolean(id));
   const [adminData, setAdminData] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [totalForms, setTotalForms] = useState(0);
   const [totalSurveys, setTotalSurveys] = useState(0);
+
+  useEffect(() => {
+    if (survey || !id) return;
+    let cancelled = false;
+    const token = localStorage.getItem('adminToken');
+    axios.get(`${import.meta.env.VITE_API_URL}/api/admin/monthly-surveys/area/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then((res) => { if (!cancelled) setSurvey(res.data?.survey || null); })
+      .catch((error) => console.error('Error loading monthly survey:', error))
+      .finally(() => { if (!cancelled) setSurveyLoading(false); });
+    return () => { cancelled = true; };
+  }, [id, survey]);
 
   useEffect(() => {
     const storedAdminData = localStorage.getItem('adminData');
@@ -67,36 +84,7 @@ const AreaMonthlyDetailPage = () => {
     navigate('/notifications');
   };
 
-  const handleNavigateToMembership = () => {
-    navigate('/membership', { state: { roleHint: 'admin' } });
-  };
 
-  const handleDownloadCSV = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/user/users/export-csv`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          responseType: 'blob'
-        }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('CSV download error:', error);
-      alert('Failed to download CSV. Please try again.');
-    }
-  };
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -116,9 +104,7 @@ const AreaMonthlyDetailPage = () => {
           activeTab="monthly"
           onTabChange={handleSidebarNavigate}
           onNavigateToReports={handleNavigateToReports}
-          onDownloadCSV={handleDownloadCSV}
           onNavigateToNotifications={handleNavigateToNotifications}
-          onNavigateToMembership={handleNavigateToMembership}
           onLogout={handleLogout}
           adminEmail={adminData?.email || 'Admin'}
           totalForms={totalForms}
@@ -127,10 +113,13 @@ const AreaMonthlyDetailPage = () => {
           onMobileToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
         <div className="flex-1 relative z-10 box-border flex flex-col min-w-0 overflow-hidden">
+          <MobileTopBar
+            title="പ്രതിമാസ റിപ്പോർട്ട്"
+          />
           <div className="flex-1 bg-white flex items-center justify-center">
             <div className="text-center">
               <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-8 max-w-md shadow-lg animate-fade-in">
-                <p className="text-yellow-700 mb-6 font-semibold">No report data passed. Go back and open from admin dashboard.</p>
+                <p className="text-yellow-700 mb-6 font-semibold">{surveyLoading ? 'റിപ്പോർട്ട് ലോഡ് ചെയ്യുന്നു…' : 'ഈ റിപ്പോർട്ട് കണ്ടെത്താനായില്ല. ഡാഷ്ബോർഡിലേക്ക് മടങ്ങുക.'}</p>
                 <button 
                   onClick={handleBack} 
                   className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#002349] text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 hover:scale-105 ease-out hover:shadow-[#002349]/50"
@@ -160,9 +149,7 @@ const AreaMonthlyDetailPage = () => {
         activeTab="monthly"
         onTabChange={handleSidebarNavigate}
         onNavigateToReports={handleNavigateToReports}
-        onDownloadCSV={handleDownloadCSV}
         onNavigateToNotifications={handleNavigateToNotifications}
-        onNavigateToMembership={handleNavigateToMembership}
         onLogout={handleLogout}
         adminEmail={adminData?.email || 'Admin'}
         totalForms={totalForms}

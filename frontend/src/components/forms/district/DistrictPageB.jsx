@@ -8,6 +8,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
   const { formData, updateFormData, prevStep, validateCurrentStep } = useDistrictForm();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field, value, wing = null) => {
     if (wing) {
@@ -99,7 +100,8 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
   const handleSubmit = async () => {
     setError('');
     setSuccess('');
-    
+    setIsSubmitting(true);
+
     try {
       // Validate required fields before submitting
       if (!formData.district) {
@@ -194,6 +196,8 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
     } catch (error) {
       console.error('Error submitting report:', error);
       setError('Error submitting report. Please try again. Error: ' + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -238,9 +242,9 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
   ];
 
   return (
-    <div className="p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
-      {/* Header */}
-      <div className="mb-8">
+    <div className="p-4 sm:p-8 bg-white rounded-2xl shadow-lg border border-gray-200">
+      {/* Header: hidden on mobile, the page header / MobileTopBar already names this screen there. */}
+      <div className="hidden lg:block mb-8">
         <h2 className="text-2xl font-bold text-[#002349] mb-2">
           ജില്ലാ തലം റിപ്പോർട്ട് - PART B
         </h2>
@@ -263,6 +267,8 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
             </label>
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={formData.partD.invitations.male || ''}
               onChange={(e) => {
                 const cleaned = validateNumericInput(e.target.value);
@@ -270,7 +276,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
               }}
               onKeyDown={handleNumericKeyDown}
               onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('male', value))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-lg transition-all duration-300 hover:border-[#002349]/50"
+              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-lg transition-all duration-300 hover:border-[#002349]/50"
               placeholder="എണ്ണം നൽകുക"
             />
           </div>
@@ -281,6 +287,8 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
             </label>
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={formData.partD.invitations.female || ''}
               onChange={(e) => {
                 const cleaned = validateNumericInput(e.target.value);
@@ -288,7 +296,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
               }}
               onKeyDown={handleNumericKeyDown}
               onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('female', value))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-lg transition-all duration-300 hover:border-[#002349]/50"
+              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-lg transition-all duration-300 hover:border-[#002349]/50"
               placeholder="എണ്ണം നൽകുക"
             />
           </div>
@@ -325,13 +333,15 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
           {formData.partD.categories[category.key]?.male && (
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={
                 formData.partD.categoriesCounts?.[category.key]?.male || ""
               }
               onChange={(e) =>
                 handleCountChange(category.key, "male", e.target.value)
               }
-              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="എണ്ണം"
               min="0"
             />
@@ -357,13 +367,15 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
           {formData.partD.categories[category.key]?.female && (
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={
                 formData.partD.categoriesCounts?.[category.key]?.female || ""
               }
               onChange={(e) =>
                 handleCountChange(category.key, "female", e.target.value)
               }
-              className="w-full px-3 py-2 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="എണ്ണം"
               min="0"
             />
@@ -383,10 +395,10 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
         </h3>
         
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="w-full border-collapse">
+          <table className="ih-table-compact w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
+                <th className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">പുതിയ ഘടകങ്ങൾ എണ്ണം</th>
                 <th className="border border-gray-200 px-4 py-3 text-center font-semibold text-gray-700">പുതുതായി വന്നവർ</th>
               </tr>
@@ -394,13 +406,13 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
             <tbody>
               {wings.map((wing) => (
                 <tr key={wing.key} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
+                  <td className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 font-semibold text-[#002349]">{wing.label}</td>
                   <td className="border border-gray-200 px-4 py-3">
                     <input
                       type="text"
                       value={formData.partE.wingGrowth[wing.key].newComponents || ''}
                       onChange={(e) => handleInputChange('newComponents', e.target.value, wing.key)}
-                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
+                      className="w-full px-2 py-1 border border-gray-300 rounded-xl text-center text-[16px] sm:text-base focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300"
                       placeholder="0"
                     />
                   </td>
@@ -410,7 +422,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
                       value={formData.partE.wingGrowth[wing.key].newMembers || ''}
                       onChange={(e) => handleInputChange('newMembers', e.target.value, wing.key)}
                       disabled={wing.key === 'teenIndia' || wing.key === 'malarvadi'}
-                      className={`w-full px-2 py-1 border border-gray-300 rounded-xl text-center focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 ${
+                      className={`w-full px-2 py-1 border border-gray-300 rounded-xl text-center text-[16px] sm:text-base focus:ring-2 focus:ring-[#002349] focus:border-transparent transition-all duration-300 ${
                         wing.key === 'teenIndia' || wing.key === 'malarvadi' ? 'bg-gray-100 cursor-not-allowed' : ''
                       }`}
                       placeholder="0"
@@ -451,11 +463,20 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
         
         <button
           onClick={handleSubmit}
-          disabled={!formData.district || !formData.month||!validateInvitations()}
+          disabled={!formData.district || !formData.month||!validateInvitations()||isSubmitting}
           className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-400 text-white px-8 py-3 rounded-2xl font-semibold flex items-center space-x-2 transition-all duration-500 hover:shadow-lg transform hover:scale-105 ease-out hover:shadow-green-500/50 disabled:transform-none"
         >
-          <Check className="w-5 h-5" />
-          <span>{isEditing ? 'അപ്ഡേറ്റ് ചെയ്യുക' : 'സബ്മിറ്റ് ചെയ്യുക'}</span>
+          {isSubmitting ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <span>സമർപ്പിക്കുന്നു...</span>
+            </>
+          ) : (
+            <>
+              <Check className="w-5 h-5" />
+              <span>{isEditing ? 'അപ്ഡേറ്റ് ചെയ്യുക' : 'സബ്മിറ്റ് ചെയ്യുക'}</span>
+            </>
+          )}
         </button>
       </div>
     </div>

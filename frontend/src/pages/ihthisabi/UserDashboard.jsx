@@ -24,7 +24,6 @@ import { Q3_DISABLED, isQ3Disabled } from '../../utils/ihthisabi/quarterHelper'
 const UserDashboard = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const [stats, setStats] = useState(null)
   const [submissions, setSubmissions] = useState([])
   const [submissionsPagination, setSubmissionsPagination] = useState({ current: 1, pages: 1, total: 0 })
   const [loading, setLoading] = useState(true)
@@ -39,7 +38,6 @@ const UserDashboard = () => {
       }
       
       const timer = setTimeout(() => {
-        fetchStats()
         fetchSubmissions()
         fetchAlternativeSubmissions()
       }, 100)
@@ -49,21 +47,6 @@ const UserDashboard = () => {
       navigate('/ihthisabi/login')
     }
   }, [isAuthenticated, authLoading, user])
-
-  const fetchStats = async () => {
-    try {
-      const response = await api.get('/submissions/stats/my-stats')
-      setStats(response.data.data)
-    } catch (error) {
-      console.error('Failed to fetch stats:', error)
-      
-      if (error.response?.status === 404 || error.response?.data?.message?.includes('No submissions')) {
-        setStats(null)
-      } else {
-        toast.error('Failed to load dashboard data')
-      }
-    }
-  }
 
   const fetchSubmissions = async (page = 1) => {
     try {
@@ -353,7 +336,7 @@ const UserDashboard = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">
@@ -366,7 +349,7 @@ const UserDashboard = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Please log in to access your dashboard.</p>
           <button 
@@ -381,22 +364,27 @@ const UserDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <div className="ih-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <div className="ih-page-shell">
         {/* Welcome Header with CTA */}
         <div className="ih-page-header">
           <div className="min-w-0 flex-1">
-            <h1 className="ih-page-title brand-font truncate">
+            {/* App bar already greets the user on mobile — keep the big welcome for lg+ only */}
+            <h1 className="ih-page-title brand-font hidden truncate lg:block">
               Welcome back, {user?.name || user?.username}
             </h1>
             <p className="ih-page-subtitle truncate">
-              {user?.unit && user.unit !== '-' ? `${user.unit} · ` : ''}
+              {/* Unit already shows in the mobile app bar context line */}
+              <span className="hidden lg:inline">
+                {user?.unit && user.unit !== '-' ? `${user.unit} · ` : ''}
+              </span>
               RUKN ID <span className="font-semibold text-gray-900">{user?.ruknId || 'N/A'}</span>
             </p>
           </div>
+          {/* Mobile relies on the contextual Submit Now CTA in the quarter status card */}
           <button
             onClick={() => navigate('/ihthisabi/submit')}
-            className="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#161F2F] px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-md transition-all duration-200 hover:bg-[#1a2538] sm:px-5 sm:py-2 sm:text-sm"
+            className="hidden shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#161F2F] px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-md transition-all duration-200 hover:bg-[#1a2538] sm:px-5 sm:py-2 sm:text-sm lg:inline-flex"
           >
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Submit Form
@@ -489,7 +477,7 @@ const UserDashboard = () => {
                     {isSubmitted ? (
                             <button
                         onClick={() => navigate(isAlt ? `/ihthisabi/alternative-submissions/${currentSubmission._id}` : `/ihthisabi/submissions/${currentSubmission._id}`)}
-                        className="inline-flex items-center px-4 py-2 bg-[#161F2F] hover:bg-[#1a2538] text-white text-sm font-semibold rounded-lg transition-all duration-200"
+                        className="inline-flex w-full min-h-[44px] items-center justify-center px-4 py-2 bg-[#161F2F] hover:bg-[#1a2538] text-white text-sm font-semibold rounded-lg transition-all duration-200 sm:w-auto lg:min-h-0"
                             >
                               <Eye className="w-4 h-4 mr-2" />
                         View Details
@@ -497,7 +485,7 @@ const UserDashboard = () => {
                     ) : (
                       <button
                         onClick={() => navigate('/ihthisabi/submit')}
-                        className="inline-flex items-center px-4 py-2 bg-[#161F2F] hover:bg-[#1a2538] text-white text-sm font-semibold rounded-lg transition-all duration-200"
+                        className="inline-flex w-full min-h-[44px] items-center justify-center px-4 py-2 bg-[#161F2F] hover:bg-[#1a2538] text-white text-sm font-semibold rounded-lg transition-all duration-200 sm:w-auto lg:min-h-0"
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         Submit Now
@@ -546,9 +534,10 @@ const UserDashboard = () => {
                     </p>
                   </div>
                 </div>
+                {/* Mobile already has the Submit Now CTA in the quarter status card above */}
                 <button
                   onClick={() => navigate('/ihthisabi/submit')}
-                  className="inline-flex items-center px-6 py-3 bg-[#161F2F] hover:bg-[#1a2538] text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
+                  className="hidden lg:inline-flex items-center px-6 py-3 bg-[#161F2F] hover:bg-[#1a2538] text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Submit Your First Quarterly Report
@@ -579,26 +568,26 @@ const UserDashboard = () => {
                       <span className={`px-3 py-1.5 text-xs font-semibold rounded-lg border ${getStatusColor(submission.status)}`}>
                         {submission.status}
                       </span>
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => navigate(`/ihthisabi/submissions/${submission._id}`)}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                          className="flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 lg:min-h-0 lg:min-w-0"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        
+
                         <button
                           onClick={() => navigate(`/ihthisabi/submit?edit=${submission._id}`)}
-                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200"
+                          className="flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 lg:min-h-0 lg:min-w-0"
                           title="Edit Submission"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-                        
+
                         <button
                           onClick={(e) => handleDeleteSubmission(submission._id, e)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                          className="flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 lg:min-h-0 lg:min-w-0"
                           title="Delete Submission"
                         >
                           <Trash2 className="w-4 h-4" />

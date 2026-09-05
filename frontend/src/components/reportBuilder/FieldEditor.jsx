@@ -10,7 +10,13 @@ import { FIELD_WIDTHS, fieldWidth } from '../../utils/fieldWidth';
 
 const TYPES_WITH_OPTIONS = ['select', 'dropdown', 'radio', 'checkbox', 'multiselect'];
 
-export default function FieldEditor({ field, allFields, onChange, onRemove, onCopy, onDuplicate, pageIndex, fieldIndex, isCopied }) {
+export default function FieldEditor({
+  field, allFields, onChange, onRemove, onCopy, onDuplicate, pageIndex, fieldIndex, isCopied,
+  // Optional. When a section passes its role list (the members application does),
+  // the basic tab gains an Audience control so a field can be scoped to one role
+  // instead of the applicant. Sections that omit it are unaffected.
+  roleOptions = null,
+}) {
   const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState('basic');
 
@@ -36,7 +42,7 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, onCo
         isDragging ? 'border-blue-400 shadow-lg' : isCopied ? 'border-blue-300 ring-1 ring-blue-200' : 'border-gray-200'
       }`}
     >
-      <div className="flex items-center gap-2 px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 px-3 py-2">
         <button
           type="button"
           {...attributes}
@@ -45,7 +51,7 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, onCo
         >
           <GripVertical size={16} />
         </button>
-        <span className="text-xs font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+        <span className="text-xs font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
           #{field.id} {field.type}
         </span>
         <div className="flex-1 min-w-0">
@@ -54,7 +60,7 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, onCo
             value={field.label || ''}
             onChange={e => update('label', e.target.value)}
             placeholder={isLayout ? (field.type === 'title' ? 'Section title...' : 'HTML content...') : 'Field label...'}
-            className="w-full text-sm border-0 bg-transparent outline-none text-gray-700 placeholder-gray-300"
+            className="w-full text-base sm:text-sm border-0 bg-transparent outline-none text-gray-700 placeholder-gray-300"
           />
         </div>
         {!isLayout && (
@@ -62,7 +68,7 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, onCo
             value={fieldWidth(field)}
             onChange={e => update('width', e.target.value)}
             title="How many fields share this line. Give each field on the line the same setting."
-            className="flex-shrink-0 text-xs text-gray-500 border border-gray-200 rounded px-1 py-0.5 bg-white outline-none focus:ring-1 focus:ring-blue-400"
+            className="flex-shrink-0 min-h-[44px] sm:min-h-0 text-sm sm:text-xs text-gray-500 border border-gray-200 rounded px-1.5 sm:px-1 py-0.5 bg-white outline-none focus:ring-1 focus:ring-blue-400"
           >
             {FIELD_WIDTHS.map(w => (
               <option key={w.value} value={w.value}>{w.perLine}/line</option>
@@ -80,42 +86,44 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, onCo
             Req
           </label>
         )}
-        {onCopy && (
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {onCopy && (
+            <button
+              type="button"
+              onClick={onCopy}
+              title={isCopied ? 'Copied — paste it on any page' : 'Copy field (paste on any page)'}
+              className={`p-2 -m-1 transition-colors ${isCopied ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'}`}
+            >
+              {isCopied ? <Check size={15} /> : <Copy size={15} />}
+            </button>
+          )}
+          {onDuplicate && (
+            <button
+              type="button"
+              onClick={onDuplicate}
+              title="Duplicate below"
+              className="p-2 -m-1 text-gray-400 hover:text-blue-600"
+            >
+              <CopyPlus size={15} />
+            </button>
+          )}
           <button
             type="button"
-            onClick={onCopy}
-            title={isCopied ? 'Copied — paste it on any page' : 'Copy field (paste on any page)'}
-            className={`flex-shrink-0 transition-colors ${isCopied ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'}`}
+            onClick={() => setExpanded(v => !v)}
+            title="Field settings"
+            className="p-2 -m-1 text-gray-400 hover:text-gray-600"
           >
-            {isCopied ? <Check size={15} /> : <Copy size={15} />}
+            <Settings size={15} />
           </button>
-        )}
-        {onDuplicate && (
           <button
             type="button"
-            onClick={onDuplicate}
-            title="Duplicate below"
-            className="text-gray-400 hover:text-blue-600 flex-shrink-0"
+            onClick={onRemove}
+            title="Delete field"
+            className="p-2 -m-1 text-red-300 hover:text-red-500"
           >
-            <CopyPlus size={15} />
+            <Trash2 size={15} />
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setExpanded(v => !v)}
-          title="Field settings"
-          className="text-gray-400 hover:text-gray-600 flex-shrink-0"
-        >
-          <Settings size={15} />
-        </button>
-        <button
-          type="button"
-          onClick={onRemove}
-          title="Delete field"
-          className="text-red-300 hover:text-red-500 flex-shrink-0"
-        >
-          <Trash2 size={15} />
-        </button>
+        </div>
       </div>
 
       {expanded && (
@@ -126,7 +134,7 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, onCo
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`capitalize px-2 py-1 rounded ${tab === t ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`capitalize px-2.5 py-1.5 rounded ${tab === t ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 {t}
               </button>
@@ -135,6 +143,32 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, onCo
 
           {tab === 'basic' && (
             <div className="space-y-2">
+              {roleOptions && (
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Audience</label>
+                  <select
+                    value={field.audience === 'role' ? (field.audienceRole || '') : ''}
+                    onChange={e => {
+                      const roleKey = e.target.value;
+                      onChange({
+                        ...field,
+                        audience: roleKey ? 'role' : 'applicant',
+                        audienceRole: roleKey,
+                      });
+                    }}
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-400"
+                  >
+                    <option value="">Applicant (visible on the public form)</option>
+                    {roleOptions.map(r => (
+                      <option key={r.key} value={r.key}>{r.name} only</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Role fields are stripped from the applicant&apos;s form and can only be
+                    filled by that role during verification.
+                  </p>
+                </div>
+              )}
               {!isLayout && (
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Placeholder</label>
@@ -142,7 +176,7 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, onCo
                     type="text"
                     value={field.placeholder || ''}
                     onChange={e => update('placeholder', e.target.value)}
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-400"
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
                   />
                 </div>
               )}
@@ -152,7 +186,7 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, onCo
                   type="text"
                   value={field.helpText || ''}
                   onChange={e => update('helpText', e.target.value)}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
                 />
               </div>
               {field.type === 'html' && (
@@ -162,7 +196,7 @@ export default function FieldEditor({ field, allFields, onChange, onRemove, onCo
                     value={field.label || ''}
                     onChange={e => update('label', e.target.value)}
                     rows={4}
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm font-mono outline-none focus:ring-1 focus:ring-blue-400"
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm font-mono outline-none focus:ring-1 focus:ring-blue-400"
                   />
                 </div>
               )}

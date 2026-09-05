@@ -270,7 +270,7 @@ export default function RowColumnEditor({ field, onChange }) {
             value={field.sumRowLabel ?? 'Total'}
             onChange={e => onChange({ ...field, sumRowLabel: e.target.value })}
             placeholder="Row label (e.g. Total)"
-            className="ml-6 w-40 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-blue-400"
+            className="ml-6 w-40 border border-gray-300 rounded px-2 py-1 text-base sm:text-xs outline-none focus:ring-1 focus:ring-blue-400"
           />
         )}
 
@@ -290,7 +290,7 @@ export default function RowColumnEditor({ field, onChange }) {
             value={field.sumColumnLabel ?? 'Total'}
             onChange={e => onChange({ ...field, sumColumnLabel: e.target.value })}
             placeholder="Column label (e.g. Total)"
-            className="ml-6 w-40 border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-blue-400"
+            className="ml-6 w-40 border border-gray-300 rounded px-2 py-1 text-base sm:text-xs outline-none focus:ring-1 focus:ring-blue-400"
           />
         )}
       </div>

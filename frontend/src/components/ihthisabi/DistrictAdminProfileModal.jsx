@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { api } from '../../utils/ihthisabi/api'
 import { X, User, Phone, Mail, MapPin, Calendar, CheckCircle2, XCircle, Loader2, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import ConfirmationModal from './ConfirmationModal'
 
 const emptyForm = { ruknId: '', name: '', district: '', contactNo: '', emailId: '', password: '', isActive: true }
 
@@ -12,6 +13,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(isCreate)
   const [form, setForm] = useState(emptyForm)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return
@@ -97,7 +99,6 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
   }
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete district admin "${districtAdmin?.name}"? This cannot be undone.`)) return
     setSaving(true)
     try {
       await api.delete(`ihthisabi/admin/district-admins/${districtAdminId}`)
@@ -109,6 +110,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
       toast.error('Failed to delete district admin')
     } finally {
       setSaving(false)
+      setConfirmDelete(false)
     }
   }
 
@@ -121,7 +123,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
           <h2 className="text-base font-bold text-gray-900">
             {isCreate ? 'Add District Admin' : editing ? 'Edit District Admin' : 'District Admin Profile'}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-2 -m-2 rounded-full">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -140,7 +142,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
                   type="text"
                   value={form.ruknId}
                   onChange={(e) => setForm((f) => ({ ...f, ruknId: e.target.value }))}
-                  className="form-input"
+                  className="form-input text-base sm:text-sm"
                   placeholder="e.g. 109518"
                 />
               </div>
@@ -150,7 +152,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="form-input"
+                  className="form-input text-base sm:text-sm"
                 />
               </div>
               <div>
@@ -159,7 +161,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
                   type="text"
                   value={form.district}
                   onChange={(e) => setForm((f) => ({ ...f, district: e.target.value }))}
-                  className="form-input"
+                  className="form-input text-base sm:text-sm"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -169,7 +171,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
                     type="text"
                     value={form.contactNo}
                     onChange={(e) => setForm((f) => ({ ...f, contactNo: e.target.value }))}
-                    className="form-input"
+                    className="form-input text-base sm:text-sm"
                   />
                 </div>
                 <div>
@@ -178,7 +180,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
                     type="email"
                     value={form.emailId}
                     onChange={(e) => setForm((f) => ({ ...f, emailId: e.target.value }))}
-                    className="form-input"
+                    className="form-input text-base sm:text-sm"
                   />
                 </div>
               </div>
@@ -190,7 +192,7 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
                   type="password"
                   value={form.password}
                   onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                  className="form-input"
+                  className="form-input text-base sm:text-sm"
                   placeholder="Min 6 characters"
                 />
               </div>
@@ -286,19 +288,19 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
           )}
         </div>
 
-        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-4 py-3 flex items-center justify-between gap-2">
+        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-4 py-3 flex flex-wrap items-center justify-between gap-2">
           {!isCreate && !editing && (
-            <button onClick={handleDelete} disabled={saving} className="inline-flex items-center gap-1.5 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium disabled:opacity-50">
+            <button onClick={() => setConfirmDelete(true)} disabled={saving} className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium disabled:opacity-50">
               <Trash2 className="w-4 h-4" /> Delete
             </button>
           )}
           <div className="flex items-center gap-2 ml-auto">
             {!isCreate && !editing && (
               <>
-                <button onClick={handleToggleActive} disabled={saving} className="btn-ghost text-sm disabled:opacity-50">
+                <button onClick={handleToggleActive} disabled={saving} className="btn-ghost text-sm py-2.5 disabled:opacity-50">
                   {districtAdmin?.isActive ? 'Deactivate' : 'Activate'}
                 </button>
-                <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium">
+                <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 px-3 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium">
                   <Pencil className="w-4 h-4" /> Edit
                 </button>
               </>
@@ -306,23 +308,34 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
             {editing && (
               <>
                 {!isCreate && (
-                  <button onClick={() => setEditing(false)} className="btn-ghost text-sm" disabled={saving}>
+                  <button onClick={() => setEditing(false)} className="btn-ghost text-sm py-2.5" disabled={saving}>
                     Cancel
                   </button>
                 )}
-                <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium disabled:opacity-50">
+                <button onClick={handleSave} disabled={saving} className="px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium disabled:opacity-50">
                   {saving ? 'Saving...' : 'Save'}
                 </button>
               </>
             )}
             {!editing && (
-              <button onClick={onClose} className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+              <button onClick={onClose} className="min-h-[44px] sm:min-h-0 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
                 Close
               </button>
             )}
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title="Delete District Admin"
+        message={`Delete district admin "${districtAdmin?.name}"? This cannot be undone.`}
+        confirmText="Delete"
+        variant="danger"
+        isLoading={saving}
+      />
     </div>
   )
 }

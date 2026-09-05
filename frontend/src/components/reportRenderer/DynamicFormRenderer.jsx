@@ -122,9 +122,9 @@ export default function DynamicFormRenderer({
       {/* Page progress indicator */}
       {pages.length > 1 && (
         <div className="mb-4">
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-            <span>Page {currentPage + 1} of {pages.length}</span>
-            {page.title && <span className="font-medium text-gray-700">{page.title}</span>}
+          <div className="flex items-center justify-between gap-2 text-xs text-gray-500 mb-1">
+            <span className="shrink-0">Page {currentPage + 1} of {pages.length}</span>
+            {page.title && <span className="min-w-0 truncate font-medium text-gray-700">{page.title}</span>}
           </div>
           <div className="w-full bg-gray-200 rounded-full h-1.5">
             <div
@@ -212,14 +212,14 @@ export default function DynamicFormRenderer({
 
       {/* Navigation — Save Draft / Previous / Next stay on one row, on phones
           too, so the footer never costs a whole extra screen of height. */}
-      <div className="flex flex-row items-center justify-between gap-2 sm:gap-3 mt-6 pt-4 border-t border-gray-100">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:flex-nowrap sm:gap-3 mt-6 pt-4 border-t border-gray-100">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           {!disabled && onSaveDraft && (
             <button
               type="button"
               onClick={handleDraft}
               disabled={submitting}
-              className="flex items-center gap-1 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
+              className="flex items-center gap-1 px-3 sm:px-4 py-2 min-h-[44px] sm:min-h-0 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
             >
               <Save size={16} /> <span className="hidden sm:inline">Save </span>Draft
             </button>
@@ -229,19 +229,19 @@ export default function DynamicFormRenderer({
               type="button"
               onClick={onCancelEdit}
               disabled={submitting}
-              className="flex items-center gap-1 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
+              className="flex items-center gap-1 px-3 sm:px-4 py-2 min-h-[44px] sm:min-h-0 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
             >
               Cancel
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           {currentPage > 0 && (
             <button
               type="button"
               onClick={goPrev}
               disabled={submitting}
-              className="flex items-center gap-1 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
+              className="flex items-center gap-1 px-3 sm:px-4 py-2 min-h-[44px] sm:min-h-0 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
             >
               <ChevronLeft size={16} /> Prev
             </button>
@@ -251,7 +251,7 @@ export default function DynamicFormRenderer({
               type="button"
               onClick={handleSubmit}
               disabled={submitting}
-              className="flex items-center gap-1.5 px-3 sm:px-5 py-2 bg-green-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-green-700 disabled:opacity-60 whitespace-nowrap"
+              className="flex items-center gap-1.5 px-3 sm:px-5 py-2 min-h-[44px] sm:min-h-0 bg-green-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-green-700 disabled:opacity-60 whitespace-nowrap"
             >
               {submitting ? (
                 <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
@@ -267,7 +267,7 @@ export default function DynamicFormRenderer({
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="flex items-center gap-1.5 px-3 sm:px-5 py-2 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 disabled:opacity-60 whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3 sm:px-5 py-2 min-h-[44px] sm:min-h-0 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 disabled:opacity-60 whitespace-nowrap"
               >
                 {submitting ? (
                   <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
@@ -282,7 +282,7 @@ export default function DynamicFormRenderer({
               type="button"
               onClick={goNext}
               disabled={submitting}
-              className="flex items-center gap-1 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg text-xs sm:text-sm hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+              className="flex items-center gap-1 px-3 sm:px-4 py-2 min-h-[44px] sm:min-h-0 bg-blue-600 text-white rounded-lg text-xs sm:text-sm hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
             >
               Next <ChevronRight size={16} />
             </button>

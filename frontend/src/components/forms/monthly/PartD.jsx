@@ -70,7 +70,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.interestFreeSystems?.count ?? ''}
                     onChange={(e) => handleSystemChange('interestFreeSystems', 'count', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -82,7 +82,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.interestFreeSystems?.beneficiariesLast3Years ?? ''}
                     onChange={(e) => handleSystemChange('interestFreeSystems', 'beneficiariesLast3Years', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -96,7 +96,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.zakatCommittee?.count ?? ''}
                     onChange={(e) => handleSystemChange('zakatCommittee', 'count', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -108,7 +108,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.zakatCommittee?.beneficiariesLast3Years ?? ''}
                     onChange={(e) => handleSystemChange('zakatCommittee', 'beneficiariesLast3Years', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -122,7 +122,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.peoplesFoundationBeneficiaries ?? ''}
                     onChange={(e) => handleChange('peoplesFoundationBeneficiaries', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -136,7 +136,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.housingProjectBeneficiaries ?? ''}
                     onChange={(e) => handleChange('housingProjectBeneficiaries', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -150,7 +150,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.baytulZakatBeneficiaries ?? ''}
                     onChange={(e) => handleChange('baytulZakatBeneficiaries', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -164,7 +164,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.nonWorkersinMadhyamamReaders ?? ''}
                     onChange={(e) => handleChange('nonWorkersinMadhyamamReaders', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -178,7 +178,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.nonWorkersinPrabodhanamReaders ?? ''}
                     onChange={(e) => handleChange('nonWorkersinPrabodhanamReaders', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -192,7 +192,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.nonWorkersinAaramamReaders ?? ''}
                     onChange={(e) => handleChange('nonWorkersinAaramamReaders', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -206,7 +206,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.nonWorkersinAyahUsers ?? ''}
                     onChange={(e) => handleChange('nonWorkersinAyahUsers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -220,7 +220,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.areas?.ourAreas ?? ''}
                     onChange={(e) => handleAreasChange('ourAreas', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -232,7 +232,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.areas?.registeredNonOurFamilies ?? ''}
                     onChange={(e) => handleAreasChange('registeredNonOurFamilies', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -246,7 +246,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.influentialMahalls ?? ''}
                     onChange={(e) => handleChange('influentialMahalls', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -260,7 +260,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.khutbaListenersfromOrganizedAreas ?? ''}
                     onChange={(e) => handleChange('khutbaListenersfromOrganizedAreas', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -274,7 +274,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.khutbaListenersfromNonOrganizedAreas ?? ''}
                     onChange={(e) => handleChange('khutbaListenersfromNonOrganizedAreas', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -288,7 +288,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.FullTimeWorkers ?? ''}
                     onChange={(e) => handleChange('FullTimeWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>
@@ -302,7 +302,7 @@ const PartD = () => {
                     type="number"
                     value={formData.partD?.PartTimeWorkers ?? ''}
                     onChange={(e) => handleChange('PartTimeWorkers', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-sm min-w-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-sm min-w-[120px]"
                     style={numberInputStyles}
                   />
                 </td>

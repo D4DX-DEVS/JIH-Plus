@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { Plus, ClipboardPaste, X } from 'lucide-react';
 import FieldEditor from './FieldEditor';
+import ConfirmationModal from '../ihthisabi/ConfirmationModal';
 
 export default function FieldCanvas({
   pages,
@@ -16,9 +17,13 @@ export default function FieldCanvas({
   onDuplicateField,
   onPasteField,
   onClearClipboard,
+  // Optional. Passing a role list turns on audience scoping for this page and
+  // its fields (used by the members application form builder).
+  roleOptions = null,
 }) {
   const page = pages[pageIndex];
   const fields = page.fields || [];
+  const [confirmRemoveIndex, setConfirmRemoveIndex] = useState(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -47,15 +52,27 @@ export default function FieldCanvas({
     onPagesChange(newPages);
   };
 
+  // A blank, just-added field can be removed immediately — nothing to lose. A
+  // field with a label or options gets a confirmation so it isn't tapped away by accident.
+  const requestRemoveField = (fieldIndex) => {
+    const field = fields[fieldIndex];
+    const hasContent = Boolean(field?.label?.trim()) || (field?.options && field.options.length > 0);
+    if (hasContent) {
+      setConfirmRemoveIndex(fieldIndex);
+    } else {
+      removeField(fieldIndex);
+    }
+  };
+
   // Thin drop-zone shown between fields while a field is on the clipboard, so
   // a copied field can be pasted at any position — like pasting text.
   const PasteSlot = ({ index }) => (
     <div className="group relative h-2 -my-1 flex items-center justify-center">
-      <span className="absolute inset-x-0 top-1/2 h-px bg-blue-200 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <span className="absolute inset-x-0 top-1/2 h-px bg-blue-200 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity" />
       <button
         type="button"
         onClick={() => onPasteField(index)}
-        className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 rounded-full border border-dashed border-blue-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-blue-600 shadow-sm hover:bg-blue-50"
+        className="relative z-10 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity flex items-center gap-1 rounded-full border border-dashed border-blue-300 bg-white px-2 py-1 text-[11px] font-semibold text-blue-600 shadow-sm hover:bg-blue-50"
       >
         <ClipboardPaste size={11} /> Paste here
       </button>
@@ -63,7 +80,7 @@ export default function FieldCanvas({
   );
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-2">
+    <div className="flex-1 overflow-y-auto p-4 pb-24 lg:pb-4 space-y-2">
       <div className="mb-3">
         <input
           type="text"
@@ -83,8 +100,33 @@ export default function FieldCanvas({
             onPagesChange(newPages);
           }}
           placeholder="Page description (optional)"
-          className="mt-1 text-sm border-0 outline-none bg-transparent text-gray-500 w-full"
+          className="mt-1 text-base sm:text-sm border-0 outline-none bg-transparent text-gray-500 w-full"
         />
+        {roleOptions && (
+          <div className="mt-3">
+            <label className="block text-xs text-gray-500 mb-1">Page audience</label>
+            <select
+              value={page.audience === 'role' ? (page.audienceRole || '') : ''}
+              onChange={e => {
+                const roleKey = e.target.value;
+                const newPages = pages.map((p, pi) => pi === pageIndex
+                  ? { ...p, audience: roleKey ? 'role' : 'applicant', audienceRole: roleKey }
+                  : p);
+                onPagesChange(newPages);
+              }}
+              className="w-full sm:w-80 border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-400"
+            >
+              <option value="">Applicant page (visible on the public form)</option>
+              {roleOptions.map(r => (
+                <option key={r.key} value={r.key}>{r.name} comments only</option>
+              ))}
+            </select>
+            <p className="text-[11px] text-gray-400 mt-1">
+              A role page is hidden from the applicant entirely — the usual shape for a
+              &quot;Unit Admin Comment&quot; style section.
+            </p>
+          </div>
+        )}
       </div>
 
       {fields.length === 0 && (
@@ -108,9 +150,10 @@ export default function FieldCanvas({
                 fieldIndex={fieldIndex}
                 isCopied={copiedFieldId === field.id}
                 onChange={newField => updateField(fieldIndex, newField)}
-                onRemove={() => removeField(fieldIndex)}
+                onRemove={() => requestRemoveField(fieldIndex)}
                 onCopy={onCopyField ? () => onCopyField(field) : undefined}
                 onDuplicate={onDuplicateField ? () => onDuplicateField(fieldIndex) : undefined}
+                roleOptions={page.audience === 'role' ? null : roleOptions}
               />
             </React.Fragment>
           ))}
@@ -157,13 +200,23 @@ export default function FieldCanvas({
               type="button"
               onClick={onClearClipboard}
               title="Clear clipboard"
-              className="text-emerald-500 hover:text-emerald-700 flex-shrink-0 p-1"
+              className="text-emerald-500 hover:text-emerald-700 flex-shrink-0 p-2 -m-1"
             >
               <X size={14} />
             </button>
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={confirmRemoveIndex != null}
+        onClose={() => setConfirmRemoveIndex(null)}
+        onConfirm={() => { removeField(confirmRemoveIndex); setConfirmRemoveIndex(null); }}
+        title="Delete Field"
+        message="This field has content. Deleting it cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

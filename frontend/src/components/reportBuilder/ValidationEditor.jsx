@@ -19,7 +19,7 @@ export default function ValidationEditor({ validation = {}, fieldType, onChange 
                   min={0}
                   value={validation.minLength ?? ''}
                   onChange={e => update('minLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
                 />
               </div>
               <div>
@@ -29,7 +29,7 @@ export default function ValidationEditor({ validation = {}, fieldType, onChange 
                   min={0}
                   value={validation.maxLength ?? ''}
                   onChange={e => update('maxLength', e.target.value === '' ? undefined : parseInt(e.target.value, 10))}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
                 />
               </div>
             </>
@@ -42,7 +42,7 @@ export default function ValidationEditor({ validation = {}, fieldType, onChange 
                   type="number"
                   value={validation.min ?? ''}
                   onChange={e => update('min', e.target.value === '' ? undefined : Number(e.target.value))}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
                 />
               </div>
               <div>
@@ -51,7 +51,7 @@ export default function ValidationEditor({ validation = {}, fieldType, onChange 
                   type="number"
                   value={validation.max ?? ''}
                   onChange={e => update('max', e.target.value === '' ? undefined : Number(e.target.value))}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
                 />
               </div>
             </>
@@ -66,7 +66,7 @@ export default function ValidationEditor({ validation = {}, fieldType, onChange 
             value={validation.pattern ?? ''}
             onChange={e => update('pattern', e.target.value)}
             placeholder="e.g. ^[A-Za-z]+$"
-            className="w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-400"
+            className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
           />
         </div>
       )}
@@ -77,7 +77,7 @@ export default function ValidationEditor({ validation = {}, fieldType, onChange 
           value={validation.customMessage ?? ''}
           onChange={e => update('customMessage', e.target.value)}
           placeholder="Message shown on validation failure"
-          className="w-full border border-gray-300 rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
         />
       </div>
     </div>

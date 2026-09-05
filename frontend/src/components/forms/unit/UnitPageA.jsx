@@ -311,7 +311,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
-      <div className="mb-8">
+      <div className="hidden lg:block mb-8">
         <h2 className="text-xl font-bold text-[#002349] mb-1.5">ഭാഗം A: പ്രാഥമിക വിവരങ്ങൾ</h2>
         <p className="text-sm text-gray-600">ജില്ല, ഏരിയ, യൂണിറ്റ് വിവരങ്ങൾ</p>
       </div>
@@ -346,6 +346,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">റുക്ന്‍:</label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={localData.workers?.rukkun || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -353,7 +355,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
                 }}
                 onKeyDown={handleNumericKeyDown}
                 onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('workers.rukkun', value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
                 placeholder="0"
               />
             </div>
@@ -361,6 +363,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">കാർകുൻ:</label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={localData.workers?.karkun || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -368,7 +372,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
                 }}
                 onKeyDown={handleNumericKeyDown}
                 onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('workers.karkun', value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
                 placeholder="0"
               />
             </div>
@@ -376,6 +380,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">ആക്ടീവ് അസോസിയേറ്റ്‌സ്</label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={localData.workers?.activeAssociate || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -383,7 +389,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
                 }}
                 onKeyDown={handleNumericKeyDown}
                 onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('workers.activeAssociate', value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
                 placeholder="0"
               />
             </div>
@@ -406,7 +412,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
             type="text"
             value={localData.partA?.codes || ''}
             onChange={(e) => handleInputChange('partA.codes', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
             placeholder=" സ്കോഡുകളുടെ എണ്ണം നൽകുക"
           />
         </div>
@@ -419,6 +425,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">ആൺ</label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={localData.partA?.spokenPersons?.male || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -426,7 +434,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
                 }}
                 onKeyDown={handleNumericKeyDown}
                 onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('partA.spokenPersons.male', value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
                 placeholder="0"
               />
             </div>
@@ -434,6 +442,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               <label className="block text-sm font-semibold text-[#002349] mb-1.5">പെൺ </label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={localData.partA?.spokenPersons?.female || 0}
                 onChange={(e) => {
                   const cleaned = validateNumericInput(e.target.value);
@@ -441,7 +451,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
                 }}
                 onKeyDown={handleNumericKeyDown}
                 onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange('partA.spokenPersons.female', value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
                 placeholder="0"
               />
             </div>
@@ -491,6 +501,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
                       {gender.male && (
                         <input
                           type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={counts.male || 0}
                           onChange={(e) => {
                             const cleaned = validateNumericInput(e.target.value);
@@ -498,7 +510,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
                           }}
                           onKeyDown={handleNumericKeyDown}
                           onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange(`partA.authorityPersonsCounts.${option.key}.male`, value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300"
                           placeholder="എണ്ണം"
                         />
                       )}
@@ -518,6 +530,8 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
                       {gender.female && (
                         <input
                           type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={counts.female || 0}
                           onChange={(e) => {
                             const cleaned = validateNumericInput(e.target.value);
@@ -525,7 +539,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
                           }}
                           onKeyDown={handleNumericKeyDown}
                           onPaste={(e) => handleNumericPaste(e, (value) => handleInputChange(`partA.authorityPersonsCounts.${option.key}.female`, value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300"
                           placeholder="എണ്ണം"
                         />
                       )}
@@ -544,7 +558,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
             type="text"
             value={localData.partA?.authorityOtherText || ''}
             onChange={(e) => handleInputChange('partA.authorityOtherText', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-sm transition-all duration-300 hover:border-[#002349]/50"
+            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent text-[16px] sm:text-sm transition-all duration-300 hover:border-[#002349]/50"
             placeholder="വ്യക്തമാക്കുക"
           />
         </div>
@@ -554,7 +568,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
       <div className="mt-12 flex justify-end">
         <button
           onClick={handleNext}
-          className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-[#002349] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#002349] text-white text-sm font-semibold rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#002349] focus:ring-offset-2 transition-all duration-500 hover:shadow-lg transform hover:scale-105 ease-out hover:shadow-[#002349]/50"
+          className="inline-flex items-center min-h-[44px] px-6 py-2 bg-gradient-to-r from-[#002349] to-[#1a3a5c] hover:from-[#1a3a5c] hover:to-[#002349] text-white text-sm font-semibold rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#002349] focus:ring-offset-2 transition-all duration-500 hover:shadow-lg transform hover:scale-105 ease-out hover:shadow-[#002349]/50"
         >
           അടുത്തത്
           <ArrowRight className="ml-2 h-4 w-4" />

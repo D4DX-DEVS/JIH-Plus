@@ -245,18 +245,18 @@ const LoginPage = () => {
           animation: fade-in 0.3s ease-out;
         }
       `}</style>
-      <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
       {/* Home Icon - Floating */}
       <button
         onClick={() => navigate('/')}
-        className="fixed top-6 right-6 z-50 text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
+        className="fixed top-4 right-4 z-50 inline-flex h-[44px] w-[44px] items-center justify-center text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
         aria-label="Back to Home"
       >
         <Home className="w-6 h-6" />
       </button>
 
       {/* Main Content */}
-      <div className="h-full overflow-hidden flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
+      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-md w-full space-y-6">
           {/* Header with Logo */}
           <div className="text-center mb-8">
@@ -285,7 +285,7 @@ const LoginPage = () => {
                 setError(null)
                 setAdminError(null)
               }}
-              className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+              className={`min-h-[44px] px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
                 !showMainAdminLogin
                   ? 'bg-[#7B4FF2] text-white shadow-md'
                   : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
@@ -300,7 +300,7 @@ const LoginPage = () => {
                 setAdminError(null)
                 setRoleSelection(null)
               }}
-              className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+              className={`min-h-[44px] px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
                 showMainAdminLogin
                   ? 'bg-[#7B4FF2] text-white shadow-md'
                   : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
@@ -342,10 +342,10 @@ const LoginPage = () => {
                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#7B4FF2]/10 flex items-center justify-center">
                         <Icon className="h-5 w-5 text-[#7B4FF2]" />
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-[#002349]">{roleOption.label}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-[#002349]">{roleOption.label}</p>
                         {roleOption.scope && (
-                          <p className="text-xs text-gray-500">{roleOption.scope}</p>
+                          <p className="truncate text-xs text-gray-500">{roleOption.scope}</p>
                         )}
                       </div>
                     </button>
@@ -374,7 +374,7 @@ const LoginPage = () => {
                   setRoleSelection(null)
                   setError(null)
                 }}
-                className="w-full flex items-center justify-center gap-1 text-xs text-gray-500 hover:text-[#002349] transition-colors duration-200"
+                className="w-full flex items-center justify-center gap-1 py-2.5 text-xs text-gray-500 hover:text-[#002349] transition-colors duration-200"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Use a different RUKN ID
@@ -405,7 +405,7 @@ const LoginPage = () => {
                       required
                       value={formData.ruknId}
                       onChange={handleChange}
-                      className={`w-full px-4 py-2.5 pl-10 border-2 rounded-lg focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2] text-center text-sm transition-all duration-200 bg-gray-50 hover:bg-white ${
+                      className={`w-full px-4 py-2.5 pl-10 border-2 rounded-lg focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white ${
                         error ? 'border-red-300 focus:border-red-400 focus:ring-red-200' : 'border-gray-200'
                       }`}
                       placeholder="Enter 6-digit RUKN ID (e.g., 109702)"
@@ -427,7 +427,7 @@ const LoginPage = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="mx-auto max-w-xs bg-[#7B4FF2] hover:bg-[#6a3dd9] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 text-sm shadow-md hover:shadow-lg"
+                    className="mx-auto max-w-xs bg-[#7B4FF2] hover:bg-[#6a3dd9] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold min-h-[44px] py-3 px-6 rounded-lg transition-all duration-200 text-sm shadow-md hover:shadow-lg"
                   >
                     {loading ? (
                       <div className="flex items-center justify-center">
@@ -462,13 +462,14 @@ const LoginPage = () => {
                     id="mainAdminEmail"
                     name="email"
                     type="email"
+                    autoComplete="email"
                     required
                     value={mainAdminFormData.email}
                     onChange={(e) => {
                       setMainAdminFormData({...mainAdminFormData, [e.target.name]: e.target.value})
                       if (adminError) setAdminError(null)
                     }}
-                    className={`w-full px-4 py-2.5 border-2 rounded-lg focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2] text-center text-sm transition-all duration-200 bg-gray-50 hover:bg-white ${
+                    className={`w-full px-4 py-2.5 border-2 rounded-lg focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white ${
                       adminError ? 'border-red-300 focus:border-red-400 focus:ring-red-200' : 'border-gray-200'
                     }`}
                     placeholder="admin@example.com"
@@ -483,13 +484,14 @@ const LoginPage = () => {
                     id="mainAdminPassword"
                     name="password"
                     type="password"
+                    autoComplete="current-password"
                     required
                     value={mainAdminFormData.password}
                     onChange={(e) => {
                       setMainAdminFormData({...mainAdminFormData, [e.target.name]: e.target.value})
                       if (adminError) setAdminError(null)
                     }}
-                    className={`w-full px-4 py-2.5 border-2 rounded-lg focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2] text-center text-sm transition-all duration-200 bg-gray-50 hover:bg-white ${
+                    className={`w-full px-4 py-2.5 border-2 rounded-lg focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white ${
                       adminError ? 'border-red-300 focus:border-red-400 focus:ring-red-200' : 'border-gray-200'
                     }`}
                     placeholder="••••••••"
@@ -508,7 +510,7 @@ const LoginPage = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="mx-auto max-w-xs bg-[#7B4FF2] hover:bg-[#6a3dd9] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 text-sm shadow-md hover:shadow-lg"
+                    className="mx-auto max-w-xs bg-[#7B4FF2] hover:bg-[#6a3dd9] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold min-h-[44px] py-3 px-6 rounded-lg transition-all duration-200 text-sm shadow-md hover:shadow-lg"
                   >
                     {loading ? (
                       <div className="flex items-center justify-center">

@@ -60,7 +60,7 @@ const PartA = () => {
               type="number"
               value={formData.partA?.totalPopulation ?? ''}
               onChange={(e) => handleInputChange('totalPopulation', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="ജനസംഖ്യ നൽകുക"
             />
           </div>
@@ -74,9 +74,11 @@ const PartA = () => {
               type="number"
               value={formData.partA?.muslimPercentage ?? ''}
               onChange={(e) => handleInputChange('muslimPercentage', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="ശതമാനം നൽകുക"
               step="0.01"
+              min="0"
+              max="100"
             />
           </div>
 
@@ -89,9 +91,11 @@ const PartA = () => {
               type="number"
               value={formData.partA?.hinduPercentage ?? ''}
               onChange={(e) => handleInputChange('hinduPercentage', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="ശതമാനം നൽകുക"
               step="0.01"
+              min="0"
+              max="100"
             />
           </div>
 
@@ -104,9 +108,11 @@ const PartA = () => {
               type="number"
               value={formData.partA?.christianPercentage ?? ''}
               onChange={(e) => handleInputChange('christianPercentage', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="ശതമാനം നൽകുക"
               step="0.01"
+              min="0"
+              max="100"
             />
           </div>
 
@@ -119,9 +125,11 @@ const PartA = () => {
               type="number"
               value={formData.partA?.othersPercentage ?? ''}
               onChange={(e) => handleInputChange('othersPercentage', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="ശതമാനം നൽകുക"
               step="0.01"
+              min="0"
+              max="100"
             />
           </div>
 
@@ -134,9 +142,11 @@ const PartA = () => {
               type="number"
               value={formData.partA?.movementPercentage ?? ''}
               onChange={(e) => handleInputChange('movementPercentage', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm bg-white"
               placeholder="ശതമാനം നൽകുക"
               step="0.01"
+              min="0"
+              max="100"
             />
         </div>
 
@@ -148,7 +158,7 @@ const PartA = () => {
             <select
               value={formData.partA?.majorityInReligiousOrganizations ?? ''}
               onChange={(e) => handleInputChange('majorityInReligiousOrganizations', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
             >
               <option value="">തിരഞ്ഞെടുക്കുക</option>
               <option value="സമസ്ത ഇ.കെ">സമസ്ത ഇ.കെ.</option>
@@ -167,7 +177,7 @@ const PartA = () => {
               type="text"
               value={formData.partA?.secondPosition ?? ''}
               onChange={(e) => handleInputChange('secondPosition', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="വിവരങ്ങൾ നൽകുക"
             />
           </div>
@@ -181,7 +191,7 @@ const PartA = () => {
               type="text"
               value={formData.partA?.thirdPosition ?? ''}
               onChange={(e) => handleInputChange('thirdPosition', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="വിവരങ്ങൾ നൽകുക"
             />
           </div>
@@ -195,7 +205,7 @@ const PartA = () => {
               type="text"
               value={formData.partA?.ourPosition ?? ''}
               onChange={(e) => handleInputChange('ourPosition', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
               placeholder="വിവരങ്ങൾ നൽകുക"
             />
           </div>
@@ -208,7 +218,7 @@ const PartA = () => {
             <select
               value={formData.partA?.morePoliticalInfluence ?? ''}
               onChange={(e) => handleInputChange('morePoliticalInfluence', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[16px] sm:text-sm"
             >
               <option value="">തിരഞ്ഞെടുക്കുക</option>
               <option value="മുസ്ലിം ലീഗ്">മുസ്ലിം ലീഗ്.</option>

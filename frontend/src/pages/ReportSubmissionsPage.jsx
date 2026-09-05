@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, X, Filter, ChevronDown } from 'lucide-react';
+import { ArrowLeft, MapPin, FileText, Activity } from 'lucide-react';
+import { JihFilterBar, JihFilterSelect } from '../components/JihToolbar';
 import axios from 'axios';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
@@ -8,6 +9,7 @@ import ConfirmationModal from '../components/modals/ConfirmationModal';
 import RowColumnReadonly from '../components/reportRenderer/RowColumnReadonly';
 import jihLogo from '../assets/LogoColor.png';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import { fieldWidthClass } from '../utils/fieldWidth';
 
 const ReportSubmissionsPage = ({ onLogout }) => {
   const { id } = useParams();
@@ -33,7 +35,6 @@ const ReportSubmissionsPage = ({ onLogout }) => {
   const [reportForFilter, setReportForFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   // Filters start collapsed on phones — expanded they cost most of the viewport.
-  const [showFilters, setShowFilters] = useState(false);
   const [reportList, setReportList] = useState([]); // for dropdown
   const [selectedReportId, setSelectedReportId] = useState('');
 
@@ -210,7 +211,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
       return (
         <div className="flex flex-wrap gap-2">
           {answer.map((item, idx) => (
-            <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+            <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm break-words max-w-full">
               {String(item)}
             </span>
           ))}
@@ -264,7 +265,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
       return (
         <div className="flex flex-wrap gap-1 mt-1">
           {selected.map((v, i) => (
-            <span key={i} className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+            <span key={i} className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-medium break-words max-w-full">
               {String(v)}
             </span>
           ))}
@@ -285,7 +286,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
     // ── Select / Radio / Dropdown ──
     if (['select', 'dropdown', 'radio'].includes(field.type)) {
       return (
-        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-800 rounded text-sm font-medium border border-indigo-200">
+        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-800 rounded text-sm font-medium border border-indigo-200 break-words">
           {String(rawValue)}
         </span>
       );
@@ -329,10 +330,6 @@ const ReportSubmissionsPage = ({ onLogout }) => {
 
   // Sidebar handlers
   const handleTabChange = (tabId) => {
-    if (tabId === 'membership') {
-      navigate('/membership', { state: { roleHint: 'admin' } });
-      return;
-    }
     if (tabId === 'yearly' || tabId === 'monthly' || tabId === 'stats') {
       navigate('/admin-dashboard', { 
         state: { activeTab: tabId } 
@@ -342,31 +339,6 @@ const ReportSubmissionsPage = ({ onLogout }) => {
 
   const handleNavigateToReports = () => {
     navigate('/view-reports');
-  };
-
-  const handleDownloadCSV = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/forms/export/csv`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          responseType: 'blob'
-        }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `forms_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error downloading CSV:', error);
-    }
   };
 
   const handleNavigateToNotifications = () => {
@@ -462,8 +434,6 @@ const ReportSubmissionsPage = ({ onLogout }) => {
           activeTab=""
           onTabChange={handleTabChange}
           onNavigateToReports={handleNavigateToReports}
-          onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'admin' } })}
-          onDownloadCSV={handleDownloadCSV}
           onNavigateToNotifications={handleNavigateToNotifications}
           onLogout={handleLogout}
           adminEmail={adminData?.email || 'Admin'}
@@ -520,15 +490,16 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => toggleSubmission(null)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
+                    className="inline-flex h-[44px] w-[44px] items-center justify-center hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
                     title="Back to list"
+                    aria-label="Back to list"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
-                  <div>
-                    <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">റിപ്പോർട്ട് വിവരങ്ങൾ</h2>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">റിപ്പോർട്ട് വിവരങ്ങൾ</h2>
                     {selectedSubmission?.userId && (
-                      <p className="text-base font-bold text-[#002349] mt-2">
+                      <p className="text-base font-bold text-[#002349] mt-2 break-words leading-relaxed">
                         {getUserDisplayName(selectedSubmission.userId, report.reportFor)}
                       </p>
                     )}
@@ -545,14 +516,14 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                           <h3 className="text-lg font-bold text-[#002349] mb-4 border-b pb-2">{page.title}</h3>
                         )}
                         {page.fields && page.fields.length > 0 ? (
-                          <div className="space-y-4">
+                          <div className="grid grid-cols-12 gap-x-4 gap-y-4">
                             {page.fields
                               .filter(f => !['title', 'html'].includes(f.type))
                               .map((field) => {
                                 const rawValue = selectedSubmission.formData?.[`field_${field.id}`];
                                 return (
-                                  <div key={field.id} className="border-l-4 border-[#002349] pl-4 py-2">
-                                    <div className="text-sm font-semibold text-gray-700 mb-1">
+                                  <div key={field.id} className={`${fieldWidthClass(field)} border-l-4 border-[#002349] pl-4 py-2`}>
+                                    <div className="text-sm font-semibold text-gray-700 mb-1 break-words">
                                       {field.label}
                                       {field.required && <span className="ml-1 text-red-500 text-xs">*</span>}
                                     </div>
@@ -580,7 +551,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                                 <div key={questionIndex} className="border-l-4 border-[#002349] pl-4 py-3">
                                   <div className="flex items-start gap-2 mb-2">
                                     <span className="text-sm font-bold text-[#002349]">Q{questionIndex + 1}:</span>
-                                    <span className="text-gray-900 font-semibold flex-1">{question.questionText}</span>
+                                    <span className="text-gray-900 font-semibold flex-1 min-w-0 break-words">{question.questionText}</span>
                                     {question.isRequired && (
                                       <span className="text-xs text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded">*Required</span>
                                     )}
@@ -613,98 +584,62 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => navigate(isUnitUser ? '/user-reports' : '/view-reports')}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
+                    className="inline-flex h-[44px] w-[44px] items-center justify-center hover:bg-gray-100 rounded-lg transition-colors text-[#002349]"
+                    aria-label="Back"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
-                  <h2 className="text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
+                  <h2 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
                     {isCrossReport ? 'All Submissions' : 'റിപ്പോർട്ട് സമർപ്പണങ്ങൾ'}
                   </h2>
                 </div>
-                <div className="relative w-full md:w-80">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <input
-                    type="text"
-                    placeholder="Search by district, area, unit..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#002349] focus:border-transparent bg-white shadow-sm"
-                  />
-                </div>
               </div>
 
-              {/* ── Cross-report filter bar — collapsed behind its toggle on phones ── */}
-              {isCrossReport && (
-                <div className="mb-4 lg:mb-5 bg-white border border-gray-200 rounded-2xl p-3 sm:p-4 shadow-sm">
-                <div className="flex items-center gap-2 lg:hidden">
-                  <button
-                    type="button"
-                    onClick={() => setShowFilters(v => !v)}
-                    aria-expanded={showFilters}
-                    className="flex items-center gap-2 text-[#002349]"
-                  >
-                    <Filter className="w-4 h-4" />
-                    <span className="text-xs font-semibold uppercase tracking-wide">Filters</span>
-                    {activeFilterCount > 0 && (
-                      <span className="rounded-full bg-[#002349] px-1.5 py-0.5 text-[10px] font-bold text-white">{activeFilterCount}</span>
-                    )}
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-                  </button>
-                  <span className="ml-auto text-xs font-semibold text-[#002349]">
-                    {filteredSubmissions.length} submission{filteredSubmissions.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                <div className={`${showFilters ? 'flex' : 'hidden'} lg:flex flex-wrap gap-2 sm:gap-3 mt-3 lg:mt-0`}>
-                  <select
-                    value={typeFilter}
-                    onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                  >
+              <JihFilterBar
+                className="mb-4 lg:mb-5"
+                search={searchTerm}
+                onSearchChange={setSearchTerm}
+                placeholder="Search by district, area, unit..."
+                activeFilterCount={isCrossReport ? activeFilterCount : 0}
+                onClear={() => { setTypeFilter(''); setReportForFilter(''); setSelectedReportId(''); setStatusFilter(''); setCurrentPage(1); }}
+                gridClass="sm:grid-cols-3 lg:grid-cols-5"
+              >
+                {isCrossReport && (
+                  <JihFilterSelect value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}>
                     <option value="">All Types</option>
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
                     <option value="special">Special</option>
-                  </select>
-                  <select
-                    value={reportForFilter}
-                    onChange={(e) => { setReportForFilter(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                  >
+                  </JihFilterSelect>
+                )}
+                {isCrossReport && (
+                  <JihFilterSelect icon={MapPin} value={reportForFilter} onChange={(e) => { setReportForFilter(e.target.value); setCurrentPage(1); }}>
                     <option value="">All Audiences</option>
                     <option value="district">District</option>
                     <option value="area">Area</option>
                     <option value="unit">Unit</option>
-                  </select>
-                  <select
-                    value={selectedReportId}
-                    onChange={(e) => { setSelectedReportId(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none lg:min-w-[180px] border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                  >
+                  </JihFilterSelect>
+                )}
+                {isCrossReport && (
+                  <JihFilterSelect icon={FileText} value={selectedReportId} onChange={(e) => { setSelectedReportId(e.target.value); setCurrentPage(1); }}>
                     <option value="">All Reports</option>
                     {reportList.map(r => (
                       <option key={r._id} value={r._id}>{r.title}</option>
                     ))}
-                  </select>
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                    className="flex-1 min-w-[45%] lg:flex-none border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#002349]"
-                  >
+                  </JihFilterSelect>
+                )}
+                {isCrossReport && (
+                  <JihFilterSelect icon={Activity} value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
                     <option value="">All Statuses</option>
                     <option value="submitted">Submitted</option>
                     <option value="pending">Pending</option>
-                  </select>
-                  {(typeFilter || reportForFilter || selectedReportId || statusFilter) && (
-                    <button
-                      onClick={() => { setTypeFilter(''); setReportForFilter(''); setSelectedReportId(''); setStatusFilter(''); }}
-                      className="px-3 py-2 text-sm text-gray-500 hover:text-gray-800 border border-gray-200 rounded-xl hover:bg-gray-50"
-                    >
-                      Clear
-                    </button>
-                  )}
-                  <span className="ml-auto self-center hidden lg:block text-sm text-gray-500 font-medium">{filteredSubmissions.length} submission{filteredSubmissions.length !== 1 ? 's' : ''}</span>
-                </div>
-                </div>
+                  </JihFilterSelect>
+                )}
+              </JihFilterBar>
+              {isCrossReport && (
+                <p className="-mt-2 mb-4 text-right text-xs font-semibold text-[#002349]">
+                  {filteredSubmissions.length} submission{filteredSubmissions.length !== 1 ? 's' : ''}
+                </p>
               )}
 
               {/* ── Submissions Table ── */}
@@ -750,7 +685,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                           onClick={() => isCrossReport
                             ? navigate(`/report-submissions/${submission.reportId?._id || submission.reportId}`)
                             : toggleSubmission(submission._id)}
-                          className="mt-2.5 w-full rounded-lg bg-[#002349]/10 px-3 py-2 text-xs font-semibold text-[#002349]"
+                          className="mt-2.5 flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#002349]/10 px-3 py-2 text-xs font-semibold text-[#002349]"
                         >
                           {isCrossReport ? 'View Report' : 'View Details'}
                         </button>
@@ -851,9 +786,9 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                     Showing {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, filteredSubmissions.length)} of {filteredSubmissions.length}
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Prev</button>
+                    <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-2 lg:py-1 border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Prev</button>
                     <span className="font-semibold text-[#002349]">Page {currentPage} of {totalPages}</span>
-                    <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Next</button>
+                    <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-2 lg:py-1 border border-gray-300 rounded-lg disabled:opacity-50 hover:bg-gray-50">Next</button>
                   </div>
                 </div>
               )}

@@ -62,14 +62,12 @@ const DistrictDashboardPage = ({ onLogout }) => {
   const [activeReportsList, setActiveReportsList] = useState([]);
   const [activeReportsLoading, setActiveReportsLoading] = useState(false);
 
-  // Respect navigation requests coming from other pages (e.g., MembershipPage)
+  // Respect navigation requests coming from other pages
   useEffect(() => {
     const nextView = location.state?.activeView;
     if (!nextView) return;
 
-    if (nextView === 'membership') {
-      handleNavigateToMembership();
-    } else if (nextView === 'notifications') {
+    if (nextView === 'notifications') {
       handleNavigateToNotifications();
     } else {
       setCurrentView(nextView);
@@ -174,9 +172,6 @@ const DistrictDashboardPage = ({ onLogout }) => {
     // Navigate to notifications page route
     navigate('/notifications');
   };
-  const handleNavigateToMembership = () => {
-    navigate('/membership', { state: { roleHint: 'district' } });
-  };
   const handleBackToHome = () => {
     setCurrentView('home');
     setEditingForm(null);
@@ -203,7 +198,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
   const handleCreateMonthlySurvey = () => {
     setEditingSurvey(null);
     // For district users, navigate to the district survey form
-    window.location.href = '/district-survey';
+    navigate('/district-survey');
   };
   
   const handleEditMonthlySurvey = (survey) => {
@@ -583,14 +578,15 @@ const DistrictDashboardPage = ({ onLogout }) => {
       <div className="space-y-6">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] rounded-2xl p-6 text-white">
-          <h2 className="text-xl font-bold">ജില്ലാ ഡാഷ്ബോർഡ്</h2>
+          {/* MobileTopBar already names this screen on mobile; avoid a duplicate title below lg. */}
+          <h2 className="hidden lg:block text-xl font-bold">ജില്ലാ ഡാഷ്ബോർഡ്</h2>
           {districtName && <p className="text-white/80 text-sm mt-1">{districtName}</p>}
         </div>
 
         <SubmissionsAnalytics scope="district" />
 
         {/* Stat cards */}
-        <div className="grid grid-cols-4 gap-2 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
           <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-50 flex items-center justify-center">
               <MapPin className="w-5 h-5 text-[#002349]" />
@@ -696,6 +692,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
       return (
         <div className="text-center py-12">
           <p className="text-red-600 font-semibold">{statsError}</p>
+          <button onClick={loadDistrictStats} className="mt-4 px-4 py-2 bg-[#002349] text-white rounded-lg text-sm">Retry</button>
         </div>
       );
     }
@@ -751,25 +748,25 @@ const DistrictDashboardPage = ({ onLogout }) => {
           <div className="flex space-x-3 flex-wrap gap-2">
             <button
               onClick={() => setActiveStatsSubTab('summary')}
-              className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'summary' ? 'bg-[#002349] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
+              className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'summary' ? 'bg-[#002349] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
             >
               Statistics
             </button>
             <button
               onClick={() => setActiveStatsSubTab('districtTable')}
-              className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'districtTable' ? 'bg-[#957C3D] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
+              className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'districtTable' ? 'bg-[#957C3D] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
             >
               District Table
             </button>
             <button
               onClick={() => setActiveStatsSubTab('areaTable')}
-              className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'areaTable' ? 'bg-[#002349] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
+              className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'areaTable' ? 'bg-[#002349] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
             >
               Area Table
             </button>
             <button
               onClick={() => setActiveStatsSubTab('unitTable')}
-              className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'unitTable' ? 'bg-[#957C3D] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
+              className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'unitTable' ? 'bg-[#957C3D] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
             >
               Unit Table
             </button>
@@ -783,7 +780,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
         {/* AI Summary */}
         {activeStatsSubTab === 'summary' && summary && (
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-500">
-            <div className="text-sm text-gray-800 leading-relaxed">{summary}</div>
+            <div className="text-sm text-gray-800 leading-relaxed break-words">{summary}</div>
           </div>
         )}
 
@@ -984,7 +981,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
                               <div className="text-xs text-gray-500 uppercase tracking-wide">Area</div>
                               <h4 className="text-sm font-semibold text-gray-900">{a.title || a.name || areaId}</h4>
                             </div>
-                            <button className="text-xs text-gray-600 hover:text-gray-900" onClick={() => setExpandedAreaId(null)}>Close</button>
+                            <button className="text-xs text-gray-600 hover:text-gray-900 px-3 py-2.5" onClick={() => setExpandedAreaId(null)}>Close</button>
                           </div>
 
                           {loadingExpandedArea ? (
@@ -1057,10 +1054,10 @@ const DistrictDashboardPage = ({ onLogout }) => {
                 </button>
                 <button
                   onClick={() => navigate('/district/dynamic-submissions/monthly', { state: { areaFilter: a.name || a.title } })}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#002349] text-white text-xs font-semibold hover:bg-[#1a3a5c] transition-colors"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#002349] text-white text-xs font-semibold hover:bg-[#1a3a5c] transition-colors"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">സബ്മിഷനുകൾ</span>
+                  <span>സബ്മിഷനുകൾ</span>
                 </button>
               </div>
 
@@ -1086,10 +1083,10 @@ const DistrictDashboardPage = ({ onLogout }) => {
                             </div>
                             <button
                               onClick={() => navigate('/district/dynamic-submissions/monthly', { state: { unitFilter: u.name || u.title } })}
-                              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#002349]/10 text-[#002349] text-xs font-semibold hover:bg-[#002349]/20 transition-colors"
+                              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-lg bg-[#002349]/10 text-[#002349] text-xs font-semibold hover:bg-[#002349]/20 transition-colors"
                             >
                               <FileText className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">സബ്മിഷനുകൾ</span>
+                              <span>സബ്മിഷനുകൾ</span>
                             </button>
                           </div>
                         );
@@ -1109,13 +1106,13 @@ const DistrictDashboardPage = ({ onLogout }) => {
   const renderLocationsView = () => (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] rounded-2xl p-6 text-white">
-        <h2 className="text-xl font-bold">ഏരിയകളും യൂണിറ്റുകളും</h2>
+        <h2 className="hidden lg:block text-xl font-bold">ഏരിയകളും യൂണിറ്റുകളും</h2>
         <p className="text-white/80 text-sm mt-1">
           {userData?.district || userData?.districtName || ''} · {areas.length} areas
         </p>
       </div>
       <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-200">
-        <p className="text-xs text-[#957C3D] font-medium mb-4">
+        <p className="text-xs text-[#957C3D] font-medium mb-4 break-words leading-relaxed">
           💡 ഒരു ഏരിയയിൽ ക്ലിക്ക് ചെയ്ത് അതിലെ യൂണിറ്റുകൾ കാണുക. "സബ്മിഷനുകൾ" ബട്ടൺ ആ ഏരിയ / യൂണിറ്റിന്റെ സബ്മിഷനുകൾ കാണിക്കും.
         </p>
         {renderAreasUnitsList()}
@@ -1128,11 +1125,6 @@ const DistrictDashboardPage = ({ onLogout }) => {
   const handleSidebarNavigate = (viewId) => {
     if (viewId === 'reports') {
       navigate('/user-reports');
-      setIsSidebarOpen(false);
-      return;
-    }
-    if (viewId === 'membership') {
-      handleNavigateToMembership();
       setIsSidebarOpen(false);
       return;
     }
@@ -1197,7 +1189,6 @@ const DistrictDashboardPage = ({ onLogout }) => {
           onLogout={handleLogoutClick}
           onNotifications={handleNavigateToNotifications}
           onDynamicReports={() => navigate('/user-reports')}
-          onNavigateToMembership={handleNavigateToMembership}
           onReportTypeSelect={(type) => navigate('/user-reports', { state: { initialType: type } })}
           districtName={userData?.district}
           isMobileOpen={isSidebarOpen}
@@ -1206,7 +1197,16 @@ const DistrictDashboardPage = ({ onLogout }) => {
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <MobileTopBar
-            title="ജില്ലാ ഡാഷ്ബോർഡ്"
+            title={
+              {
+                'yearly-dashboard': 'വാർഷിക റിപ്പോർട്ട്',
+                'yearly-form': 'വാർഷിക റിപ്പോർട്ട്',
+                'monthly-dashboard': 'പ്രതിമാസ റിപ്പോർട്ട്',
+                'monthly-form': 'പ്രതിമാസ റിപ്പോർട്ട്',
+                locations: 'ലൊക്കേഷനുകൾ',
+                stats: 'സ്ഥിതിവിവരങ്ങൾ',
+              }[currentView] || 'ജില്ലാ ഡാഷ്ബോർഡ്'
+            }
           />
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 pt-4 pb-24 lg:pb-4">
             {currentViewContent}

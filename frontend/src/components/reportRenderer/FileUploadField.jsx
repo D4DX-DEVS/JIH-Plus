@@ -16,9 +16,9 @@ export default function FileUploadField({ field, value, onChange }) {
       >
         <Upload size={20} className="mx-auto text-gray-400 mb-1" />
         {value ? (
-          <p className="text-sm text-blue-600">{value.name || String(value)}</p>
+          <p className="text-sm text-blue-600 break-words">{value.name || String(value)}</p>
         ) : (
-          <p className="text-sm text-gray-500">{field.placeholder || 'Click to upload a file'}</p>
+          <p className="text-sm text-gray-500 break-words">{field.placeholder || 'Click to upload a file'}</p>
         )}
       </div>
       <input

@@ -48,26 +48,26 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
             <button
               type="button"
               onClick={() => onChange({ ...normalizeBlock({ ...block, type: 'static' }) })}
-              className={`px-3 py-1 transition-colors ${isStatic ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+              className={`px-3 py-1.5 transition-colors ${isStatic ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
             >
               Static
             </button>
             <button
               type="button"
               onClick={() => onChange({ ...normalizeBlock({ ...block, type: 'data' }) })}
-              className={`px-3 py-1 transition-colors ${!isStatic ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+              className={`px-3 py-1.5 transition-colors ${!isStatic ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
             >
               Data
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onMoveUp}
             disabled={index === 0}
-            className="p-1 rounded text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="p-2 rounded text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
             title="Move up"
           >
             <ChevronUp className="w-4 h-4" />
@@ -76,7 +76,7 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
             type="button"
             onClick={onMoveDown}
             disabled={index === total - 1}
-            className="p-1 rounded text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="p-2 rounded text-gray-500 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
             title="Move down"
           >
             <ChevronDown className="w-4 h-4" />
@@ -84,7 +84,7 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
           <button
             type="button"
             onClick={onDelete}
-            className="p-1 rounded text-red-500 hover:bg-red-50"
+            className="p-2 rounded text-red-500 hover:bg-red-50"
             title="Delete block"
           >
             <Trash2 className="w-4 h-4" />
@@ -100,7 +100,7 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
             value={block.text || ''}
             onChange={(e) => onChange({ ...block, text: e.target.value })}
             rows={3}
-            className="w-full text-sm border border-gray-300 rounded-md p-2 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono"
+            className="w-full text-base sm:text-sm border border-gray-300 rounded-md p-2 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono"
             placeholder="Enter static text. Supports {unit}, {quarter}, {year} placeholders."
           />
         </div>
@@ -112,7 +112,7 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
             <select
               value={block.fieldKey || ''}
               onChange={(e) => onChange({ ...block, fieldKey: e.target.value })}
-              className="w-full text-sm border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full text-[13px] sm:text-sm border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
               <option value="">— Select field —</option>
               <optgroup label="Context Variables">
@@ -134,7 +134,7 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
 
           {/* Field key indicator — shown when a field is selected */}
           {block.fieldKey && (
-            <div className="flex items-center gap-2 text-xs text-gray-500 bg-white border border-gray-200 rounded px-3 py-1.5">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 bg-white border border-gray-200 rounded px-3 py-1.5">
               <span className="text-gray-400">key:</span>
               <code className="font-mono text-indigo-700 font-semibold">{block.fieldKey}</code>
               <span className="text-gray-400 mx-1">→</span>
@@ -153,13 +153,13 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
 
           {/* Condition row — only shown when {count} is used in the text template */}
           {showConditionRow && (
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex-1 min-w-[140px]">
               <label className="block text-xs font-medium text-gray-600 mb-1">Condition</label>
               <select
                 value={block.condition?.operator || 'gt'}
                 onChange={(e) => onChange({ ...block, condition: { ...block.condition, operator: e.target.value } })}
-                className="w-full text-sm border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full text-[13px] sm:text-sm border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               >
                 {Object.entries(OPERATOR_LABELS).map(([op, label]) => (
                   <option key={op} value={op}>{label}</option>
@@ -173,7 +173,7 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
                 min="0"
                 value={block.condition?.value ?? 0}
                 onChange={(e) => onChange({ ...block, condition: { ...block.condition, value: parseInt(e.target.value) || 0 } })}
-                className="w-full text-sm border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full text-base sm:text-sm border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
             <div className="w-20">
@@ -184,7 +184,7 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
                 placeholder="All"
                 value={block.limit ?? ''}
                 onChange={(e) => onChange({ ...block, limit: e.target.value ? parseInt(e.target.value) : null })}
-                className="w-full text-sm border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full text-base sm:text-sm border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
           </div>
@@ -200,7 +200,7 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
               value={block.textTemplate || ''}
               onChange={(e) => onChange({ ...block, textTemplate: e.target.value })}
               rows={3}
-              className="w-full text-sm border border-gray-300 rounded-md p-2 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono"
+              className="w-full text-base sm:text-sm border border-gray-300 rounded-md p-2 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono"
               placeholder="e.g. {names} ഖുർആൻ പഠനം പൂർത്തിയാക്കി\n\n"
             />
             {!hideCondition && !usesCount && (
@@ -218,7 +218,7 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
               value={block.elseText || ''}
               onChange={(e) => onChange({ ...block, elseText: e.target.value })}
               rows={2}
-              className="w-full text-sm border border-gray-300 rounded-md p-2 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono"
+              className="w-full text-base sm:text-sm border border-gray-300 rounded-md p-2 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-400 font-mono"
               placeholder="Leave empty to show nothing when list is empty."
             />
           </div>
@@ -299,18 +299,18 @@ export default function ReplyTemplateBuilder({ blocks, onChange, onSave, onCance
     <div className="border border-indigo-200 rounded-xl bg-indigo-50 p-5 space-y-4">
       <div className="flex items-center justify-between">
         <h4 className="font-semibold text-indigo-900 text-base">Edit Reply Template</h4>
-        <button type="button" onClick={onCancel} className="text-gray-500 hover:text-gray-700">
+        <button type="button" onClick={onCancel} className="text-gray-500 hover:text-gray-700 p-2 -m-2 rounded-full">
           <X className="w-5 h-5" />
         </button>
       </div>
 
       {/* Quarter selector */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <label className="text-xs font-semibold text-indigo-800">Quarter for field labels:</label>
         <select
           value={selectedQuarter || ''}
           onChange={(e) => onQuarterChange && onQuarterChange(Number(e.target.value))}
-          className="text-sm border border-indigo-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+          className="text-[13px] sm:text-sm border border-indigo-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
         >
           <option value={1}>Q1 (ജനുവരി-മാർച്ച്)</option>
           <option value={2}>Q2 (ഏപ്രിൽ-ജൂൺ)</option>
@@ -354,25 +354,25 @@ export default function ReplyTemplateBuilder({ blocks, onChange, onSave, onCance
         <button
           type="button"
           onClick={addStatic}
-          className="flex items-center gap-1 text-sm px-3 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-gray-700"
+          className="flex items-center gap-1 text-sm px-3 py-2.5 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-gray-700"
         >
           <Plus className="w-4 h-4" /> Add Static Block
         </button>
         <button
           type="button"
           onClick={addData}
-          className="flex items-center gap-1 text-sm px-3 py-2 border border-indigo-300 rounded-lg bg-white hover:bg-indigo-50 text-indigo-700"
+          className="flex items-center gap-1 text-sm px-3 py-2.5 border border-indigo-300 rounded-lg bg-white hover:bg-indigo-50 text-indigo-700"
         >
           <Plus className="w-4 h-4" /> Add Data Block
         </button>
       </div>
 
       {/* Footer actions */}
-      <div className="flex items-center justify-between pt-2 border-t border-indigo-200">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-indigo-200">
         <button
           type="button"
           onClick={handleReset}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 p-2 -m-2"
         >
           <RotateCcw className="w-4 h-4" /> Reset to Default
         </button>
@@ -380,7 +380,7 @@ export default function ReplyTemplateBuilder({ blocks, onChange, onSave, onCance
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-gray-700"
+            className="px-4 py-2.5 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-50 text-gray-700"
           >
             Cancel
           </button>
@@ -388,7 +388,7 @@ export default function ReplyTemplateBuilder({ blocks, onChange, onSave, onCance
             type="button"
             onClick={() => onSave(localBlocks)}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {saving ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

@@ -34,6 +34,15 @@ const AlternativeSubmissionForm = () => {
     }
     return '/ihthisabi/dashboard'
   }
+
+  // Get the correct "submit a report" entry point based on user role —
+  // '/ihthisabi/submit' is rukn-only, a unit admin must land on their own route.
+  const getSubmitFormPath = () => {
+    if (authUser?.role === 'unitAdmin') {
+      return '/ihthisabi/unitadmin/submit-form'
+    }
+    return '/ihthisabi/submit'
+  }
   const [loading, setLoading] = useState(false)
   const [hasExistingSubmission, setHasExistingSubmission] = useState(false)
   const [editMode, setEditMode] = useState(false)
@@ -122,7 +131,7 @@ const AlternativeSubmissionForm = () => {
         setSelectedYear(parseInt(year))
       } else {
         // If no quarter/year provided, redirect to regular submission form
-        navigate('/ihthisabi/submit')
+        navigate(getSubmitFormPath())
       }
     }
   }, [id])
@@ -262,7 +271,7 @@ const AlternativeSubmissionForm = () => {
       if (authUser?.role === 'admin') {
         navigate('/ihthisabi/admin/submissions')
       } else {
-        navigate('/ihthisabi/submit')
+        navigate(getSubmitFormPath())
       }
     } catch (error) {
       console.error('Failed to delete submission:', error)
@@ -614,7 +623,7 @@ const AlternativeSubmissionForm = () => {
   if (viewMode) {
     if (authLoading || loading) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="ih-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading submission details...</p>
@@ -625,7 +634,7 @@ const AlternativeSubmissionForm = () => {
 
     if (!submission) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="ih-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Submission Not Found</h3>
@@ -647,7 +656,7 @@ const AlternativeSubmissionForm = () => {
 
     return (
       <>
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="ih-screen bg-gray-50 py-8">
           <div className="max-w-4xl mx-auto px-4">
             <button
               onClick={() => {
@@ -655,10 +664,10 @@ const AlternativeSubmissionForm = () => {
                 if (authUser?.role === 'admin') {
                   navigate('/ihthisabi/admin/submissions')
                 } else {
-                  navigate('/ihthisabi/submit')
+                  navigate(getSubmitFormPath())
                 }
               }}
-              className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              className="mb-6 flex items-center py-2.5 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
               {authUser?.role === 'admin' ? 'Back to Submissions' : 'Back to Quarter Selection'}
@@ -667,21 +676,21 @@ const AlternativeSubmissionForm = () => {
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">Alternative Submission Details</h1>
+                  <h1 className="hidden lg:block text-3xl font-bold text-gray-900 mb-2">Alternative Submission Details</h1>
                   <p className="text-gray-600">{submission.periodDisplay || 'N/A'}</p>
                 </div>
                 {isOwner && (
                   <div className="flex space-x-2">
                     <button
                       onClick={() => navigate(`/ihthisabi/alternative-submission?edit=${id}`)}
-                      className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="flex items-center px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
                     </button>
                     <button
                       onClick={() => setDeleteModal({ isOpen: true })}
-                      className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      className="flex items-center px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Delete
@@ -757,7 +766,7 @@ const AlternativeSubmissionForm = () => {
                       <MessageSquare className="w-5 h-5 mr-2" />
                       <span className="font-semibold">Admin Reply</span>
                     </div>
-                    <p className="text-blue-900 ml-7 whitespace-pre-wrap mb-3">
+                    <p className="text-blue-900 ml-7 whitespace-pre-wrap break-words mb-3">
                       {submission.adminReply.message}
                     </p>
                     {submission.adminReply.repliedBy && (
@@ -787,7 +796,7 @@ const AlternativeSubmissionForm = () => {
                     {submission.adminReply?.message && (
                       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                         <div className="text-xs text-blue-800 mb-2 font-medium">Previous Reply:</div>
-                        <p className="text-sm text-blue-900 whitespace-pre-wrap">{submission.adminReply.message}</p>
+                        <p className="text-sm text-blue-900 whitespace-pre-wrap break-words">{submission.adminReply.message}</p>
                         {submission.adminReply.repliedAt && (
                           <div className="text-xs text-blue-700 mt-2">
                             Replied on: {formatDate(submission.adminReply.repliedAt)}
@@ -803,7 +812,7 @@ const AlternativeSubmissionForm = () => {
                         onChange={(e) => setReplyMessage(e.target.value)}
                         placeholder="Enter your reply message..."
                         rows={4}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                        className="w-full px-3 py-2 text-[16px] sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                       />
                       
                       {whatsappStatus !== null && (
@@ -821,7 +830,7 @@ const AlternativeSubmissionForm = () => {
                         <button
                           onClick={handleSubmitReply}
                           disabled={!replyMessage.trim() || replyLoading}
-                          className="px-4 py-2 text-sm text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center font-medium shadow-sm"
+                          className="px-4 py-2.5 text-sm text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center font-medium shadow-sm"
                           style={{ backgroundColor: '#121A2A' }}
                         >
                           {replyLoading ? (
@@ -871,7 +880,7 @@ const AlternativeSubmissionForm = () => {
   // Form mode - show form
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="ih-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
@@ -885,22 +894,23 @@ const AlternativeSubmissionForm = () => {
     <>
       {/* Fixed Close Button - Top Right Corner */}
       <button
-        onClick={() => navigate('/ihthisabi/dashboard')}
-        className="fixed top-4 right-4 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+        onClick={() => navigate(getDashboardPath())}
+        className="fixed top-16 right-4 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white shadow-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors lg:top-4"
         title="Close"
       >
         <X className="w-5 h-5" />
       </button>
 
       <div className="h-screen bg-gray-50 overflow-hidden flex flex-col pt-2">
-        <div className="max-w-2xl mx-auto px-4 w-full flex-1 overflow-y-auto">
+        <div className="max-w-2xl mx-auto px-4 w-full flex-1 overflow-y-auto ih-mobile-bottom-safe lg:pb-0">
           {/* Heading outside container */}
           <div className="mb-4 mt-2">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {editMode ? 'Akternate Submission Edit' : 'Alternate Submission'}
+            <h1 className="hidden lg:block text-3xl font-bold text-gray-900 mb-2">
+              {editMode ? 'Alternate Submission Edit' : 'Alternate Submission'}
             </h1>
             <p className="text-gray-600">
-              {selectedQuarter && selectedYear 
+              {editMode ? 'Editing · ' : ''}
+              {selectedQuarter && selectedYear
                 ? `Quarter ${selectedQuarter}, ${selectedYear}`
                 : 'Select quarter to continue'}
             </p>
@@ -930,7 +940,7 @@ const AlternativeSubmissionForm = () => {
                 rules={{ required: 'Type is required' }}
                 render={({ field }) => (
                   <div className="flex space-x-6">
-                    <label className="flex items-center">
+                    <label className="flex items-center min-h-[44px]">
                       <input
                         type="radio"
                         value="Aged"
@@ -940,7 +950,7 @@ const AlternativeSubmissionForm = () => {
                       />
                       <span className="ml-2 text-sm text-gray-700">വാർദ്ധക്യം</span>
                     </label>
-                    <label className="flex items-center">
+                    <label className="flex items-center min-h-[44px]">
                       <input
                         type="radio"
                         value="Patient"
@@ -970,7 +980,7 @@ const AlternativeSubmissionForm = () => {
                   type="text"
                   readOnly
                   value={districtName || user?.district || ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed text-[16px] sm:text-base"
                 />
                 {errors.district && (
                   <p className="mt-1 text-sm text-red-600">{errors.district.message}</p>
@@ -987,7 +997,7 @@ const AlternativeSubmissionForm = () => {
                   type="text"
                   readOnly
                   value={areaName || user?.area || ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed text-[16px] sm:text-base"
                 />
                 {errors.area && (
                   <p className="mt-1 text-sm text-red-600">{errors.area.message}</p>
@@ -1007,7 +1017,7 @@ const AlternativeSubmissionForm = () => {
                   type="text"
                   readOnly
                   value={user?.unit || ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed text-[16px] sm:text-base"
                 />
                 {errors.unit && (
                   <p className="mt-1 text-sm text-red-600">{errors.unit.message}</p>
@@ -1022,7 +1032,7 @@ const AlternativeSubmissionForm = () => {
                 <input
                   {...register('ruknName', { required: 'Rukn name is required', maxLength: { value: 100, message: 'Rukn name cannot exceed 100 characters' } })}
                   type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-[16px] sm:text-base"
                   placeholder="റുഖ്ൻ പേര് നൽകുക"
                 />
                 {errors.ruknName && (
@@ -1039,7 +1049,7 @@ const AlternativeSubmissionForm = () => {
               <textarea
                 {...register('reason', { maxLength: { value: 1000, message: 'Reason cannot exceed 1000 characters' } })}
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-[16px] sm:text-base"
                 placeholder="Enter remarks"
               />
               {errors.reason && (
@@ -1048,18 +1058,18 @@ const AlternativeSubmissionForm = () => {
             </div>
 
             {/* Submit Buttons */}
-            <div className="flex items-center justify-end space-x-4 pt-4">
+            <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
               <button
                 type="button"
                 onClick={() => navigate(getDashboardPath())}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="w-full sm:w-auto px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading || !selectedQuarter || !selectedYear}
-                className="px-6 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center hover:opacity-90"
+                className="w-full sm:w-auto justify-center px-6 py-2.5 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center hover:opacity-90"
                 style={{ backgroundColor: '#101828' }}
               >
                 {loading ? (

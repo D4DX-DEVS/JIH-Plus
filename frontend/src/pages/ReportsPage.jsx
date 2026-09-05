@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import {
-  ArrowLeft, Search, Edit, Trash2, Eye, Plus, Save,
-  FileText, Globe, EyeOff, X, Settings, CheckCircle2, Copy, FileStack,
-} from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Eye, Plus, Save, FileText, Globe, EyeOff, X, Settings, CheckCircle2, Copy, FileStack, MapPin, Activity } from 'lucide-react';
 import axios from 'axios';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
@@ -12,6 +9,7 @@ import FieldTypeSelector from '../components/reportBuilder/FieldTypeSelector';
 import DynamicFormRenderer from '../components/reportRenderer/DynamicFormRenderer';
 import jihLogo from '../assets/LogoColor.png';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import { JihFilterBar, JihFilterSelect, JihFab } from '../components/JihToolbar';
 
 const authHeader = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
 const TYPE_LABELS = { monthly: 'Monthly', special: 'Special', yearly: 'Yearly', quarterly: 'Quarterly' };
@@ -21,7 +19,7 @@ function nextId() { return _nextFieldId++; }
 function makeNewPage(order = 0) { return { id: nextId(), title: '', description: '', order, fields: [] }; }
 function makeNewField(type) {
   return {
-    id: nextId(), type, label: '', required: false, placeholder: '', helpText: '',
+    id: nextId(), type, label: '', required: false, placeholder: '', helpText: '', width: 'full',
     options: ['select', 'dropdown', 'radio', 'checkbox', 'multiselect'].includes(type) ? ['Option 1', 'Option 2'] : [],
     validation: {}, conditionalLogic: null,
     rowTitles: type === 'row' ? ['Row 1'] : [],
@@ -122,16 +120,8 @@ function ReportListView({ onLogout }) {
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => setShowLogoutModal(true)} adminData={adminData} />
 
       <div className="flex-1 min-w-0 flex flex-col overflow-y-auto overflow-x-hidden">
-        <MobileTopBar
-          title="റിപ്പോർട്ടുകൾ"
-          actions={
-            <button
-              onClick={() => navigate('/create-report')}
-              className="flex items-center gap-1 rounded-lg bg-[#002349] px-2.5 py-1.5 text-xs font-semibold text-white">
-              <Plus size={14} /> New
-            </button>
-          }
-        />
+        <MobileTopBar title="റിപ്പോർട്ടുകൾ" />
+        <JihFab onClick={() => navigate('/create-report')} label="New Report" />
 
         <div className="hidden lg:flex bg-white border-b px-6 py-3 items-center gap-3 sticky top-0 z-10 shadow-sm">
           <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
@@ -149,30 +139,33 @@ function ReportListView({ onLogout }) {
         {error && <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{error}</div>}
         {success && <div className="mb-3 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">{success}</div>}
 
-        <div className="bg-white rounded-xl border p-3 mb-4 flex flex-wrap gap-2">
-          <div className="relative flex-1 min-w-40">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search reports..." className="pl-8 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm w-full outline-none focus:ring-2 focus:ring-blue-300" />
-          </div>
-          <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none">
+        <JihFilterBar
+          className="mb-4"
+          search={search}
+          onSearchChange={setSearch}
+          placeholder="Search reports..."
+          activeFilterCount={[typeFilter, reportForFilter, statusFilter].filter(Boolean).length}
+          onClear={() => { setTypeFilter(''); setReportForFilter(''); setStatusFilter(''); }}
+        >
+          <JihFilterSelect value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
             <option value="">All Types</option>
             <option value="monthly">Monthly</option>
             <option value="quarterly">Quarterly</option>
             <option value="special">Special</option>
             <option value="yearly">Yearly</option>
-          </select>
-          <select value={reportForFilter} onChange={e => setReportForFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none">
+          </JihFilterSelect>
+          <JihFilterSelect icon={MapPin} value={reportForFilter} onChange={e => setReportForFilter(e.target.value)}>
             <option value="">All Levels</option>
             <option value="district">District</option>
             <option value="area">Area</option>
             <option value="unit">Unit</option>
-          </select>
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none">
+          </JihFilterSelect>
+          <JihFilterSelect icon={Activity} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
-          </select>
-        </div>
+          </JihFilterSelect>
+        </JihFilterBar>
 
         <div className="bg-white rounded-xl border overflow-hidden">
           {loading ? (
@@ -183,7 +176,7 @@ function ReportListView({ onLogout }) {
             <div className="text-center py-12 text-gray-400">
               <FileText size={32} className="mx-auto mb-2 opacity-50" />
               <p>No reports found</p>
-              <button onClick={() => navigate('/create-report')} className="mt-3 text-sm text-blue-600 hover:underline">Create your first report</button>
+              <button onClick={() => navigate('/create-report')} className="mt-3 inline-flex min-h-[44px] items-center px-3 text-sm text-blue-600 hover:underline">Create your first report</button>
             </div>
           ) : (
             <>
@@ -202,14 +195,14 @@ function ReportListView({ onLogout }) {
                     {r.legacy && <span className="text-[11px] text-orange-500">legacy</span>}
                     {r.recurringMonthly && <span className="text-[11px] text-blue-500">template</span>}
                   </div>
-                  <div className="flex items-center gap-1 mt-2">
-                    <button onClick={() => navigate(`/view-report/${r._id}`)} className="p-1.5 text-gray-500 hover:text-blue-600 border border-gray-200 rounded-lg" title="View"><Eye size={16} /></button>
-                    <button onClick={() => navigate(`/edit-report/${r._id}`)} className="p-1.5 text-gray-500 hover:text-green-600 border border-gray-200 rounded-lg" title="Edit"><Edit size={16} /></button>
-                    <button onClick={() => handleClone(r)} className="p-1.5 text-gray-500 hover:text-indigo-600 border border-gray-200 rounded-lg" title="Clone"><Copy size={16} /></button>
-                    <button onClick={() => togglePublish(r)} className="p-1.5 text-gray-500 hover:text-purple-600 border border-gray-200 rounded-lg" title={r.isPublished ? 'Unpublish' : 'Publish'}>
+                  <div className="flex items-center gap-2 mt-2">
+                    <button onClick={() => navigate(`/view-report/${r._id}`)} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-blue-600 border border-gray-200 rounded-lg" title="View"><Eye size={16} /></button>
+                    <button onClick={() => navigate(`/edit-report/${r._id}`)} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-green-600 border border-gray-200 rounded-lg" title="Edit"><Edit size={16} /></button>
+                    <button onClick={() => handleClone(r)} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-indigo-600 border border-gray-200 rounded-lg" title="Clone"><Copy size={16} /></button>
+                    <button onClick={() => togglePublish(r)} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-purple-600 border border-gray-200 rounded-lg" title={r.isPublished ? 'Unpublish' : 'Publish'}>
                       {r.isPublished ? <EyeOff size={16} /> : <Globe size={16} />}
                     </button>
-                    <button onClick={() => { setReportToDelete(r); setShowDeleteModal(true); }} className="p-1.5 text-gray-500 hover:text-red-500 border border-gray-200 rounded-lg" title="Delete"><Trash2 size={16} /></button>
+                    <button onClick={() => { setReportToDelete(r); setShowDeleteModal(true); }} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-500 hover:text-red-500 border border-gray-200 rounded-lg" title="Delete"><Trash2 size={16} /></button>
                   </div>
                 </div>
               ))}
@@ -277,9 +270,9 @@ function ReportListView({ onLogout }) {
           <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
             <span>{totalCount} total</span>
             <div className="flex gap-2">
-              <button disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1 border rounded disabled:opacity-40 hover:bg-gray-50">Prev</button>
+              <button disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-2 lg:py-1 border rounded disabled:opacity-40 hover:bg-gray-50">Prev</button>
               <span className="px-3 py-1">{currentPage} / {totalPages}</span>
-              <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1 border rounded disabled:opacity-40 hover:bg-gray-50">Next</button>
+              <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-2 lg:py-1 border rounded disabled:opacity-40 hover:bg-gray-50">Next</button>
             </div>
           </div>
         )}
@@ -312,6 +305,7 @@ function ReportBuilderView({ reportId, onLogout }) {
     startDate: '',
   });
   const [loading, setLoading] = useState(isEdit);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -330,8 +324,19 @@ function ReportBuilderView({ reportId, onLogout }) {
   }, []);
 
   useEffect(() => {
+    if (!showPreview) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowPreview(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showPreview]);
+
+  const loadReport = () => {
     if (!isEdit) return;
     (async () => {
+      setLoading(true);
+      setLoadFailed(false);
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/reports/${reportId}`, authHeader());
         if (res.data.success) {
@@ -361,6 +366,7 @@ function ReportBuilderView({ reportId, onLogout }) {
                 required: q.isRequired || false,
                 placeholder: q.placeholder || '',
                 helpText: '',
+                width: 'full',
                 options: q.options || [],
                 validation: {},
                 conditionalLogic: null,
@@ -371,9 +377,14 @@ function ReportBuilderView({ reportId, onLogout }) {
             setPages(converted);
           }
         }
-      } catch { setError('Failed to load report'); }
+      } catch { setError('Failed to load report'); setLoadFailed(true); }
       finally { setLoading(false); }
     })();
+  };
+
+  useEffect(() => {
+    loadReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportId, isEdit]);
 
   const allFields = pages.flatMap(p => p.fields || []);
@@ -447,6 +458,20 @@ function ReportBuilderView({ reportId, onLogout }) {
     </div>
   );
 
+  if (loadFailed) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="bg-white border-2 border-red-200 rounded-2xl p-8 max-w-md text-center shadow-lg">
+        <p className="text-red-600 font-semibold mb-6">{error || 'Failed to load report'}</p>
+        <button
+          onClick={loadReport}
+          className="min-h-[44px] px-6 py-3 bg-[#002349] hover:bg-[#1a3a5c] text-white rounded-2xl font-semibold transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  );
+
   // ── Step 0: Choose Report Type ──────────────────────────────────────────────
   if (setupStep === 0) {
     const types = [
@@ -486,7 +511,7 @@ function ReportBuilderView({ reportId, onLogout }) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <header className="bg-white border-b px-4 py-3 flex items-center gap-3 shadow-sm">
-          <button onClick={() => navigate('/view-reports')} className="text-gray-400 hover:text-gray-700 p-1">
+          <button onClick={() => navigate('/view-reports')} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-400 hover:text-gray-700">
             <ArrowLeft size={20} />
           </button>
           <img src={jihLogo} alt="JIH" className="h-7 w-auto hidden sm:block" />
@@ -494,7 +519,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           <span className="text-xs text-gray-400 font-medium">Step 1 of 2</span>
         </header>
 
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-10">
+        <div className="flex-1 flex flex-col items-center justify-start lg:justify-center px-4 py-6 lg:py-10">
           <div className="w-full max-w-xl">
             {/* Progress */}
             <div className="flex items-center gap-2 mb-8">
@@ -567,7 +592,7 @@ function ReportBuilderView({ reportId, onLogout }) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <header className="bg-white border-b px-4 py-3 flex items-center gap-3 shadow-sm">
-          <button onClick={() => setSetupStep(0)} className="text-gray-400 hover:text-gray-700 p-1">
+          <button onClick={() => setSetupStep(0)} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-400 hover:text-gray-700">
             <ArrowLeft size={20} />
           </button>
           <img src={jihLogo} alt="JIH" className="h-7 w-auto hidden sm:block" />
@@ -578,7 +603,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           <span className="text-xs text-gray-400 font-medium">Step 2 of 2</span>
         </header>
 
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-10">
+        <div className="flex-1 flex flex-col items-center justify-start lg:justify-center px-4 py-6 lg:py-10">
           <div className="w-full max-w-xl">
             {/* Progress */}
             <div className="flex items-center gap-2 mb-8">
@@ -619,7 +644,7 @@ function ReportBuilderView({ reportId, onLogout }) {
   const Toggle = ({ value, onChange }) => (
     <button
       type="button"
-      onClick={() => onChange(!value)}
+      onClick={(e) => { e.stopPropagation(); onChange(!value); }}
       className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 focus:outline-none ${value ? 'bg-[#002349]' : 'bg-gray-300'}`}
     >
       <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-5' : ''}`} />
@@ -690,19 +715,28 @@ function ReportBuilderView({ reportId, onLogout }) {
       <div>
         <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2.5">Settings</p>
         <div className="space-y-3">
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label
+            className="flex min-h-[44px] items-center gap-3 cursor-pointer"
+            onClick={() => setReportMeta(m => ({ ...m, isActive: !m.isActive }))}
+          >
             <Toggle value={reportMeta.isActive} onChange={v => setReportMeta(m => ({ ...m, isActive: v }))} />
             <span className="text-sm text-gray-700">Active (visible to users)</span>
           </label>
           {reportMeta.type === 'monthly' && (
-            <label className="flex items-center gap-3 cursor-pointer">
+            <label
+              className="flex min-h-[44px] items-center gap-3 cursor-pointer"
+              onClick={() => setReportMeta(m => ({ ...m, recurringMonthly: !m.recurringMonthly }))}
+            >
               <Toggle value={reportMeta.recurringMonthly} onChange={v => setReportMeta(m => ({ ...m, recurringMonthly: v }))} />
               <span className="text-sm text-gray-700">Recurring monthly template</span>
             </label>
           )}
           {reportMeta.type === 'quarterly' && (
             <>
-              <label className="flex items-center gap-3 cursor-pointer">
+              <label
+                className="flex min-h-[44px] items-center gap-3 cursor-pointer"
+                onClick={() => setReportMeta(m => ({ ...m, recurringQuarterly: !m.recurringQuarterly }))}
+              >
                 <Toggle value={reportMeta.recurringQuarterly} onChange={v => setReportMeta(m => ({ ...m, recurringQuarterly: v }))} />
                 <span className="text-sm text-gray-700">Recurring quarterly template</span>
               </label>
@@ -752,7 +786,7 @@ function ReportBuilderView({ reportId, onLogout }) {
                   <button
                     type="button"
                     onClick={e => { e.stopPropagation(); handleRemovePage(pi); }}
-                    className={`p-0.5 rounded ${pi === activePage ? 'text-red-300 hover:text-red-100' : 'text-gray-300 hover:text-red-400'}`}
+                    className={`p-1.5 lg:p-0.5 rounded ${pi === activePage ? 'text-red-300 hover:text-red-100' : 'text-gray-300 hover:text-red-400'}`}
                   >
                     <Trash2 size={12} />
                   </button>
@@ -778,7 +812,7 @@ function ReportBuilderView({ reportId, onLogout }) {
       <header className="bg-white border-b px-3 sm:px-4 py-2.5 flex items-center gap-2 sm:gap-3 z-20 shadow-sm flex-shrink-0">
         <button
           onClick={() => navigate('/view-reports')}
-          className="text-gray-500 hover:text-gray-800 transition-colors p-1 flex-shrink-0"
+          className="text-gray-500 hover:text-gray-800 transition-colors p-2.5 lg:p-1 flex-shrink-0"
         >
           <ArrowLeft size={20} />
         </button>
@@ -790,7 +824,7 @@ function ReportBuilderView({ reportId, onLogout }) {
             value={reportMeta.title}
             onChange={e => setReportMeta(m => ({ ...m, title: e.target.value }))}
             placeholder="Enter report title..."
-            className="w-full text-sm sm:text-base font-bold text-[#002349] border-0 border-b-2 border-transparent focus:border-blue-400 outline-none bg-transparent placeholder:text-gray-300"
+            className="w-full text-base font-bold text-[#002349] border-0 border-b-2 border-transparent focus:border-blue-400 outline-none bg-transparent placeholder:text-gray-300"
           />
         </div>
 
@@ -803,7 +837,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           }`}>{TYPE_LABELS[reportMeta.type]}</span>
           <button
             onClick={() => setShowConfigPanel(true)}
-            className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
           >
             <Settings size={15} />
           </button>
@@ -814,7 +848,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           <button
             onClick={() => { setPreviewScope('page'); setShowPreview(true); }}
             title={`Preview this page only (${pages[activePage]?.title || `Page ${activePage + 1}`})`}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2.5 lg:py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <Eye size={14} />
             <span className="hidden sm:inline">Preview Page</span>
@@ -823,7 +857,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           <button
             onClick={() => { setPreviewScope('all'); setShowPreview(true); }}
             title={`Preview the full report (${pages.length} page${pages.length !== 1 ? 's' : ''})`}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2.5 lg:py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <FileStack size={14} />
             <span className="hidden sm:inline">Preview All</span>
@@ -834,7 +868,7 @@ function ReportBuilderView({ reportId, onLogout }) {
         <button
           onClick={() => handleSave(false)}
           disabled={saving}
-          className="flex items-center gap-1.5 border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-60 transition-colors flex-shrink-0"
+          className="flex items-center gap-1.5 border border-gray-300 text-gray-700 px-3 py-2.5 lg:py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-60 transition-colors flex-shrink-0"
         >
           <Save size={14} />
           <span className="hidden sm:inline">{saving ? 'Saving...' : 'Save Draft'}</span>
@@ -844,7 +878,7 @@ function ReportBuilderView({ reportId, onLogout }) {
         <button
           onClick={() => handleSave(true)}
           disabled={saving}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-60 transition-colors flex-shrink-0 ${
+          className={`flex items-center gap-1.5 px-3 py-2.5 lg:py-1.5 rounded-lg text-sm font-medium disabled:opacity-60 transition-colors flex-shrink-0 ${
             isPublished
               ? 'bg-green-600 hover:bg-green-700 text-white'
               : 'bg-[#002349] hover:bg-[#1a3a5c] text-white'
@@ -908,7 +942,7 @@ function ReportBuilderView({ reportId, onLogout }) {
                     <span
                       role="button"
                       onClick={e => { e.stopPropagation(); handleRemovePage(pi); }}
-                      className={`ml-0.5 rounded hover:text-red-400 ${pi === activePage ? 'text-gray-400' : 'text-gray-300'}`}
+                      className={`ml-0.5 p-1 lg:p-0 rounded hover:text-red-400 ${pi === activePage ? 'text-gray-400' : 'text-gray-300'}`}
                     >
                       <X size={12} />
                     </span>
@@ -1056,9 +1090,9 @@ function ReportSingleView({ reportId, onLogout }) {
           title={report?.title || 'Report'}
           actions={
             <>
-              <button onClick={() => navigate('/view-reports')} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"><ArrowLeft size={18} /></button>
+              <button onClick={() => navigate('/view-reports')} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"><ArrowLeft size={18} /></button>
               {report && (
-                <button onClick={() => navigate(`/edit-report/${reportId}`)} className="flex items-center gap-1 rounded-lg bg-[#002349] px-2.5 py-1.5 text-xs font-semibold text-white">
+                <button onClick={() => navigate(`/edit-report/${reportId}`)} className="flex min-h-[44px] items-center gap-1 rounded-lg bg-[#002349] px-3 py-1.5 text-xs font-semibold text-white">
                   <Edit size={14} /> Edit
                 </button>
               )}
@@ -1078,7 +1112,7 @@ function ReportSingleView({ reportId, onLogout }) {
             </button>
           )}
         </div>
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full min-w-0">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-4xl mx-auto w-full min-w-0">
         {error && <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg mb-4">{error}</div>}
         {report && (
           <div className="bg-white rounded-xl border p-5 space-y-4">
@@ -1089,8 +1123,8 @@ function ReportSingleView({ reportId, onLogout }) {
               {!report.isActive && <span className="px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-600">Inactive</span>}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-800">{report.title}</h2>
-              {report.description && <p className="text-sm text-gray-600 mt-1">{report.description}</p>}
+              <h2 className="hidden lg:block text-xl font-bold text-gray-800">{report.title}</h2>
+              {report.description && <p className="text-sm text-gray-600 mt-1 break-words leading-relaxed">{report.description}</p>}
             </div>
             {(report.pages || []).length > 0 ? (
               <div className="border border-gray-100 rounded-lg">

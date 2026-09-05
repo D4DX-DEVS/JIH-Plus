@@ -69,7 +69,7 @@ const PartC = () => {
       {/* Platforms Table */}
       <div className="mb-4">
         <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300">
+          <table className="w-full border border-gray-300 min-w-[560px]">
             <thead>
               <tr className="bg-gray-50">
                 <th className="border border-gray-300 px-3 py-2 text-left font-medium">വിവരങ്ങൾ</th>
@@ -89,7 +89,7 @@ const PartC = () => {
                       type="number"
                       value={formData.partC?.[platform.key]?.count ?? ''}
                       onChange={(e) => handleChange(platform.key, 'count', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-center"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-base"
                       placeholder="എണ്ണം"
                     />
                   </td>
@@ -98,7 +98,7 @@ const PartC = () => {
                       type="number"
                       value={formData.partC?.[platform.key]?.cooperatingOthers ?? ''}
                       onChange={(e) => handleChange(platform.key, 'cooperatingOthers', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-center"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-center text-[16px] sm:text-base"
                       placeholder="എണ്ണം"
                     />
                   </td>
@@ -107,7 +107,7 @@ const PartC = () => {
                       type="text"
                       value={formData.partC?.[platform.key]?.remarks ?? ''}
                       onChange={(e) => handleChange(platform.key, 'remarks', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-[16px] sm:text-base"
                       placeholder="അഭിപ്രായങ്ങൾ"
                     />
                   </td>

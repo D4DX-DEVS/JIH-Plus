@@ -4,6 +4,8 @@ import {
   Globe,
   FileText,
   Search,
+  Filter,
+  SlidersHorizontal,
   CheckCircle2,
   Clock,
   XCircle,
@@ -72,7 +74,7 @@ const MemberDetailDrawer = ({ memberId, submissions, onClose, onViewSubmission }
       <div className="w-full max-w-xl bg-white shadow-2xl flex flex-col h-full">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-bold text-gray-900">Member Details</h3>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+          <button onClick={onClose} className="p-2 -m-2 rounded-lg hover:bg-gray-100 text-gray-500" aria-label="Close">
             <CloseIcon className="w-5 h-5" />
           </button>
         </div>
@@ -87,22 +89,22 @@ const MemberDetailDrawer = ({ memberId, submissions, onClose, onViewSubmission }
             <>
               <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+                  <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
                     {(member.name || '?').charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <div className="font-bold text-gray-900">{member.name || '—'}</div>
-                    {member.ruknId && <div className="text-sm text-gray-500 font-mono">{member.ruknId}</div>}
+                  <div className="min-w-0">
+                    <div className="font-bold text-gray-900 truncate">{member.name || '—'}</div>
+                    {member.ruknId && <div className="text-sm text-gray-500 font-mono truncate">{member.ruknId}</div>}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-600 min-w-0">
                     <MapPin className="w-4 h-4 flex-shrink-0" />
-                    <span>{[member.district, member.area, member.unit].filter(Boolean).join(' - ') || '—'}</span>
+                    <span className="truncate">{[member.district, member.area, member.unit].filter(Boolean).join(' - ') || '—'}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-600 min-w-0">
                     <Globe className="w-4 h-4 flex-shrink-0" />
-                    <span>{member.abroadCountry?.title || 'Unassigned Country'}</span>
+                    <span className="truncate">{member.abroadCountry?.title || 'Unassigned Country'}</span>
                   </div>
                 </div>
               </div>
@@ -519,7 +521,7 @@ const SubmissionDrawer = ({ submissionId, onClose, onRefresh }) => {
               <p className="text-xs text-gray-500">{details.periodDisplay}</p>
             )}
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+          <button onClick={onClose} className="p-2 -m-2 rounded-lg hover:bg-gray-100 text-gray-500" aria-label="Close">
             <CloseIcon className="w-5 h-5" />
           </button>
         </div>
@@ -535,15 +537,15 @@ const SubmissionDrawer = ({ submissionId, onClose, onRefresh }) => {
             <div className="space-y-4">
               {/* Member info */}
               <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
-                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-medium text-lg">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-medium text-lg shrink-0">
                   {(details.ruknName || 'U').charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <div className="text-sm font-semibold text-gray-900">{details.ruknName || 'Unknown Member'}</div>
-                  {details.ruknId && <div className="text-xs text-gray-500 font-mono">{details.ruknId}</div>}
-                  <div className="text-xs text-gray-500 flex items-center mt-0.5">
-                    <MapPin className="w-3.5 h-3.5 mr-1" />
-                    <span>{[details.district, details.area, details.unit].filter(Boolean).join(' - ') || '—'}</span>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-gray-900 truncate">{details.ruknName || 'Unknown Member'}</div>
+                  {details.ruknId && <div className="text-xs text-gray-500 font-mono truncate">{details.ruknId}</div>}
+                  <div className="text-xs text-gray-500 flex items-center mt-0.5 min-w-0">
+                    <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
+                    <span className="truncate">{[details.district, details.area, details.unit].filter(Boolean).join(' - ') || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -577,7 +579,7 @@ const SubmissionDrawer = ({ submissionId, onClose, onRefresh }) => {
                       key={s}
                       onClick={() => handleStatusUpdate(s)}
                       disabled={statusUpdating}
-                      className="px-3 py-1.5 text-xs border border-gray-300 rounded-full text-gray-700 hover:bg-gray-50 disabled:opacity-50 capitalize"
+                      className="px-3 py-2.5 text-xs border border-gray-300 rounded-full text-gray-700 hover:bg-gray-50 disabled:opacity-50 capitalize"
                     >
                       {statusUpdating ? '...' : `Mark ${s}`}
                     </button>
@@ -604,7 +606,7 @@ const SubmissionDrawer = ({ submissionId, onClose, onRefresh }) => {
             {details.adminReply?.message && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="text-xs text-blue-800 mb-2 font-medium">Previous Reply:</div>
-                <p className="text-sm text-blue-900 whitespace-pre-wrap">{details.adminReply.message}</p>
+                <p className="text-sm text-blue-900 whitespace-pre-wrap break-words">{details.adminReply.message}</p>
                 {details.adminReply.repliedAt && (
                   <div className="text-xs text-blue-700 mt-2">Replied on: {formatDate(details.adminReply.repliedAt)}</div>
                 )}
@@ -617,19 +619,19 @@ const SubmissionDrawer = ({ submissionId, onClose, onRefresh }) => {
                 onChange={e => setReplyMessage(e.target.value)}
                 placeholder="Enter your reply message..."
                 rows={3}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                className="w-full px-3 py-2 text-[16px] sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
               />
               <div className="flex items-center justify-end gap-2">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleReply}
                   disabled={!replyMessage.trim() || replyLoading}
-                  className="px-4 py-2 text-sm text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center font-medium shadow-sm"
+                  className="px-4 py-2.5 text-sm text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center font-medium shadow-sm"
                   style={{ backgroundColor: '#121A2A' }}
                 >
                   {replyLoading ? (
@@ -665,6 +667,7 @@ const AbroadSubmissions = () => {
   const [quarterFilter, setQuarterFilter] = useState('all')
   const [yearFilter, setYearFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [expandedCountries, setExpandedCountries] = useState({})
   const [areaOptions, setAreaOptions] = useState([])
   const [unitOptions, setUnitOptions] = useState([])
@@ -799,7 +802,7 @@ const AbroadSubmissions = () => {
 
   const toggleCountry = (key) => setExpandedCountries(prev => ({ ...prev, [key]: !prev[key] }))
 
-  const hasActiveFilters = searchTerm || selectedCountry !== 'all' || selectedArea !== 'all' || selectedUnit !== 'all' || statusFilter !== 'all' || quarterFilter !== 'all' || yearFilter !== 'all'
+  const activeFilterCount = [selectedCountry, selectedArea, selectedUnit, statusFilter, quarterFilter, yearFilter].filter(v => v !== 'all').length
   const clearFilters = () => {
     setSearchTerm('')
     setSelectedCountry('all')
@@ -822,109 +825,110 @@ const AbroadSubmissions = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
+        <div className="hidden lg:block">
           <h2 className="text-xl font-bold text-gray-900">Abroad Members</h2>
           <p className="text-sm text-gray-500 mt-1">Members marked as abroad — grouped by country</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
-            <Globe className="w-4 h-4 mr-1.5" />
+        <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 sm:mx-0 sm:gap-2 sm:px-0 [scrollbar-width:none]">
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium sm:px-3 sm:py-1.5 sm:text-sm bg-blue-50 text-blue-700 border border-blue-200">
+            <Globe className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4" />
             {countryGroups.length} {countryGroups.length === 1 ? 'country' : 'countries'}
           </span>
-          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
-            <UsersIcon className="w-4 h-4 mr-1.5" />
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium sm:px-3 sm:py-1.5 sm:text-sm bg-indigo-50 text-indigo-700 border border-indigo-200">
+            <UsersIcon className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4" />
             {totalMembers} {totalMembers === 1 ? 'member' : 'members'}
           </span>
-          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200">
-            <FileText className="w-4 h-4 mr-1.5" />
+          <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium sm:px-3 sm:py-1.5 sm:text-sm bg-gray-50 text-gray-700 border border-gray-200">
+            <FileText className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4" />
             {totalSubs} submissions
           </span>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex flex-wrap gap-3">
-          {/* Search */}
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                placeholder="Search by name or RUKN ID..."
-                className="form-input pl-10 w-full"
-              />
-            </div>
+      <div className="ih-surface p-2.5 sm:p-3">
+        {/* Search + filter toggle share one row */}
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
+            <Search className="ih-filter-icon" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Search by name or RUKN ID..."
+              className="ih-field h-[44px] pr-3 text-base sm:h-9 sm:text-sm"
+            />
           </div>
+          <button
+            onClick={() => setFiltersOpen(o => !o)}
+            className={`inline-flex h-[44px] shrink-0 items-center gap-1 rounded-full px-3 text-[11px] font-medium transition-colors sm:hidden ${
+              activeFilterCount > 0
+                ? 'bg-primary/10 text-primary'
+                : 'text-gray-500'
+            }`}
+            style={activeFilterCount > 0 ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
+            aria-expanded={filtersOpen}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            {activeFilterCount > 0 && <span>{activeFilterCount}</span>}
+            <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${filtersOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
 
-          {/* Country */}
-          <div className="min-w-[160px]">
-            <select value={selectedCountry} onChange={e => setSelectedCountry(e.target.value)} className="form-select w-full">
+        {/* Filter controls — collapsed on mobile until toggled, always shown from sm: */}
+        <div className={`${filtersOpen ? 'grid' : 'hidden'} mt-2 grid-cols-2 gap-2 sm:!grid sm:grid-cols-3 lg:grid-cols-6`}>
+          <div className="relative">
+            <Globe className="ih-filter-icon" />
+            <select value={selectedCountry} onChange={e => setSelectedCountry(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
               <option value="all">All Countries</option>
               {countryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
 
-          {/* Area */}
           {selectedCountry !== 'all' && (
-            <div className="min-w-[160px]">
-              <select value={selectedArea} onChange={e => setSelectedArea(e.target.value)} className="form-select w-full">
+            <div className="relative">
+              <MapPin className="ih-filter-icon" />
+              <select value={selectedArea} onChange={e => setSelectedArea(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                 <option value="all">All Areas</option>
                 {areaOptions.map(a => <option key={a._id} value={a._id}>{a.title}</option>)}
               </select>
             </div>
           )}
 
-          {/* Unit */}
           {selectedArea !== 'all' && (
-            <div className="min-w-[160px]">
-              <select value={selectedUnit} onChange={e => setSelectedUnit(e.target.value)} className="form-select w-full">
+            <div className="relative">
+              <MapPin className="ih-filter-icon" />
+              <select value={selectedUnit} onChange={e => setSelectedUnit(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
                 <option value="all">All Units</option>
                 {unitOptions.map(u => <option key={u._id} value={u._id}>{u.title}</option>)}
               </select>
             </div>
           )}
 
-          {/* Year */}
-          <div className="min-w-[120px]">
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <select
-                value={yearFilter}
-                onChange={e => setYearFilter(e.target.value)}
-                className="form-select pl-9 w-full"
-              >
-                <option value="all">All Years</option>
-                {yearOptions.map(y => (
-                  <option key={y} value={String(y)}>{y}</option>
-                ))}
-              </select>
-            </div>
+          <div className="relative">
+            <Calendar className="ih-filter-icon" />
+            <select value={yearFilter} onChange={e => setYearFilter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
+              <option value="all">All Years</option>
+              {yearOptions.map(y => (
+                <option key={y} value={String(y)}>{y}</option>
+              ))}
+            </select>
           </div>
 
-          {/* Quarter */}
-          <div className="min-w-[130px]">
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <select
-                value={quarterFilter}
-                onChange={e => setQuarterFilter(e.target.value)}
-                className="form-select pl-9 w-full"
-              >
-                <option value="all">All Quarters</option>
-                <option value="1">Q1 (Jan–Mar)</option>
-                <option value="2">Q2 (Apr–Jun)</option>
-                <option value="3">Q3 (Jul–Sep)</option>
-                <option value="4">Q4 (Oct–Dec)</option>
-              </select>
-            </div>
+          <div className="relative">
+            <Calendar className="ih-filter-icon" />
+            <select value={quarterFilter} onChange={e => setQuarterFilter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
+              <option value="all">All Quarters</option>
+              <option value="1">Q1 (Jan–Mar)</option>
+              <option value="2">Q2 (Apr–Jun)</option>
+              <option value="3">Q3 (Jul–Sep)</option>
+              <option value="4">Q4 (Oct–Dec)</option>
+            </select>
           </div>
 
-          {/* Status */}
-          <div className="min-w-[140px]">
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="form-select w-full">
+          <div className="relative">
+            <Filter className="ih-filter-icon" />
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="ih-filter-select truncate text-[13px] sm:text-sm">
               <option value="all">All Statuses</option>
               <option value="submitted">Submitted</option>
               <option value="reviewed">Reviewed</option>
@@ -932,13 +936,14 @@ const AbroadSubmissions = () => {
             </select>
           </div>
 
-          {/* Clear */}
-          {hasActiveFilters && (
+          {activeFilterCount > 0 && (
             <button
               onClick={clearFilters}
-              className="inline-flex items-center px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="col-span-2 inline-flex items-center justify-center gap-1 rounded-full px-2 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:text-gray-800 sm:col-span-1"
+              style={{ backgroundColor: 'rgba(16,24,40,0.04)' }}
             >
-              <CloseIcon className="w-4 h-4 mr-1" /> Clear
+              <CloseIcon className="w-3 h-3" />
+              Clear all
             </button>
           )}
         </div>
@@ -1071,41 +1076,39 @@ const MemberRow = ({ member, submissions, onViewSubmission, onOpenMemberDetails 
     <div className="border-b border-gray-50 last:border-0">
       {/* Member header row */}
       <div
-        className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 cursor-pointer"
+        className="ih-list-row cursor-pointer"
         onClick={() => onOpenMemberDetails(member, submissions)}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
-            {(member.name || '?').charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div className="font-semibold text-gray-900 text-sm">{member.name || '—'}</div>
-            <div className="flex items-center gap-2 mt-0.5">
-              {member.ruknId && (
-                <span className="text-xs text-gray-500 font-mono">{member.ruknId}</span>
-              )}
-              {member.unit && (
-                <span className="text-xs text-gray-400">· {member.unit}</span>
-              )}
-            </div>
+        <div className="ih-avatar bg-indigo-100 text-indigo-700">
+          {(member.name || '?').charAt(0).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="ih-list-title">{member.name || '—'}</div>
+          <div className="flex items-center gap-2 mt-0.5 min-w-0">
+            {member.ruknId && (
+              <span className="ih-list-meta shrink-0">{member.ruknId}</span>
+            )}
+            {member.unit && (
+              <span className="ih-list-meta">· {member.unit}</span>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 shrink-0">
           {submissions.length === 0 ? (
-            <span className="inline-flex items-center gap-1 text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full">
+            <span className="ih-chip bg-gray-50 border border-gray-200 text-gray-400">
               <AlertCircle className="w-3.5 h-3.5" />
               No submissions
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-xs text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">
+            <span className="ih-chip bg-blue-50 border border-blue-200 text-blue-700">
               <FileText className="w-3.5 h-3.5" />
               {submissions.length} submission{submissions.length !== 1 ? 's' : ''}
             </span>
           )}
 
           {latestSub && (
-            <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border font-medium ${statusColor(latestSub.status)}`}>
+            <span className={`ih-chip border font-medium ${statusColor(latestSub.status)}`}>
               {statusIcon(latestSub.status)}
               {latestSub.status}
             </span>
@@ -1117,7 +1120,7 @@ const MemberRow = ({ member, submissions, onViewSubmission, onOpenMemberDetails 
                 e.stopPropagation()
                 setExpanded(prev => !prev)
               }}
-              className="p-1 rounded hover:bg-gray-100"
+              className="ih-icon-btn"
               aria-label={expanded ? 'Collapse submissions' : 'Expand submissions'}
             >
               {expanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
@@ -1133,32 +1136,30 @@ const MemberRow = ({ member, submissions, onViewSubmission, onOpenMemberDetails 
             <div
               key={sub._id}
               onClick={() => onViewSubmission(sub._id)}
-              className="flex items-center justify-between px-8 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-0"
+              className="ih-list-row cursor-pointer pl-10 hover:bg-gray-100"
             >
-              <div className="flex items-center gap-3">
-                <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <div>
-                  <div className="text-sm font-medium text-gray-800">
-                    {sub.submissionPeriod
-                      ? `Q${sub.submissionPeriod.quarter} ${sub.submissionPeriod.year}`
-                      : 'Submission'}
-                  </div>
-                  <div className="text-xs text-gray-500">{formatDate(sub.createdAt)}</div>
+              <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="ih-list-title">
+                  {sub.submissionPeriod
+                    ? `Q${sub.submissionPeriod.quarter} ${sub.submissionPeriod.year}`
+                    : 'Submission'}
                 </div>
+                <div className="ih-list-meta">{formatDate(sub.createdAt)}</div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 shrink-0">
                 {sub.adminReply?.message && (
-                  <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
+                  <span className="ih-chip bg-green-50 border border-green-200 text-green-700">
                     <MessageSquare className="w-3 h-3" /> Replied
                   </span>
                 )}
-                <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border font-medium ${statusColor(sub.status)}`}>
+                <span className={`ih-chip border font-medium ${statusColor(sub.status)}`}>
                   {statusIcon(sub.status)}
                   {sub.status}
                 </span>
                 <button
                   onClick={e => { e.stopPropagation(); onViewSubmission(sub._id) }}
-                  className="text-xs font-medium text-primary border border-primary/30 px-2.5 py-1 rounded-lg hover:bg-primary/5"
+                  className="text-xs font-medium text-primary border border-primary/30 px-2.5 py-1 -my-1 rounded-lg hover:bg-primary/5"
                 >
                   View
                 </button>

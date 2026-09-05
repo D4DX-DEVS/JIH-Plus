@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, X, CheckCircle } from 'lucide-react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { AreaFormProvider, useAreaForm } from '../contexts/AreaFormContext';
 import AreaPageA from '../components/forms/area/AreaPageA';
 import AreaPageB from '../components/forms/area/AreaPageB';
@@ -11,12 +12,15 @@ import AreaPageE from '../components/forms/area/AreaPageE';
 import AreaPageF from '../components/forms/area/AreaPageF';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, success, setError, setSuccess }) => {
   const { currentStep } = useAreaForm();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [area, setArea] = useState(null);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [pendingNavTabId, setPendingNavTabId] = useState(null);
 
   useEffect(() => {
     // Load area data
@@ -61,7 +65,7 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
     navigate('/', { replace: true });
   };
 
-  const handleSidebarNavigate = (tabId) => {
+  const performSidebarNavigate = (tabId) => {
     setIsSidebarOpen(false);
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     const areaId = userData.areaId || userData.area;
@@ -69,6 +73,23 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
       navigate(`/area-dashboard/${areaId}`, { state: { initialTab: tabId } });
     } else {
       navigate('/area-dashboard');
+    }
+  };
+
+  const handleSidebarNavigate = (tabId) => {
+    if (currentStep > 1) {
+      setPendingNavTabId(tabId);
+      setShowDiscardModal(true);
+      return;
+    }
+    performSidebarNavigate(tabId);
+  };
+
+  const confirmDiscardNav = () => {
+    setShowDiscardModal(false);
+    if (pendingNavTabId) {
+      performSidebarNavigate(pendingNavTabId);
+      setPendingNavTabId(null);
     }
   };
 
@@ -99,7 +120,6 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
         onLogout={handleLogout}
         onNotifications={() => navigate('/notifications')}
         onDynamicReports={() => navigate('/user-reports')}
-        onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'area' } })}
         areaName={area?.name || survey?.area || '—'}
         isMobileOpen={isSidebarOpen}
         onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
@@ -114,8 +134,8 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
           {/* Progress Bar */}
           <div className="bg-white shadow-lg border border-gray-200 rounded-2xl mb-4 hover:shadow-xl transition-all duration-500">
             <div className="px-4 py-3">
-              <div className="flex items-center justify-between mb-3">
-                <h1 className="text-lg font-bold text-[#002349]">
+              <div className="flex items-center justify-end lg:justify-between mb-3">
+                <h1 className="hidden lg:block text-lg font-bold text-[#002349]">
                   ഏരിയ തലം പ്രതിമാസ റിപ്പോർട്ട് എഡിറ്റ്
                 </h1>
                 <div className="text-xs text-gray-600 font-medium">
@@ -134,13 +154,13 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
                   />
                 ))}
               </div>
-              <div className="flex justify-between mt-1.5 text-[10px] text-gray-600 font-medium">
-                <span>ഘടകങ്ങൾ</span>
-                <span>പ്രവർത്തനങ്ങൾ</span>
-                <span>ഫോകസ്</span>
-                <span>ടീം പ്രവർത്തനങ്ങൾ</span>
-                <span>വ്യക്തികൾ</span>
-                <span>വർദ്ധനവ്</span>
+              <div className="flex gap-3 overflow-x-auto mt-1.5 text-[10px] text-gray-600 font-medium lg:justify-between lg:gap-0 lg:overflow-visible">
+                <span className="shrink-0 whitespace-nowrap">ഘടകങ്ങൾ</span>
+                <span className="shrink-0 whitespace-nowrap">പ്രവർത്തനങ്ങൾ</span>
+                <span className="shrink-0 whitespace-nowrap">ഫോകസ്</span>
+                <span className="shrink-0 whitespace-nowrap">ടീം പ്രവർത്തനങ്ങൾ</span>
+                <span className="shrink-0 whitespace-nowrap">വ്യക്തികൾ</span>
+                <span className="shrink-0 whitespace-nowrap">വർദ്ധനവ്</span>
               </div>
             </div>
           </div>
@@ -170,6 +190,19 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={showDiscardModal}
+        onClose={() => {
+          setShowDiscardModal(false);
+          setPendingNavTabId(null);
+        }}
+        onConfirm={confirmDiscardNav}
+        title="Discard this report"
+        message="ഈ റിപ്പോർട്ട് ഉപേക്ഷിക്കണോ? / Discard this report and its progress?"
+        confirmText="Discard"
+        type="warning"
+      />
     </div>
   );
 };
@@ -231,6 +264,7 @@ const AreaSurveyEditPage = ({ surveyId: propSurveyId, onBack, onSubmit }) => {
 
       if (response.data.success) {
         setSuccess('Area report updated successfully!');
+        toast.success('Area report updated successfully!');
         setTimeout(() => {
           if (onSubmit) {
             onSubmit(response.data.data);

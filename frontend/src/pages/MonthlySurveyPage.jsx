@@ -8,7 +8,7 @@ import PartD from '../components/forms/monthly/PartD';
 import MonthlySurveyPartE from '../components/forms/monthly/MonthlySurveyPartE';
 
 const MonthlySurveyPage = ({ onBack, onSubmit, editingSurvey, isAdmin = false }) => {
-  const { currentStep, formData, setFormData } = useForm();
+  const { currentStep, formData, setFormData, nextStep, prevStep, validateCurrentStep } = useForm();
 
   // Load editing survey data if provided
   React.useEffect(() => {
@@ -72,19 +72,23 @@ const MonthlySurveyPage = ({ onBack, onSubmit, editingSurvey, isAdmin = false })
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
+            <div className="flex min-w-0 flex-1 items-center space-x-4">
               <button
                 onClick={onBack}
-                className="text-gray-600 hover:text-[#002349] transition-all duration-500 flex items-center space-x-2 text-sm font-medium border border-gray-300 hover:border-[#002349] px-4 py-2 rounded-2xl hover:shadow-md transform hover:scale-105 ease-out hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#002349]/10"
+                aria-label="തിരികെ പോകുക"
+                className="shrink-0 min-h-[44px] text-gray-600 hover:text-[#002349] transition-all duration-500 flex items-center space-x-2 text-sm font-medium border border-gray-300 hover:border-[#002349] px-4 py-2 rounded-2xl hover:shadow-md transform hover:scale-105 ease-out hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#002349]/10"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>തിരികെ പോകുക</span>
+                {/* MobileTopBar-equivalent context is provided by the parent shell; keep the label for lg+ only to save width on phones. */}
+                <span className="hidden sm:inline">തിരികെ പോകുക</span>
               </button>
-              <div>
-                <h1 className="text-xl font-bold text-[#002349]">
+              <div className="min-w-0 flex-1">
+                {/* Parent dashboard shell already names the screen on mobile; avoid a duplicate title below lg. */}
+                <h1 className="hidden lg:block text-xl font-bold text-[#002349] truncate">
                   {editingSurvey && editingSurvey._id ? 'പ്രതിമാസ  റിപ്പോർട്ട് എഡിറ്റ് ചെയ്യുക' : 'പുതിയ പ്രതിമാസ  റിപ്പോർട്ട്'}
                 </h1>
-                <p className="text-sm text-gray-600 font-medium">{getStepTitle()}</p>
+                <p className="text-sm text-gray-600 font-medium truncate">{getStepTitle()}</p>
+                <p className="md:hidden text-xs text-gray-600 font-medium mt-1">Step {currentStep} of 5</p>
               </div>
             </div>
             
@@ -120,6 +124,18 @@ const MonthlySurveyPage = ({ onBack, onSubmit, editingSurvey, isAdmin = false })
       {/* Main Content */}
       <main className="max-w-7xl mx-auto">
         {renderCurrentStep()}
+        {currentStep < 5 && (
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-4">
+            {currentStep > 1 ? (
+              <button onClick={prevStep} className="min-h-[44px] px-6 rounded-2xl border border-gray-300 text-gray-700 font-semibold text-sm">
+                മുൻപത്തെ
+              </button>
+            ) : <span />}
+            <button onClick={nextStep} disabled={!validateCurrentStep()} className="min-h-[44px] px-6 rounded-2xl bg-[#002349] hover:bg-[#1a3a5c] disabled:bg-gray-400 text-white font-semibold text-sm">
+              അടുത്തത്
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

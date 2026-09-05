@@ -15,7 +15,7 @@ const FIELD_WIDTH_CLASS = {
 
 export default function FieldRenderer({ field, value, onChange, disabled = false }) {
   const inputBase =
-    'border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-500';
+    'border border-gray-300 rounded-lg px-3 py-2 text-base sm:text-sm outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-500';
   const widthClass = (type) => FIELD_WIDTH_CLASS[type] || 'w-full';
 
   const handleChange = (val) => onChange(val);
@@ -71,7 +71,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
       return (
         <div className="space-y-2">
           {(field.options || []).map((opt, i) => (
-            <label key={i} className="flex items-center gap-2 cursor-pointer">
+            <label key={i} className="flex min-h-[44px] items-center gap-2 cursor-pointer">
               <input
                 type="radio"
                 name={`field_${field.id}`}
@@ -81,7 +81,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
                 disabled={disabled}
                 className="text-blue-600"
               />
-              <span className="text-sm text-gray-700">{opt}</span>
+              <span className="min-w-0 flex-1 break-words text-sm text-gray-700">{opt}</span>
             </label>
           ))}
         </div>
@@ -92,7 +92,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
       return (
         <div className="space-y-2">
           {(field.options || []).map((opt, i) => (
-            <label key={i} className="flex items-center gap-2 cursor-pointer">
+            <label key={i} className="flex min-h-[44px] items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={checked.includes(opt)}
@@ -105,7 +105,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
                 disabled={disabled}
                 className="rounded text-blue-600"
               />
-              <span className="text-sm text-gray-700">{opt}</span>
+              <span className="min-w-0 flex-1 break-words text-sm text-gray-700">{opt}</span>
             </label>
           ))}
         </div>
@@ -117,7 +117,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
       return (
         <div className="space-y-1">
           {(field.options || []).map((opt, i) => (
-            <label key={i} className="flex items-center gap-2 cursor-pointer">
+            <label key={i} className="flex min-h-[44px] items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={selected.includes(opt)}
@@ -130,7 +130,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
                 disabled={disabled}
                 className="rounded text-blue-600"
               />
-              <span className="text-sm text-gray-700">{opt}</span>
+              <span className="min-w-0 flex-1 break-words text-sm text-gray-700">{opt}</span>
             </label>
           ))}
         </div>
@@ -141,7 +141,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
       return (
         <div className="flex gap-3">
           {['Yes', 'No'].map(opt => (
-            <label key={opt} className="flex items-center gap-2 cursor-pointer">
+            <label key={opt} className="flex min-h-[44px] items-center gap-2 cursor-pointer">
               <input
                 type="radio"
                 name={`field_${field.id}`}
@@ -151,7 +151,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
                 disabled={disabled}
                 className="text-blue-600"
               />
-              <span className="text-sm text-gray-700">{opt}</span>
+              <span className="min-w-0 flex-1 break-words text-sm text-gray-700">{opt}</span>
             </label>
           ))}
         </div>

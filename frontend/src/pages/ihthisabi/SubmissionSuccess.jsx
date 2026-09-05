@@ -6,7 +6,7 @@ const SubmissionSuccess = () => {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="ih-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Success Animation */}
         <div className="text-center">
@@ -14,8 +14,9 @@ const SubmissionSuccess = () => {
             <CheckCircle className="h-12 w-12 text-green-600 animate-pulse" />
           </div>
           
-          {/* Branding */}
-          <div className="mb-8">
+          {/* Branding — the mobile app bar already names the app/screen, so this
+              splash heading is desktop-only to avoid a duplicate header on phones. */}
+          <div className="hidden lg:block mb-8">
             <h1 className="text-4xl font-bold text-accent mb-2">
               IHTHISABI REPORT
             </h1>

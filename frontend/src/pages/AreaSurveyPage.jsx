@@ -13,6 +13,7 @@ import { CheckCircle } from 'lucide-react';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
   const { currentStep } = useAreaForm();
@@ -23,6 +24,8 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [area, setArea] = useState(null);
   const [adminData, setAdminData] = useState(null);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [pendingNavTabId, setPendingNavTabId] = useState(null);
 
   useEffect(() => {
     if (isAdmin) {
@@ -83,7 +86,7 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
     navigate('/', { replace: true });
   };
 
-  const handleSidebarNavigate = (tabId) => {
+  const performSidebarNavigate = (tabId) => {
     setIsSidebarOpen(false);
 
     if (isAdmin) {
@@ -93,8 +96,6 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
         navigate('/notifications');
       } else if (tabId === 'view-reports') {
         navigate('/view-reports');
-      } else if (tabId === 'membership') {
-        navigate('/membership', { state: { roleHint: 'admin' } });
       }
       return;
     }
@@ -111,6 +112,23 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
       const userData = JSON.parse(localStorage.getItem('userData') || '{}');
       const areaId = userData.areaId || userData.area;
       navigate(`/area-dashboard/${areaId}`, { state: { initialTab: 'stats' } });
+    }
+  };
+
+  const handleSidebarNavigate = (tabId) => {
+    if (currentStep > 1) {
+      setPendingNavTabId(tabId);
+      setShowDiscardModal(true);
+      return;
+    }
+    performSidebarNavigate(tabId);
+  };
+
+  const confirmDiscardNav = () => {
+    setShowDiscardModal(false);
+    if (pendingNavTabId) {
+      performSidebarNavigate(pendingNavTabId);
+      setPendingNavTabId(null);
     }
   };
 
@@ -191,7 +209,6 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
       onNavigateToReports={() => navigate('/view-reports')}
       onDownloadCSV={() => {}}
       onNavigateToNotifications={() => navigate('/notifications')}
-      onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'admin' } })}
       onLogout={handleLogout}
       adminEmail={adminData?.email || 'Admin'}
       totalForms={0}
@@ -206,7 +223,6 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
       onLogout={handleLogout}
       onNotifications={() => navigate('/notifications')}
       onDynamicReports={() => navigate('/user-reports')}
-      onNavigateToMembership={() => navigate('/membership', { state: { roleHint: 'area' } })}
       areaName={area?.name || '—'}
       isMobileOpen={isSidebarOpen}
       onMobileToggle={() => setIsSidebarOpen((prev) => !prev)}
@@ -226,8 +242,8 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
           {/* Progress Bar */}
           <div className="bg-white shadow-lg border border-gray-200 rounded-2xl mb-4 hover:shadow-xl transition-all duration-500">
             <div className="px-4 py-3">
-              <div className="flex items-center justify-between mb-3">
-                <h1 className="text-lg font-bold text-[#002349]">
+              <div className="flex items-center justify-end lg:justify-between mb-3">
+                <h1 className="hidden lg:block text-lg font-bold text-[#002349]">
                   ഏരിയ തലം പ്രതിമാസ  റിപ്പോർട്ട്
                 </h1>
                 <div className="text-xs text-gray-600 font-medium">
@@ -246,13 +262,13 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
                   />
                 ))}
               </div>
-              <div className="flex justify-between mt-1.5 text-[10px] text-gray-600 font-medium">
-                <span>ഘടകങ്ങൾ</span>
-                <span>പ്രവർത്തനങ്ങൾ</span>
-                <span>ഫോകസ്</span>
-                <span>ടീം പ്രവർത്തനങ്ങൾ</span>
-                <span>വ്യക്തികൾ</span>
-                <span>വർദ്ധനവ്</span>
+              <div className="hidden lg:flex lg:justify-between gap-3 mt-1.5 text-[10px] text-gray-600 font-medium">
+                <span className="shrink-0 whitespace-nowrap">ഘടകങ്ങൾ</span>
+                <span className="shrink-0 whitespace-nowrap">പ്രവർത്തനങ്ങൾ</span>
+                <span className="shrink-0 whitespace-nowrap">ഫോകസ്</span>
+                <span className="shrink-0 whitespace-nowrap">ടീം പ്രവർത്തനങ്ങൾ</span>
+                <span className="shrink-0 whitespace-nowrap">വ്യക്തികൾ</span>
+                <span className="shrink-0 whitespace-nowrap">വർദ്ധനവ്</span>
               </div>
             </div>
           </div>
@@ -282,6 +298,19 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={showDiscardModal}
+        onClose={() => {
+          setShowDiscardModal(false);
+          setPendingNavTabId(null);
+        }}
+        onConfirm={confirmDiscardNav}
+        title="Discard this report"
+        message="ഈ റിപ്പോർട്ട് ഉപേക്ഷിക്കണോ? / Discard this report and its progress?"
+        confirmText="Discard"
+        type="warning"
+      />
     </div>
   );
 };

@@ -16,11 +16,22 @@ const emptyForm = () => ({
 })
 
 function FormModal({ title, onClose, children }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-      <div className="ih-surface flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div className="ih-surface flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3.5 sm:px-6">
-          <h2 className="text-sm font-semibold text-gray-900 sm:text-base">{title}</h2>
+          <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 sm:text-base">{title}</h2>
           <button onClick={onClose} className="ih-icon-btn hover:bg-gray-100 hover:text-gray-700">
             <X className="w-4 h-4" />
           </button>
@@ -72,7 +83,7 @@ function RuknPicker({ selected, onSelect, onClear }) {
           {place && <p className="ih-list-meta">{place}</p>}
         </div>
         <button type="button" onClick={() => { setQuery(''); setResults([]); onClear() }}
-          className="shrink-0 text-xs font-medium text-primary hover:underline">
+          className="-m-2 shrink-0 p-2 text-xs font-medium text-primary hover:underline">
           Change
         </button>
       </div>
@@ -227,30 +238,37 @@ const MekhalaNazimManagement = () => {
     }
   }
 
-  const inputClass = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary'
+  const inputClass = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell max-w-5xl">
-        <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
-          <div className="hidden min-w-0 sm:block">
+        {/* Header row starts at sm: — on phones the app bar names the page and the
+            add action lives in the floating button below. */}
+        <div className="mb-2 hidden items-center justify-between gap-2 sm:mb-3 sm:flex">
+          <div className="hidden min-w-0 lg:block">
             <h1 className="ih-page-title">Mekhala Nazim</h1>
             <p className="ih-page-subtitle">One nazim per mekhala, promoted from an existing member</p>
           </div>
           {isSuperAdmin && (
             <button onClick={() => openForm(null)}
-              className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:px-4 sm:py-2.5 sm:text-sm">
-              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="sm:hidden">Add</span>
-              <span className="hidden sm:inline">Add Nazim</span>
+              className="ml-auto inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-[#161F2F] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538]">
+              <Plus className="h-4 w-4" />
+              Add Nazim
             </button>
           )}
         </div>
 
+        {isSuperAdmin && (
+          <button onClick={() => openForm(null)} title="Add Nazim" aria-label="Add Nazim" className="ih-fab">
+            <Plus className="h-5 w-5" />
+          </button>
+        )}
+
         <div className="relative mb-3 sm:max-w-xs">
           <Search className="ih-filter-icon" />
           <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by name or Rukn ID…" className="ih-field" />
+            placeholder="Search by name or Rukn ID…" className="ih-field h-[44px] pr-3 text-base sm:h-9 sm:text-sm" />
         </div>
 
         {loading ? (
@@ -381,12 +399,10 @@ const MekhalaNazimManagement = () => {
             {formError && <p className="text-sm text-red-500">{formError}</p>}
 
             <div className="flex justify-end gap-2 pt-1">
-              <button onClick={() => setFormOpen(false)}
-                className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-200">
+              <button onClick={() => setFormOpen(false)} className="btn-ghost">
                 Cancel
               </button>
-              <button onClick={handleSave} disabled={saving}
-                className="rounded-lg bg-[#161F2F] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1a2538] disabled:opacity-50">
+              <button onClick={handleSave} disabled={saving} className="btn-secondary">
                 {saving ? 'Saving…' : editItem ? 'Save' : 'Create'}
               </button>
             </div>
