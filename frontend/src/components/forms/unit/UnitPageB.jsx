@@ -1,3 +1,4 @@
+import FormSection from '../FormSection';
 import NumericInput from "../../NumericInput";
 import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
@@ -452,7 +453,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
+    <FormSection className="unit-report-section">
       {/* Header */}
       <div className="hidden lg:block mb-8">
         <h2 className="text-xl font-bold text-[#002349] mb-1.5">
@@ -825,7 +826,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
           <Check className="w-4 h-4" />
         </button>
       </div>
-    </div>
+    </FormSection>
   );
 };
 

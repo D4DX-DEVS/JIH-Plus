@@ -1,6 +1,15 @@
 @import "tailwindcss";
 
 @media (max-width: 639px) {
+  .unit-report-section .p-4 { padding: 10px; }
+  .unit-report-section .gap-6 { gap: 12px; }
+  .unit-report-section .mb-8 { margin-bottom: 16px; }
+  .unit-report-section .space-y-8 > :not(:last-child) { margin-block-end: 16px; }
+  .unit-report-section label:has(input[type="checkbox"]) { min-height: 44px; }
+  .unit-report-section :is(input, select) { max-width: 100%; }
+}
+
+@media (max-width: 639px) {
   /* Report section headings follow the same light mobile dashboard header. */
   #root .card-header {
     background: #fff;

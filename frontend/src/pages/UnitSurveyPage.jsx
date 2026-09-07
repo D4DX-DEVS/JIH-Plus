@@ -700,7 +700,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
           title="യൂണിറ്റ് റിപ്പോർട്ട്"
         />
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4">
+        <div className="flex-1 min-w-0 overflow-y-auto px-2 sm:px-6 lg:px-8 py-3 pb-24 lg:pb-4">
           {/* Header with Close Button on same horizontal level */}
           <div className="mb-6 flex items-start justify-end lg:justify-between">
             <h1 className="hidden lg:block text-xl sm:text-2xl lg:text-4xl font-bold text-[#002349]">
