@@ -1,5 +1,5 @@
 import React from 'react';
-import jihLogo from '../../assets/LogoColor.png';
+import BrandLogo from '../branding/BrandLogo';
 
 /**
  * Shared mobile top bar for every expansion-portal page.
@@ -11,11 +11,11 @@ import jihLogo from '../../assets/LogoColor.png';
  * `actions` renders trailing controls (refresh, create, ...) on the right.
  */
 const MobileTopBar = ({ title, actions = null }) => (
-  <header className="lg:hidden sticky top-0 z-30 flex-shrink-0 border-b border-gray-200 bg-white/95 backdrop-blur shadow-sm">
-    <div className="flex items-center gap-2 px-4 py-2.5">
-      <img src={jihLogo} alt="JIH" className="h-7 w-auto flex-shrink-0" />
+  <header className="app-mobile-header lg:hidden z-30 flex-shrink-0 border-b border-gray-200 bg-white/95 backdrop-blur shadow-sm">
+    <div className="flex min-h-[4.125rem] items-center gap-2 px-3 py-2.5">
+      <BrandLogo alt="JIH" size="sm" />
       {title ? (
-        <h1 className="min-w-0 flex-1 truncate text-base font-extrabold text-[#002349]">{title}</h1>
+        <h1 className="min-w-0 flex-1 break-words text-base font-extrabold leading-snug text-[#002349] [overflow-wrap:anywhere]">{title}</h1>
       ) : (
         <div className="flex-1" />
       )}

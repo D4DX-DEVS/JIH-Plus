@@ -27,8 +27,8 @@ const ActiveReportsCard = ({ reports = [], loading = false }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow border border-gray-100 p-6">
-      <div className="flex items-center justify-between mb-4">
+    <section className="rounded-2xl border border-gray-100 bg-white p-3 shadow sm:p-6">
+      <div className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
         <h3 className="text-sm font-bold text-[#002349] flex items-center gap-2">
           <FileText className="w-4 h-4" /> ആക്ടീവ് റിപ്പോർട്ടുകൾ
         </h3>
@@ -51,13 +51,13 @@ const ActiveReportsCard = ({ reports = [], loading = false }) => {
       ) : (
         <div className="space-y-2.5">
           {reports.map((report) => (
-            <div
+            <article
               key={report._id}
-              className="flex items-center justify-between gap-3 border border-gray-100 rounded-xl px-4 py-3 hover:bg-gray-50 transition-colors"
+              className="rounded-xl border border-gray-100 p-3 transition-colors hover:bg-gray-50 sm:flex sm:items-center sm:justify-between sm:gap-3 sm:px-4"
             >
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{report.title}</p>
-                <div className="flex items-center gap-2 mt-1">
+                <p className="break-words text-sm font-semibold leading-relaxed text-gray-900 [overflow-wrap:anywhere]">{report.title}</p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${typeBadgeClass(report.type)}`}>
                     {report.type}
                   </span>
@@ -72,15 +72,15 @@ const ActiveReportsCard = ({ reports = [], loading = false }) => {
               </div>
               <button
                 onClick={() => handleFill(report._id)}
-                className="flex-shrink-0 inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2.5 rounded-lg bg-[#002349] text-white text-xs font-semibold hover:bg-[#1a3a5c] transition-colors"
+                className="mt-2.5 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-lg bg-[#002349] px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1a3a5c] sm:mt-0 sm:w-auto sm:flex-shrink-0 sm:text-xs"
               >
                 പൂരിപ്പിക്കുക <ArrowRight className="w-3.5 h-3.5" />
               </button>
-            </div>
+            </article>
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

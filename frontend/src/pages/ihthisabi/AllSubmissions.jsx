@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
@@ -1151,7 +1152,7 @@ const AllSubmissions = () => {
 
                 {/* Desktop Table */}
                 <div className="hidden lg:block overflow-x-auto">
-                  <table className="w-full table-fixed">
+                  <ResponsiveTable className="w-full table-fixed">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider w-10">#</th>
@@ -1186,7 +1187,7 @@ const AllSubmissions = () => {
                         )
                       })}
                     </tbody>
-                  </table>
+                  </ResponsiveTable>
                 </div>
 
                 {/* Mobile Cards */}
@@ -1244,7 +1245,7 @@ const AllSubmissions = () => {
             ) : (
               <>
                 <div className="hidden lg:block overflow-x-auto">
-                  <table className="w-full table-fixed">
+                  <ResponsiveTable className="w-full table-fixed">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider w-10">#</th>
@@ -1341,7 +1342,7 @@ const AllSubmissions = () => {
                         )
                       })}
                     </tbody>
-                  </table>
+                  </ResponsiveTable>
                 </div>
                 <div className="lg:hidden ih-list">
                   {alternativeSubmissions.map((submission) => (
@@ -1414,7 +1415,7 @@ const AllSubmissions = () => {
             <>
               {/* Desktop Table */}
               <div className="hidden lg:block">
-                <table className="w-full table-fixed">
+                <ResponsiveTable className="w-full table-fixed">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider w-10">
@@ -1517,7 +1518,7 @@ const AllSubmissions = () => {
                       );
                     })}
                   </tbody>
-                </table>
+                </ResponsiveTable>
               </div>
 
               {/* Mobile Cards — two lines per row. Every child is min-w-0 or shrink-0

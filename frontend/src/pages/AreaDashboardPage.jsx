@@ -1,6 +1,7 @@
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FileText, Filter, Edit, Trash2, Users, ArrowLeft, Eye, Building, BookOpen, TrendingUp, Calendar, LogOut, Bell, MapPin } from 'lucide-react';
+import { FileText, Filter, Edit, Trash2, Users, ArrowLeft, Eye, Building, BookOpen, TrendingUp, Calendar, LogOut, Bell, MapPin, BarChart3, ChevronRight } from 'lucide-react';
 import { JihFilterBar, JihFilterSelect, JihFab, JihAddButton } from '../components/JihToolbar';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -15,8 +16,8 @@ import SurveyPieChart from '../components/charts/SurveyPieChart';
 import AreaStatsChart from '../components/charts/AreaStatsChart';
 import AreaMonthlyStatsTable from '../components/tables/AreaMonthlyStatsTable';
 import UnitMonthlyStatsTable from '../components/tables/UnitMonthlyStatsTable';
-import jihLogo from '../assets/LogoColor.png';
 import ActiveReportsCard from '../components/dashboard/ActiveReportsCard';
+import DashboardMetricGrid from '../components/dashboard/DashboardMetricGrid';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
 
@@ -578,13 +579,15 @@ const AreaDashboardPage = ({ onLogout }) => {
         ];
         const areaName = userData?.areaName || userData?.area || '';
         return (
-          <div className="space-y-6">
-            <div className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] rounded-2xl p-6 text-white">
+          <div className="space-y-3 sm:space-y-6">
+            <div className="rounded-2xl bg-gradient-to-r from-[#002349] to-[#1a3a5c] px-4 py-3.5 text-white sm:p-6">
               <h2 className="hidden lg:block text-xl font-bold">ഏരിയ ഡാഷ്ബോർഡ്</h2>
-              {areaName && <p className="text-white/80 text-sm lg:mt-1">{areaName}</p>}
+              {areaName && <p className="text-sm leading-snug text-white/90 lg:mt-1">{areaName}</p>}
             </div>
 
-            <SubmissionsAnalytics scope="area" />
+            <div className="hidden lg:block">
+              <SubmissionsAnalytics scope="area" />
+            </div>
 
             {dashboardLoading ? (
               <div className="flex items-center justify-center py-16">
@@ -598,32 +601,27 @@ const AreaDashboardPage = ({ onLogout }) => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                  <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                      <Building className="w-5 h-5 text-[#957C3D]" />
-                    </div>
-                    <p className="text-2xl font-bold text-[#957C3D]">{d.units ?? '—'}</p>
-                    <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">ആകെ യൂണിറ്റുകൾ</p>
-                  </div>
-                  <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-green-600" />
-                    </div>
-                    <p className="text-2xl font-bold text-green-600">{d.activeReports ?? '—'}</p>
-                    <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">ആക്ടീവ് റിപ്പോർട്ടുകൾ</p>
-                  </div>
-                  <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <p className="text-2xl font-bold text-emerald-600">{d.submitted ?? '—'}</p>
-                    <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">സബ്മിറ്റ് ചെയ്തവ</p>
-                  </div>
-                </div>
+                <DashboardMetricGrid
+                  items={[
+                    { key: 'units', label: 'ആകെ യൂണിറ്റുകൾ', value: d.units, icon: Building, tone: 'gold', onClick: () => setActiveTab('units') },
+                    { key: 'reports', label: 'ആക്ടീവ് റിപ്പോർട്ടുകൾ', value: d.activeReports, icon: BookOpen, tone: 'violet', onClick: () => navigate('/user-reports') },
+                    { key: 'submitted', label: 'സബ്മിറ്റ് ചെയ്തവ', value: d.submitted, icon: TrendingUp, tone: 'green', onClick: () => setActiveTab('stats') },
+                  ]}
+                />
+
+                <ActiveReportsCard reports={activeReportsList} loading={activeReportsLoading} />
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('stats')}
+                  className="flex min-h-[48px] w-full items-center justify-between rounded-xl border border-[#002349]/10 bg-white px-4 py-3 text-left text-sm font-semibold text-[#002349] shadow-sm transition-colors hover:bg-[#002349]/5 lg:hidden"
+                >
+                  <span className="flex items-center gap-2"><BarChart3 className="h-5 w-5" /> വിശദമായ സ്ഥിതിവിവരങ്ങൾ</span>
+                  <ChevronRight className="h-5 w-5" />
+                </button>
 
                 {d.activeReports > 0 && (
-                  <div className="bg-white rounded-2xl shadow border border-gray-100 p-6">
+                  <div className="hidden rounded-2xl border border-gray-100 bg-white p-6 shadow lg:block">
                     <h3 className="text-sm font-bold text-[#002349] mb-4">സബ്മിഷൻ സ്റ്റാറ്റസ്</h3>
                     <ResponsiveContainer width="100%" height={240}>
                       <PieChart>
@@ -644,7 +642,6 @@ const AreaDashboardPage = ({ onLogout }) => {
                   </div>
                 )}
 
-                <ActiveReportsCard reports={activeReportsList} loading={activeReportsLoading} />
               </>
             )}
           </div>
@@ -749,7 +746,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                   </div>
 
                   <div className="hidden lg:block overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <ResponsiveTable className="w-full text-sm">
                       <thead className="bg-[#002349] border-b border-[#002349]">
                         <tr>
                           <th className="px-4 py-2 text-left text-[11px] font-semibold text-white uppercase tracking-wide">
@@ -828,7 +825,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </ResponsiveTable>
                   </div>
 
                   {/* Pagination */}
@@ -1286,7 +1283,7 @@ const AreaDashboardPage = ({ onLogout }) => {
 
                       {/* Desktop table */}
                       <div className="hidden lg:block overflow-x-auto">
-                        <table className="w-full">
+                        <ResponsiveTable className="w-full">
                           <thead className="bg-gray-50">
                             <tr>
                               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1329,7 +1326,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                               </tr>
                             ))}
                           </tbody>
-                        </table>
+                        </ResponsiveTable>
                       </div>
                     </>
                   )}
@@ -1665,7 +1662,7 @@ const AreaDashboardPage = ({ onLogout }) => {
               <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
                 <h3 className="text-lg font-bold text-[#002349] mb-4">Units</h3>
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <ResponsiveTable className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Unit</th>
@@ -1691,7 +1688,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                         );
                       })}
                     </tbody>
-                  </table>
+                  </ResponsiveTable>
                 </div>
 
                 {/* Expanded unit tables */}
@@ -1732,7 +1729,7 @@ const AreaDashboardPage = ({ onLogout }) => {
 
   return (
     <>
-      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+      <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex">
         <AreaAdminSidebar
           activeTab={activeTab}
           onNavigate={handleSidebarNavigate}
@@ -1750,7 +1747,7 @@ const AreaDashboardPage = ({ onLogout }) => {
           <MobileTopBar
             title="ഏരിയ ഡാഷ്ബോർഡ്"
           />
-          <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 pt-4 pb-24 lg:pb-4">
+          <div data-app-scroll className="app-scroll-region mobile-readable-content flex-1 px-3 pt-3 pb-24 sm:px-6 sm:pt-4 lg:px-8 lg:pb-4">
             {mainContent}
           </div>
         </div>

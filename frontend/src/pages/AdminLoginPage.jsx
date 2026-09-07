@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowRight, Shield, Eye, EyeOff, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import jihLogo from '../assets/LogoColor.png';
+import BrandLogo from '../components/branding/BrandLogo';
 import d4dxLogo from '../assets/d4dx_logo.png';
 
 const AdminLoginPage = ({ onLoginSuccess }) => {
@@ -39,7 +39,7 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
+    <div className="mobile-readable-content min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
       {/* Home Icon - Floating */}
       <button
         onClick={() => navigate('/')}
@@ -54,7 +54,7 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
         {/* Logo and Heading Section */}
         <div className="text-center mb-16">
           <div className="flex justify-center mb-4">
-            <img src={jihLogo} alt="JIH Logo" className="h-20 sm:h-20 w-auto mx-auto" />
+            <BrandLogo alt="JIH Logo" size="xl" className="mx-auto" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#002349] mb-3 tracking-tight" style={{ fontFamily: 'Cinzel, serif' }}>
             Admin Access Portal
@@ -65,7 +65,7 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
         {/* Admin Login Form */}
         <div className="max-w-md mx-auto">
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" aria-busy={isLoading}>
             <div>
               <label htmlFor="email" className="block text-xs font-semibold text-[#002349] mb-2">
                 Admin Email
@@ -74,12 +74,14 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
                 type="email"
                 id="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); if (error) setError(''); }}
                 placeholder="admin@example.com"
                 className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                 disabled={isLoading}
                 autoComplete="username"
                 required
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'admin-login-error' : undefined}
               />
             </div>
 
@@ -92,12 +94,14 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
                   type={showPassword ? "text" : "password"}
                   id="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); if (error) setError(''); }}
                   placeholder="Enter password"
                   className="w-full px-4 py-2.5 pr-12 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                   disabled={isLoading}
                   autoComplete="current-password"
                   required
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? 'admin-login-error' : undefined}
                 />
                 <button
                   type="button"
@@ -115,7 +119,7 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
             </div>
 
             {error && (
-              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3">
+              <div id="admin-login-error" role="alert" aria-live="assertive" className="bg-red-50 border-2 border-red-200 rounded-lg p-3">
                 <p className="text-red-700 text-xs font-medium text-center">{error}</p>
               </div>
             )}
@@ -164,5 +168,3 @@ const AdminLoginPage = ({ onLoginSuccess }) => {
 };
 
 export default AdminLoginPage;
-
-

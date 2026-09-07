@@ -395,7 +395,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   const shouldUseAdminLayout = isCentralAdmin && !onBack;
 
   const wrapWithAdminSidebar = (content) => (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <AdminSidebar
         activeTab="notifications"
         onTabChange={handleTabChange}
@@ -414,7 +414,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
         />
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
+        <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>
@@ -422,7 +422,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   );
 
   const wrapWithAreaSidebar = (content) => (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <AreaAdminSidebar
         activeTab="notifications"
         onNavigate={handleAreaSidebarNavigate}
@@ -439,7 +439,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
         />
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
+        <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>
@@ -447,7 +447,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   );
 
   const wrapWithUnitSidebar = (content) => (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <UnitAdminSidebar
         activeTab="notifications"
         onNavigate={handleUnitSidebarNavigate}
@@ -465,7 +465,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
         />
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
+        <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>
@@ -473,7 +473,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   );
 
   const wrapWithDistrictSidebar = (content) => (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <DistrictAdminSidebar
         activeView="notifications"
         onNavigate={handleDistrictSidebarNavigate}
@@ -489,7 +489,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
         />
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
+        <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>
@@ -706,7 +706,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       ) : (
         <>
           {(showReceivedTab && showSentTab || unreadCount > 0) && (
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-500">
+            <div className="mobile-tab-grid flex items-center gap-2 text-sm font-semibold text-gray-500">
               {showReceivedTab && showSentTab && (
                 <button
                   onClick={() => setActiveTab('received')}

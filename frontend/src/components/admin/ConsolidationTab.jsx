@@ -1,3 +1,4 @@
+import ResponsiveTable from "../tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -244,7 +245,7 @@ export default function ConsolidationTab() {
     }
     return (
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+        <ResponsiveTable className="w-full border-collapse text-sm">
           <thead>
             <tr>
               <th className={`${th} text-left`}>{field.firstColumnHeader || ''}</th>
@@ -278,7 +279,7 @@ export default function ConsolidationTab() {
               <td className="border border-gray-200 bg-[#002349] px-2.5 py-2 text-center font-bold text-white">{grand}</td>
             </tr>
           </tbody>
-        </table>
+        </ResponsiveTable>
       </div>
     );
   };

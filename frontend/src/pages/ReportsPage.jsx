@@ -1,3 +1,4 @@
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, Eye, Plus, Save, FileText, Globe, EyeOff, X, Settings, CheckCircle2, Copy, FileStack, MapPin, Activity } from 'lucide-react';
@@ -7,7 +8,7 @@ import AdminSidebar from '../components/sidebars/AdminSidebar';
 import FieldCanvas from '../components/reportBuilder/FieldCanvas';
 import FieldTypeSelector from '../components/reportBuilder/FieldTypeSelector';
 import DynamicFormRenderer from '../components/reportRenderer/DynamicFormRenderer';
-import jihLogo from '../assets/LogoColor.png';
+import BrandLogo from '../components/branding/BrandLogo';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
 import { JihFilterBar, JihFilterSelect, JihFab } from '../components/JihToolbar';
 
@@ -116,7 +117,7 @@ function ReportListView({ onLogout }) {
   const filtered = search ? reports.filter(r => r.title?.toLowerCase().includes(search.toLowerCase())) : reports;
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="app-viewport bg-gray-50 flex overflow-hidden">
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => setShowLogoutModal(true)} adminData={adminData} />
 
       <div className="flex-1 min-w-0 flex flex-col overflow-y-auto overflow-x-hidden">
@@ -124,7 +125,7 @@ function ReportListView({ onLogout }) {
         <JihFab onClick={() => navigate('/create-report')} label="New Report" />
 
         <div className="hidden lg:flex bg-white border-b px-6 py-3 items-center gap-3 sticky top-0 z-10 shadow-sm">
-          <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
+          <BrandLogo alt="JIH" size="xs" className="h-8" />
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold text-[#002349] truncate">Reports</h1>
           </div>
@@ -210,7 +211,7 @@ function ReportListView({ onLogout }) {
 
             {/* Desktop view: full table */}
             <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-sm">
+              <ResponsiveTable className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">Title</th>
@@ -260,7 +261,7 @@ function ReportListView({ onLogout }) {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </ResponsiveTable>
             </div>
             </>
           )}
@@ -514,7 +515,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           <button onClick={() => navigate('/view-reports')} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-400 hover:text-gray-700">
             <ArrowLeft size={20} />
           </button>
-          <img src={jihLogo} alt="JIH" className="h-7 w-auto hidden sm:block" />
+          <BrandLogo alt="JIH" size="xs" className="hidden h-7 sm:block" />
           <div className="flex-1" />
           <span className="text-xs text-gray-400 font-medium">Step 1 of 2</span>
         </header>
@@ -595,7 +596,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           <button onClick={() => setSetupStep(0)} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-400 hover:text-gray-700">
             <ArrowLeft size={20} />
           </button>
-          <img src={jihLogo} alt="JIH" className="h-7 w-auto hidden sm:block" />
+          <BrandLogo alt="JIH" size="xs" className="hidden h-7 sm:block" />
           <div className="flex-1" />
           <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${TYPE_COLOR[reportMeta.type] || 'bg-gray-100 text-gray-500'}`}>
             {TYPE_LABELS[reportMeta.type]}
@@ -770,28 +771,32 @@ function ReportBuilderView({ reportId, onLogout }) {
           {pages.map((p, pi) => (
             <div
               key={pi}
-              onClick={() => { setActivePage(pi); setShowConfigPanel(false); }}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer text-sm transition-colors ${
+              className={`flex w-full items-center rounded-xl text-sm transition-colors ${
                 pi === activePage
                   ? 'bg-[#002349] text-white'
                   : 'text-gray-700 hover:bg-gray-100 border border-gray-100'
               }`}
             >
-              <span className="truncate flex-1">{p.title || `Page ${pi + 1}`}</span>
-              <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+              <button
+                type="button"
+                onClick={() => { setActivePage(pi); setShowConfigPanel(false); }}
+                className="flex min-w-0 flex-1 items-center justify-between rounded-xl px-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+              >
+                <span className="min-w-0 flex-1 truncate">{p.title || `Page ${pi + 1}`}</span>
                 <span className={`text-xs ${pi === activePage ? 'text-blue-200' : 'text-gray-400'}`}>
                   {(p.fields || []).length} field{(p.fields || []).length !== 1 ? 's' : ''}
                 </span>
-                {pages.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={e => { e.stopPropagation(); handleRemovePage(pi); }}
-                    className={`p-1.5 lg:p-0.5 rounded ${pi === activePage ? 'text-red-300 hover:text-red-100' : 'text-gray-300 hover:text-red-400'}`}
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                )}
-              </div>
+              </button>
+              {pages.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => handleRemovePage(pi)}
+                  aria-label={`Remove ${p.title || `Page ${pi + 1}`}`}
+                  className={`mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${pi === activePage ? 'text-red-300 hover:text-red-100' : 'text-gray-400 hover:text-red-500'}`}
+                >
+                  <Trash2 size={15} />
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -800,7 +805,7 @@ function ReportBuilderView({ reportId, onLogout }) {
   );
 
   return (
-    <div className="h-screen bg-gray-100 flex overflow-hidden">
+    <div className="app-viewport bg-gray-100 flex overflow-hidden">
       <AdminSidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen((prev) => !prev)}
@@ -809,14 +814,14 @@ function ReportBuilderView({ reportId, onLogout }) {
       />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
       {/* ── Header ── */}
-      <header className="bg-white border-b px-3 sm:px-4 py-2.5 flex items-center gap-2 sm:gap-3 z-20 shadow-sm flex-shrink-0">
+      <header className="z-20 flex flex-shrink-0 flex-wrap items-center gap-2 border-b bg-white px-3 py-2.5 shadow-sm sm:gap-3 sm:px-4 lg:flex-nowrap">
         <button
           onClick={() => navigate('/view-reports')}
           className="text-gray-500 hover:text-gray-800 transition-colors p-2.5 lg:p-1 flex-shrink-0"
         >
           <ArrowLeft size={20} />
         </button>
-        <img src={jihLogo} alt="JIH" className="h-7 w-auto hidden sm:block flex-shrink-0" />
+        <BrandLogo alt="JIH" size="xs" className="hidden h-7 sm:block" />
 
         <div className="flex-1 min-w-0 mx-1">
           <input
@@ -843,8 +848,11 @@ function ReportBuilderView({ reportId, onLogout }) {
           </button>
         </div>
 
+        {/* Mobile actions get their own wrapped row so the editable title keeps
+            enough width. Desktop retains the original single-row toolbar. */}
+        <div className="order-2 flex w-full flex-wrap items-center justify-end gap-2 lg:order-none lg:w-auto lg:flex-nowrap">
         {/* Preview — current page / whole report */}
-        <div className="flex items-stretch rounded-lg border border-gray-300 overflow-hidden flex-shrink-0">
+        <div className="flex flex-shrink-0 items-stretch overflow-hidden rounded-lg border border-gray-300">
           <button
             onClick={() => { setPreviewScope('page'); setShowPreview(true); }}
             title={`Preview this page only (${pages[activePage]?.title || `Page ${activePage + 1}`})`}
@@ -887,6 +895,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           <Globe size={14} />
           <span className="hidden sm:inline">{isPublished ? 'Published' : 'Publish'}</span>
         </button>
+        </div>
       </header>
 
       {error && <div className="px-4 py-2 text-sm bg-red-50 text-red-700 border-b border-red-200 flex-shrink-0">{error}</div>}
@@ -923,7 +932,7 @@ function ReportBuilderView({ reportId, onLogout }) {
         <main className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Page tabs */}
           <div className="bg-white border-b flex-shrink-0 px-4 pt-3 min-w-0">
-            <div className="flex items-end gap-0 overflow-x-auto pb-1">
+            <div className="mobile-tab-grid flex items-end gap-0 overflow-x-auto pb-1">
               {pages.map((p, pi) => (
                 <button
                   key={pi}
@@ -1030,7 +1039,7 @@ function ReportBuilderView({ reportId, onLogout }) {
           </div>
 
           {/* Render exactly as user would see it */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="mobile-readable-content flex-1 overflow-y-auto">
             <div className="max-w-2xl mx-auto py-8 px-4">
               {previewScope === 'page' && (
                 <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
@@ -1083,7 +1092,7 @@ function ReportSingleView({ reportId, onLogout }) {
   );
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="app-viewport bg-gray-50 flex overflow-hidden">
       <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen((prev) => !prev)} onLogout={() => onLogout && onLogout()} adminData={adminData} />
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         <MobileTopBar
@@ -1102,7 +1111,7 @@ function ReportSingleView({ reportId, onLogout }) {
 
         <div className="hidden lg:flex bg-white border-b px-6 py-3 items-center gap-3 shadow-sm flex-shrink-0">
           <button onClick={() => navigate('/view-reports')} className="text-gray-500 hover:text-gray-700"><ArrowLeft size={20} /></button>
-          <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
+          <BrandLogo alt="JIH" size="xs" className="h-8" />
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-bold text-[#002349] truncate">{report?.title || 'Report'}</h1>
           </div>
@@ -1112,7 +1121,7 @@ function ReportSingleView({ reportId, onLogout }) {
             </button>
           )}
         </div>
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-4xl mx-auto w-full min-w-0">
+      <div className="mobile-readable-content flex-1 overflow-y-auto px-3 pt-3 pb-24 sm:p-6 lg:p-8 lg:pb-8 max-w-4xl mx-auto w-full min-w-0">
         {error && <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg mb-4">{error}</div>}
         {report && (
           <div className="bg-white rounded-xl border p-5 space-y-4">

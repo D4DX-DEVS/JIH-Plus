@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { ArrowLeft, Eye, Plus, Save, Trash2, X } from 'lucide-react'
@@ -52,6 +52,7 @@ export default function FormBuilderPage() {
   const [usageCount, setUsageCount] = useState(0)
   const [dirty, setDirty] = useState(false)
   const [confirmLeave, setConfirmLeave] = useState(false)
+  const restoringHistory = useRef(false)
 
   // Once applications exist against this template its structure is frozen —
   // only the title and description can still change.
@@ -89,6 +90,61 @@ export default function FormBuilderPage() {
       .catch(err => toast.error(apiError(err, 'Failed to load the form')))
       .finally(() => setLoading(false))
   }, [id, isNew])
+
+  // BrowserRouter does not expose a data-router blocker. Keep the established
+  // confirmation modal for this page's Back action, and guard the remaining
+  // browser/route exits at the DOM and history boundaries.
+  useEffect(() => {
+    if (!dirty) return
+
+    const message = 'You have unsaved form changes. Leave this page and discard them?'
+    const currentHistoryIndex = window.history.state?.idx
+
+    const onBeforeUnload = (event) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    const onDocumentClick = (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      const link = event.target instanceof Element ? event.target.closest('a[href]') : null
+      if (!link || link.target === '_blank' || link.hasAttribute('download')) return
+
+      const destination = new URL(link.href, window.location.href)
+      const current = new URL(window.location.href)
+      if (destination.origin !== current.origin || `${destination.pathname}${destination.search}${destination.hash}` === `${current.pathname}${current.search}${current.hash}`) return
+
+      if (!window.confirm(message)) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+    }
+
+    const onPopState = (event) => {
+      if (restoringHistory.current) {
+        restoringHistory.current = false
+        return
+      }
+      if (window.confirm(message)) return
+
+      event.stopImmediatePropagation()
+      const nextHistoryIndex = event.state?.idx
+      const delta = Number.isInteger(currentHistoryIndex) && Number.isInteger(nextHistoryIndex)
+        ? currentHistoryIndex - nextHistoryIndex
+        : 1
+      restoringHistory.current = true
+      window.history.go(delta || 1)
+    }
+
+    window.addEventListener('beforeunload', onBeforeUnload)
+    document.addEventListener('click', onDocumentClick, true)
+    window.addEventListener('popstate', onPopState, true)
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      document.removeEventListener('click', onDocumentClick, true)
+      window.removeEventListener('popstate', onPopState, true)
+    }
+  }, [dirty])
 
   const allFields = useMemo(() => pages.flatMap(p => p.fields || []), [pages])
 
@@ -247,7 +303,7 @@ export default function FormBuilderPage() {
 
       <Card className="mb-4 overflow-hidden">
         <div className="px-4 pt-3">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-gray-200">
+          <div className="mobile-tab-grid flex items-center gap-2 overflow-x-auto pb-1 border-b border-gray-200">
             {pages.map((page, i) => (
               <div key={i} className="flex-shrink-0 flex items-center gap-2">
                 <button
@@ -368,7 +424,7 @@ export default function FormBuilderPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setConfirmLeave(false)}>Keep editing</Button>
-            <Button variant="danger" onClick={() => navigate('/members/forms')}>Discard changes</Button>
+            <Button variant="danger" onClick={() => { setDirty(false); setConfirmLeave(false); navigate('/members/forms') }}>Discard changes</Button>
           </>
         }
       >

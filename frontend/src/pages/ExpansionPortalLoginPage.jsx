@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowRight, Shield, Users, Eye, EyeOff, Home, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Shield, Users, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import jihLogo from '../assets/LogoColor.png';
+import BrandLogo from '../components/branding/BrandLogo';
 
 const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
   const navigate = useNavigate();
@@ -110,23 +110,24 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
         }
         .animate-fade-in { animation: fade-in 0.3s ease-out; }
       `}</style>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
-        {/* Home Icon */}
+      <div className="mobile-readable-content min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
+        {/* Return to portal selection */}
         <button
+          type="button"
           onClick={() => navigate('/')}
-          className="fixed top-3.5 right-3.5 z-50 inline-flex h-[44px] w-[44px] items-center justify-center text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
-          aria-label="Back to Home"
+          className="fixed left-3.5 top-3.5 z-50 inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-[#002349] transition-colors duration-300 hover:bg-white/70 hover:text-[#1a3a5c]"
         >
-          <Home className="w-6 h-6" />
+          <ArrowLeft className="h-4 w-4" />
+          All portals
         </button>
 
         {/* Main Content */}
-        <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
+        <main className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-md w-full space-y-6">
             {/* Header */}
             <div className="text-center mb-8">
               <div className="mx-auto flex items-center justify-center mb-4">
-                <img src={jihLogo} alt="JIH Logo" className="h-20 w-auto object-contain" />
+                <BrandLogo alt="JIH Logo" size="xl" />
               </div>
               <h1
                 className="text-2xl sm:text-3xl font-bold text-[#002349] mb-3 tracking-tight"
@@ -134,11 +135,16 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
               >
                 JIH Portal
               </h1>
+              <p className="text-sm text-gray-600">Choose your account type to continue.</p>
             </div>
 
             {/* Tab Toggle */}
-            <div className="flex justify-center gap-4 mb-6">
+            <div className="flex justify-center gap-4 mb-6" role="group" aria-label="Login type">
               <button
+                type="button"
+                id="user-login-tab"
+                aria-pressed={activeTab === 'user'}
+                aria-controls="user-login-panel"
                 onClick={() => handleTabChange('user')}
                 className={`min-h-[44px] px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center space-x-2 ${
                   activeTab === 'user'
@@ -150,6 +156,10 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                 <span>User Login</span>
               </button>
               <button
+                type="button"
+                id="admin-login-tab"
+                aria-pressed={activeTab === 'admin'}
+                aria-controls="admin-login-panel"
                 onClick={() => handleTabChange('admin')}
                 className={`min-h-[44px] px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center space-x-2 ${
                   activeTab === 'admin'
@@ -164,8 +174,12 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
 
             {/* User Login Form */}
             {activeTab === 'user' && (
-              <div className="space-y-5 animate-fade-in">
-                <form onSubmit={handleUserLogin} className="space-y-5">
+              <div id="user-login-panel" role="region" aria-labelledby="user-login-tab" className="space-y-5 animate-fade-in">
+                <form onSubmit={handleUserLogin} className="space-y-5" aria-busy={userLoading}>
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5 text-sm text-[#002349]">
+                    <p className="font-semibold">District, area or unit user</p>
+                    <p className="mt-0.5 text-xs text-gray-600">Sign in with your assigned username and password.</p>
+                  </div>
                   <div>
                     <label htmlFor="username" className="block text-xs font-semibold text-[#002349] mb-2">
                       Username
@@ -178,6 +192,8 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                       placeholder="Enter username"
                       className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                       disabled={userLoading}
+                      aria-invalid={Boolean(userError)}
+                      aria-describedby={userError ? 'user-login-error' : undefined}
                       autoComplete="username"
                       autoFocus
                     />
@@ -195,13 +211,14 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                         placeholder="Enter password"
                         className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                         disabled={userLoading}
+                        aria-invalid={Boolean(userError)}
+                        aria-describedby={userError ? 'user-login-error' : undefined}
                         autoComplete="current-password"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-[#002349]"
-                        tabIndex={-1}
                         aria-label={showPassword ? "Hide password" : "Show password"}
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -210,7 +227,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                   </div>
 
                   {userError && (
-                    <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 flex items-start space-x-2 animate-fade-in">
+                    <div id="user-login-error" role="alert" aria-live="assertive" className="bg-red-50 border-2 border-red-200 rounded-lg p-3 flex items-start space-x-2 animate-fade-in">
                       <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
                       <p className="text-xs text-red-700 font-medium">{userError}</p>
                     </div>
@@ -249,8 +266,12 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
 
             {/* Admin Login Form */}
             {activeTab === 'admin' && (
-              <div className="space-y-5 animate-fade-in">
-                <form onSubmit={handleAdminLogin} className="space-y-5">
+              <div id="admin-login-panel" role="region" aria-labelledby="admin-login-tab" className="space-y-5 animate-fade-in">
+                <form onSubmit={handleAdminLogin} className="space-y-5" aria-busy={adminLoading}>
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5 text-sm text-[#002349]">
+                    <p className="font-semibold">Portal administrator</p>
+                    <p className="mt-0.5 text-xs text-gray-600">Use your administrator email and password.</p>
+                  </div>
                   <div>
                     <label htmlFor="adminEmail" className="block text-xs font-semibold text-[#002349] mb-2">
                       Admin Email
@@ -263,6 +284,9 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                       placeholder="admin@example.com"
                       className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                       disabled={adminLoading}
+                      aria-invalid={Boolean(adminError)}
+                      aria-describedby={adminError ? 'admin-login-error' : undefined}
+                      autoComplete="username"
                       autoFocus
                     />
                   </div>
@@ -279,13 +303,14 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                         placeholder="••••••••"
                         className="w-full px-4 py-2.5 pr-10 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-[#002349] focus:border-[#002349] text-base transition-all duration-200 bg-gray-50 hover:bg-white"
                         disabled={adminLoading}
+                        aria-invalid={Boolean(adminError)}
+                        aria-describedby={adminError ? 'admin-login-error' : undefined}
                         autoComplete="current-password"
                       />
                       <button
                         type="button"
                         onClick={() => setShowAdminPassword(!showAdminPassword)}
                         className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-[#002349]"
-                        tabIndex={-1}
                         aria-label={showAdminPassword ? "Hide password" : "Show password"}
                       >
                         {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -294,7 +319,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                   </div>
 
                   {adminError && (
-                    <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 flex items-start space-x-2 animate-fade-in">
+                    <div id="admin-login-error" role="alert" aria-live="assertive" className="bg-red-50 border-2 border-red-200 rounded-lg p-3 flex items-start space-x-2 animate-fade-in">
                       <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
                       <p className="text-xs text-red-700 font-medium">{adminError}</p>
                     </div>
@@ -320,7 +345,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
               </div>
             )}
           </div>
-        </div>
+        </main>
       </div>
     </>
   );

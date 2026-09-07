@@ -125,12 +125,12 @@ const ProfilePage = () => {
   const isAdmin = user?.role === 'admin' || user?.isAdmin
 
   return (
-    <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-6">
+    <div className="ih-profile-compact max-w-3xl mx-auto px-0 sm:px-4 py-1 sm:py-6">
       {/* Profile Header */}
       <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-3 sm:mb-4">
-        <div className="bg-primary/5 px-3 sm:px-6 py-3 sm:py-4">
+        <div className="bg-primary/5 px-3 sm:px-6 py-2 sm:py-4">
           <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-2 sm:gap-3">
-            <div className="text-center sm:text-left">
+            <div className="hidden lg:block text-center sm:text-left">
               <h1 className="hidden lg:block text-base sm:text-2xl font-semibold text-gray-900">
                 {user?.name || user?.username || 'User'}
               </h1>
@@ -165,7 +165,7 @@ const ProfilePage = () => {
       <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
         <h2 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-gray-100">Profile Information</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-4">
+        <div className="ih-profile-details grid grid-cols-1 min-[360px]:grid-cols-2 gap-2 sm:gap-4">
           {/* RUKN ID / Admin ID */}
           {(user?.ruknId || user?.id) && (
             <div className="group bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-200/50 hover:border-primary/30 hover:shadow-md transition-all">
@@ -357,6 +357,5 @@ const ProfilePage = () => {
 }
 
 export default ProfilePage
-
 
 

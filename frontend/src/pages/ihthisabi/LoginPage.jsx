@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
-import { User, Shield, Home, AlertCircle, Users, Building2, ArrowLeft, Landmark } from 'lucide-react'
-import logoColor from '../../assets/LogoColor.png'
+import { User, Shield, AlertCircle, Users, Building2, ArrowLeft, Landmark } from 'lucide-react'
+import BrandLogo from '../../components/branding/BrandLogo'
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -245,14 +245,15 @@ const LoginPage = () => {
           animation: fade-in 0.3s ease-out;
         }
       `}</style>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
-      {/* Home Icon - Floating */}
+      <div className="mobile-readable-content min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
+      {/* Return to portal selection */}
       <button
+        type="button"
         onClick={() => navigate('/')}
-        className="fixed top-4 right-4 z-50 inline-flex h-[44px] w-[44px] items-center justify-center text-[#002349] hover:text-[#1a3a5c] transition-colors duration-300 cursor-pointer"
-        aria-label="Back to Home"
+        className="fixed left-3.5 top-3.5 z-50 inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-[#002349] transition-colors duration-300 hover:bg-white/70 hover:text-[#1a3a5c]"
       >
-        <Home className="w-6 h-6" />
+        <ArrowLeft className="h-4 w-4" />
+        All portals
       </button>
 
       {/* Main Content */}
@@ -262,11 +263,7 @@ const LoginPage = () => {
           <div className="text-center mb-8">
             {/* Logo */}
             <div className="mx-auto flex items-center justify-center mb-4">
-              <img 
-                src={logoColor} 
-                alt="JIH Logo" 
-                className="h-20 w-auto object-contain"
-              />
+              <BrandLogo alt="JIH Logo" size="xl" />
             </div>
             
             {/* Branding */}
@@ -274,6 +271,7 @@ const LoginPage = () => {
               <h1 className="text-2xl sm:text-3xl font-bold text-[#002349] mb-3 tracking-tight" style={{ fontFamily: 'Cinzel, serif' }}>
                 IHTHISABI REPORT
               </h1>
+              <p className="text-sm text-gray-600">For RUKN members and IHTHISABI administrators.</p>
             </div>
           </div>
 
@@ -386,6 +384,10 @@ const LoginPage = () => {
           {!showMainAdminLogin && !roleSelection && (
             <div className="space-y-5">
               <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="rounded-lg border border-purple-100 bg-purple-50 px-3 py-2.5 text-sm text-[#30205f]">
+                  <p className="font-semibold">RUKN member access</p>
+                  <p className="mt-0.5 text-xs text-gray-600">Enter your 6-digit RUKN ID to open the appropriate dashboard.</p>
+                </div>
                 {/* RUKN ID Field */}
                 <div>
                   <label htmlFor="ruknId" className="block text-xs font-semibold text-[#002349] mb-2">
@@ -454,6 +456,10 @@ const LoginPage = () => {
           {showMainAdminLogin && (
             <div className="space-y-5">
               <form onSubmit={handleMainAdminSubmit} className="space-y-5">
+                <div className="rounded-lg border border-purple-100 bg-purple-50 px-3 py-2.5 text-sm text-[#30205f]">
+                  <p className="font-semibold">IHTHISABI administrator</p>
+                  <p className="mt-0.5 text-xs text-gray-600">Use your administrator email and password.</p>
+                </div>
                 <div>
                   <label htmlFor="mainAdminEmail" className="block text-xs font-semibold text-[#002349] mb-2">
                     Email

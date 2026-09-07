@@ -1,3 +1,4 @@
+import ResponsiveTable from "../tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react'
 import { api } from '../../utils/ihthisabi/api'
 import { Archive, Trash2, Plus, Calendar } from 'lucide-react'
@@ -205,7 +206,7 @@ const ArchiveManagement = () => {
         </div>
         {/* Desktop: table */}
         <div className="hidden lg:block ih-scroll-x">
-        <table className="min-w-full divide-y divide-gray-200">
+        <ResponsiveTable className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -280,7 +281,7 @@ const ArchiveManagement = () => {
               ))
             )}
           </tbody>
-        </table>
+        </ResponsiveTable>
         </div>
         <Pagination pagination={pagination} onPageChange={fetchArchivedQuarters} loading={loading} itemLabel="archived quarters" />
       </div>

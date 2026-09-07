@@ -335,11 +335,11 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
   if (!isOpen) return null;
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl border border-gray-200">
+    <div className="mx-auto flex max-h-[90dvh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-[#002349]/5 to-[#957C3D]/5">
-        <div>
-          <h2 className="text-xl font-bold text-[#002349]">{isEdit ? 'Edit Notification' : 'Create Notification'}</h2>
+      <div className="flex items-center justify-between gap-3 border-b bg-gradient-to-r from-[#002349]/5 to-[#957C3D]/5 p-6 flex-shrink-0">
+        <div className="min-w-0">
+          <h2 className="break-words text-xl font-bold text-[#002349]">{isEdit ? 'Edit Notification' : 'Create Notification'}</h2>
           <p className="text-sm text-gray-600 mt-1 font-medium">
             {userData?.role === 'admin' || userData?.role === 'superadmin'
               ? 'Send a notification to any district, area, or unit'
@@ -350,13 +350,14 @@ const CreateNotificationModal = ({ isOpen, onClose, userData, onNotificationCrea
         </div>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-[#002349] transition-all duration-300 p-2 hover:bg-gray-100 rounded-xl"
+          aria-label="Close"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl p-2 text-gray-400 transition-all duration-300 hover:bg-gray-100 hover:text-[#002349]"
         >
           <X className="w-6 h-6" />
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto space-y-6 p-6">
         {error && (
           <div ref={errorRef} className="bg-red-50 border-2 border-red-200 rounded-2xl p-4">
             <div className="flex items-center">

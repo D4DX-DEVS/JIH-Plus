@@ -117,13 +117,13 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[85vh] overflow-y-auto scrollbar-hide">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-          <h2 className="text-base font-bold text-gray-900">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/30 p-4 backdrop-blur-sm sm:items-center">
+      <div className="my-4 max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto overscroll-contain rounded-xl bg-white shadow-2xl sm:max-h-[85vh] scrollbar-hide">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-3">
+          <h2 className="min-w-0 flex-1 break-words text-base font-bold text-gray-900">
             {isCreate ? 'Add District Admin' : editing ? 'Edit District Admin' : 'District Admin Profile'}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-2 -m-2 rounded-full">
+          <button onClick={onClose} aria-label="Close" className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:text-gray-600">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -290,14 +290,14 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
 
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-4 py-3 flex flex-wrap items-center justify-between gap-2">
           {!isCreate && !editing && (
-            <button onClick={() => setConfirmDelete(true)} disabled={saving} className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium disabled:opacity-50">
+            <button onClick={() => setConfirmDelete(true)} disabled={saving} className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium disabled:bg-gray-100 disabled:text-gray-500 disabled:opacity-100">
               <Trash2 className="w-4 h-4" /> Delete
             </button>
           )}
           <div className="flex items-center gap-2 ml-auto">
             {!isCreate && !editing && (
               <>
-                <button onClick={handleToggleActive} disabled={saving} className="btn-ghost text-sm py-2.5 disabled:opacity-50">
+                <button onClick={handleToggleActive} disabled={saving} className="btn-ghost text-sm py-2.5 disabled:bg-gray-200 disabled:text-gray-700 disabled:opacity-100">
                   {districtAdmin?.isActive ? 'Deactivate' : 'Activate'}
                 </button>
                 <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 px-3 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium">
@@ -308,11 +308,11 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
             {editing && (
               <>
                 {!isCreate && (
-                  <button onClick={() => setEditing(false)} className="btn-ghost text-sm py-2.5" disabled={saving}>
+                  <button onClick={() => setEditing(false)} className="btn-ghost text-sm py-2.5 disabled:bg-gray-200 disabled:text-gray-700 disabled:opacity-100" disabled={saving}>
                     Cancel
                   </button>
                 )}
-                <button onClick={handleSave} disabled={saving} className="px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium disabled:opacity-50">
+                <button onClick={handleSave} disabled={saving} className="px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium disabled:bg-gray-300 disabled:text-gray-700 disabled:opacity-100">
                   {saving ? 'Saving...' : 'Save'}
                 </button>
               </>

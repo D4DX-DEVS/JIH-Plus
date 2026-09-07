@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { api } from '../../utils/ihthisabi/api'
@@ -15,11 +15,10 @@ import {
   AlertCircle,
   Clock3,
   Trash2,
-  Edit,
-  Lock
+  Edit
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { Q3_DISABLED, isQ3Disabled } from '../../utils/ihthisabi/quarterHelper'
+import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
 
 const UserDashboard = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth()
@@ -29,26 +28,9 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [alternativeSubmissions, setAlternativeSubmissions] = useState([])
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, submissionId: null, submissionName: null })
+  const [showSchedule, setShowSchedule] = useState(false)
 
-  useEffect(() => {
-    if (isAuthenticated && !authLoading && user) {
-      if (user.role !== 'rukn') {
-        setLoading(false)
-        return
-      }
-      
-      const timer = setTimeout(() => {
-        fetchSubmissions()
-        fetchAlternativeSubmissions()
-      }, 100)
-      
-      return () => clearTimeout(timer)
-    } else if (!authLoading && !isAuthenticated) {
-      navigate('/ihthisabi/login')
-    }
-  }, [isAuthenticated, authLoading, user])
-
-  const fetchSubmissions = async (page = 1) => {
+  const fetchSubmissions = useCallback(async (page = 1) => {
     try {
       const response = await api.get('/submissions/my-submissions', { params: { page, limit: 10 } })
       setSubmissions(response.data.data.submissions || [])
@@ -59,9 +41,9 @@ const UserDashboard = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const fetchAlternativeSubmissions = async () => {
+  const fetchAlternativeSubmissions = useCallback(async () => {
     try {
       const response = await api.get('/alternative-submissions/my-submissions')
       setAlternativeSubmissions(response.data.data.alternativeSubmissions || [])
@@ -69,15 +51,27 @@ const UserDashboard = () => {
       console.error('Failed to fetch alternative submissions:', error)
       setAlternativeSubmissions([])
     }
-  }
+  }, [])
 
-  const getCurrentMonth = () => {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ]
-    return months[new Date().getMonth()]
-  }
+  useEffect(() => {
+    if (isAuthenticated && !authLoading && user) {
+      if (user.role !== 'rukn') {
+        setLoading(false)
+        return undefined
+      }
+
+      const timer = setTimeout(() => {
+        fetchSubmissions()
+        fetchAlternativeSubmissions()
+      }, 100)
+
+      return () => clearTimeout(timer)
+    }
+    if (!authLoading && !isAuthenticated) {
+      navigate('/ihthisabi/login')
+    }
+    return undefined
+  }, [isAuthenticated, authLoading, user, navigate, fetchSubmissions, fetchAlternativeSubmissions])
 
   // Get currently OPEN quarter for submissions
   // Q4 (Oct-Dec) only opens after December 31st
@@ -101,8 +95,6 @@ const UserDashboard = () => {
     return { quarter: 3, year: currentYear }
   }
 
-  const getLastQuarter = () => getAvailableSubmissionQuarter()
-
   const getQuarterInfo = (quarter) => {
     const quarterInfo = {
       1: { name: 'Q1', period: 'January – March', startMonth: 1, endMonth: 3 },
@@ -113,59 +105,6 @@ const UserDashboard = () => {
     return quarterInfo[quarter]
   }
 
-  const hasSubmittedForAvailableQuarter = () => {
-    if (submissions.length === 0) return false
-    
-    const currentDate = new Date()
-    const available = getAvailableSubmissionQuarter(currentDate)
-    
-    // Check if user has submitted for currently open quarter and year
-    // Use stored submissionPeriod.quarter if available, otherwise calculate from date
-    return submissions.some(submission => {
-      const submissionYear = submission.submissionPeriod?.year || new Date(submission.createdAt).getFullYear()
-      const submissionQuarter = submission.submissionPeriod?.quarter || 
-        (() => {
-          const month = new Date(submission.createdAt).getMonth() + 1
-          if (month >= 1 && month <= 3) return 1
-          if (month >= 4 && month <= 6) return 2
-          if (month >= 7 && month <= 9) return 3
-          if (month >= 10 && month <= 12) return 4
-          return 1
-        })()
-      
-      return submissionYear === available.year && submissionQuarter === available.quarter
-    })
-  }
-
-  const canSubmitNow = () => {
-    return !hasSubmittedForAvailableQuarter()
-  }
-  
-  const getNextSubmissionDate = () => {
-    const currentDate = new Date()
-    const { quarter, year } = getAvailableSubmissionQuarter(currentDate)
-
-    // If they can submit now, return null (no next date needed)
-    if (canSubmitNow()) return null
-
-    // Next available quarter is simply current available + 1 (previous completed already)
-    let nextQuarter = quarter + 1
-    let nextYear = year
-    if (nextQuarter > 4) {
-      nextQuarter = 1
-      nextYear = year + 1
-    }
-
-    const quarterInfo = getQuarterInfo(nextQuarter)
-    const nextDate = new Date(nextYear, quarterInfo.startMonth - 1, 1)
-
-    return nextDate.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
   const getCurrentQuarterDisplay = () => {
     // Show the available submission quarter (previous completed quarter)
     const { quarter, year } = getAvailableSubmissionQuarter()
@@ -173,25 +112,10 @@ const UserDashboard = () => {
     return `${quarterInfo.name} ${year} (${quarterInfo.period})`
   }
 
-  const getLastQuarterDisplay = () => {
-    const { quarter, year } = getLastQuarter()
-    const quarterInfo = getQuarterInfo(quarter)
-    
-    return `${quarterInfo.name} ${year} (${quarterInfo.period} - 3 months)`
-  }
-
   const getCombinedSubmissions = () => ([
     ...submissions.map(s => ({ ...s, _type: 'regular' })),
     ...alternativeSubmissions.map(s => ({ ...s, _type: 'alternative' }))
   ])
-
-  // Get the last submitted form (most recent) across regular and alternative
-  const getLastSubmission = () => {
-    const combined = getCombinedSubmissions()
-    if (combined.length === 0) return null
-
-    return combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
-  }
 
   // Get current quarter submission (for available submission quarter)
   const getCurrentQuarterSubmission = () => {
@@ -259,34 +183,6 @@ const UserDashboard = () => {
     })
 
     return completedQuarters
-  }
-
-  const getQuarterStatus = (year, quarter) => {
-    // Check if Q3 is disabled
-    if (Q3_DISABLED && quarter === 3) {
-      return { status: 'locked', submission: null, icon: Lock, color: 'gray', text: 'Disabled' }
-    }
-    
-    const combined = getCombinedSubmissions()
-    const matching = combined
-      .filter(sub => {
-        const subYear = sub.submissionPeriod?.year || new Date(sub.createdAt).getFullYear()
-        const subQuarter = sub.submissionPeriod?.quarter || (() => {
-          const month = new Date(sub.createdAt).getMonth() + 1
-          if (month >= 1 && month <= 3) return 1
-          if (month >= 4 && month <= 6) return 2
-          if (month >= 7 && month <= 9) return 3
-          if (month >= 10 && month <= 12) return 4
-          return 1
-        })()
-        return subYear === year && subQuarter === quarter
-      })
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-
-    if (matching.length === 0) return { status: 'pending', submission: null }
-    const regular = matching.find(m => m._type === 'regular')
-    if (regular) return { status: 'completed', submission: regular }
-    return { status: 'alternative', submission: matching[0] }
   }
 
   const getStatusColor = (status) => {
@@ -367,7 +263,7 @@ const UserDashboard = () => {
     <div className="ih-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <div className="ih-page-shell">
         {/* Welcome Header with CTA */}
-        <div className="ih-page-header">
+        <div className="ih-page-header hidden lg:flex">
           <div className="min-w-0 flex-1">
             {/* App bar already greets the user on mobile — keep the big welcome for lg+ only */}
             <h1 className="ih-page-title brand-font hidden truncate lg:block">
@@ -394,11 +290,11 @@ const UserDashboard = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4 mb-3 sm:mb-6">
           {[
-            { label: 'Total Submissions', short: 'Total', value: submissions.length, Icon: FileText, tone: 'bg-blue-100 text-blue-600' },
-            { label: 'Approved', short: 'Approved', value: submissions.filter(s => s.status === 'approved').length, Icon: CheckCircle2, tone: 'bg-green-100 text-green-600' },
-            { label: 'In Review', short: 'In Review', value: submissions.filter(s => s.status === 'reviewed' || s.status === 'submitted').length, Icon: Clock3, tone: 'bg-amber-100 text-amber-600' },
-            { label: 'Annual Progress', short: 'Progress', value: `${Math.round((getQuarterCompletionStatus().length / (Q3_DISABLED ? 3 : 4)) * 100)}%`, Icon: TrendingUp, tone: 'bg-purple-100 text-purple-600' },
-          ].map(({ label, short, value, Icon, tone }) => (
+            { label: 'Total Submissions', short: 'Total', value: submissions.length, icon: <FileText className="h-4 w-4" />, tone: 'bg-blue-100 text-blue-600' },
+            { label: 'Approved', short: 'Approved', value: submissions.filter(s => s.status === 'approved').length, icon: <CheckCircle2 className="h-4 w-4" />, tone: 'bg-green-100 text-green-600' },
+            { label: 'In Review', short: 'In Review', value: submissions.filter(s => s.status === 'reviewed' || s.status === 'submitted').length, icon: <Clock3 className="h-4 w-4" />, tone: 'bg-amber-100 text-amber-600' },
+            { label: 'Annual Progress', short: 'Progress', value: `${Math.round((getQuarterCompletionStatus().length / (Q3_DISABLED ? 3 : 4)) * 100)}%`, icon: <TrendingUp className="h-4 w-4" />, tone: 'bg-purple-100 text-purple-600' },
+          ].map(({ label, short, value, icon, tone }) => (
             <div key={label} className="ih-stat-card">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -409,7 +305,7 @@ const UserDashboard = () => {
                   <p className="ih-stat-value mt-1">{value}</p>
                 </div>
                 <div className={`ih-stat-icon ${tone}`}>
-                  <Icon className="h-4 w-4" />
+                  {icon}
                 </div>
               </div>
             </div>
@@ -418,12 +314,12 @@ const UserDashboard = () => {
 
         {/* Main Content Card */}
         <div className="ih-surface overflow-hidden">
-          <div className="border-b border-gray-200 bg-[#161F2F] px-3 py-2 sm:px-6 sm:py-3">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="brand-font truncate text-[13px] font-bold text-white sm:text-lg">
+          <div className="border-b border-gray-200 bg-white px-3 py-3 sm:bg-[#161F2F] sm:px-6 sm:py-3">
+            <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+              <h2 className="brand-font break-words text-base font-bold leading-snug text-gray-900 sm:text-lg sm:text-white">
                 Quarterly Submissions Summary
               </h2>
-              <span className="ih-chip shrink-0 border-white/20 bg-white/10 font-semibold text-white">
+              <span className="max-w-full break-words text-sm leading-snug text-gray-600 sm:rounded-full sm:border sm:border-white/20 sm:bg-white/10 sm:px-2 sm:py-0.5 sm:text-xs sm:font-semibold sm:text-white">
                 {getCurrentQuarterDisplay()}
               </span>
             </div>
@@ -500,39 +396,45 @@ const UserDashboard = () => {
           <div className="p-3 sm:p-6">
             {/* Submissions List */}
             {submissions.length === 0 ? (
-              <div className="py-6 text-center sm:py-10">
-                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100">
-                  <FileText className="w-6 h-6 text-gray-400" />
-                </div>
-                <h3 className="brand-font mb-1 text-sm font-bold text-gray-900">No submissions yet</h3>
-                <p className="mx-auto mb-3 max-w-md text-xs text-gray-500">
-                  Start your quarterly reporting by submitting your first report for {getCurrentQuarterDisplay()}.
-                </p>
-                <div className="mx-auto mb-4 max-w-lg rounded-xl border border-blue-200 bg-blue-50 p-3 text-left sm:p-5">
-                  <h4 className="mb-1.5 text-xs font-semibold text-blue-900 sm:text-sm">Quarterly Submission Schedule</h4>
-                  <div className="space-y-0.5 text-[11px] text-blue-800 sm:text-sm">
-                    <div className="flex items-center justify-between py-1">
-                      <span>• January – March</span>
-                      <span className="text-blue-600 font-medium">(3 months)</span>
+              <div className="py-1 text-center sm:py-4">
+                <div className="mx-auto mb-4 max-w-lg rounded-xl border border-blue-200 bg-blue-50 text-left">
+                  <button
+                    type="button"
+                    onClick={() => setShowSchedule((isVisible) => !isVisible)}
+                    aria-expanded={showSchedule}
+                    aria-controls="quarterly-submission-schedule"
+                    className="flex min-h-[44px] w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-xs font-semibold text-blue-900 sm:px-5 sm:text-sm"
+                  >
+                    <span>View quarterly submission schedule</span>
+                    <span aria-hidden="true" className="text-base leading-none">{showSchedule ? '−' : '+'}</span>
+                  </button>
+                  {showSchedule && (
+                    <div id="quarterly-submission-schedule" className="border-t border-blue-200 px-3 pb-3 pt-2.5 sm:px-5 sm:pb-5">
+                      <div className="space-y-0.5 text-[11px] text-blue-800 sm:text-sm">
+                        <div className="flex items-center justify-between py-1">
+                          <span>• January – March</span>
+                          <span className="font-medium text-blue-600">(3 months)</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1">
+                          <span>• April – June</span>
+                          <span className="font-medium text-blue-600">(3 months)</span>
+                        </div>
+                        <div className={`flex items-center justify-between py-1 ${Q3_DISABLED ? 'opacity-50 line-through' : ''}`}>
+                          <span>• July – September</span>
+                          <span className="font-medium text-blue-600">(3 months) {Q3_DISABLED && '(Disabled)'}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1">
+                          <span>• October – December</span>
+                          <span className="font-medium text-blue-600">(3 months)</span>
+                        </div>
+                      </div>
+                      <div className="mt-3 border-t border-blue-200 pt-3">
+                        <p className="text-sm font-semibold text-blue-700">
+                          Total: {Q3_DISABLED ? '3' : '4'} submissions per year ({Q3_DISABLED ? '9' : '12'} months)
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between py-1">
-                      <span>• April – June</span>
-                      <span className="text-blue-600 font-medium">(3 months)</span>
-                    </div>
-                    <div className={`flex items-center justify-between py-1 ${Q3_DISABLED ? 'opacity-50 line-through' : ''}`}>
-                      <span>• July – September</span>
-                      <span className="text-blue-600 font-medium">(3 months) {Q3_DISABLED && '(Disabled)'}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <span>• October – December</span>
-                      <span className="text-blue-600 font-medium">(3 months)</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-blue-200">
-                    <p className="text-sm text-blue-700 font-semibold">
-                      Total: {Q3_DISABLED ? '3' : '4'} submissions per year ({Q3_DISABLED ? '9' : '12'} months)
-                    </p>
-                  </div>
+                  )}
                 </div>
                 {/* Mobile already has the Submit Now CTA in the quarter status card above */}
                 <button

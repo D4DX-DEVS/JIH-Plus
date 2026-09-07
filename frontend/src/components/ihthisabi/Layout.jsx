@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import ConfirmationModal from './ConfirmationModal'
 import PoweredByD4DX from '../sidebars/PoweredByD4DX'
-import LogoWhite from '../../assets/LogoWhite.png'
-import LogoColor from '../../assets/LogoColor.png'
+import BrandLogo from '../branding/BrandLogo'
+import useModalFocus from '../../hooks/useModalFocus'
 import { 
   Home, 
   FileText, 
@@ -32,6 +32,8 @@ const Layout = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [moreOpen, setMoreOpen] = useState(false)
+  const closeMore = useCallback(() => setMoreOpen(false), [])
+  const { dialogRef: moreSheetRef, triggerRef: moreButtonRef } = useModalFocus(moreOpen, closeMore)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState(new Set())
@@ -238,7 +240,18 @@ const Layout = () => {
     if (user?.role === 'rukn') {
       return [
         { name: 'Home', href: dashboardHref, icon: Home },
-        { name: 'Submit', href: '/ihthisabi/submit', icon: FileText },
+        {
+          name: 'Submit',
+          href: '/ihthisabi/submit',
+          icon: FileText,
+          activePaths: [
+            '/ihthisabi/submit',
+            '/ihthisabi/submission-success',
+            '/ihthisabi/submissions',
+            '/ihthisabi/alternative-submission',
+            '/ihthisabi/alternative-submissions',
+          ],
+        },
         { name: 'Profile', href: '/ihthisabi/profile', icon: User },
         { name: 'Help', href: '/ihthisabi/help-desk', icon: LifeBuoy },
       ]
@@ -275,7 +288,7 @@ const Layout = () => {
           match: ['/ihthisabi/admin/submissions', '/ihthisabi/admin/consolidation', '/ihthisabi/admin/unit-reply'] },
         { name: 'Forms', href: '/ihthisabi/admin/form-management', icon: ClipboardList },
         { name: 'Users', href: '/ihthisabi/admin/members', icon: Users,
-          match: ['/ihthisabi/admin/members', '/ihthisabi/admin/unit-admins', '/ihthisabi/admin/user-management',
+          match: ['/ihthisabi/admin/members', '/ihthisabi/admin/unit-admins', '/ihthisabi/admin/district-admins', '/ihthisabi/admin/user-management',
                   '/ihthisabi/admin/archive', '/ihthisabi/admin/abroad-countries', '/ihthisabi/admin/abroad-members'] },
         { name: 'More', icon: Menu, action: 'menu' },
       ]
@@ -286,12 +299,13 @@ const Layout = () => {
     ]
   }
 
-  const bottomNavItems = buildBottomNav()
+  const accountPaths = new Set(['/ihthisabi/profile', '/ihthisabi/help-desk'])
+  const bottomNavItems = buildBottomNav().filter(item => !accountPaths.has(item.href))
 
   // "More" lists only what the bottom bar doesn't already carry — repeating the
   // four tabs that are one tap away is what made the old drawer feel redundant.
   const moreItems = (() => {
-    const inBar = new Set(bottomNavItems.filter(i => i.href).map(i => i.href))
+    const inBar = new Set([...accountPaths, ...bottomNavItems.filter(i => i.href).map(i => i.href)])
     const rest = []
     navigation.forEach(item => {
       if (item.type === 'group') {
@@ -303,10 +317,25 @@ const Layout = () => {
     return rest
   })()
 
-  const isBottomActive = (item) => {
-    if (item.action === 'menu') return moreOpen
+  const pathMatches = (path) => (
+    location.pathname === path || location.pathname.startsWith(`${path}/`)
+  )
+
+  const matchesBottomDestination = (item) => {
+    if (item.activePaths) return item.activePaths.some(pathMatches)
     if (item.match) return item.match.includes(bestMatchHref)
     return isActive(item.href)
+  }
+
+  const hasActiveBottomDestination = bottomNavItems.some((item) => {
+    if (item.action === 'menu') return false
+    return matchesBottomDestination(item)
+  })
+  const hasActiveMoreItem = !hasActiveBottomDestination && moreItems.some((item) => isActive(item.href))
+
+  const isBottomActive = (item) => {
+    if (item.action === 'menu') return moreOpen || hasActiveMoreItem
+    return matchesBottomDestination(item)
   }
 
   const handleBottomClick = (item) => {
@@ -455,18 +484,14 @@ const Layout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="app-viewport bg-gray-50 flex">
       {/* Sidebar — desktop only; phones navigate via the bottom bar and its
           "More" panel, so this never slides in on mobile. */}
       <div className="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full bg-gradient-to-b from-[#1E1040] to-[#2D1B69] border-r border-[#3D2475] shadow-xl lg:translate-x-0">
         {/* Sidebar Header */}
         <div className="flex items-center h-16 px-6 border-b border-[#3D2475] bg-[#1A0D3D]/50 backdrop-blur-sm">
           <div className="flex items-center space-x-3">
-            <img
-              src={LogoWhite}
-              alt="IHTHISABI Logo"
-              className="w-10 h-10 object-contain"
-            />
+            <BrandLogo variant="white" alt="IHTHISABI Logo" size="sm" className="h-10" />
             <div>
               <span className="text-sm font-bold text-white block">IHTHISABI</span>
               <span className="text-xs text-purple-300">REPORT</span>
@@ -521,24 +546,27 @@ const Layout = () => {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
-        <div className="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur-xl backdrop-saturate-150 shadow-[0_1px_0_rgba(16,24,40,0.06)]">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden lg:ml-64">
+        <div className="app-mobile-header lg:hidden flex-shrink-0 z-20 bg-white/80 backdrop-blur-xl backdrop-saturate-150 shadow-[0_1px_0_rgba(16,24,40,0.06)]">
           <div className="flex items-center justify-between gap-2.5 px-3.5 py-2.5">
             <div className="min-w-0 flex items-center gap-2.5">
-              <img src={LogoColor} alt="IHTHISABI" className="h-9 w-9 shrink-0 object-contain" />
+              <BrandLogo alt="IHTHISABI" size="sm" />
               <div className="min-w-0">
-                <h1 className="truncate text-[15px] font-bold leading-tight tracking-tight text-gray-900">
+                <h1 className="break-words text-[15px] font-bold leading-tight tracking-tight text-gray-900 [overflow-wrap:anywhere]">
                   {pageTitle}
                 </h1>
-                <p className="truncate text-[10px] leading-tight text-gray-500">
-                  {contextLabel}
+                <p className="flex flex-wrap items-baseline gap-x-1.5 text-xs leading-snug text-gray-600">
+                  <span className="min-w-0 break-words [overflow-wrap:anywhere]">{contextLabel}</span>
+                  {user?.ruknId && (
+                    <span className="whitespace-nowrap">· RUKN ID <span className="font-semibold">{user.ruknId}</span></span>
+                  )}
                 </p>
               </div>
             </div>
-            <div className="relative shrink-0">
+            <div className="relative z-30 shrink-0">
               <button
                 onClick={() => setProfileMenuOpen((prev) => !prev)}
-                className="inline-flex h-[40px] w-[40px] items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+                className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
                 aria-label="Account menu"
               >
                 <User className="h-[18px] w-[18px]" />
@@ -547,6 +575,22 @@ const Layout = () => {
               {profileMenuOpen && (
                 <div className="absolute right-0 top-11 z-30 w-52 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
                   <PoweredByD4DX />
+                  <button
+                    type="button"
+                    onClick={() => { setProfileMenuOpen(false); navigate('/ihthisabi/profile') }}
+                    className="flex min-h-11 w-full items-center gap-2 border-t border-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    <User className="h-4 w-4" />
+                    Profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setProfileMenuOpen(false); navigate('/ihthisabi/help-desk') }}
+                    className="flex min-h-11 w-full items-center gap-2 border-t border-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    <LifeBuoy className="h-4 w-4" />
+                    Help Desk
+                  </button>
                   {otherRoles.map((roleOption) => (
                     <button
                       key={roleOption.role}
@@ -576,7 +620,7 @@ const Layout = () => {
         </div>
 
         {/* Page content */}
-        <main className="flex-1 ih-mobile-bottom-safe lg:pb-0">
+        <main data-app-scroll className="app-scroll-region flex-1 ih-mobile-bottom-safe lg:pb-0">
           <Outlet />
         </main>
 
@@ -593,7 +637,7 @@ const Layout = () => {
             {/* "More" panel — grows upward out of the bar, carrying only the
                 destinations the bar itself doesn't already show. */}
             {moreOpen && (
-              <div className="ih-more-sheet max-h-[60vh] overflow-y-auto border-b border-gray-200 bg-white px-3 pb-2 pt-3">
+              <div ref={moreSheetRef} id="ihthisabi-mobile-more-sheet" role="dialog" aria-modal="true" aria-label="More navigation" className="ih-more-sheet max-h-[60vh] overflow-y-auto border-b border-gray-200 bg-white px-3 pb-2 pt-3">
                 {moreItems.length > 0 && (
                   <div className="space-y-1">
                     {moreItems.map(item => {
@@ -649,7 +693,7 @@ const Layout = () => {
               </div>
             )}
             <nav
-              className="grid gap-0.5 px-1.5 py-1"
+              className="grid gap-2 px-3 py-1.5"
               style={{ gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))` }}
             >
               {bottomNavItems.map((item) => {
@@ -658,20 +702,22 @@ const Layout = () => {
                 return (
                   <button
                     key={item.name}
+                    ref={item.action === 'menu' ? moreButtonRef : undefined}
                     onClick={() => handleBottomClick(item)}
-                    className={`relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1.5 text-[10px] font-semibold leading-none transition-colors duration-300 ease-out ${
-                      active ? 'text-[#7B4FF2]' : 'text-gray-400 hover:text-gray-700'
+                    className={`relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-2 py-1.5 text-xs font-semibold leading-snug transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-inset ${
+                      active ? 'border-violet-200 bg-violet-50 text-violet-700' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                     aria-current={active ? 'page' : undefined}
+                    aria-haspopup={item.action === 'menu' ? 'dialog' : undefined}
+                    aria-expanded={item.action === 'menu' ? moreOpen : undefined}
+                    aria-controls={item.action === 'menu' ? 'ihthisabi-mobile-more-sheet' : undefined}
                   >
                     <span
-                      className={`flex h-7 w-full max-w-[46px] items-center justify-center rounded-full transition-all duration-300 ease-out ${
-                        active ? 'bg-[#7B4FF2]/12' : 'bg-transparent'
-                      }`}
+                      className="flex h-5 w-5 items-center justify-center"
                     >
-                      <Icon className={`h-[17px] w-[17px] shrink-0 transition-transform duration-300 ${active ? 'scale-110' : ''}`} />
+                      <Icon className="h-5 w-5 shrink-0" />
                     </span>
-                    <span className="max-w-full truncate">{item.name}</span>
+                    <span className="max-w-full break-words text-center [overflow-wrap:anywhere]">{item.name}</span>
                   </button>
                 )
               })}
@@ -697,4 +743,3 @@ const Layout = () => {
 }
 
 export default Layout
-

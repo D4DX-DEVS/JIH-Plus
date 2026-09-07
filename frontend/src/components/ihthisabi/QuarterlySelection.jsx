@@ -9,7 +9,7 @@ import {
   Lock,
   FileText
 } from 'lucide-react'
-import { Q3_DISABLED, isQ3Disabled } from '../../utils/ihthisabi/quarterHelper'
+import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
 
 const QuarterlySelection = ({ submissions = [], alternativeSubmissions = [], onQuarterSelect, title, subtitle }) => {
   const navigate = useNavigate()
@@ -349,113 +349,122 @@ const QuarterlySelection = ({ submissions = [], alternativeSubmissions = [], onQ
           const isAvailableQuarter = isQuarterAvailable(quarter, year)
           const currentQuarter = getCurrentQuarter()
           const isCurrentQuarter = year === currentYear && quarter === currentQuarter
-          
+          const isInteractive = !['locked', 'current', 'unavailable'].includes(status.status)
+
           return (
             <div
               key={`${year}-${quarter}`}
-              onClick={() => handleQuarterClick(quarter, year)}
               className={`
-                ih-surface relative p-2.5 transition-all duration-300 sm:p-5
+                ih-surface relative overflow-hidden transition-all duration-300
                 ${status.status === 'locked' || status.status === 'current'
-                  ? 'cursor-not-allowed opacity-55'
+                  ? 'cursor-not-allowed'
                   : status.status === 'submitted'
                     ? 'cursor-pointer bg-green-50/70 hover:-translate-y-0.5'
                     : status.status === 'alternative-submitted'
                       ? 'cursor-pointer bg-purple-50/70 hover:-translate-y-0.5'
                       : status.status === 'available'
                         ? 'cursor-pointer bg-blue-50/60 hover:-translate-y-0.5'
-                        : 'cursor-not-allowed bg-red-50/60 opacity-55'
+                        : 'cursor-not-allowed bg-red-50/60'
                 }
                 ${isAvailableQuarter ? 'ring-2 ring-blue-500/40' : ''}
                 ${isCurrentQuarter ? 'ring-2 ring-amber-400/40' : ''}
               `}
             >
-              {/* Available Quarter Badge */}
-              {isAvailableQuarter && (
-                <div className="absolute -top-1.5 right-1.5 rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
-                  Available
-                </div>
-              )}
-              
-              {/* Upcoming Quarter Badge */}
-              {isCurrentQuarter && (
-                <div className="absolute -top-1.5 left-1.5 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
-                  Upcoming
-                </div>
-              )}
-              
-              {/* Quarter Header */}
-              <div className="mb-1.5 text-center">
-                <div className={`
-                  mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-full sm:h-10 sm:w-10
-                  ${status.status === 'submitted' ? 'bg-green-500' :
-                    status.status === 'alternative-submitted' ? 'bg-purple-500' :
-                    status.status === 'available' ? 'bg-blue-500' :
-                    status.status === 'current' ? 'bg-yellow-500' :
-                    'bg-gray-400'
-                  }
-                `}>
-                  <StatusIcon className="h-3.5 w-3.5 text-white sm:h-5 sm:w-5" />
+              <button
+                type="button"
+                onClick={() => handleQuarterClick(quarter, year)}
+                disabled={!isInteractive}
+                aria-label={`${quarterInfo.name} ${year}, ${quarterInfo.period}: ${status.text}`}
+                className="relative block w-full rounded-2xl p-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7B4FF2] disabled:cursor-not-allowed sm:p-5"
+              >
+                <div className="mb-2 flex min-h-6 flex-wrap justify-center gap-1">
+                {/* Available Quarter Badge */}
+                {isAvailableQuarter && (
+                  <span className="max-w-full rounded-full bg-blue-700 px-2 py-0.5 text-xs font-semibold leading-normal text-white">
+                    Available
+                  </span>
+                )}
+
+                {/* Upcoming Quarter Badge */}
+                {isCurrentQuarter && (
+                  <span className="max-w-full rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold leading-normal text-amber-900">
+                    Upcoming
+                  </span>
+                )}
                 </div>
 
-                <h3 className="text-[13px] font-bold leading-tight text-gray-900 sm:text-lg">
-                  {quarterInfo.name} - {year}
-                </h3>
-                <p className="text-[10px] leading-tight text-gray-500 sm:text-sm">
-                  {quarterInfo.period}
-                </p>
-              </div>
+                {/* Quarter Header */}
+                <div className="mb-1.5 text-center">
+                  <div className={`
+                    mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-full sm:h-10 sm:w-10
+                    ${status.status === 'submitted' ? 'bg-green-500' :
+                      status.status === 'alternative-submitted' ? 'bg-purple-500' :
+                      status.status === 'available' ? 'bg-blue-500' :
+                      status.status === 'current' ? 'bg-yellow-500' :
+                      'bg-gray-400'
+                    }
+                  `}>
+                    <StatusIcon className="h-3.5 w-3.5 text-white sm:h-5 sm:w-5" />
+                  </div>
 
-              {/* Status */}
-              <div className="text-center">
-                <span className={`
-                  ih-chip border-transparent
-                  ${status.status === 'submitted' ? 'bg-green-100 text-green-800' :
-                    status.status === 'alternative-submitted' ? 'bg-purple-100 text-purple-800' :
-                    status.status === 'available' ? 'bg-blue-100 text-blue-800' :
-                    status.status === 'current' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-600'
-                  }
-                `}>
-                  {status.text}
-                </span>
-              </div>
-              
-              {/* Action Hint */}
-              {status.status !== 'locked' && status.status !== 'current' && (
-                <div className="mt-1.5 space-y-1">
-                  {status.status === 'submitted' ? (
-                    <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500 sm:text-sm">
-                      <span>View Report</span>
-                      <ArrowRight className="h-3 w-3" />
-                    </div>
-                  ) : status.status === 'alternative-submitted' ? (
-                    <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500 sm:text-sm">
-                      <span className="truncate">View Alternative</span>
-                      <ArrowRight className="h-3 w-3 shrink-0" />
-                    </div>
-                  ) : (
-                    <>
+                  <h3 className="text-sm font-bold leading-snug text-gray-900 sm:text-lg">
+                    {quarterInfo.name} - {year}
+                  </h3>
+                  <p className="text-sm leading-snug text-gray-600">
+                    {quarterInfo.period}
+                  </p>
+                </div>
+
+                {/* Status */}
+                <div className="text-center">
+                  <span className={`
+                    ih-chip max-w-full whitespace-normal break-words text-center leading-snug border-transparent
+                    ${status.status === 'submitted' ? 'bg-green-100 text-green-800' :
+                      status.status === 'alternative-submitted' ? 'bg-purple-100 text-purple-800' :
+                      status.status === 'available' ? 'bg-blue-100 text-blue-800' :
+                      status.status === 'current' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-600'
+                    }
+                  `}>
+                    {status.text}
+                  </span>
+                </div>
+
+                {/* Action Hint */}
+                {status.status !== 'locked' && status.status !== 'current' && (
+                  <div className="mt-1.5 space-y-1">
+                    {status.status === 'submitted' ? (
+                      <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500 sm:text-sm">
+                        <span>View Report</span>
+                        <ArrowRight className="h-3 w-3" />
+                      </div>
+                    ) : status.status === 'alternative-submitted' ? (
+                      <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500 sm:text-sm">
+                        <span className="break-words">View Alternative</span>
+                        <ArrowRight className="h-3 w-3 shrink-0" />
+                      </div>
+                    ) : (
                       <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500 sm:text-sm">
                         <span>Submit Report</span>
                         <ArrowRight className="h-3 w-3" />
                       </div>
-                      {status.status === 'available' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/ihthisabi/alternative-submission?quarter=${quarter}&year=${year}`)
-                          }}
-                          className="inline-flex w-full min-h-[44px] sm:min-h-0 items-center justify-center gap-1 rounded-full px-2 py-2 text-[10px] font-medium text-white shadow-sm transition-opacity hover:opacity-90 sm:py-1.5 sm:text-xs"
-                          style={{ backgroundColor: '#1A3A5C' }}
-                          title="Submit alternative submission if unable to complete regular report"
-                        >
-                          <FileText className="h-3 w-3 shrink-0" />
-                          <span className="truncate">Alternative</span>
-                        </button>
-                      )}
-                    </>
-                  )}
+                    )}
+                  </div>
+                )}
+              </button>
+
+              {status.status === 'available' && (
+                <div className="px-2.5 pb-2.5 sm:px-5 sm:pb-5">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/ihthisabi/alternative-submission?quarter=${quarter}&year=${year}`)}
+                    className="inline-flex min-h-[44px] w-full items-center justify-center gap-1 rounded-full px-2 py-2 text-[10px] font-medium text-white shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7B4FF2] focus-visible:ring-offset-2 sm:min-h-0 sm:py-1.5 sm:text-xs"
+                    style={{ backgroundColor: '#1A3A5C' }}
+                    title="Submit alternative submission if unable to complete regular report"
+                  >
+                    <FileText className="h-3 w-3 shrink-0" />
+                    <span className="truncate">Alternative</span>
+                  </button>
                 </div>
               )}
             </div>

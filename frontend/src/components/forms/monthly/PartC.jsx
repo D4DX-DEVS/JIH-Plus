@@ -1,3 +1,5 @@
+import NumericInput from "../../NumericInput";
+import ResponsiveTable from "../../tables/ResponsiveTable.jsx";
 import React from 'react';
 import { useForm } from '../../../contexts/FormContext';
 
@@ -69,7 +71,7 @@ const PartC = () => {
       {/* Platforms Table */}
       <div className="mb-4">
         <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300 min-w-[560px]">
+          <ResponsiveTable className="w-full border border-gray-300 min-w-[560px]">
             <thead>
               <tr className="bg-gray-50">
                 <th className="border border-gray-300 px-3 py-2 text-left font-medium">വിവരങ്ങൾ</th>
@@ -85,7 +87,7 @@ const PartC = () => {
                     {index + 1}. {platform.label}
                   </td>
                   <td className="border border-gray-300 px-3 py-2">
-                    <input
+                    <NumericInput
                       type="number"
                       value={formData.partC?.[platform.key]?.count ?? ''}
                       onChange={(e) => handleChange(platform.key, 'count', e.target.value)}
@@ -94,7 +96,7 @@ const PartC = () => {
                     />
                   </td>
                   <td className="border border-gray-300 px-3 py-2">
-                    <input
+                    <NumericInput
                       type="number"
                       value={formData.partC?.[platform.key]?.cooperatingOthers ?? ''}
                       onChange={(e) => handleChange(platform.key, 'cooperatingOthers', e.target.value)}
@@ -114,7 +116,7 @@ const PartC = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
 

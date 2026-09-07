@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -873,7 +874,7 @@ const UnitAdminDashboard = () => {
                   </div>
 
                   <div className="hidden md:block overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <ResponsiveTable className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
@@ -948,7 +949,7 @@ const UnitAdminDashboard = () => {
                       </React.Fragment>
                     ))}
                       </tbody>
-                    </table>
+                    </ResponsiveTable>
                   </div>
                   <Pagination pagination={membersPagination} onPageChange={fetchMembers} loading={membersLoading} itemLabel="members" />
               </div>
@@ -1043,7 +1044,7 @@ const UnitAdminDashboard = () => {
                     </div>
 
                     <div className="hidden md:block overflow-x-auto border border-gray-200 rounded-xl">
-                      <table className="min-w-full divide-y divide-gray-200">
+                      <ResponsiveTable className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Rukn Name</th>
@@ -1079,7 +1080,7 @@ const UnitAdminDashboard = () => {
                             )
                           })}
                         </tbody>
-                      </table>
+                      </ResponsiveTable>
                     </div>
                     <Pagination pagination={submissionsPagination} onPageChange={fetchSubmissions} loading={submissionsLoading} itemLabel="submissions" />
                   </>

@@ -1,3 +1,4 @@
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Calendar, CalendarDays, Star, ClipboardList, BarChart2, RefreshCw, Download, ArrowDownUp, MapPin, FileText } from 'lucide-react';
@@ -389,7 +390,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       {renderSidebar()}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -423,7 +424,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
 
             {/* Type switcher tabs — horizontally swipeable so it never wraps
                 or clips on narrow phones. */}
-            <div className="flex flex-nowrap gap-2 overflow-x-auto scrollbar-hide pb-1 mt-3 sm:mt-4">
+            <div className="mobile-tab-grid flex flex-nowrap gap-2 overflow-x-auto scrollbar-hide pb-1 mt-3 sm:mt-4">
               {(['monthly', 'yearly', 'quarterly', 'special']).map(t => {
                 const TIcon = TYPE_ICONS[t];
                 return (
@@ -587,7 +588,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
               {/* Desktop table */}
               <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <ResponsiveTable className="w-full">
                     <thead className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">#</th>
@@ -661,7 +662,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
                         );
                       })}
                     </tbody>
-                  </table>
+                  </ResponsiveTable>
                 </div>
               </div>
 

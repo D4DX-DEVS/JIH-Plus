@@ -1,9 +1,10 @@
+import NumericInput from "../components/NumericInput";
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react';
 import { Edit, Calendar, FileText, Users, Building, Eye, X, ArrowLeft, Trash2 } from 'lucide-react';
 import { JihFilterBar, JihFilterSelect, JihFab, JihAddButton } from '../components/JihToolbar';
 import axios from 'axios';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
-import jihLogo from '../assets/LogoColor.png';
 import { useNavigate } from 'react-router-dom';
 
 // Authority persons options for display
@@ -279,7 +280,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
         ജില്ലാ സബ്‌കമ്മിറ്റി പങ്കെടുക്കൽ
       </h3>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300">
+        <ResponsiveTable className="w-full border-collapse border border-gray-300">
           <thead>
             <tr className="bg-gray-50">
               <th className="border border-gray-300 px-4 py-3 text-left font-semibold">വിംഗ്</th>
@@ -298,7 +299,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResponsiveTable>
       </div>
     </div>
   );
@@ -378,7 +379,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
           സബ്‌കമ്മിറ്റി പ്രവർത്തനങ്ങൾ
         </h3>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300">
+          <ResponsiveTable className="w-full border-collapse border border-gray-300">
             <thead>
               <tr className="bg-gray-50">
                 <th className="border border-gray-300 px-4 py-3 text-left font-semibold">വിംഗ്</th>
@@ -399,7 +400,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
     );
@@ -498,7 +499,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
         റിപ്പോർട്ട് കാലയളവിലെ വളർച്ച
       </h3>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300">
+        <ResponsiveTable className="w-full border-collapse border border-gray-300">
           <thead>
             <tr className="bg-gray-50">
               <th className="border border-gray-300 px-4 py-3 text-left font-semibold">വിംഗ്</th>
@@ -515,7 +516,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResponsiveTable>
       </div>
     </div>
   );
@@ -589,7 +590,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
             വിംഗ് ഹാജരാകൽ
           </h4>
           <div className="overflow-x-auto rounded-xl border border-gray-200">
-            <table className="w-full border-collapse">
+            <ResponsiveTable className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-50">
                   <th className="border-b border-gray-200 px-3 py-2 text-left text-xs font-semibold text-[#002349]">വിംഗ്</th>
@@ -608,7 +609,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ResponsiveTable>
           </div>
         </div>
 
@@ -696,7 +697,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
         </h3>
         
         <div className="overflow-x-auto rounded-xl border border-gray-200">
-          <table className="w-full border-collapse">
+          <ResponsiveTable className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
                 <th className="border-b border-gray-200 px-3 py-2 text-left text-xs font-semibold text-[#002349]">വിംഗ്</th>
@@ -719,7 +720,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
     );
@@ -816,7 +817,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                           <span className="text-xs font-medium text-blue-800">ആൺ</span>
                         </div>
                         {male && (
-                          <input
+                          <NumericInput
                             type="number"
                             value={maleCount || 0}
                             readOnly
@@ -838,7 +839,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                           <span className="text-xs font-medium text-pink-800">പെൺ </span>
                         </div>
                         {female && (
-                          <input
+                          <NumericInput
                             type="number"
                             value={femaleCount || 0}
                             readOnly
@@ -1732,7 +1733,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
               </div>
               {/* Desktop: table */}
               <div className="overflow-x-auto">
-                <table className="hidden lg:table w-full text-sm">
+                <ResponsiveTable className="hidden lg:table w-full text-sm">
                   <thead className="bg-[#002349] border-b border-gray-200">
                     <tr>
                       <th className="px-4 py-2 text-left text-[11px] font-semibold text-white uppercase tracking-wide">
@@ -1832,7 +1833,7 @@ const MonthlySurveyDashboard = ({ onBack, onCreateNew, onEdit, userData }) => {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </ResponsiveTable>
               </div>
 
               {/* Pagination */}

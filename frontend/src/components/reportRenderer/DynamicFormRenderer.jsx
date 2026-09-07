@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Send, Save } from 'lucide-react';
 import FieldRenderer from './FieldRenderer';
 import { fieldWidthClass, fieldWidth } from '../../utils/fieldWidth';
@@ -43,11 +43,61 @@ export default function DynamicFormRenderer({
   const [currentPage, setCurrentPage] = useState(() => clampPage(initialPage));
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState({});
+  const rendererRef = useRef(null);
+  const pageStartRef = useRef(null);
+  const pendingErrorFocus = useRef(null);
+  const errorIdPrefix = useId().replace(/:/g, '');
 
   useEffect(() => {
     onPageChange && onPageChange(currentPage, pages[currentPage]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
+
+  // FieldRenderer is shared by legacy JIH forms and intentionally keeps a small
+  // prop surface. Apply validation semantics to its rendered controls here so
+  // every field type (including radio groups and row/column inputs) is covered
+  // without changing those consumers.
+  useEffect(() => {
+    const root = rendererRef.current;
+    if (!root) return;
+
+    root.querySelectorAll('[data-form-field-key]').forEach(container => {
+      const key = container.getAttribute('data-form-field-key');
+      const errorId = `${errorIdPrefix}-${key}-error`;
+      const invalid = Boolean(errors[key]);
+      const controls = container.querySelectorAll('input, select, textarea');
+
+      controls.forEach(control => {
+        if (invalid) {
+          control.setAttribute('aria-invalid', 'true');
+          const describedBy = new Set((control.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean));
+          describedBy.add(errorId);
+          control.setAttribute('aria-describedby', [...describedBy].join(' '));
+        } else {
+          control.removeAttribute('aria-invalid');
+          const describedBy = (control.getAttribute('aria-describedby') || '')
+            .split(/\s+/)
+            .filter(id => id && id !== errorId);
+          if (describedBy.length) control.setAttribute('aria-describedby', describedBy.join(' '));
+          else control.removeAttribute('aria-describedby');
+        }
+      });
+    });
+
+    const key = pendingErrorFocus.current;
+    if (!key) return;
+    const container = [...root.querySelectorAll('[data-form-field-key]')]
+      .find(node => node.getAttribute('data-form-field-key') === key);
+    const control = container?.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+    if (control) {
+      control.focus({ preventScroll: true });
+      control.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+      container?.focus({ preventScroll: true });
+      container?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    pendingErrorFocus.current = null;
+  }, [currentPage, errorIdPrefix, errors]);
 
   const handleChange = (fieldId, value) => {
     setFormData(prev => ({ ...prev, [`field_${fieldId}`]: value }));
@@ -86,19 +136,31 @@ export default function DynamicFormRenderer({
         if (empty) newErrors[`field_${field.id}`] = field.validation?.customMessage || 'This field is required';
       }
     });
+    const errorKeys = Object.keys(newErrors);
+    pendingErrorFocus.current = errorKeys[0] || null;
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return errorKeys.length === 0;
+  };
+
+  const focusPageStart = () => {
+    window.requestAnimationFrame(() => {
+      const start = pageStartRef.current;
+      const scroller = start?.closest('[data-app-scroll], .overflow-y-auto');
+      if (scroller) scroller.scrollTo({ top: 0, behavior: 'smooth' });
+      else start?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      start?.focus({ preventScroll: true });
+    });
   };
 
   const goNext = () => {
     if (!validatePage()) return;
     setCurrentPage(p => Math.min(p + 1, pages.length - 1));
-    window.scrollTo(0, 0);
+    focusPageStart();
   };
 
   const goPrev = () => {
     setCurrentPage(p => Math.max(p - 1, 0));
-    window.scrollTo(0, 0);
+    focusPageStart();
   };
 
   const handleSubmit = () => {
@@ -118,7 +180,8 @@ export default function DynamicFormRenderer({
   const isLastPage = currentPage === pages.length - 1;
 
   return (
-    <div className="px-4 sm:px-6 py-4">
+    <div ref={rendererRef} className="px-2 py-3 sm:px-6 sm:py-4">
+      <div ref={pageStartRef} tabIndex={-1} aria-label={`ഫോം ഭാഗം ${currentPage + 1} / ${pages.length}`} className="scroll-mt-3 outline-none" />
       {/* Page progress indicator */}
       {pages.length > 1 && (
         <div className="mb-4">
@@ -139,11 +202,24 @@ export default function DynamicFormRenderer({
         <p className="text-sm text-gray-600 mb-4">{page.description}</p>
       )}
 
-      <div className="grid grid-cols-12 gap-x-4 gap-y-5">
+      {Object.keys(errors).length > 0 && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700"
+        >
+          Please correct {Object.keys(errors).length === 1 ? 'the highlighted field' : `${Object.keys(errors).length} highlighted fields`} before continuing.
+        </div>
+      )}
+
+      <div className="grid grid-cols-12 gap-x-3 gap-y-3 sm:gap-x-4 sm:gap-y-5">
         {(page.fields || []).map(field => {
           if (!isFieldVisible(field)) return null;
           const required = isFieldRequired(field);
           const errorKey = `field_${field.id}`;
+          const controlId = `${errorIdPrefix}-${errorKey}-control`;
+          const labelId = `${errorIdPrefix}-${errorKey}-label`;
+          const errorId = errors[errorKey] ? `${errorIdPrefix}-${errorKey}-error` : undefined;
 
           const widthClass = fieldWidthClass(field);
 
@@ -163,24 +239,38 @@ export default function DynamicFormRenderer({
           // Side-by-side fields have no room for a label column, so only
           // full-width simple fields keep the label-beside-input layout.
           if (INLINE_FIELD_TYPES.has(field.type) && fieldWidth(field) === 'full') {
+            const compactNumber = field.type === 'number';
             return (
-              <div key={field.id} className={`${widthClass} flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4`}>
-                <label className="text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0">
+              <div
+                key={field.id}
+                data-form-field-key={errorKey}
+                tabIndex={-1}
+                className={`${widthClass} flex ${compactNumber ? 'items-center gap-3' : 'flex-col gap-1 sm:flex-row sm:items-center sm:gap-4'}`}
+              >
+                <label
+                  htmlFor={controlId}
+                  id={labelId}
+                  className={`${compactNumber ? 'min-w-0 flex-1' : 'sm:w-1/3 sm:flex-shrink-0'} text-sm font-semibold leading-snug text-gray-800`}
+                >
                   {field.label}
                   {required && <span className="text-red-500 ml-0.5">*</span>}
                   {field.helpText && (
                     <span className="block text-xs font-normal text-gray-500">{field.helpText}</span>
                   )}
                 </label>
-                <div className="flex-1 min-w-0">
+                <div className={compactNumber ? 'w-24 flex-shrink-0' : 'min-w-0 flex-1'}>
                   <FieldRenderer
                     field={field}
+                    controlId={controlId}
+                    labelledBy={labelId}
+                    ariaInvalid={Boolean(errors[errorKey])}
+                    ariaDescribedBy={errorId}
                     value={formData[errorKey]}
                     onChange={val => handleChange(field.id, val)}
                     disabled={disabled}
                   />
                   {errors[errorKey] && (
-                    <p className="text-xs text-red-500 mt-1">{errors[errorKey]}</p>
+                    <p id={`${errorIdPrefix}-${errorKey}-error`} className="text-xs text-red-600 mt-1">{errors[errorKey]}</p>
                   )}
                 </div>
               </div>
@@ -188,8 +278,12 @@ export default function DynamicFormRenderer({
           }
 
           return (
-            <div key={field.id} className={widthClass}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div key={field.id} data-form-field-key={errorKey} tabIndex={-1} className={widthClass}>
+              <label
+                id={labelId}
+                htmlFor={['row', 'radio', 'checkbox', 'multiselect', 'yesno'].includes(field.type) ? undefined : controlId}
+                className="mb-1 block text-sm font-semibold leading-snug text-gray-800"
+              >
                 {field.label}
                 {required && <span className="text-red-500 ml-0.5">*</span>}
               </label>
@@ -198,12 +292,16 @@ export default function DynamicFormRenderer({
               )}
               <FieldRenderer
                 field={field}
+                controlId={controlId}
+                labelledBy={labelId}
+                ariaInvalid={Boolean(errors[errorKey])}
+                ariaDescribedBy={errorId}
                 value={formData[errorKey]}
                 onChange={val => handleChange(field.id, val)}
                 disabled={disabled}
               />
               {errors[errorKey] && (
-                <p className="text-xs text-red-500 mt-1">{errors[errorKey]}</p>
+                <p id={`${errorIdPrefix}-${errorKey}-error`} className="text-xs text-red-600 mt-1">{errors[errorKey]}</p>
               )}
             </div>
           );

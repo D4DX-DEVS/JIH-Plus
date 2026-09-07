@@ -1,3 +1,5 @@
+import NumericInput from "../../NumericInput";
+import ResponsiveTable from "../../tables/ResponsiveTable.jsx";
 import React from 'react';
 import { useForm } from '../../../contexts/FormContext';
 
@@ -72,7 +74,7 @@ const PartB = () => {
       <div className="mb-2">
         <h3 className="text-sm font-semibold text-gray-900 mb-2">സംഘടനകൾ</h3>
         <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300 min-w-full">
+          <ResponsiveTable className="w-full border border-gray-300 min-w-full">
             <thead>
               <tr className="bg-gray-50">
                 <th className="border border-gray-300 px-3 py-2 text-left text-sm font-medium">വിവരങ്ങൾ</th>
@@ -89,7 +91,7 @@ const PartB = () => {
                 <td className="border border-gray-300 px-3 py-2 font-medium">ആകെ ഏരിയകൾ</td>
                 {organizations.map(org => (
                   <td key={org.key} className="border border-gray-300 px-3 py-2">
-                    <input
+                    <NumericInput
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.totalAreas ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'totalAreas', e.target.value)}
@@ -106,7 +108,7 @@ const PartB = () => {
                 <td className="border border-gray-300 px-3 py-2 font-medium">ഘടകങ്ങൾ</td>
                 {organizations.map(org => (
                   <td key={org.key} className="border border-gray-300 px-3 py-2">
-                    <input
+                    <NumericInput
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.components ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'components', e.target.value)}
@@ -123,7 +125,7 @@ const PartB = () => {
                 <td className="border border-gray-300 px-3 py-2 font-medium">പ്രവർത്തകരുടെ എണ്ണം (2023)</td>
                 {organizations.map(org => (
                   <td key={org.key} className="border border-gray-300 px-3 py-2">
-                    <input
+                    <NumericInput
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.workers2023 ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'workers2023', e.target.value)}
@@ -139,7 +141,7 @@ const PartB = () => {
                 <td className="border border-gray-300 px-3 py-2 font-medium">പ്രവർത്തകരുടെ എണ്ണം (2025)</td>
                 {organizations.map(org => (
                   <td key={org.key} className="border border-gray-300 px-3 py-2">
-                    <input
+                    <NumericInput
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.workers2025 ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'workers2025', e.target.value)}
@@ -155,7 +157,7 @@ const PartB = () => {
                 <td className="border border-gray-300 px-3 py-2 font-medium">ഘടകങ്ങളുടെ എണ്ണം (2023)</td>
                 {organizations.map(org => (
                   <td key={org.key} className="border border-gray-300 px-3 py-2">
-                    <input
+                    <NumericInput
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.components2023 ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'components2023', e.target.value)}
@@ -171,7 +173,7 @@ const PartB = () => {
                 <td className="border border-gray-300 px-3 py-2 font-medium">ഘടകങ്ങളുടെ എണ്ണം (2025)</td>
                 {organizations.map(org => (
                   <td key={org.key} className="border border-gray-300 px-3 py-2">
-                    <input
+                    <NumericInput
                       type="number"
                       value={formData.partB?.organizations?.[org.key]?.components2025 ?? ''}
                       onChange={(e) => handleOrganizationChange(org.key, 'components2025', e.target.value)}
@@ -182,7 +184,7 @@ const PartB = () => {
                 ))}
               </tr>
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
 
@@ -194,7 +196,7 @@ const PartB = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">തംഹീദുല്‍ മർഅഃ</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.thawheedMaraa?.existing ?? ''}
               onChange={(e) => handleOtherChange('thawheedMaraa', 'existing', e.target.value)}
@@ -205,7 +207,7 @@ const PartB = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">പഠിതാക്കൾ</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.thawheedMaraa?.students ?? ''}
               onChange={(e) => handleOtherChange('thawheedMaraa', 'students', e.target.value)}
@@ -216,7 +218,7 @@ const PartB = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">പ്രവർത്തകരല്ലാത്തവർ</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.thawheedMaraa?.nonWorkers ?? ''}
               onChange={(e) => handleOtherChange('thawheedMaraa', 'nonWorkers', e.target.value)}
@@ -231,7 +233,7 @@ const PartB = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">QSC (പുരുഷന്മാർ)</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.qscMen?.existing ?? ''}
               onChange={(e) => handleOtherChange('qscMen', 'existing', e.target.value)}
@@ -242,7 +244,7 @@ const PartB = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">പഠിതാക്കൾ</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.qscMen?.students ?? ''}
               onChange={(e) => handleOtherChange('qscMen', 'students', e.target.value)}
@@ -253,7 +255,7 @@ const PartB = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">പ്രവർത്തകരല്ലാത്തവർ</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.qscMen?.nonWorkers ?? ''}
               onChange={(e) => handleOtherChange('qscMen', 'nonWorkers', e.target.value)}
@@ -268,7 +270,7 @@ const PartB = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">QSC (വനിത)</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.qscWomen?.existing ?? ''}
               onChange={(e) => handleOtherChange('qscWomen', 'existing', e.target.value)}
@@ -279,7 +281,7 @@ const PartB = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">പഠിതാക്കൾ</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.qscWomen?.students ?? ''}
               onChange={(e) => handleOtherChange('qscWomen', 'students', e.target.value)}
@@ -290,7 +292,7 @@ const PartB = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">പ്രവർത്തകരല്ലാത്തവർ</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.qscWomen?.nonWorkers ?? ''}
               onChange={(e) => handleOtherChange('qscWomen', 'nonWorkers', e.target.value)}
@@ -305,7 +307,7 @@ const PartB = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">ജുമുഅഃ നടക്കുന്ന പള്ളികൾ</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.jumaMosques?.count ?? ''}
               onChange={(e) => handleOtherChange('jumaMosques', 'count', e.target.value)}
@@ -316,7 +318,7 @@ const PartB = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">ജുമുഅഃയിൽ പങ്കെടുക്കുന്നവർ (ശരാശരി)</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.jumaMosques?.averageAttendees ?? ''}
               onChange={(e) => handleOtherChange('jumaMosques', 'averageAttendees', e.target.value)}
@@ -327,7 +329,7 @@ const PartB = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">പ്രവർത്തകരല്ലാത്തവർ (ഏകദേശം)</label>
-            <input
+            <NumericInput
               type="number"
               value={formData.partB?.jumaMosques?.nonWorkersApprox ?? ''}
               onChange={(e) => handleOtherChange('jumaMosques', 'nonWorkersApprox', e.target.value)}
@@ -344,7 +346,7 @@ const PartB = () => {
         <h3 className="text-sm font-semibold text-gray-900 mb-2">വിദ്യാഭ്യാസ സ്ഥാപനങ്ങൾ</h3>
         
         <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300 min-w-full">
+          <ResponsiveTable className="w-full border border-gray-300 min-w-full">
             <thead>
               <tr className="bg-gray-50">
                 <th className="border border-gray-300 px-3 py-2 text-left font-medium">വിവരങ്ങൾ</th>
@@ -368,7 +370,7 @@ const PartB = () => {
               <tr>
                 <td className="border border-gray-300 px-3 py-2 font-medium">9. മദ്റസകളുടെ എണ്ണം</td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'count', e.target.value)}
@@ -377,7 +379,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'studentsCount', e.target.value)}
@@ -386,7 +388,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.staffWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'staffWorkers', e.target.value)}
@@ -395,7 +397,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.staffOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'staffOthers', e.target.value)}
@@ -404,7 +406,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.nonTeachingWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'nonTeachingWorkers', e.target.value)}
@@ -413,7 +415,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.madrasas?.nonTeachingOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('madrasas', 'nonTeachingOthers', e.target.value)}
@@ -427,7 +429,7 @@ const PartB = () => {
               <tr>
                 <td className="border border-gray-300 px-3 py-2 font-medium">10. സ്‌കൂളുകൾ (വിദ്യാകൗൺസിൽ)</td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.schools?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'count', e.target.value)}
@@ -436,7 +438,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.schools?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'studentsCount', e.target.value)}
@@ -445,7 +447,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.schools?.staffWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'staffWorkers', e.target.value)}
@@ -454,7 +456,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.schools?.staffOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'staffOthers', e.target.value)}
@@ -463,7 +465,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.schools?.nonTeachingWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'nonTeachingWorkers', e.target.value)}
@@ -472,7 +474,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.schools?.nonTeachingOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('schools', 'nonTeachingOthers', e.target.value)}
@@ -486,7 +488,7 @@ const PartB = () => {
               <tr>
                 <td className="border border-gray-300 px-3 py-2 font-medium">11. ഹെവൻസ്</td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.heavens?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'count', e.target.value)}
@@ -495,7 +497,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.heavens?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'studentsCount', e.target.value)}
@@ -504,7 +506,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.heavens?.staffWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'staffWorkers', e.target.value)}
@@ -513,7 +515,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.heavens?.staffOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'staffOthers', e.target.value)}
@@ -522,7 +524,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.heavens?.nonTeachingWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'nonTeachingWorkers', e.target.value)}
@@ -531,7 +533,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.heavens?.nonTeachingOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('heavens', 'nonTeachingOthers', e.target.value)}
@@ -545,7 +547,7 @@ const PartB = () => {
               <tr>
                 <td className="border border-gray-300 px-3 py-2 font-medium">12. അറബി കോളേജുകൾ</td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'count', e.target.value)}
@@ -554,7 +556,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'studentsCount', e.target.value)}
@@ -563,7 +565,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.staffWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'staffWorkers', e.target.value)}
@@ -572,7 +574,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.staffOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'staffOthers', e.target.value)}
@@ -581,7 +583,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.nonTeachingWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'nonTeachingWorkers', e.target.value)}
@@ -590,7 +592,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.arabicColleges?.nonTeachingOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('arabicColleges', 'nonTeachingOthers', e.target.value)}
@@ -604,7 +606,7 @@ const PartB = () => {
               <tr>
                 <td className="border border-gray-300 px-3 py-2 font-medium">13. ആർട്സ് കോളേജുകൾ</td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.artsColleges?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'count', e.target.value)}
@@ -613,7 +615,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.artsColleges?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'studentsCount', e.target.value)}
@@ -622,7 +624,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.artsColleges?.staffWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'staffWorkers', e.target.value)}
@@ -631,7 +633,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.artsColleges?.staffOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'staffOthers', e.target.value)}
@@ -640,7 +642,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partB?.institutions?.artsColleges?.nonTeachingWorkers ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'nonTeachingWorkers', e.target.value)}
@@ -649,7 +651,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-            <input
+            <NumericInput
               type="number"
                     value={formData.partB?.institutions?.artsColleges?.nonTeachingOthers ?? ''}
                     onChange={(e) => handleInstitutionChange('artsColleges', 'nonTeachingOthers', e.target.value)}
@@ -663,7 +665,7 @@ const PartB = () => {
               <tr>
                 <td className="border border-gray-300 px-3 py-2 font-medium">14. പ്രധാന കാമ്പസുകൾ (SIO, GIO സാന്നിധ്യമുള്ളത്)</td>
                 <td className="border border-gray-300 px-3 py-2">
-            <input
+            <NumericInput
               type="number"
                     value={formData.partB?.institutions?.mainCampuses?.count ?? ''}
                     onChange={(e) => handleInstitutionChange('mainCampuses', 'count', e.target.value)}
@@ -672,7 +674,7 @@ const PartB = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-            <input
+            <NumericInput
               type="number"
                     value={formData.partB?.institutions?.mainCampuses?.studentsCount ?? ''}
                     onChange={(e) => handleInstitutionChange('mainCampuses', 'studentsCount', e.target.value)}
@@ -694,7 +696,7 @@ const PartB = () => {
                 </td>
               </tr>
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FileText, Edit, Trash2, Calendar, Eye, X, BookOpen, TrendingUp, LogOut, Filter, ArrowLeft, Save, Bell } from 'lucide-react';
+import { FileText, Edit, Trash2, Calendar, Eye, X, BookOpen, TrendingUp, LogOut, Filter, ArrowLeft, Save, Bell, BarChart3, ChevronRight } from 'lucide-react';
 import { JihFilterBar, JihFilterSelect, JihFab, JihAddButton } from '../components/JihToolbar';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -14,6 +15,7 @@ import StatisticsCard from '../components/charts/StatisticsCard';
 import SurveyBarChart from '../components/charts/SurveyBarChart';
 import UnitMonthlyStatsTable from '../components/tables/UnitMonthlyStatsTable';
 import ActiveReportsCard from '../components/dashboard/ActiveReportsCard';
+import DashboardMetricGrid from '../components/dashboard/DashboardMetricGrid';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
 
@@ -1141,7 +1143,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
     // Wrap with sidebar if unit user
     if (isUnitUser) {
       return (
-        <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+        <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex">
           <UnitAdminSidebar
             activeTab="monthly"
             onNavigate={handleSidebarNavigate}
@@ -1160,7 +1162,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
             <MobileTopBar
               title="യൂണിറ്റ് റിപ്പോർട്ടുകളുടെ വിശദാംശങ്ങൾ"
             />
-            <div className="flex-1 overflow-y-auto overflow-x-hidden pb-24 lg:pb-0">
+            <div data-app-scroll className="app-scroll-region mobile-readable-content flex-1 pb-24 lg:pb-0">
               {detailViewContent}
             </div>
           </div>
@@ -1208,10 +1210,10 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
             { name: 'Not Started', value: d.notStarted || 0 },
           ];
           return (
-            <div className="space-y-6">
-              <div className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] rounded-2xl p-6 text-white">
+            <div className="space-y-3 sm:space-y-6">
+              <div className="rounded-2xl bg-gradient-to-r from-[#002349] to-[#1a3a5c] px-4 py-3.5 text-white sm:p-6">
                 <h2 className="hidden lg:block text-xl font-bold">യൂണിറ്റ് ഡാഷ്ബോർഡ്</h2>
-                {unitName !== '—' && <p className="text-white/80 text-sm mt-1">{unitName}</p>}
+                {unitName !== '—' && <p className="text-sm leading-snug text-white/90 lg:mt-1">{unitName}</p>}
               </div>
 
               {dashboardLoading ? (
@@ -1226,32 +1228,27 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                    <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-green-600" />
-                      </div>
-                      <p className="text-2xl font-bold text-green-600">{d.activeReports ?? '—'}</p>
-                      <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">ആക്ടീവ് റിപ്പോർട്ടുകൾ</p>
-                    </div>
-                    <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-emerald-600" />
-                      </div>
-                      <p className="text-2xl font-bold text-emerald-600">{d.submitted ?? '—'}</p>
-                      <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">സബ്മിറ്റ് ചെയ്തവ</p>
-                    </div>
-                    <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-[#957C3D]" />
-                      </div>
-                      <p className="text-2xl font-bold text-[#957C3D]">{totalSurveys}</p>
-                      <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">പ്രതിമാസ റിപ്പോർട്ടുകൾ</p>
-                    </div>
-                  </div>
+                  <DashboardMetricGrid
+                    items={[
+                      { key: 'reports', label: 'ആക്ടീവ് റിപ്പോർട്ടുകൾ', value: d.activeReports, icon: BookOpen, tone: 'violet', onClick: () => navigate('/user-reports') },
+                      { key: 'submitted', label: 'സബ്മിറ്റ് ചെയ്തവ', value: d.submitted, icon: TrendingUp, tone: 'green', onClick: () => setActiveTab('stats') },
+                      { key: 'monthly', label: 'പ്രതിമാസ റിപ്പോർട്ടുകൾ', value: totalSurveys, icon: FileText, tone: 'gold', onClick: () => setActiveTab('monthly') },
+                    ]}
+                  />
+
+                  <ActiveReportsCard reports={activeReportsList} loading={activeReportsLoading} />
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('stats')}
+                    className="flex min-h-[48px] w-full items-center justify-between rounded-xl border border-[#002349]/10 bg-white px-4 py-3 text-left text-sm font-semibold text-[#002349] shadow-sm transition-colors hover:bg-[#002349]/5 lg:hidden"
+                  >
+                    <span className="flex items-center gap-2"><BarChart3 className="h-5 w-5" /> വിശദമായ സ്ഥിതിവിവരങ്ങൾ</span>
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
 
                   {d.activeReports > 0 && (
-                    <div className="bg-white rounded-2xl shadow border border-gray-100 p-6">
+                    <div className="hidden rounded-2xl border border-gray-100 bg-white p-6 shadow lg:block">
                       <h3 className="text-sm font-bold text-[#002349] mb-4">സബ്മിഷൻ സ്റ്റാറ്റസ്</h3>
                       <ResponsiveContainer width="100%" height={240}>
                         <PieChart>
@@ -1267,7 +1264,6 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                     </div>
                   )}
 
-                  <ActiveReportsCard reports={activeReportsList} loading={activeReportsLoading} />
                 </>
               )}
             </div>
@@ -1385,7 +1381,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
 
                   {/* Desktop table */}
                   <div className="hidden lg:block overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <ResponsiveTable className="w-full text-sm">
                       <thead className="bg-[#002349] border-b border-[#002349]">
                         <tr>
                           <th className="px-4 py-2 text-left text-[11px] font-semibold text-white uppercase tracking-wide">
@@ -1474,7 +1470,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </ResponsiveTable>
                   </div>
 
                   {/* Pagination */}
@@ -1719,7 +1715,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
 
   if (isUnitUser) {
     return (
-      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+      <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex">
         <UnitAdminSidebar
           activeTab={sidebarActiveTab}
           onNavigate={handleSidebarNavigate}
@@ -1738,7 +1734,7 @@ const [isUnitSidebarOpen, setIsUnitSidebarOpen] = useState(false);
           <MobileTopBar
             title={mobileTitle}
           />
-          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div data-app-scroll className="app-scroll-region mobile-readable-content flex-1">
             {pageContent}
           </div>
         </div>

@@ -1,3 +1,4 @@
+import ResponsiveTable from "../tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useCallback } from 'react'
 import { api } from '../../utils/ihthisabi/api'
 import { Plus, Pencil, Trash2, Check, X, Globe, MapPin, Building2, Users } from 'lucide-react'
@@ -142,7 +143,7 @@ function CountriesTab() {
           )}
         </div>
         {/* Desktop: table */}
-        <table className="hidden lg:table w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+        <ResponsiveTable className="hidden lg:table w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Country Name</th>
@@ -188,7 +189,7 @@ function CountriesTab() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResponsiveTable>
         <Pagination pagination={pagination} onPageChange={load} loading={loading} itemLabel="countries" />
       </div>
       <ConfirmationModal
@@ -317,7 +318,7 @@ function AreasTab() {
             )}
           </div>
           {/* Desktop: table */}
-          <table className="hidden lg:table w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+          <ResponsiveTable className="hidden lg:table w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Area Name</th>
@@ -357,7 +358,7 @@ function AreasTab() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </ResponsiveTable>
           <Pagination pagination={pagination} onPageChange={(page) => loadAreas(selectedCountry, page)} loading={loading} itemLabel="areas" />
         </div>
       ) : (
@@ -642,7 +643,7 @@ function AbroadUnitAdminsTab() {
           )}
         </div>
         {/* Desktop: table */}
-        <table className="hidden lg:table w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+        <ResponsiveTable className="hidden lg:table w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Unit Admin</th>
@@ -683,7 +684,7 @@ function AbroadUnitAdminsTab() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResponsiveTable>
         <Pagination pagination={pagination} onPageChange={(page) => load(page)} loading={loading} itemLabel="abroad unit admins" />
       </div>
     </div>
@@ -853,7 +854,7 @@ function UnitsTab() {
             )}
           </div>
           {/* Desktop: table */}
-          <table className="hidden lg:table w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+          <ResponsiveTable className="hidden lg:table w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Unit Name</th>
@@ -910,7 +911,7 @@ function UnitsTab() {
                 )
               })}
             </tbody>
-          </table>
+          </ResponsiveTable>
           <Pagination pagination={pagination} onPageChange={(page) => loadUnits(selectedArea, page)} loading={loading} itemLabel="units" />
         </div>
       ) : (

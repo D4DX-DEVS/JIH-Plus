@@ -1,5 +1,106 @@
 @import "tailwindcss";
 
+@media (max-width: 639px) {
+  /* Report section headings follow the same light mobile dashboard header. */
+  #root .card-header {
+    background: #fff;
+    color: #111827;
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  #root .card-header :is(h1, h2, h3, h4) {
+    color: #111827;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  #root .card-header p {
+    color: #4b5563;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Radio labels already contain vertical touch padding. Avoid counting it
+     again as a full field gap before the next visible question. */
+  #root form > .alternative-type-row:not(:last-child) {
+    margin-block-end: 4px;
+  }
+}
+
+/* Mobile form rhythm shared by the three portal families. Only stacked
+   labels are spaced here; inline numeric rows and choices keep their layout. */
+@media (max-width: 639px) {
+  #root :is(form, .mobile-readable-content, .app-scroll-region) label.block:not(:has(input, select, textarea)),
+  #root .form-label {
+    margin-bottom: 6px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  #root form:is(.space-y-6, .space-y-8) > :not(:last-child) {
+    margin-block-end: 16px;
+  }
+  #root form .grid:is(.gap-4, .gap-6, .gap-8) {
+    row-gap: 16px;
+    column-gap: 12px;
+  }
+  #root form :is(input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]):not([type="range"]):not([type="color"]), select),
+  #root :is(.form-input, .form-select) {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  #root form textarea {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  #root form label:has(> input[type="radio"], > input[type="checkbox"]) {
+    min-height: 44px;
+    align-items: center;
+  }
+}
+
+/* All portals share a white canvas and quiet, outlined content surfaces.
+   Keep semantic colours on controls, badges, notices and navigation. */
+#root,
+.app-viewport,
+.app-scroll-region,
+.ih-screen,
+.mobile-readable-content,
+#root > div[class*="min-h-screen"],
+:is(main, section, article, div).bg-gray-50:not([role="dialog"]),
+:is(main, section, article, div).bg-gray-100:not([role="dialog"]),
+:is(main, section, article, div).bg-slate-50 {
+  background-color: #fff;
+  background-image: none;
+}
+:is(section, article, div)[class*="rounded"][class*="bg-white"],
+.ih-surface,
+.ih-section-card,
+.ih-stat-card {
+  background-color: #fff;
+  box-shadow: none;
+  border: 1px solid #e5e7eb;
+}
+.ih-stat-card:hover {
+  box-shadow: none;
+}
+
+/* White profile canvas, including the space outside the content column. */
+.app-viewport:has(.ih-profile-compact),
+.app-scroll-region:has(.ih-profile-compact),
+.ih-profile-compact,
+.ih-profile-compact > div,
+.ih-profile-compact > div:first-child > div,
+.ih-profile-details > .group {
+  background-color: #fff;
+  background-image: none;
+}
+.ih-profile-compact > div,
+.ih-profile-details > .group {
+  box-shadow: none;
+}
+
 /* Brand palette. Tailwind v4 ignores tailwind.config.js unless it is loaded
    explicitly, so the theme lives here — this is what makes bg-primary,
    text-primary, border-primary/30, ring-primary/20 etc. resolve. */
@@ -51,12 +152,30 @@
   /* Hairline that separates surfaces without drawing a box around them.
      This is the default border colour for the whole app (see @layer base). */
   --color-hairline: rgba(16, 24, 40, 0.07);
-  --color-canvas: #f6f7f9;
+  --color-canvas: #ffffff;
 
   /* Layered, low-opacity shadows. Depth comes from these rather than outlines. */
   --shadow-soft: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
   --shadow-lift: 0 2px 4px rgba(16, 24, 40, 0.03), 0 6px 16px rgba(16, 24, 40, 0.07);
   --shadow-float: 0 4px 8px rgba(16, 24, 40, 0.04), 0 12px 32px rgba(16, 24, 40, 0.1);
+}
+
+:root {
+  --brand-navy: #002349;
+  --brand-navy-hover: #1a3a5c;
+  --brand-teal: #178582;
+  --brand-violet: #6d28d9;
+  --brand-gold: #957c3d;
+  --brand-gold-text: #755e25;
+  --text-primary: #161f2f;
+  --text-secondary: #59677f;
+  --surface-page: #f6f7f9;
+  --surface-card: #ffffff;
+  --radius-card: 1rem;
+  --touch-target: 44px;
+  --app-header-height: 4.125rem;
+  --app-bottom-nav-height: 4.5rem;
+  --app-page-gutter: 0.75rem;
 }
 
 /* Malayalam Fonts */
@@ -76,11 +195,8 @@
   font-display: swap;
 }
 
-/* Malayalam renders noticeably larger than Latin at the same font-size: the
-   script fills more of the em box. `size-adjust` scales the glyphs down without
-   touching any font-size in the app, and `unicode-range` confines the face to
-   the Malayalam block so Latin/digits keep their original size. Prepending
-   'MalayalamUI' to every font stack is what activates it. */
+/* Keep Malayalam at its native readable size. The Unicode range confines this
+   face to Malayalam; Latin and digits use the remaining font stack. */
 @font-face {
   font-family: 'MalayalamUI';
   src: url('./fonts/NotoSansMalayalam-Regular.ttf') format('truetype');
@@ -90,7 +206,7 @@
   font-weight: normal;
   font-style: normal;
   font-display: swap;
-  size-adjust: 85%;
+  size-adjust: 100%;
   unicode-range: U+0D00-0D7F, U+0964-0965, U+200C-200D, U+25CC;
 }
 
@@ -102,16 +218,40 @@ html, body {
   scrollbar-width: none;  /* Firefox */
 }
 
-/* Mobile-first density: shrink the rem base so every Tailwind size (text, padding,
-   gaps, radii) scales down together on small screens instead of page-by-page. */
+/* One viewport and one content scroller across all three portals. */
+.app-viewport {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-scroll-region {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-top: 0.75rem;
+  scroll-padding-bottom: calc(var(--app-bottom-nav-height) + env(safe-area-inset-bottom) + 0.75rem);
+}
+
+.app-mobile-header {
+  min-height: var(--app-header-height);
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Keep Tailwind's standard 16px rem base on phones. Shrinking the root made
+   text-xs render at 10.5px and text-sm at 12.25px, which was too small for
+   Malayalam labels and dashboard metadata. */
 @media (max-width: 639px) {
   html {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   /* iOS Safari zooms the page when a focused text control's computed font-size
-     is under 16px. The 14px rem base above drags every rem-sized input below
-     that threshold, so force real text-entry controls up to 16px on phones.
+     is under 16px, so force real text-entry controls up to that threshold.
      Checkboxes/radios are excluded — they open native pickers and never trigger
      the zoom. Selects DO trigger it on iOS Safari when focused, so they are
      included; their pills are `truncate`d so the larger text never overflows. */
@@ -119,6 +259,36 @@ html, body {
   select,
   textarea {
     font-size: 16px !important;
+  }
+
+  /* Legacy one-off labels are normalized to a readable mobile minimum while
+     the pages are migrated to semantic typography tokens. */
+  .text-\[9px\],
+  .text-\[10px\],
+  .text-\[11px\],
+  .text-\[0\.65rem\] {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+
+  /* Mobile content must show complete names, labels and descriptions. Navigation
+     and native selects keep their compact behavior; page content reflows. */
+  :is(main, .mobile-readable-content) :is(.truncate, .line-clamp-1, .line-clamp-2, .line-clamp-3):not(select):not(.mobile-keep-truncate) {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    -webkit-line-clamp: unset !important;
+  }
+
+  /* Every content action and form control has a reliable finger-sized target. */
+  :is(main, .mobile-readable-content) button:not(.ih-icon-btn):not(.mobile-compact-control) {
+    min-height: var(--touch-target);
+  }
+
+  :is(main, .mobile-readable-content) input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):not([type='hidden']),
+  :is(main, .mobile-readable-content) select {
+    min-height: var(--touch-target);
   }
 }
 
@@ -149,6 +319,21 @@ body::-webkit-scrollbar {
   font-family: 'MalayalamUI', 'Noto Sans Malayalam', 'NotoSansMalayalam', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
 }
 
+/* Contrast-safe replacements for legacy muted/gold text tokens. These
+   selectors intentionally sit outside Tailwind layers so they override the
+   generated arbitrary-color utilities without touching background colors. */
+.text-\[\#957C3D\],
+.text-\[\#957c3d\] {
+  color: var(--brand-gold-text);
+}
+
+.text-\[\#71809D\],
+.text-\[\#71809d\],
+.text-\[\#73809A\],
+.text-\[\#73809a\] {
+  color: var(--text-secondary);
+}
+
 /* Remove number input spinners completely */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
@@ -176,6 +361,7 @@ input[type="number"] {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.005em;
+    line-height: 1.5;
   }
 
   h1, h2, h3 {
@@ -317,15 +503,15 @@ input[type="number"] {
   }
 
   .card-header {
-    @apply px-6 py-4 border-b border-gray-200;
+    @apply px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200;
   }
 
   .card-body {
-    @apply px-6 py-4;
+    @apply px-4 py-3 sm:px-6 sm:py-4;
   }
 
   .card-footer {
-    @apply px-6 py-4 border-t border-gray-200;
+    @apply px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-200;
   }
 
   /* Table styles */
@@ -367,7 +553,7 @@ input[type="number"] {
   }
 
   .ih-page-title {
-    @apply text-base sm:text-2xl font-bold text-gray-900 leading-tight;
+    @apply text-xl sm:text-2xl font-bold text-gray-900 leading-tight;
   }
 
   .ih-page-subtitle {
@@ -409,7 +595,7 @@ input[type="number"] {
   }
 
   .ih-stat-label {
-    @apply text-[11px] sm:text-xs font-medium text-gray-500 leading-tight;
+    @apply text-sm font-medium text-gray-600 leading-snug;
   }
 
   .ih-stat-value {
@@ -417,7 +603,7 @@ input[type="number"] {
   }
 
   .ih-stat-meta {
-    @apply text-[10px] sm:text-xs text-gray-400 leading-tight;
+    @apply text-xs text-gray-500 leading-snug;
   }
 
   .ih-stat-icon {
@@ -448,11 +634,13 @@ input[type="number"] {
   }
 
   .ih-list-title {
-    @apply text-[13px] sm:text-sm font-semibold text-gray-900 leading-tight truncate tracking-tight;
+    @apply text-[13px] sm:text-sm font-semibold text-gray-900 leading-tight tracking-tight break-words sm:truncate;
+    overflow-wrap: anywhere;
   }
 
   .ih-list-meta {
-    @apply text-[11px] sm:text-xs text-gray-400 leading-tight truncate;
+    @apply text-[11px] sm:text-xs text-gray-400 leading-tight break-words sm:truncate;
+    overflow-wrap: anywhere;
   }
 
   .ih-avatar {
@@ -492,8 +680,8 @@ input[type="number"] {
     @apply block w-full appearance-none rounded-full border-0 py-[7px] pl-8 pr-7 text-[13px] sm:text-sm text-gray-700;
   }
 
-  /* A select is a tap target in its own right: 44px tall on phones (the 14px
-     root font makes py-[7px] + 13px text only ~30px), compact from sm: up. */
+  /* A select is a tap target in its own right: 44px tall on phones and compact
+     from sm: up. */
   .ih-filter-select {
     @apply min-h-[44px] sm:min-h-0;
     background-color: rgba(16, 24, 40, 0.04);
@@ -694,6 +882,53 @@ input[type="number"] {
   }
 }
 
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ih-page-shell {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .ih-stat-card {
+    padding: 1.25rem;
+  }
+}
+
+/* Touch-first tablets keep reliable targets even though responsive utilities
+   switch to their compact desktop sizing at the sm breakpoint. Fine-pointer
+   desktops are unaffected. */
+@media (pointer: coarse) and (min-width: 640px) {
+  button,
+  [role="button"] {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+  }
+
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']):not([type='hidden']),
+  select,
+  textarea {
+    min-height: var(--touch-target);
+  }
+}
+
+/* Respect the operating-system motion preference across legacy and new UI.
+   Near-zero durations preserve animation completion events without visible
+   movement, while smooth scrolling is disabled entirely. */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -708,6 +943,61 @@ input[type="number"] {
     display: none;
   }
 }
+/* Shared mobile sheets across all three portals. Round the backing surface as
+   well as the sheet so the navigation container cannot fill its top corners. */
+.ih-mobile-nav-safe:has(> .ih-more-sheet) {
+  border-top-left-radius: 1.5rem;
+  border-top-right-radius: 1.5rem;
+  border-top: 0;
+}
+
+.ih-more-sheet {
+  border-radius: 1.5rem 1.5rem 0 0;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+}
+
+.ih-more-sheet::before {
+  content: '';
+  display: block;
+  width: 2.5rem;
+  height: 0.25rem;
+  margin: 0 auto 0.75rem;
+  border-radius: 999px;
+  background: #a8b1bf;
+}
+
+.ih-more-sheet :is(button, a).w-full {
+  border: 1px solid #dce2ea;
+  margin-bottom: 0.375rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
+
+.ih-more-sheet :is(button, a).w-full::after {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  flex-shrink: 0;
+  margin-left: auto;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.65;
+}
+
+.ih-more-sheet :is(button, a):focus-visible {
+  outline: 2px solid #7b4ff2;
+  outline-offset: 2px;
+}
+
+.ih-more-sheet .truncate {
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
 /* Compact table — deliberately unlayered so it outranks the per-cell padding
    utilities (px-6 py-3) already on existing markup. Tailwind's utilities layer
    would otherwise win over anything in @layer components regardless of
@@ -731,5 +1021,133 @@ input[type="number"] {
   .ih-table-compact th,
   .ih-table-compact td {
     padding: 0.75rem 1rem;
+  }
+}
+
+@media screen and (max-width: 639px) {
+  .mobile-tab-grid,
+  .ih-mobile-tabs,
+  .ih-segment {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100% !important;
+    max-width: 100%;
+    gap: 8px;
+    overflow: visible !important;
+  }
+  :is(.mobile-tab-grid, .ih-mobile-tabs, .ih-segment) > * {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    border-radius: 10px;
+  }
+  :is(.mobile-tab-grid, .ih-mobile-tabs, .ih-segment) button {
+    min-height: 44px;
+    white-space: normal !important;
+    text-align: left;
+    line-height: 1.5;
+  }
+  :is(.mobile-tab-grid, .ih-mobile-tabs, .ih-segment) .truncate {
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+  }
+  .responsive-record-table:not(.hidden) {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: auto;
+    border: 0;
+  }
+  .responsive-record-table:not(.hidden) > thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .responsive-record-table.responsive-table-header-actions > thead {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+  .responsive-record-table:not(.hidden) > :is(tbody, tfoot) { display: block; }
+  .responsive-record-table:not(.hidden) > :is(thead, tbody, tfoot) > tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-bottom: 8px;
+    border: 1px solid #dce2ea;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .responsive-record-table:not(.hidden) > :is(thead, tbody, tfoot) > tr > :is(td, th) {
+    display: block;
+    position: static;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100%;
+    padding: 8px 12px;
+    white-space: normal !important;
+    overflow: visible !important;
+    overflow-wrap: anywhere;
+    text-overflow: clip !important;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid #eef0f3;
+  }
+  .responsive-record-table td[data-mobile-label]:not([data-mobile-label=''])::before {
+    content: attr(data-mobile-label);
+    display: block;
+    margin-bottom: 4px;
+    color: #59677f;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  .responsive-record-table :is(input, select, textarea) {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .responsive-record-table .truncate {
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+  }
+}
+/* Compact profile facts: two short values per row, long details full width. */
+@media (max-width: 639px) {
+  .ih-profile-details > .group {
+    min-width: 0;
+    padding: 10px;
+    box-shadow: none;
+  }
+  .ih-profile-details > .group > div:first-child {
+    min-height: 28px;
+    margin-bottom: 4px;
+    gap: 4px;
+  }
+  .ih-profile-details > .group > div:first-child > div {
+    gap: 4px;
+    min-width: 0;
+  }
+  .ih-profile-details .group .bg-primary\/10 {
+    display: none;
+  }
+  .ih-profile-details label {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .ih-profile-details > .group > p {
+    font-size: 16px;
+    overflow-wrap: anywhere;
+    margin-bottom: 0;
+  }
+  .ih-profile-details > .group:has([title="Copy Email"]),
+  .ih-profile-details > .group:has([title="Copy Contact Number"]),
+  .ih-profile-details > .group:has(> p + p) {
+    grid-column: 1 / -1;
   }
 }

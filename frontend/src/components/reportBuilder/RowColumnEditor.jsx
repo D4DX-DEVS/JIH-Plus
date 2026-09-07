@@ -1,3 +1,4 @@
+import ResponsiveTable from "../tables/ResponsiveTable.jsx";
 import React from 'react';
 import { Plus, X } from 'lucide-react';
 import {
@@ -99,7 +100,7 @@ export default function RowColumnEditor({ field, onChange }) {
       </p>
 
       <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="w-full border-collapse text-xs">
+        <ResponsiveTable className="w-full border-collapse text-xs">
           <thead>
             <tr>
               {/* Top-left cell: optional table title */}
@@ -240,7 +241,7 @@ export default function RowColumnEditor({ field, onChange }) {
               </td>
             </tr>
           </tbody>
-        </table>
+        </ResponsiveTable>
       </div>
 
       {/* ── Auto-totals config ── */}

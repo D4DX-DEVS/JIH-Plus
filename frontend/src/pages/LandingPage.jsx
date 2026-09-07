@@ -13,10 +13,9 @@ import {
   UserRound,
   Users,
   X,
-  Zap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import jihLogo from '../assets/LogoColor.png';
+import BrandLogo from '../components/branding/BrandLogo';
 import d4dxLogo from '../assets/d4dx_logo.png';
 import { PUBLIC_HELP_DESK_CONTACTS, getTelHref, getWhatsAppHref } from '../data/helpDeskContacts';
 
@@ -25,6 +24,7 @@ const portalCards = [
     id: 'expansion-portal',
     title: 'JIH Portal',
     description: 'Access dashboards for district, area and unit management',
+    mobileDescription: 'District, area and unit management',
     icon: Shield,
     accent: 'blue',
     illustration: 'expansion',
@@ -41,6 +41,7 @@ const portalCards = [
     id: 'ihthisabi-report',
     title: 'IHTHISABI Report',
     description: 'Access reporting system for member management',
+    mobileDescription: 'Member reporting and submissions',
     icon: FileBarChart,
     accent: 'green',
     illustration: 'report',
@@ -57,6 +58,7 @@ const portalCards = [
     id: 'member-applications',
     title: 'Member Applications',
     description: 'Rukn and Karkun application processing',
+    mobileDescription: 'Rukn and Karkun applications',
     icon: Users,
     accent: 'purple',
     illustration: 'members',
@@ -76,29 +78,6 @@ const portalCards = [
 const orderedPortalCards = [...portalCards].sort(
   (a, b) => Number(Boolean(a.comingSoon)) - Number(Boolean(b.comingSoon))
 );
-
-const trustItems = [
-  {
-    title: 'Secure & Reliable',
-    description: 'Your data is protected with advanced security',
-    icon: Shield,
-  },
-  {
-    title: 'Fast & Efficient',
-    description: 'Streamlined processes for better productivity',
-    icon: Zap,
-  },
-  {
-    title: 'User Friendly',
-    description: 'Designed for everyone to use with ease',
-    icon: UserRound,
-  },
-  {
-    title: 'Data Driven',
-    description: 'Accurate reports for smarter decisions',
-    icon: BarChart3,
-  },
-];
 
 const accentClasses = {
   blue: {
@@ -139,7 +118,7 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden overflow-y-auto bg-[#f8f9ff] text-[#10274f]">
+    <div className="mobile-readable-content relative min-h-screen overflow-x-hidden overflow-y-auto bg-[#f8f9ff] text-[#10274f]">
       <style>{`
         @keyframes landingFadeUp {
           from { opacity: 0; transform: translateY(18px); }
@@ -160,37 +139,48 @@ const LandingPage = () => {
         }
       `}</style>
 
-      <BackgroundCanvas />
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-3 sm:px-6 lg:px-8">
-        <header className="absolute right-4 top-3 z-20 sm:right-6 lg:right-8">
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-3 py-3 sm:px-6 lg:px-8">
+        <header className="relative z-20 flex items-center justify-between gap-3 pb-2 sm:justify-end sm:pb-2 sm:pt-2">
+          <div className="flex min-w-0 items-center gap-2.5 sm:hidden">
+            <BrandLogo alt="JIH Plus Portal" size="xs" />
+            <div className="min-w-0">
+              <h1 className="text-base font-extrabold leading-tight text-[#10274f]">JIH Plus Portal</h1>
+              <p className="text-xs leading-tight text-[#59677f]">Choose the service you need</p>
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => setShowHelpDesk(true)}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/80 bg-white/80 px-4 py-2 text-xs font-semibold text-[#17325b] shadow-[0_12px_35px_rgba(85,91,144,0.14)] backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_16px_38px_rgba(85,91,144,0.18)] focus:outline-none focus:ring-2 focus:ring-[#7d5df1]/35 sm:text-sm"
+            className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full border border-white/80 bg-white/85 px-3 py-2 text-xs font-semibold text-[#17325b] shadow-[0_8px_24px_rgba(85,91,144,0.12)] backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#7d5df1]/35 sm:gap-2 sm:px-4 sm:text-sm"
           >
             <PhoneCall className="h-4 w-4 text-[#7548e8]" />
-            <span>Help Desk</span>
+            <span className="hidden min-[340px]:inline">Help Desk</span>
           </button>
         </header>
 
-        <main className="flex min-h-0 flex-1 flex-col justify-start pt-8 sm:pt-9 lg:pt-7">
-          <section className="landing-fade-up text-center">
-            <img src={jihLogo} alt="JIH Plus Portal" className="mx-auto h-11 w-auto sm:h-12 lg:h-14" />
+        <main className="flex min-h-0 flex-1 flex-col justify-start sm:pt-2 lg:pt-1">
+          <section className="landing-fade-up hidden text-center sm:block">
+            <BrandLogo alt="JIH Plus Portal" size="sm" className="mx-auto sm:h-12 lg:h-14" />
             <h1
-              className="mt-2 text-2xl font-bold leading-tight text-[#10274f] sm:text-3xl lg:text-[2rem]"
+              className="mt-1.5 text-2xl font-bold leading-tight text-[#10274f] sm:mt-2 sm:text-3xl lg:text-[2rem]"
               style={{ fontFamily: 'Cinzel, Georgia, serif', letterSpacing: '0' }}
             >
               JIH Plus Portal
             </h1>
-            <div className="mx-auto mt-2 flex w-16 items-center justify-center gap-1.5">
+            <div className="mx-auto mt-1.5 flex w-16 items-center justify-center gap-1.5 sm:mt-2">
               <span className="h-1.5 w-6 rounded-full bg-[#7548e8]" />
               <span className="h-1.5 w-3 rounded-full bg-[#7548e8]" />
             </div>
-            <p className="mt-2 text-xs font-semibold text-[#71809d] sm:text-sm">One Portal. Many Possibilities.</p>
+            <p className="mt-1.5 text-xs font-semibold text-[#71809d] sm:mt-2 sm:text-sm">One Portal. Many Possibilities.</p>
           </section>
 
-          <section className="mt-4 grid min-h-0 gap-3 md:grid-cols-3 md:gap-4 lg:gap-5 xl:mt-5">
+          <div className="mb-2 mt-2 sm:hidden">
+            <h2 className="text-lg font-extrabold leading-tight text-[#10274f]">Select a portal</h2>
+            <p className="mt-0.5 text-xs text-[#59677f]">All JIH services in one place</p>
+          </div>
+
+          <section className="grid min-h-0 gap-2.5 sm:mt-3 md:mt-4 md:grid-cols-3 md:gap-4 lg:gap-5 xl:mt-5">
             {orderedPortalCards.map((card, index) => (
               <PortalCard
                 key={card.id}
@@ -201,13 +191,12 @@ const LandingPage = () => {
             ))}
           </section>
 
-          <TrustStrip />
         </main>
 
-        <footer className="relative z-10 pb-3 pt-2 text-center md:pb-0">
-          <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/70 bg-white/70 px-4 py-1.5 text-xs text-[#6d7892] shadow-[0_10px_32px_rgba(91,98,141,0.12)] backdrop-blur">
+        <footer className="relative z-10 mt-auto pb-1 pt-3 text-center sm:pb-3 md:pb-0">
+          <div className="inline-flex flex-wrap items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/75 px-3 py-1.5 text-[11px] text-[#6d7892] shadow-[0_8px_24px_rgba(91,98,141,0.1)] backdrop-blur sm:gap-2 sm:px-4 sm:text-xs">
             <span>Powered by</span>
-            <img src={d4dxLogo} alt="D4DX Logo" className="h-5 w-auto" />
+            <img src={d4dxLogo} alt="D4DX Logo" className="h-4 w-auto sm:h-5" />
             <a
               href="https://d4dx.co/"
               target="_blank"
@@ -232,11 +221,31 @@ const PortalCard = ({ card, index, onAction }) => {
 
   return (
     <article
-      className={`landing-fade-up group relative flex flex-col overflow-hidden rounded-2xl border border-white/80 bg-white/[0.82] p-4 text-center shadow-[0_18px_50px_rgba(87,91,145,0.16)] backdrop-blur transition duration-300 sm:min-h-[265px] sm:p-5 lg:min-h-[300px] lg:p-5 ${
+      className={`landing-fade-up group relative flex flex-col overflow-hidden rounded-2xl border border-white/80 bg-white/[0.86] text-left shadow-[0_10px_30px_rgba(87,91,145,0.12)] backdrop-blur transition duration-300 sm:min-h-[265px] sm:p-5 sm:text-center sm:shadow-[0_18px_50px_rgba(87,91,145,0.16)] lg:min-h-[300px] lg:p-5 ${
         disabled ? 'opacity-80 grayscale-[0.35]' : 'hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(87,91,145,0.22)]'
       }`}
       style={{ animationDelay: `${index * 90}ms` }}
     >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && onAction(card.actions[0])}
+        className="flex min-h-[104px] w-full items-center gap-3 px-3.5 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7d5df1]/45 disabled:cursor-not-allowed sm:hidden"
+        aria-label={disabled ? `${card.title} coming soon` : `Open ${card.title}`}
+      >
+        <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${accent.iconWrap}`} aria-hidden="true">
+          <Icon className={`h-6 w-6 ${accent.icon}`} strokeWidth={2.3} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block break-words text-base font-extrabold leading-snug text-[#14305c] [overflow-wrap:anywhere]">{card.title}</span>
+          <span className="mt-0.5 block break-words text-xs font-medium leading-relaxed text-[#59677f] [overflow-wrap:anywhere]">{card.mobileDescription || card.description}</span>
+        </span>
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${accent.iconWrap} ${accent.icon}`} aria-hidden="true">
+          {disabled ? <Clock className="h-4 w-4" /> : <ArrowRight className="h-5 w-5" />}
+        </span>
+      </button>
+
+      <div className="hidden h-full flex-1 flex-col sm:flex">
       {disabled && (
         <span className="absolute right-3 top-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-[#10274f] px-3 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-white shadow-md">
           <Clock className="h-3 w-3" />
@@ -244,41 +253,42 @@ const PortalCard = ({ card, index, onAction }) => {
         </span>
       )}
 
-      <div className={`absolute left-1/2 top-5 h-20 w-20 -translate-x-1/2 rounded-full ${accent.glow} opacity-80 blur-2xl`} />
+      <div className={`absolute left-1/2 top-3 h-16 w-16 -translate-x-1/2 rounded-full ${accent.glow} opacity-80 blur-2xl sm:top-5 sm:h-20 sm:w-20`} />
 
       <div
-        className={`relative mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/55 shadow-inner ring-1 ring-white/80 transition duration-300 sm:h-16 sm:w-16 lg:h-[4.5rem] lg:w-[4.5rem] ${
+        className={`relative mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white/55 shadow-inner ring-1 ring-white/80 transition duration-300 sm:h-16 sm:w-16 lg:h-[4.5rem] lg:w-[4.5rem] ${
           disabled ? '' : 'group-hover:scale-105'
         }`}
         aria-hidden="true"
       >
-        <span className={`flex h-[2.9rem] w-[2.9rem] items-center justify-center rounded-full ${accent.iconWrap} sm:h-[3.25rem] sm:w-[3.25rem] lg:h-[3.75rem] lg:w-[3.75rem]`}>
-          <Icon className={`h-6 w-6 ${accent.icon} sm:h-7 sm:w-7 lg:h-8 lg:w-8`} strokeWidth={2.3} />
+        <span className={`flex h-[2.35rem] w-[2.35rem] items-center justify-center rounded-full ${accent.iconWrap} sm:h-[3.25rem] sm:w-[3.25rem] lg:h-[3.75rem] lg:w-[3.75rem]`}>
+          <Icon className={`h-5 w-5 ${accent.icon} sm:h-7 sm:w-7 lg:h-8 lg:w-8`} strokeWidth={2.3} />
         </span>
       </div>
 
-      <h2 className="relative mt-3 text-lg font-extrabold leading-tight text-[#14305c] sm:mt-4 lg:text-xl">{card.title}</h2>
-      <span className={`mx-auto mt-2 h-1 w-10 rounded-full ${accent.underline} sm:mt-3`} />
-      <p className="mx-auto mt-2 max-w-[220px] text-xs font-medium leading-5 text-[#68758f] sm:mt-3 lg:text-sm">{card.description}</p>
+      <h2 className="relative mt-2 text-lg font-extrabold leading-tight text-[#14305c] sm:mt-4 lg:text-xl">{card.title}</h2>
+      <span className={`mx-auto mt-1.5 h-1 w-10 rounded-full ${accent.underline} sm:mt-3`} />
+      <p className="mx-auto mt-1 max-w-[260px] text-xs font-medium leading-4 text-[#68758f] sm:mt-3 sm:leading-5 lg:text-sm">{card.description}</p>
 
       <div className="hidden md:block">
         <DecorativeIllustration type={card.illustration} accent={card.accent} />
       </div>
 
       {disabled ? (
-        <div className="relative z-10 mt-4 md:mt-auto">
+        <div className="relative z-10 mt-3 md:mt-auto">
           <div className="flex w-full min-h-[48px] cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-[#d8dcec] bg-[#eef0f8] px-4 py-2.5 text-xs font-bold text-[#5c6787] lg:text-sm">
             <Clock className="h-4 w-4" />
             <span>Coming Soon</span>
           </div>
         </div>
       ) : (
-        <div className="relative z-10 mt-4 space-y-2.5 md:mt-auto">
+        <div className="relative z-10 mt-3 space-y-2.5 md:mt-auto">
           {card.actions.map((action) => (
             <PortalActionButton key={action.label} action={action} onClick={() => onAction(action)} />
           ))}
         </div>
       )}
+      </div>
     </article>
   );
 };
@@ -349,27 +359,6 @@ const DecorativeIllustration = ({ type, accent }) => {
     </div>
   );
 };
-
-const TrustStrip = () => (
-  <section className="landing-fade-up mt-4 rounded-2xl border border-white/80 bg-white/[0.72] px-4 py-3 shadow-[0_18px_50px_rgba(87,91,145,0.14)] backdrop-blur sm:px-6 lg:px-8">
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0">
-      {trustItems.map((item, index) => {
-        const Icon = item.icon;
-        return (
-          <div key={item.title} className={`flex items-center gap-3 lg:px-4 ${index > 0 ? 'lg:border-l lg:border-[#e3e6f4]' : ''}`}>
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f1eaff] text-[#7548e8] lg:h-11 lg:w-11">
-              <Icon className="h-5 w-5" />
-            </span>
-            <span className="text-left">
-              <span className="block text-sm font-extrabold text-[#18315e]">{item.title}</span>
-              <span className="mt-1 block text-xs font-medium leading-5 text-[#73809a]">{item.description}</span>
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  </section>
-);
 
 const HelpDeskModal = ({ onClose }) => {
   useEffect(() => {
@@ -448,25 +437,5 @@ const HelpDeskModal = ({ onClose }) => {
   </div>
   );
 };
-
-const BackgroundCanvas = () => (
-  <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-    <div className="absolute -left-28 -top-28 h-96 w-96 rounded-full border border-white/65 bg-[#e7eaff] opacity-75" />
-    <div className="absolute -left-14 top-7 h-52 w-52 rounded-full border border-white/80 bg-[#f4f6ff] opacity-85" />
-    <div className="absolute -right-24 -bottom-20 h-[410px] w-[410px] rounded-full border border-white/70 bg-[#e5ddff] opacity-80" />
-    <div className="absolute bottom-10 right-7 h-64 w-64 rounded-full border border-white/85 bg-[#f6f3ff] opacity-75" />
-    <div className="absolute right-20 top-8 grid grid-cols-5 gap-2 opacity-35">
-      {Array.from({ length: 25 }).map((_, index) => (
-        <span key={index} className="h-1.5 w-1.5 rounded-full bg-[#b5abe9]" />
-      ))}
-    </div>
-    <div className="absolute bottom-14 left-7 hidden grid-cols-6 gap-2 opacity-35 sm:grid">
-      {Array.from({ length: 24 }).map((_, index) => (
-        <span key={index} className="h-1.5 w-1.5 rounded-full bg-[#b5abe9]" />
-      ))}
-    </div>
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.82),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(140,111,245,0.17),transparent_32%)]" />
-  </div>
-);
 
 export default LandingPage;

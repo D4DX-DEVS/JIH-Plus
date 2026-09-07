@@ -1,3 +1,4 @@
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pencil, Trash2, RefreshCw, Copy, Check, MapPin, Building2, Home, Layers, X, Eye, EyeOff, Download, ChevronLeft, ChevronRight, Scissors, GitMerge, ArrowRightLeft, Search, ChevronDown } from 'lucide-react';
@@ -292,7 +293,7 @@ function StatesTab() {
         <>
         {/* Desktop: full table */}
         <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -321,7 +322,7 @@ function StatesTab() {
                 <tr><td colSpan={3} className="text-center py-8 text-gray-400">No states yet</td></tr>
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
 
         {/* Mobile: card list with full-size tap targets */}
@@ -595,7 +596,7 @@ function DistrictsTab() {
         <>
         {/* Desktop: full table */}
         <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -641,7 +642,7 @@ function DistrictsTab() {
                 <tr><td colSpan={6} className="text-center py-8 text-gray-400">No districts yet</td></tr>
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
 
         {/* Mobile: name + actions only; tap name for state/username/password */}
@@ -1083,7 +1084,7 @@ function AreasTab() {
         <>
         {/* Desktop: full table */}
         <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -1132,7 +1133,7 @@ function AreasTab() {
                 <tr><td colSpan={6} className="text-center py-8 text-gray-400">No areas yet</td></tr>
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
 
         {/* Mobile: name + actions only; tap name for district/username/password */}
@@ -1630,7 +1631,7 @@ function UnitsTab() {
         <>
         {/* Desktop: full table */}
         <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -1681,7 +1682,7 @@ function UnitsTab() {
                 <tr><td colSpan={7} className="text-center py-8 text-gray-400">No units yet</td></tr>
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
 
         {/* Mobile: name + actions only; tap name for area/district/username/password */}
@@ -1927,7 +1928,7 @@ export default function LocationMasterPage({ onLogout }) {
   })();
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex app-viewport bg-gray-50 overflow-hidden">
       <AdminSidebar
         activeTab="master-data"
         onTabChange={(tab) => {

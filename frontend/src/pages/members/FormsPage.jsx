@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -214,7 +215,7 @@ export default function FormsPage() {
             </div>
             {/* Desktop: table */}
             <TableWrap>
-            <table className="hidden lg:table w-full text-sm min-w-[680px]">
+            <ResponsiveTable className="hidden lg:table w-full text-sm min-w-[680px]">
               <thead className="bg-gray-50/80 border-b border-gray-100">
                 <tr>
                   <Th>Title</Th>
@@ -297,7 +298,7 @@ export default function FormsPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ResponsiveTable>
             </TableWrap>
           </>
         )}

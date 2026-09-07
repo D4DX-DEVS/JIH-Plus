@@ -1,3 +1,4 @@
+import NumericInput from "../NumericInput";
 import React from 'react';
 
 export default function ValidationEditor({ validation = {}, fieldType, onChange }) {
@@ -14,7 +15,7 @@ export default function ValidationEditor({ validation = {}, fieldType, onChange 
             <>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Min Length</label>
-                <input
+                <NumericInput
                   type="number"
                   min={0}
                   value={validation.minLength ?? ''}
@@ -24,7 +25,7 @@ export default function ValidationEditor({ validation = {}, fieldType, onChange 
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Max Length</label>
-                <input
+                <NumericInput
                   type="number"
                   min={0}
                   value={validation.maxLength ?? ''}
@@ -38,7 +39,7 @@ export default function ValidationEditor({ validation = {}, fieldType, onChange 
             <>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Min</label>
-                <input
+                <NumericInput
                   type="number"
                   value={validation.min ?? ''}
                   onChange={e => update('min', e.target.value === '' ? undefined : Number(e.target.value))}
@@ -47,7 +48,7 @@ export default function ValidationEditor({ validation = {}, fieldType, onChange 
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Max</label>
-                <input
+                <NumericInput
                   type="number"
                   value={validation.max ?? ''}
                   onChange={e => update('max', e.target.value === '' ? undefined : Number(e.target.value))}

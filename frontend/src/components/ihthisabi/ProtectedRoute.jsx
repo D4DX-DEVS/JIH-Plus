@@ -1,10 +1,19 @@
 import React from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, user, loading } = useAuth()
   const location = useLocation()
+  const dashboardPaths = {
+    rukn: '/ihthisabi/dashboard',
+    unitAdmin: '/ihthisabi/unitadmin',
+    districtAdmin: '/ihthisabi/districtadmin',
+    admin: '/ihthisabi/admin',
+    mainAdmin: '/ihthisabi/admin',
+    mekhalaNazim: '/ihthisabi/mekhalanazim'
+  }
+  const dashboardPath = dashboardPaths[user?.role] || '/ihthisabi/profile'
 
   if (loading) {
     return (
@@ -34,12 +43,14 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
           <p className="text-gray-600 mb-4">
             You don't have permission to access this page.
           </p>
-          <button
-            onClick={() => window.history.back()}
-            className="btn-primary"
-          >
-            Go Back
-          </button>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link to={dashboardPath} className="btn-primary">
+              Go to dashboard
+            </Link>
+            <Link to="/ihthisabi/help-desk" className="btn-secondary">
+              Get help
+            </Link>
+          </div>
         </div>
       </div>
     )

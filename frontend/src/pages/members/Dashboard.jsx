@@ -50,14 +50,14 @@ function lastSixMonths() {
 
 function StatTile({ icon: Icon, label, value, tint, link }) {
   const body = (
-    <Card className="p-4 h-full transition-shadow hover:shadow-md">
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 flex-shrink-0 rounded-xl flex items-center justify-center ${tint}`}>
-          <Icon size={19} />
+    <Card className="h-full p-3 transition-shadow hover:shadow-md sm:p-4">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 sm:rounded-xl ${tint}`}>
+          {React.createElement(Icon, { size: 18 })}
         </div>
         <div className="min-w-0">
-          <p className="text-2xl font-bold text-gray-900 leading-tight">{value}</p>
-          <p className="text-xs text-gray-500 mt-0.5 truncate">{label}</p>
+          <p className="text-xl font-bold leading-tight text-gray-900 sm:text-2xl">{value}</p>
+          <p className="mt-0.5 break-words text-sm leading-snug text-gray-600 sm:text-xs">{label}</p>
         </div>
       </div>
     </Card>
@@ -72,6 +72,7 @@ export default function Dashboard() {
   const [waiting, setWaiting] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showMobileCharts, setShowMobileCharts] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -167,11 +168,71 @@ export default function Dashboard() {
         hideTitleOnMobile
       />
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 mb-6">
+      <Card className="mb-4 p-3 sm:mb-6 sm:p-5">
+        <div className="mb-2 flex items-center justify-between gap-3 sm:mb-4">
+          <div className="min-w-0">
+            <h2 className="font-semibold text-gray-900">Waiting on you</h2>
+            <p className="mt-0.5 text-xs text-gray-600">Applications ready for your action</p>
+          </div>
+          <Link
+            to="/members/applications?mine=1"
+            className="inline-flex min-h-[44px] flex-shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-medium text-[#5b21b6] hover:bg-violet-50"
+          >
+            View all <ArrowRight size={14} />
+          </Link>
+        </div>
+
+        {waiting.length === 0 ? (
+          <p className="rounded-lg bg-gray-50 px-3 py-4 text-sm text-gray-600">Nothing is waiting for your action.</p>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {waiting.map(app => (
+              <li key={app._id}>
+                <Link
+                  to={`/members/applications/${app._id}`}
+                  className="flex min-h-[52px] items-center justify-between gap-3 rounded-lg px-2 py-2.5 hover:bg-gray-50"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block break-words text-sm font-medium leading-snug text-gray-900">
+                      {app.applicantName || 'Unnamed applicant'}
+                    </span>
+                    <span className="mt-0.5 block break-words text-xs leading-snug text-gray-600">
+                      {FORM_TYPE_LABEL[app.formType]} · {app.scope?.unit || app.scope?.area || app.scope?.district}
+                    </span>
+                  </span>
+                  <span className="flex flex-shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
+                    <StatusBadge status={app.status} />
+                    <span className="hidden text-xs text-gray-500 sm:block">
+                      {new Date(app.submittedAt).toLocaleDateString()}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <div className="mb-4 grid grid-cols-2 gap-2.5 sm:mb-6 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
         {tiles.map(tile => <StatTile key={tile.label} {...tile} />)}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+      <button
+        type="button"
+        onClick={() => setShowMobileCharts(value => !value)}
+        className="mb-4 flex min-h-[48px] w-full items-center justify-between rounded-xl border border-violet-200 bg-white px-4 text-sm font-semibold text-[#5b21b6] shadow-sm sm:hidden"
+        aria-expanded={showMobileCharts}
+        aria-controls="members-dashboard-statistics"
+      >
+        <span>{showMobileCharts ? 'Hide detailed statistics' : 'Show detailed statistics'}</span>
+        <span aria-hidden="true">{showMobileCharts ? '−' : '+'}</span>
+      </button>
+
+      <div
+        id="members-dashboard-statistics"
+        className={`${showMobileCharts ? 'block' : 'hidden'} sm:block`}
+      >
+      <div className="mb-6 grid gap-4 sm:gap-6 lg:grid-cols-3">
         <Card className="p-4 sm:p-5 lg:col-span-2">
           <h2 className="font-semibold text-gray-900 mb-1">Submissions over time</h2>
           <p className="text-xs text-gray-500 mb-4">Applications submitted in the last 6 months</p>
@@ -235,7 +296,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-1">
         <Card className="p-4 sm:p-5">
           <h2 className="font-semibold text-gray-900 mb-1">Applications by stage</h2>
           <p className="text-xs text-gray-500 mb-4">Where the pipeline currently stands</p>
@@ -263,50 +324,7 @@ export default function Dashboard() {
           )}
         </Card>
 
-        <Card className="p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="font-semibold text-gray-900">Waiting on you</h2>
-              <p className="text-xs text-gray-500 mt-1">Applications at your stage</p>
-            </div>
-            <Link
-              to="/members/applications?mine=1"
-              className="inline-flex items-center gap-1 text-sm font-medium text-[#5b21b6] hover:underline min-h-[44px] -my-3"
-            >
-              View all <ArrowRight size={14} />
-            </Link>
-          </div>
-
-          {waiting.length === 0 ? (
-            <p className="text-sm text-gray-500 py-12 text-center">Nothing is waiting for your action.</p>
-          ) : (
-            <ul className="divide-y divide-gray-100">
-              {waiting.map(app => (
-                <li key={app._id}>
-                  <Link
-                    to={`/members/applications/${app._id}`}
-                    className="flex items-center justify-between gap-3 py-3 hover:bg-gray-50 -mx-2 px-2 rounded-lg"
-                  >
-                    <span className="min-w-0">
-                      <span className="block text-sm font-medium text-gray-900 truncate">
-                        {app.applicantName || 'Unnamed applicant'}
-                      </span>
-                      <span className="block text-xs text-gray-500 truncate">
-                        {FORM_TYPE_LABEL[app.formType]} · {app.scope?.unit || app.scope?.area || app.scope?.district}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-3 flex-shrink-0">
-                      <StatusBadge status={app.status} />
-                      <span className="text-xs text-gray-400 hidden sm:block">
-                        {new Date(app.submittedAt).toLocaleDateString()}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+      </div>
       </div>
     </div>
   )

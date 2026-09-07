@@ -1,3 +1,4 @@
+import NumericInput from "../../components/NumericInput";
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
@@ -1209,6 +1210,16 @@ const SubmissionForm = ({ userRole }) => {
     const value = dynamicFormData[qId]
     const label = question.questionTextMl || question.questionText
     const fieldError = dynamicErrors[qId]
+    const fieldId = `dynamic-question-${qId}`
+    const labelId = `${fieldId}-label`
+    const errorId = `${fieldId}-error`
+    const describedBy = fieldError ? errorId : undefined
+    const commonFieldProps = {
+      'aria-labelledby': labelId,
+      'aria-describedby': describedBy,
+      'aria-invalid': fieldError ? 'true' : undefined,
+      'aria-required': question.isRequired ? 'true' : undefined
+    }
 
     return (
       <div
@@ -1217,46 +1228,47 @@ const SubmissionForm = ({ userRole }) => {
         className="card bg-white border border-gray-200 rounded-3xl shadow-sm"
       >
         <div className="card-header rounded-t-2xl bg-[#161F2F] px-3 py-2.5 sm:rounded-t-3xl sm:px-6 sm:py-4">
-          <h3 className="text-[13px] font-semibold leading-snug text-white sm:text-lg">
+          <h3 id={labelId} className="text-[13px] font-semibold leading-snug text-white sm:text-lg">
             {qIndex + 1}. {label}
-            {question.isRequired && <span className="text-red-400 ml-1">*</span>}
+            {question.isRequired && <><span className="text-red-400 ml-1">*</span><span className="sr-only"> required</span></>}
           </h3>
         </div>
         <div className="card-body p-3 sm:p-6">
           {question.answerType === 'text' && (
-            <input type="text" value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
+            <input id={fieldId} {...commonFieldProps} type="text" value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
               className="form-input w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
               placeholder={question.placeholder || ''} maxLength={question.maxLength || 500} />
           )}
 
           {question.answerType === 'textarea' && (
-            <textarea value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
+            <textarea id={fieldId} {...commonFieldProps} value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
               className="form-input min-h-[76px] w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:min-h-[100px] sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
               placeholder={question.placeholder || ''} maxLength={question.maxLength || 1000} rows={4} />
           )}
 
           {question.answerType === 'number' && (
-            <input type="number" value={value ?? ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
+            <NumericInput id={fieldId} {...commonFieldProps} type="number" value={value ?? ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
               className="form-input w-full max-w-[9rem] rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-xs sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
               placeholder={question.placeholder || '0'}
               min={question.min ?? 0} max={question.max ?? 100000} />
           )}
 
           {question.answerType === 'radio' && (
-            <div className="space-y-2 sm:space-y-3">
-              {question.options?.map(opt => (
+            <fieldset className="space-y-2 sm:space-y-3" aria-describedby={describedBy} aria-invalid={fieldError ? 'true' : undefined} aria-required={question.isRequired ? 'true' : undefined}>
+              <legend className="sr-only">{label}</legend>
+              {question.options?.map((opt, optIndex) => (
                 <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5 py-1 sm:py-0">
-                  <input type="radio" name={qId} value={opt.value} checked={value === opt.value}
+                  <input id={`${fieldId}-option-${optIndex}`} {...commonFieldProps} aria-labelledby={`${labelId} ${fieldId}-option-label-${optIndex}`} type="radio" name={qId} value={opt.value} checked={value === opt.value}
                     onChange={() => handleDynamicFieldChange(qId, opt.value)}
                     className="h-4 w-4 shrink-0 border-gray-300 text-primary focus:ring-primary sm:h-5 sm:w-5" />
-                  <span className="text-[13px] text-gray-700 group-hover:text-gray-900 sm:text-base">{opt.labelMl || opt.label}</span>
+                  <span id={`${fieldId}-option-label-${optIndex}`} className="text-[13px] text-gray-700 group-hover:text-gray-900 sm:text-base">{opt.labelMl || opt.label}</span>
                 </label>
               ))}
-            </div>
+            </fieldset>
           )}
 
           {question.answerType === 'dropdown' && (
-            <select value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
+            <select id={fieldId} {...commonFieldProps} value={value || ''} onChange={(e) => handleDynamicFieldChange(qId, e.target.value)}
               className="form-select w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:max-w-sm sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm">
               <option value="">Select...</option>
               {question.options?.map(opt => (
@@ -1266,16 +1278,17 @@ const SubmissionForm = ({ userRole }) => {
           )}
 
           {question.answerType === 'checkbox' && (
-            <div className="space-y-2 sm:space-y-3">
-              {question.options?.map(opt => (
+            <fieldset className="space-y-2 sm:space-y-3" aria-describedby={describedBy} aria-invalid={fieldError ? 'true' : undefined} aria-required={question.isRequired ? 'true' : undefined}>
+              <legend className="sr-only">{label}</legend>
+              {question.options?.map((opt, optIndex) => (
                 <label key={opt.value} className="group flex cursor-pointer items-center gap-2.5 py-1 sm:py-0">
-                  <input type="checkbox" checked={Array.isArray(value) && value.includes(opt.value)}
+                  <input id={`${fieldId}-option-${optIndex}`} {...commonFieldProps} aria-labelledby={`${labelId} ${fieldId}-option-label-${optIndex}`} type="checkbox" checked={Array.isArray(value) && value.includes(opt.value)}
                     onChange={(e) => handleDynamicCheckboxChange(qId, opt.value, e.target.checked)}
                     className="h-4 w-4 shrink-0 rounded border-gray-300 text-primary focus:ring-primary sm:h-5 sm:w-5" />
-                  <span className="text-[13px] text-gray-700 group-hover:text-gray-900 sm:text-base">{opt.labelMl || opt.label}</span>
+                  <span id={`${fieldId}-option-label-${optIndex}`} className="text-[13px] text-gray-700 group-hover:text-gray-900 sm:text-base">{opt.labelMl || opt.label}</span>
                 </label>
               ))}
-            </div>
+            </fieldset>
           )}
 
           {question.answerType === 'star' && (
@@ -1296,8 +1309,8 @@ const SubmissionForm = ({ userRole }) => {
                 const effectiveFieldId = sf.fieldId || `field_${sfIdx}`
                 return (
                   <div key={effectiveFieldId}>
-                    <label className="mb-1 block text-[11px] font-medium text-gray-600 sm:text-sm">{sf.labelMl || sf.label}</label>
-                    <input type={sf.type === 'number' ? 'number' : 'text'}
+                    <label id={`${fieldId}-${effectiveFieldId}-label`} htmlFor={`${fieldId}-${effectiveFieldId}`} className="mb-1 block text-[11px] font-medium text-gray-600 sm:text-sm">{sf.labelMl || sf.label}</label>
+                    <NumericInput id={`${fieldId}-${effectiveFieldId}`} aria-labelledby={`${labelId} ${fieldId}-${effectiveFieldId}-label`} aria-describedby={describedBy} aria-invalid={fieldError ? 'true' : undefined} type={sf.type === 'number' ? 'number' : 'text'}
                       value={(value || {})[effectiveFieldId] ?? ''}
                       onChange={(e) => handleDynamicGroupFieldChange(qId, effectiveFieldId, e.target.value)}
                       className="form-input w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:border-primary focus:ring-2 focus:ring-primary/20 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm"
@@ -1309,7 +1322,7 @@ const SubmissionForm = ({ userRole }) => {
               })}
             </div>
           )}
-          {fieldError && <p className="form-error mt-2">{fieldError}</p>}
+          {fieldError && <p id={errorId} className="form-error mt-2">{fieldError}</p>}
         </div>
       </div>
     )
@@ -1362,14 +1375,13 @@ const SubmissionForm = ({ userRole }) => {
   if (dynamicForm) {
     return (
       <>
-        <button onClick={() => attemptNavigateAway(dashboardPath)}
-          className="fixed top-14 right-2.5 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
-          title="Close">
-          <X className="w-5 h-5" />
-        </button>
 
         <div className="mx-auto max-w-5xl space-y-3 px-2.5 py-3 sm:space-y-6 sm:px-4 sm:py-10">
-          <div className="space-y-3 rounded-2xl border border-gray-200 bg-white px-3.5 py-3 shadow-sm sm:space-y-4 sm:rounded-3xl sm:px-8 sm:py-8 sm:shadow-lg">
+          <div className="relative space-y-3 rounded-2xl border border-gray-200 bg-white pl-3.5 pr-16 py-3 sm:space-y-4 sm:rounded-3xl sm:pl-8 sm:pr-20 sm:py-8">
+            <button type="button" onClick={() => attemptNavigateAway(dashboardPath)} aria-label="Close report"
+              className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-xl text-gray-600 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-violet-500">
+              <X className="h-5 w-5" />
+            </button>
             <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <h1 className="hidden lg:block text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
@@ -1501,17 +1513,13 @@ const SubmissionForm = ({ userRole }) => {
 
   return (
     <>
-      {/* Fixed Close Button - Top Right Corner */}
-      <button
-        onClick={() => attemptNavigateAway(dashboardPath)}
-        className="fixed top-14 right-2.5 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-lg text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:h-10 sm:w-10 lg:top-4 lg:right-4"
-        title="Close"
-      >
-        <X className="w-5 h-5" />
-      </button>
 
       <div className="mx-auto max-w-5xl space-y-3 px-2.5 py-3 sm:space-y-6 sm:px-4 sm:py-10">
-        <div className="space-y-3 rounded-2xl border border-gray-200 bg-white px-3.5 py-3 shadow-sm sm:space-y-4 sm:rounded-3xl sm:px-8 sm:py-8 sm:shadow-lg">
+        <div className="relative space-y-3 rounded-2xl border border-gray-200 bg-white pl-3.5 pr-16 py-3 sm:space-y-4 sm:rounded-3xl sm:pl-8 sm:pr-20 sm:py-8">
+          <button type="button" onClick={() => attemptNavigateAway(dashboardPath)} aria-label="Close report"
+            className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-xl text-gray-600 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-violet-500">
+            <X className="h-5 w-5" />
+          </button>
           <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="hidden lg:block text-lg font-bold leading-snug text-gray-900 sm:text-3xl">
@@ -1738,7 +1746,7 @@ const SubmissionForm = ({ userRole }) => {
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. ഹദീസ് പഠനം : (എണ്ണം) <span className="text-red-400 ml-1">*</span>
             </h3>
-            <input
+            <NumericInput
               {...register('form.hadithCount', { 
                 required: 'Hadith count is required',
                 min: { value: 0, message: 'Count cannot be negative' },
@@ -1828,7 +1836,7 @@ const SubmissionForm = ({ userRole }) => {
             <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-3">
               <div>
                 <label className="form-label">ഹാജർ : (എണ്ണം)</label>
-                  <input
+                  <NumericInput
                   {...register('form.weeklyMeeting.hadir', { 
                     required: 'Count is required',
                     min: { value: 0, message: 'Count cannot be negative' },
@@ -1849,7 +1857,7 @@ const SubmissionForm = ({ userRole }) => {
             </div>
               <div>
                 <label className="form-label">ലീവ് : (എണ്ണം)</label>
-                <input
+                <NumericInput
                   {...register('form.weeklyMeeting.leave', { 
                     required: 'Count is required',
                     min: { value: 0, message: 'Count cannot be negative' },
@@ -1870,7 +1878,7 @@ const SubmissionForm = ({ userRole }) => {
               </div>
               <div>
                 <label className="form-label">ആബ്സൻ്റ് : (എണ്ണം)</label>
-                <input
+                <NumericInput
                   {...register('form.weeklyMeeting.absent', { 
                     required: 'Count is required',
                     min: { value: 0, message: 'Count cannot be negative' },
@@ -1902,7 +1910,7 @@ const SubmissionForm = ({ userRole }) => {
             <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-3">
               <div>
                 <label className="form-label">ഹാജർ : (എണ്ണം)</label>
-                  <input
+                  <NumericInput
                   {...register('form.jamaathMeeting.hadir', { 
                     required: 'Count is required',
                     min: { value: 0, message: 'Count cannot be negative' },
@@ -1923,7 +1931,7 @@ const SubmissionForm = ({ userRole }) => {
             </div>
               <div>
                 <label className="form-label">ലീവ് : (എണ്ണം)</label>
-                <input
+                <NumericInput
                   {...register('form.jamaathMeeting.leave', { 
                     required: 'Count is required',
                     min: { value: 0, message: 'Count cannot be negative' },
@@ -1944,7 +1952,7 @@ const SubmissionForm = ({ userRole }) => {
               </div>
               <div>
                 <label className="form-label">ആബ്സൻ്റ് : (എണ്ണം)</label>
-                <input
+                <NumericInput
                   {...register('form.jamaathMeeting.absent', { 
                     required: 'Count is required',
                     min: { value: 0, message: 'Count cannot be negative' },
@@ -2100,7 +2108,7 @@ const SubmissionForm = ({ userRole }) => {
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. മുസ്‌ലിം വ്യക്തിബന്ധങ്ങൾ : (എണ്ണം) <span className="text-red-400 ml-1">*</span>
             </h3>
-            <input
+            <NumericInput
               {...register('form.muslimRelations', { 
                 required: 'Number is required',
                 min: { value: 0, message: 'Count cannot be negative' },
@@ -2127,7 +2135,7 @@ const SubmissionForm = ({ userRole }) => {
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. സഹോദര സമുദായങ്ങളുമായുള്ള വ്യക്തിബന്ധം : (എണ്ണം) <span className="text-red-400 ml-1">*</span>
             </h3>
-            <input
+            <NumericInput
               {...register('form.communityRelations', { 
                 required: 'Number is required',
                 min: { value: 0, message: 'Count cannot be negative' },
@@ -2154,7 +2162,7 @@ const SubmissionForm = ({ userRole }) => {
             <h3 className="mb-2.5 text-[13px] font-semibold leading-snug text-gray-900 sm:mb-4 sm:text-lg">
               {nextQuestionNumber()}. ഈ ത്രൈമാസത്തിൽ നടത്തിയ സ്കോഡുകൾ : (എണ്ണം) <span className="text-red-400 ml-1">*</span>
             </h3>
-            <input
+            <NumericInput
               {...register('form.scoreCount', { 
                 required: 'Number is required',
                 min: { value: 0, message: 'Count cannot be negative' },

@@ -1,3 +1,5 @@
+import NumericInput from "../../NumericInput";
+import ResponsiveTable from "../../tables/ResponsiveTable.jsx";
 import React from 'react';
 import { useForm } from '../../../contexts/FormContext';
 
@@ -94,7 +96,7 @@ const PartE = () => {
           3. കഴിഞ്ഞ 5 വർഷത്തിനിടയിൽ പുതുതായി ഉണ്ടായ ഘടകങ്ങളുടെ എണ്ണം (പോഷക സംഘടനകൾ ഉൾപ്പെടെ ഇനം തിരിച്ചെഴുതുക):
         </label>
         <div className="spacye-y-4">
-          <input
+          <NumericInput
             type="number"
             value={formData.partE?.newComponentsLast5Years?.count ?? ''}
             onChange={(e) => handleNestedChange('newComponentsLast5Years', 'count', e.target.value)}
@@ -130,7 +132,7 @@ const PartE = () => {
           4. കഴിഞ്ഞ 5 വർഷത്തിനിടയിൽ പ്രവർത്തകരുടെ വർധനവ്:
         </label>
         <div className="space-y-4">
-          <input
+          <NumericInput
             type="number"
             value={formData.partE?.workersGrowthInLast5Years?.count ?? ''}
             onChange={(e) => handleNestedChange('workersGrowthInLast5Years', 'count', e.target.value)}
@@ -164,7 +166,7 @@ const PartE = () => {
           5. 6 മാസത്തിനുള്ളിൽ (2026 മാർച്ച്) രൂപീകരിക്കാൻ സാധിക്കുന്ന ഘടകങ്ങൾ:
         </label>
         <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300">
+          <ResponsiveTable className="w-full border border-gray-300">
             <thead>
               <tr className="bg-gray-50">
                 <th className="border border-gray-300 px-3 py-2 text-center font-medium">JIH</th>
@@ -179,7 +181,7 @@ const PartE = () => {
             <tbody>
               <tr>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.jih ?? ''}
                     onChange={(e) => handleComponentsChange('jih', e.target.value)}
@@ -188,7 +190,7 @@ const PartE = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.vanitha ?? ''}
                     onChange={(e) => handleComponentsChange('vanitha', e.target.value)}
@@ -197,7 +199,7 @@ const PartE = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.solidarity ?? ''}
                     onChange={(e) => handleComponentsChange('solidarity', e.target.value)}
@@ -206,7 +208,7 @@ const PartE = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.sio ?? ''}
                     onChange={(e) => handleComponentsChange('sio', e.target.value)}
@@ -215,7 +217,7 @@ const PartE = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.gio ?? ''}
                     onChange={(e) => handleComponentsChange('gio', e.target.value)}
@@ -224,7 +226,7 @@ const PartE = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.teenIndia ?? ''}
                     onChange={(e) => handleComponentsChange('teenIndia', e.target.value)}
@@ -233,7 +235,7 @@ const PartE = () => {
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-2">
-                  <input
+                  <NumericInput
                     type="number"
                     value={formData.partE?.componentsToFormIn6Months?.malarvadi ?? ''}
                     onChange={(e) => handleComponentsChange('malarvadi', e.target.value)}
@@ -243,7 +245,7 @@ const PartE = () => {
                 </td>
               </tr>
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
 

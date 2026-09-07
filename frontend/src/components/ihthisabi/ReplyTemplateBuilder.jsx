@@ -1,3 +1,4 @@
+import NumericInput from "../NumericInput";
 import React, { useState } from 'react'
 import { FIELD_LABELS, normalizeBlock, getDefaultBlocks } from '../../utils/ihthisabi/replyTemplateEngine'
 import { ChevronUp, ChevronDown, Trash2, Plus, RotateCcw, Save, X } from 'lucide-react'
@@ -168,7 +169,7 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
             </div>
             <div className="w-24">
               <label className="block text-xs font-medium text-gray-600 mb-1">Value</label>
-              <input
+              <NumericInput
                 type="number"
                 min="0"
                 value={block.condition?.value ?? 0}
@@ -178,7 +179,7 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
             </div>
             <div className="w-20">
               <label className="block text-xs font-medium text-gray-600 mb-1">Limit names</label>
-              <input
+              <NumericInput
                 type="number"
                 min="0"
                 placeholder="All"

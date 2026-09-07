@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useId, useRef } from 'react'
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 
 /** Small shared primitives so the members pages stay short and consistent. */
@@ -48,21 +48,13 @@ export function Button({ variant = 'primary', className = '', children, ...props
 }
 
 export function Field({ label, hint, children, required }) {
-  return (
-    <label className="block">
-      <span className="block text-sm font-medium text-gray-700 mb-1.5">
-        {label}{required && <span className="text-red-500"> *</span>}
-      </span>
-      {children}
-      {hint && <span className="block text-xs text-gray-500 mt-1.5">{hint}</span>}
-    </label>
-  )
+  return <FormField label={label} hint={hint} required={required}>{children}</FormField>
 }
 
 const CONTROL = 'w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-base sm:text-sm outline-none transition-shadow focus:ring-2 focus:ring-[#c4b5fd] focus:border-[#7c3aed] disabled:bg-gray-50 disabled:text-gray-500'
 
 export function Input({ className = '', ...props }) {
-  return <input {...props} className={`${CONTROL} ${className}`} />
+  return <NumericInput type="text" {...props} className={`${CONTROL} ${className}`} />
 }
 
 export function Textarea({ className = '', ...props }) {
@@ -108,16 +100,16 @@ export function FilterBar({ children, onClear, active = false, className = '' })
 /** Segmented tab switcher shared by Master Data, Workflows and the form builder. */
 export function Tabs({ tabs, value, onChange, className = '' }) {
   return (
-    <div className={`inline-flex flex-wrap items-center gap-1 p-1 bg-gray-100 rounded-xl ${className}`}>
+    <div className={`flex w-full flex-col gap-2 lg:inline-flex lg:w-auto lg:flex-row lg:flex-wrap lg:items-center lg:gap-1 lg:p-1 lg:bg-gray-100 lg:rounded-xl ${className}`}>
       {tabs.map(tab => (
         <button
           key={tab.value}
           type="button"
           onClick={() => onChange(tab.value)}
-          className={`min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+          className={`flex w-full items-center justify-between min-h-[44px] px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-left shadow-sm text-sm font-medium transition-colors lg:w-auto lg:min-h-0 lg:justify-start lg:rounded-lg lg:border-0 lg:bg-transparent lg:text-center lg:shadow-none ${
             value === tab.value
-              ? 'bg-white text-[#5b21b6] shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'text-[#5b21b6] lg:bg-white lg:shadow-sm'
+              : 'text-gray-600 hover:text-gray-900 lg:hover:bg-transparent'
           }`}
         >
           {tab.label}
@@ -133,26 +125,97 @@ export function Tabs({ tabs, value, onChange, className = '' }) {
 }
 
 export function Modal({ open, onClose, title, children, footer, wide }) {
+  const dialogRef = useRef(null)
+  const previousFocusRef = useRef(null)
+  const onCloseRef = useRef(onClose)
+  const titleId = useId()
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
   useEffect(() => {
     if (!open) return
-    const onKeyDown = (e) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open, onClose])
+
+    previousFocusRef.current = document.activeElement
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const dialog = dialogRef.current
+    const focusableSelector = [
+      'a[href]',
+      'button:not([disabled])',
+      'input:not([disabled]):not([type="hidden"])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])'
+    ].join(',')
+
+    const focusInitial = () => {
+      const preferred = dialog?.querySelector('[autofocus], [data-modal-initial-focus]')
+      const firstField = dialog?.querySelector('input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled])')
+      ;(preferred || firstField || dialog)?.focus({ preventScroll: true })
+    }
+    const frame = window.requestAnimationFrame(focusInitial)
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onCloseRef.current?.()
+        return
+      }
+      if (e.key !== 'Tab' || !dialog) return
+
+      const focusable = [...dialog.querySelectorAll(focusableSelector)]
+        .filter(element => element.getClientRects().length > 0)
+      if (focusable.length === 0) {
+        e.preventDefault()
+        dialog.focus()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const focusIsOutside = !dialog.contains(document.activeElement)
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog || focusIsOutside)) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && (document.activeElement === last || focusIsOutside)) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = previousOverflow
+      const previousFocus = previousFocusRef.current
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus()
+    }
+  }, [open])
 
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-[2px]" onClick={onClose} />
-      <div className={`relative bg-white w-full ${wide ? 'sm:max-w-3xl' : 'sm:max-w-lg'} rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col`}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="p-2 -m-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100" aria-label="Close">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className={`relative flex max-h-[90dvh] w-full flex-col bg-white shadow-2xl ${wide ? 'sm:max-w-3xl' : 'sm:max-w-lg'} rounded-t-2xl sm:rounded-2xl outline-none`}
+      >
+        <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-100">
+          <h3 id={titleId} className="min-w-0 break-words font-semibold text-gray-900">{title}</h3>
+          <button onClick={onClose} className="flex h-11 w-11 flex-shrink-0 items-center justify-center -my-2 -mr-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100" aria-label="Close dialog">
             <X size={20} />
           </button>
         </div>
-        <div className="px-5 py-4 overflow-y-auto flex-1">{children}</div>
-        {footer && <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-2">{footer}</div>}
+        <div className="min-h-0 px-4 py-3 sm:px-5 sm:py-4 overflow-y-auto overscroll-contain flex-1">{children}</div>
+        {footer && <div className="shrink-0 px-4 py-3 sm:px-5 sm:py-4 border-t border-gray-100 flex flex-wrap justify-end gap-2">{footer}</div>}
       </div>
     </div>
   )
@@ -219,7 +282,7 @@ export function Pagination({ page, total, limit = PAGE_SIZE, onChange }) {
   const start = Math.max(1, Math.min(page - 2, pages - 4))
   for (let p = start; p <= Math.min(pages, start + 4); p++) window.push(p)
 
-  const arrow = 'p-2 rounded-lg border border-gray-300 text-gray-600 enabled:hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed'
+  const arrow = 'inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gray-300 text-gray-600 enabled:hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed'
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
@@ -239,7 +302,7 @@ export function Pagination({ page, total, limit = PAGE_SIZE, onChange }) {
             key={p}
             onClick={() => onChange(p)}
             aria-current={p === page ? 'page' : undefined}
-            className={`min-w-9 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`inline-flex h-11 min-w-11 items-center justify-center px-3 rounded-lg text-sm font-medium transition-colors ${
               p === page
                 ? 'bg-gradient-to-r from-[#6d28d9] to-[#5b21b6] text-white shadow-sm'
                 : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
@@ -266,3 +329,5 @@ export function Th({ children, className = '' }) {
     </th>
   )
 }
+import NumericInput from '../NumericInput';
+import FormField from '../forms/FormField';

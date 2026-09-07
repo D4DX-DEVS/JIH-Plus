@@ -1,3 +1,4 @@
+import NumericInput from "../../components/NumericInput";
 import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { api } from '../../utils/ihthisabi/api'
@@ -368,7 +369,7 @@ const FormManagement = () => {
 
   if (view === 'editor' && editingForm) {
     return (
-      <div className="ih-screen bg-gray-50 p-4 sm:p-6">
+      <div className="ih-screen bg-gray-50 p-3 sm:p-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -394,7 +395,7 @@ const FormManagement = () => {
           </div>
 
           {/* Form Settings */}
-          <div className="ih-surface p-6 mb-6">
+          <div className="ih-surface p-3 sm:p-6 mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Form Settings</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="sm:col-span-2">
@@ -414,7 +415,7 @@ const FormManagement = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                <input type="number" value={editingForm.year} onChange={(e) => setEditingForm(prev => ({ ...prev, year: Number(e.target.value) }))}
+                <NumericInput type="number" value={editingForm.year} onChange={(e) => setEditingForm(prev => ({ ...prev, year: Number(e.target.value) }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   min="2020" max="2050" />
               </div>
@@ -501,12 +502,12 @@ const FormManagement = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Min Value</label>
-                          <input type="number" value={question.min ?? ''} onChange={(e) => updateQuestion(qIndex, 'min', e.target.value === '' ? undefined : Number(e.target.value))}
+                          <NumericInput type="number" value={question.min ?? ''} onChange={(e) => updateQuestion(qIndex, 'min', e.target.value === '' ? undefined : Number(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="0" />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Max Value</label>
-                          <input type="number" value={question.max ?? ''} onChange={(e) => updateQuestion(qIndex, 'max', e.target.value === '' ? undefined : Number(e.target.value))}
+                          <NumericInput type="number" value={question.max ?? ''} onChange={(e) => updateQuestion(qIndex, 'max', e.target.value === '' ? undefined : Number(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="100" />
                         </div>
                         <div>
@@ -521,7 +522,7 @@ const FormManagement = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Max Length</label>
-                          <input type="number" value={question.maxLength ?? ''} onChange={(e) => updateQuestion(qIndex, 'maxLength', e.target.value === '' ? undefined : Number(e.target.value))}
+                          <NumericInput type="number" value={question.maxLength ?? ''} onChange={(e) => updateQuestion(qIndex, 'maxLength', e.target.value === '' ? undefined : Number(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="500" />
                         </div>
                         <div>
@@ -607,7 +608,7 @@ const FormManagement = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Max Stars</label>
-                          <input type="number" value={question.max ?? 5} onChange={(e) => updateQuestion(qIndex, 'max', Number(e.target.value))}
+                          <NumericInput type="number" value={question.max ?? 5} onChange={(e) => updateQuestion(qIndex, 'max', Number(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary" min="1" max="10" />
                         </div>
                       </div>
@@ -745,7 +746,7 @@ const FormManagement = () => {
           className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={() => setShowCloneModal(false)}
         >
-          <div className="bg-white rounded-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-xl max-w-md w-full p-3 sm:p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Clone Form</h3>
             <p className="text-sm text-gray-500 mb-4">
               Clone "{cloneSource.title}" to a new quarter
@@ -762,7 +763,7 @@ const FormManagement = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                <input type="number" value={cloneTarget.year} onChange={(e) => setCloneTarget(prev => ({ ...prev, year: Number(e.target.value) }))}
+                <NumericInput type="number" value={cloneTarget.year} onChange={(e) => setCloneTarget(prev => ({ ...prev, year: Number(e.target.value) }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   min="2020" max="2050" />
               </div>

@@ -1,10 +1,11 @@
+import NumericInput from "../components/NumericInput";
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, Calendar, User, MapPin, CheckCircle, Users, TrendingUp, Activity } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
-import jihLogo from '../assets/LogoColor.png';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
 
@@ -213,7 +214,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
               വിംഗ് ഹാജരാകൽ
             </h4>
         <div className="overflow-x-auto rounded-xl border border-gray-200">
-            <table className="w-full border-collapse">
+            <ResponsiveTable className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-50">
                 <th className="border-b border-gray-200 px-3 py-2 text-left text-xs font-semibold text-[#002349]">വിംഗ്</th>
@@ -232,7 +233,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ResponsiveTable>
           </div>
         </div>
 
@@ -319,7 +320,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
         
         {partD.activities ? (
           <div className="overflow-x-auto rounded-xl border border-gray-200">
-            <table className="ih-table-compact w-full border-collapse">
+            <ResponsiveTable className="ih-table-compact w-full border-collapse">
               <thead>
                 <tr className="bg-gray-50">
                   <th className="sticky left-0 bg-white z-[1] border-b border-gray-200 px-3 py-2 text-left text-xs font-semibold text-[#002349]">വിംഗ്</th>
@@ -342,7 +343,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ResponsiveTable>
           </div>
         ) : (
           <p className="text-xs text-gray-600 font-medium">ടീം പ്രവർത്തനങ്ങൾ രേഖപ്പെടുത്തിയിട്ടില്ല</p>
@@ -442,7 +443,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
                           <span className="text-xs font-medium text-blue-800">ആൺ</span>
                         </div>
                       {male && (
-                          <input
+                          <NumericInput
                             type="number"
                             value={maleCount || 0}
                             readOnly
@@ -464,7 +465,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
                           <span className="text-xs font-medium text-pink-800">പെൺ </span>
                         </div>
                       {female && (
-                          <input
+                          <NumericInput
                             type="number"
                             value={femaleCount || 0}
                             readOnly
@@ -563,7 +564,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
   const areaName = area?.name || survey?.area || userData.area || userData.areaName || '—';
 
   const renderWithSidebar = (content) => (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <AreaAdminSidebar
         activeTab="monthly"
         onNavigate={handleSidebarNavigate}
@@ -634,7 +635,7 @@ const AreaSurveyDetailPage = ({ surveyId: propSurveyId, onBack, onEdit, onDelete
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <AreaAdminSidebar
         activeTab="monthly"
         onNavigate={handleSidebarNavigate}

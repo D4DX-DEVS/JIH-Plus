@@ -1,3 +1,5 @@
+import NumericInput from "../components/NumericInput";
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -607,7 +609,7 @@ const UserReportsPage = ({ onBack, userData }) => {
   };
 
   const pageContent = (
-    <div className="space-y-6 min-w-0 overflow-x-hidden">
+    <div className="min-w-0 space-y-4 overflow-x-hidden sm:space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           {selectedReport && (
@@ -621,36 +623,36 @@ const UserReportsPage = ({ onBack, userData }) => {
           )}
           <h1 className={`text-xl sm:text-2xl font-bold text-[#002349] break-words ${hasMobileTopBar ? 'hidden lg:block' : ''}`}>റിപ്പോർട്ട് ശേഖരണം</h1>
         </div>
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full sm:w-auto">
-          <div className="flex items-center gap-2 sm:gap-2.5 rounded-xl sm:rounded-2xl border border-gray-200 bg-white p-2 sm:p-3 shadow-sm">
-            <span className="flex h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#002349]/10 text-[#002349]">
+        <div className="grid w-full grid-cols-3 gap-1.5 sm:w-auto sm:gap-3">
+          <div className="flex min-w-0 flex-col items-start justify-center rounded-xl border border-gray-200 bg-white px-2 py-2.5 shadow-sm sm:flex-row sm:items-center sm:gap-2.5 sm:rounded-2xl sm:p-3">
+            <span className="hidden h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#002349]/10 text-[#002349] sm:flex">
               <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </span>
             <div className="min-w-0">
-              <p className="text-base sm:text-xl font-bold text-[#002349] leading-none">{reports.length}</p>
-              <p className="text-[11px] sm:text-xs leading-tight text-gray-500 mt-0.5">ആകെ</p>
+              <p className="text-xl font-bold leading-tight text-[#002349]">{reports.length}</p>
+              <p className="mt-1 text-xs font-medium leading-snug text-gray-600">ആകെ</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-2.5 rounded-xl sm:rounded-2xl border border-green-200 bg-green-50 p-2 sm:p-3 shadow-sm">
-            <span className="flex h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700">
+          <div className="flex min-w-0 flex-col items-start justify-center rounded-xl border border-green-200 bg-green-50 px-2 py-2.5 shadow-sm sm:flex-row sm:items-center sm:gap-2.5 sm:rounded-2xl sm:p-3">
+            <span className="hidden h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700 sm:flex">
               <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </span>
             <div className="min-w-0">
-              <p className="text-base sm:text-xl font-bold text-green-700 leading-none">
+              <p className="text-xl font-bold leading-tight text-green-700">
                 {reports.filter((r) => r.status === 'submitted').length}
               </p>
-              <p className="text-[11px] sm:text-xs leading-tight text-green-700/70 mt-0.5">സമർപ്പിച്ചത്</p>
+              <p className="mt-1 text-xs font-medium leading-snug text-green-800">സമർപ്പിച്ചത്</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-2.5 rounded-xl sm:rounded-2xl border border-amber-200 bg-amber-50 p-2 sm:p-3 shadow-sm">
-            <span className="flex h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+          <div className="flex min-w-0 flex-col items-start justify-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-2.5 shadow-sm sm:flex-row sm:items-center sm:gap-2.5 sm:rounded-2xl sm:p-3">
+            <span className="hidden h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 sm:flex">
               <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </span>
             <div className="min-w-0">
-              <p className="text-base sm:text-xl font-bold text-amber-700 leading-none">
+              <p className="text-xl font-bold leading-tight text-amber-700">
                 {reports.filter((r) => r.status !== 'submitted').length}
               </p>
-              <p className="text-[11px] sm:text-xs leading-tight text-amber-700/70 mt-0.5">ബാക്കിയായത്</p>
+              <p className="mt-1 text-xs font-medium leading-snug text-amber-800">ബാക്കിയായത്</p>
             </div>
           </div>
         </div>
@@ -720,7 +722,7 @@ const UserReportsPage = ({ onBack, userData }) => {
 
                 {/* Tablet / desktop: full detail table */}
                 <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full min-w-[640px]">
+                <ResponsiveTable className="w-full min-w-[640px]">
                   <thead className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Report</th>
@@ -829,7 +831,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </ResponsiveTable>
                 </div>
               </>
             )}
@@ -851,15 +853,15 @@ const UserReportsPage = ({ onBack, userData }) => {
         const isReadOnly = isSubmitted && !isEditing;
 
         return (
-          <div className="space-y-5">
+          <div className="space-y-3 sm:space-y-5">
             {/* Report header */}
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-4 sm:p-6 space-y-3">
+            <div className="space-y-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-md sm:p-6">
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex-1">
-                  <p className="text-xs uppercase tracking-wide text-gray-500 font-medium truncate">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                     {targetEntityName || selectedReport.reportFor || 'REPORT'}
                   </p>
-                  <h2 className="text-lg sm:text-xl font-bold text-[#002349] mt-1">{selectedReport.title}</h2>
+                  <h2 className="mt-1 break-words text-lg font-bold leading-snug text-[#002349] sm:text-xl">{selectedReport.title}</h2>
                   {selectedReport.description && <p className="text-sm text-gray-600 mt-1">{selectedReport.description}</p>}
                   {isNewFormat && currentPageInfo?.title && (
                     <p className="text-base sm:text-lg font-semibold text-[#957C3D] mt-2">
@@ -890,7 +892,7 @@ const UserReportsPage = ({ onBack, userData }) => {
             {/* Form content */}
             {isNewFormat ? (
               // New multi-page format — use DynamicFormRenderer
-              <div className="bg-white border border-gray-200 rounded-2xl shadow-md overflow-hidden">
+              <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
                 <DynamicFormRenderer
                   key={selectedReport._id + (submissionInfo?._id || 'new')}
                   report={selectedReport}
@@ -935,15 +937,15 @@ const UserReportsPage = ({ onBack, userData }) => {
               // Legacy parts-based format
               <>
                 {selectedReport.parts?.map((part, partIndex) => (
-                  <div key={partIndex} className="border border-gray-100 rounded-2xl p-4 sm:p-5 bg-white shadow-sm space-y-5">
-                    <div className="flex items-center justify-between">
-                      <div>
+                  <section key={partIndex} className="space-y-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs uppercase tracking-wide text-gray-400">Section {partIndex + 1}</p>
                         <h3 className="text-lg font-semibold text-[#002349]">{part.partName || 'Unnamed Section'}</h3>
                       </div>
-                      <span className="text-xs text-gray-500">Questions: {part.questions?.length || 0}</span>
+                      <span className="shrink-0 text-xs text-gray-500">Questions: {part.questions?.length || 0}</span>
                     </div>
-                    <div className="space-y-5">
+                    <div className="divide-y divide-gray-100">
                       {part.questions?.map((question, questionIndex) => {
                         const key = `${partIndex}_${questionIndex}`;
                         const value = answers[key] ?? (question.answerType === 'checkbox' ? [] : '');
@@ -952,8 +954,8 @@ const UserReportsPage = ({ onBack, userData }) => {
                         // text/number questions: label and input sit on the same row.
                         if (['text', 'number'].includes(question.answerType)) {
                           return (
-                            <div key={questionIndex} className="border border-gray-200 rounded-xl p-4 bg-gray-50 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                              <span className="text-sm font-semibold text-gray-900 sm:w-1/2 sm:flex-shrink-0">
+                            <div key={questionIndex} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:gap-4 sm:py-4">
+                              <span className="break-words text-sm font-semibold leading-snug text-gray-900 sm:w-1/2 sm:flex-shrink-0">
                                 {question.questionText}
                                 {question.isRequired && <span className="text-red-500 ml-1">*</span>}
                               </span>
@@ -961,7 +963,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                                 {question.answerType === 'text' ? (
                                   <input type="text" value={value || ''} onChange={e => handleAnswerChange(key, e.target.value)} placeholder={question.placeholder || 'Enter your answer'} disabled={isReadOnly} className={`w-full ${inputClass}`} />
                                 ) : (
-                                  <input type="number" value={value ?? ''} onChange={e => handleAnswerChange(key, e.target.value)} disabled={isReadOnly} className={`w-full sm:w-40 ${inputClass}`} />
+                                  <NumericInput type="number" value={value ?? ''} onChange={e => handleAnswerChange(key, e.target.value)} disabled={isReadOnly} className={`w-full sm:w-40 ${inputClass}`} />
                                 )}
                               </div>
                             </div>
@@ -969,9 +971,9 @@ const UserReportsPage = ({ onBack, userData }) => {
                         }
 
                         return (
-                          <div key={questionIndex} className="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                          <div key={questionIndex} className="py-3 first:pt-0 last:pb-0 sm:py-4">
                             <label className="flex items-start justify-between gap-3">
-                              <span className="text-sm font-semibold text-gray-900">
+                              <span className="min-w-0 flex-1 break-words text-sm font-semibold leading-snug text-gray-900">
                                 {question.questionText}
                                 {question.isRequired && <span className="text-red-500 ml-1">*</span>}
                               </span>
@@ -1016,7 +1018,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                         );
                       })}
                     </div>
-                  </div>
+                  </section>
                 ))}
                 {/* Legacy submit buttons */}
                 <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-4 sm:p-6">
@@ -1120,7 +1122,7 @@ const UserReportsPage = ({ onBack, userData }) => {
   if (isAreaUser) {
     return (
       <>
-        <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+        <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
           <AreaAdminSidebar
             activeTab={sidebarActiveReportTab || 'dynamic-reports'}
             onNavigate={handleAreaSidebarNavigate}
@@ -1140,7 +1142,7 @@ const UserReportsPage = ({ onBack, userData }) => {
               title="റിപ്പോർട്ടുകൾ"
             />
             <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6 min-w-0">{pageContent}</div>
+              <div className="mx-auto min-w-0 max-w-7xl px-2 pb-24 pt-3 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">{pageContent}</div>
             </main>
           </div>
         </div>
@@ -1179,7 +1181,7 @@ const UserReportsPage = ({ onBack, userData }) => {
   if (isDistrictUser) {
     return (
       <>
-        <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+        <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
           <DistrictAdminSidebar
             activeView={sidebarActiveReportTab || 'reports'}
             onNavigate={handleDistrictSidebarNavigate}
@@ -1198,7 +1200,7 @@ const UserReportsPage = ({ onBack, userData }) => {
               title="റിപ്പോർട്ടുകൾ"
             />
             <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6 min-w-0">{pageContent}</div>
+              <div className="mx-auto min-w-0 max-w-7xl px-2 pb-24 pt-3 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">{pageContent}</div>
             </main>
           </div>
         </div>
@@ -1237,7 +1239,7 @@ const UserReportsPage = ({ onBack, userData }) => {
   if (isUnitUser) {
     return (
       <>
-        <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+        <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
           <UnitAdminSidebar
             activeTab={sidebarActiveReportTab || 'dynamic-reports'}
             onNavigate={handleUnitSidebarNavigate}
@@ -1258,7 +1260,7 @@ const UserReportsPage = ({ onBack, userData }) => {
               title="റിപ്പോർട്ടുകൾ"
             />
             <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6 min-w-0">{pageContent}</div>
+              <div className="mx-auto min-w-0 max-w-7xl px-2 pb-24 pt-3 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">{pageContent}</div>
             </main>
           </div>
         </div>
@@ -1297,7 +1299,7 @@ const UserReportsPage = ({ onBack, userData }) => {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-x-hidden">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 min-w-0 overflow-x-hidden">{pageContent}</main>
+        <main className="mx-auto min-w-0 max-w-7xl overflow-x-hidden px-2 py-3 sm:px-6 sm:py-6 lg:px-8">{pageContent}</main>
       </div>
       <ConfirmationModal
         isOpen={showLogoutModal}
@@ -1332,4 +1334,3 @@ const UserReportsPage = ({ onBack, userData }) => {
 };
 
 export default UserReportsPage;
-

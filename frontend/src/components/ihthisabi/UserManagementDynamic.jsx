@@ -1,3 +1,4 @@
+import ResponsiveTable from "../tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useCallback } from 'react'
 import { api } from '../../utils/ihthisabi/api'
 import { useLocation as useHierarchyLocation } from '../../hooks/useLocation'
@@ -614,7 +615,7 @@ const UserManagementDynamic = () => {
 
         {/* Eight columns don't fit phone widths — mobile gets a card list below instead. */}
         <div className="hidden lg:block lg:overflow-x-auto">
-          <table className="ih-table-compact w-full min-w-full divide-y divide-gray-200 text-sm">
+          <ResponsiveTable className="ih-table-compact w-full min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3 text-left">Rukn ID</th>
@@ -690,7 +691,7 @@ const UserManagementDynamic = () => {
                 ))
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
 
         {/* Mobile list */}

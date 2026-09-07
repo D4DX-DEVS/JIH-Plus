@@ -1,3 +1,5 @@
+import NumericInput from "../../NumericInput";
+import ResponsiveTable from "../../tables/ResponsiveTable.jsx";
 import React, { useState } from 'react';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { useForm } from '../../../contexts/FormContext';
@@ -166,7 +168,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
           3. കഴിഞ്ഞ 5 വർഷത്തിനിടയിൽ പുതുതായി ഉണ്ടായ ഘടകങ്ങളുടെ എണ്ണം:
         </label>
         <div className="space-y-4">
-          <input
+          <NumericInput
             type="number"
             value={formData.partE.newComponentsLast5Years.count !== null && formData.partE.newComponentsLast5Years.count !== undefined ? formData.partE.newComponentsLast5Years.count : ''}
             onChange={(e) => handleNestedChange('newComponentsLast5Years', 'count', e.target.value)}
@@ -202,7 +204,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
           4. കഴിഞ്ഞ 5 വർഷത്തിനിടയിൽ പ്രവർത്തകരുടെ വർധനവ്:
         </label>
         <div className="space-y-4">
-          <input
+          <NumericInput
             type="number"
             value={formData.partE.workersGrowthInLast5Years.count !== null && formData.partE.workersGrowthInLast5Years.count !== undefined ? formData.partE.workersGrowthInLast5Years.count : ''}
             onChange={(e) => handleNestedChange('workersGrowthInLast5Years', 'count', e.target.value)}
@@ -236,7 +238,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
           5. 6 മാസത്തിനുള്ളിൽ രൂപീകരിക്കാൻ സാധിക്കുന്ന ഘടകങ്ങൾ:
         </label>
         <div className="overflow-x-auto">
-          <table className="ih-table-compact w-full border border-gray-300">
+          <ResponsiveTable className="ih-table-compact w-full border border-gray-300">
             <thead>
               <tr className="bg-gray-50">
                 <th className="border border-gray-300 px-4 py-3 text-center font-medium">JIH</th>
@@ -252,7 +254,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
               <tr>
                 {['jih', 'vanitha', 'solidarity', 'sio', 'gio', 'teenIndia', 'malarvadi'].map((org) => (
                   <td key={org} className="border border-gray-300 px-4 py-3">
-                    <input
+                    <NumericInput
                       type="number"
                       value={formData.partE.componentsToFormIn6Months[org] !== null && formData.partE.componentsToFormIn6Months[org] !== undefined ? formData.partE.componentsToFormIn6Months[org] : ''}
                       onChange={(e) => handleComponentsChange(org, e.target.value)}
@@ -263,7 +265,7 @@ const MonthlySurveyPartE = ({ onSubmit, editingSurvey, isAdmin = false }) => {
                 ))}
               </tr>
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
 

@@ -30,14 +30,15 @@ const UnitAdminProfileModal = ({ unitAdminId, isOpen, onClose }) => {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[85vh] overflow-y-auto scrollbar-hide">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/30 p-4 backdrop-blur-sm sm:items-center">
+      <div className="my-4 max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto overscroll-contain rounded-xl bg-white shadow-2xl sm:max-h-[85vh] scrollbar-hide">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-          <h2 className="text-base font-bold text-gray-900">Unit Admin Profile</h2>
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-3">
+          <h2 className="min-w-0 flex-1 break-words text-base font-bold text-gray-900">Unit Admin Profile</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-2 -m-2 rounded-full"
+            className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:text-gray-600"
+            aria-label="Close"
           >
             <X className="w-6 h-6" />
           </button>
@@ -184,4 +185,3 @@ const UnitAdminProfileModal = ({ unitAdminId, isOpen, onClose }) => {
 }
 
 export default UnitAdminProfileModal
-

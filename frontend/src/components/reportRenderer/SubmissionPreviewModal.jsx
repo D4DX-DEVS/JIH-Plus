@@ -1,4 +1,5 @@
 import React from 'react';
+import useModalFocus from '../../hooks/useModalFocus';
 import { X, Download, Loader2, CheckCircle2, Clock } from 'lucide-react';
 import RowColumnReadonly from './RowColumnReadonly';
 import { fieldWidthClass, fieldWidth } from '../../utils/fieldWidth';
@@ -86,6 +87,7 @@ const getLegacyAnswer = (submission, partIndex, questionIndex) => {
 };
 
 export default function SubmissionPreviewModal({ open, loading, data, onClose, onDownload, downloading }) {
+  const { dialogRef } = useModalFocus(open, onClose);
   if (!open) return null;
 
   const report = data?.report;
@@ -96,11 +98,11 @@ export default function SubmissionPreviewModal({ open, loading, data, onClose, o
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-2xl shadow-xl max-w-3xl w-full mx-auto border border-gray-200 max-h-[90vh] flex flex-col">
-          <div className="flex items-start justify-between gap-3 p-5 border-b border-gray-100">
+        <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Submission preview" className="relative bg-white rounded-2xl shadow-xl max-w-3xl w-full mx-auto border border-gray-200 max-h-[90dvh] flex flex-col overflow-hidden">
+          <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 p-3 sm:p-5 border-b border-gray-100">
             <div className="min-w-0">
               <p className="text-xs uppercase tracking-wide text-gray-400 font-medium">സമർപ്പണം പ്രിവ്യൂ</p>
-              <h3 className="text-lg font-bold text-[#002349] truncate">{report?.title || 'Report'}</h3>
+              <h3 className="text-base sm:text-lg font-bold text-[#002349] break-words [overflow-wrap:anywhere]">{report?.title || 'Report'}</h3>
               {submission?.submittedAt && (
                 <p className="text-xs text-gray-500 mt-0.5">
                   Submitted on {new Date(submission.submittedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
@@ -116,13 +118,13 @@ export default function SubmissionPreviewModal({ open, loading, data, onClose, o
                   {submission.status === 'submitted' ? 'Submitted' : 'Pending'}
                 </span>
               )}
-              <button onClick={onClose} className="flex items-center justify-center p-3 text-gray-400 hover:text-gray-600 transition-colors">
+              <button type="button" aria-label="Close submission preview" onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-xl text-gray-600 hover:bg-gray-100 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-5">
             {loading ? (
               <div className="flex items-center justify-center py-16 text-gray-500 text-sm">
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Loading submission...

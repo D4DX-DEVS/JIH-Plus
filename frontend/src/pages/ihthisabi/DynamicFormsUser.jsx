@@ -1,3 +1,5 @@
+import NumericInput from "../../components/NumericInput";
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../../utils/ihthisabi/api';
@@ -157,10 +159,22 @@ const DynamicFormsUser = () => {
 
   const renderInput = (q) => {
     const opts = Array.isArray(q.options) ? q.options : [];
+    const fieldId = q.fieldId;
+    const labelId = `${fieldId}-label`;
+    const errorId = `${fieldId}-error`;
+    const describedBy = q.hasError ? errorId : undefined;
+    const fieldProps = {
+      id: fieldId,
+      'aria-labelledby': labelId,
+      'aria-describedby': describedBy,
+      'aria-invalid': q.hasError ? 'true' : undefined,
+      'aria-required': q.isRequired ? 'true' : undefined
+    };
     switch (q.answerType) {
       case 'text':
         return (
           <input
+            {...fieldProps}
             className="form-input"
             value={q.value}
             onChange={(e) => updateAnswer(q.questionText, e.target.value)}
@@ -169,7 +183,8 @@ const DynamicFormsUser = () => {
         );
       case 'number':
         return (
-          <input
+          <NumericInput
+            {...fieldProps}
             type="number"
             className="form-input"
             value={q.value}
@@ -180,6 +195,7 @@ const DynamicFormsUser = () => {
       case 'textarea':
         return (
           <textarea
+            {...fieldProps}
             className="form-textarea"
             value={q.value}
             onChange={(e) => updateAnswer(q.questionText, e.target.value)}
@@ -190,6 +206,7 @@ const DynamicFormsUser = () => {
       case 'date':
         return (
           <input
+            {...fieldProps}
             type="date"
             className="form-input"
             value={q.value}
@@ -198,25 +215,32 @@ const DynamicFormsUser = () => {
         );
       case 'radio':
         return (
-          <div className="space-y-1">
+          <fieldset className="space-y-1" aria-describedby={describedBy} aria-invalid={q.hasError ? 'true' : undefined} aria-required={q.isRequired ? 'true' : undefined}>
+            <legend className="sr-only" id={labelId}>{q.questionText}</legend>
             {opts.map((opt, idx) => (
               <label key={idx} className="flex min-h-[44px] items-center gap-2 text-sm text-gray-700">
                 <input
                   type="radio"
+                  id={`${fieldId}-option-${idx}`}
                   name={q.questionText}
+                  aria-labelledby={`${labelId} ${fieldId}-option-label-${idx}`}
+                  aria-describedby={describedBy}
+                  aria-invalid={q.hasError ? 'true' : undefined}
+                  aria-required={q.isRequired ? 'true' : undefined}
                   value={opt}
                   checked={q.value === opt}
                   onChange={() => updateAnswer(q.questionText, opt)}
                   className="form-radio"
                 />
-                {opt}
+                <span id={`${fieldId}-option-label-${idx}`}>{opt}</span>
               </label>
             ))}
-          </div>
+          </fieldset>
         );
       case 'dropdown':
         return (
           <select
+            {...fieldProps}
             className="form-select min-h-[44px] sm:min-h-0"
             value={q.value}
             onChange={(e) => updateAnswer(q.questionText, e.target.value)}
@@ -231,13 +255,19 @@ const DynamicFormsUser = () => {
         );
       case 'checkbox':
         return (
-          <div className="space-y-1">
+          <fieldset className="space-y-1" aria-describedby={describedBy} aria-invalid={q.hasError ? 'true' : undefined} aria-required={q.isRequired ? 'true' : undefined}>
+            <legend className="sr-only" id={labelId}>{q.questionText}</legend>
             {opts.map((opt, idx) => {
               const checked = Array.isArray(q.value) && q.value.includes(opt);
               return (
                 <label key={idx} className="flex min-h-[44px] items-center gap-2 text-sm text-gray-700">
                   <input
                     type="checkbox"
+                    id={`${fieldId}-option-${idx}`}
+                    aria-labelledby={`${labelId} ${fieldId}-option-label-${idx}`}
+                  aria-describedby={describedBy}
+                  aria-invalid={q.hasError ? 'true' : undefined}
+                  aria-required={q.isRequired ? 'true' : undefined}
                     checked={checked}
                     onChange={(e) => {
                       const current = Array.isArray(q.value) ? q.value : [];
@@ -248,11 +278,11 @@ const DynamicFormsUser = () => {
                     }}
                     className="form-checkbox"
                   />
-                  {opt}
+                  <span id={`${fieldId}-option-label-${idx}`}>{opt}</span>
                 </label>
               );
             })}
-          </div>
+          </fieldset>
         );
       default:
         return null;
@@ -309,7 +339,7 @@ const DynamicFormsUser = () => {
 
           {/* Desktop table */}
           <div className="hidden overflow-x-auto rounded-lg bg-white shadow lg:block">
-            <table className="w-full min-w-full table-auto divide-y divide-gray-200 text-sm">
+            <ResponsiveTable className="w-full min-w-full table-auto divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Form</th>
@@ -355,7 +385,7 @@ const DynamicFormsUser = () => {
                   </tr>
                 )}
               </tbody>
-            </table>
+            </ResponsiveTable>
           </div>
         </>
       )}
@@ -393,18 +423,19 @@ const DynamicFormsUser = () => {
                 const ans = answers.find((a) => a.questionText === q.questionText) || q;
                 const merged = { ...q, ...ans, options: q.options || [] };
                 const error = errors[q.questionText];
+                const fieldId = `dynamic-form-${formId}-part-${p.partOrder}-question-${q.questionOrder}`;
                 return (
                   <div
                     key={q.questionOrder}
                     className="space-y-2"
                     ref={(el) => { fieldRefs.current[q.questionText] = el; }}
                   >
-                    <div className="text-sm font-medium text-gray-800">
+                    <div id={`${fieldId}-label`} className="text-sm font-medium text-gray-800">
                       {q.questionText}
-                      {q.isRequired && <span className="text-red-500 ml-0.5">*</span>}
+                      {q.isRequired && <><span className="text-red-500 ml-0.5">*</span><span className="sr-only"> required</span></>}
                     </div>
-                    {renderInput(merged)}
-                    {error && <p className="form-error">{error}</p>}
+                    {renderInput({ ...merged, fieldId, hasError: !!error })}
+                    {error && <p id={`${fieldId}-error`} className="form-error">{error}</p>}
                   </div>
                 );
               })}
@@ -496,4 +527,3 @@ const DynamicFormsUser = () => {
 };
 
 export default DynamicFormsUser;
-

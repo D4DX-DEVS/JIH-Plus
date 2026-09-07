@@ -1,10 +1,10 @@
+import MonthYearFields from '../components/forms/MonthYearFields';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save, Check, X } from 'lucide-react';
 import UnitPageA from '../components/forms/unit/UnitPageA';
 import UnitPageB from '../components/forms/unit/UnitPageB';
 import axios from 'axios';
-import jihLogo from '../assets/LogoColor.png';
 import { getAuthToken, isAdminUser } from '../utils/auth';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
@@ -692,7 +692,7 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
   );
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       {sidebarElement}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -719,34 +719,10 @@ const UnitSurveyPage = ({ onBack, editingSurvey: editingSurveyProp = null }) => 
           {/* Month-Year Selection and Progress Indicator - Same Horizontal Level */}
           <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
             {/* Month-Year Selection - Left Side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md">
-              <div>
-                <label className="block text-xs font-semibold text-[#002349] mb-2">Month</label>
-                <select
-                  value={formData.month}
-                  onChange={(e) => setFormData(prev => ({ ...prev, month: e.target.value }))}
-                  className="w-full px-3 py-2 text-base border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 font-medium"
-                >
-                  <option value="">Select Month</option>
-                  {['January', 'February', 'March', 'April', 'May', 'June', 
-                    'July', 'August', 'September', 'October', 'November', 'December'].map(month => (
-                    <option key={month} value={month}>{month}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-xs font-semibold text-[#002349] mb-2">Year</label>
-                <input
-                  type="number"
-                  value={formData.year}
-                  onChange={(e) => setFormData(prev => ({ ...prev, year: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 text-base border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#002349] focus:border-transparent transition-all duration-300 hover:border-[#002349]/50 font-medium"
-                  min="2020"
-                  max="2030"
-                />
-              </div>
-            </div>
+            <MonthYearFields month={formData.month} year={formData.year} minYear="2020" maxYear="2030"
+              onMonthChange={(e) => setFormData(prev => ({ ...prev, month: e.target.value }))}
+              onYearChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value === '' ? '' : parseInt(e.target.value) }))}
+            />
 
             {/* Progress Indicator - Right Side */}
             <div className="flex items-center space-x-4">

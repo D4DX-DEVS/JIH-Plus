@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../tables/ResponsiveTable.jsx";
 import React from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useAreaForm } from '../../../contexts/AreaFormContext';
@@ -121,7 +122,7 @@ const AreaPageB = () => {
           2. പ്രതിമാസയോഗ ഹാജർ
         </h3>
         <div className="overflow-x-auto rounded-xl border border-gray-200">
-          <table className="w-full border-collapse min-w-full ih-table-compact">
+          <ResponsiveTable className="w-full border-collapse min-w-full ih-table-compact">
             <thead>
               <tr className="bg-gray-50">
                 <th className="border border-gray-200 px-3 py-2 text-left text-xs font-semibold text-gray-700 sticky left-0 bg-white z-[1]">വിംഗ്</th>
@@ -176,7 +177,7 @@ const AreaPageB = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
         <p className="text-xs text-gray-600 mt-1.5">ഒരോ വിംഗും ഹാജര്‍/ലീവ്/ആബ്‌സന്റ് എന്നറിയണം</p>
       </div>

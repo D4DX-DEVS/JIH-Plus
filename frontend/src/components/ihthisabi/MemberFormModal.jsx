@@ -68,14 +68,14 @@ export const LocationSelects = ({ value, onChange, required = false }) => {
       </div>
       <div>
         <label className="block text-xs font-medium text-gray-700 mb-1">Area {required && <span className="text-red-500">*</span>}</label>
-        <select className="form-select text-[13px] sm:text-sm" value={selAreaId} onChange={e => handleArea(e.target.value)} disabled={!selDistrictId || locLoading.areas}>
+        <select className="form-select text-[13px] sm:text-sm disabled:bg-gray-100 disabled:text-gray-700 disabled:opacity-100" value={selAreaId} onChange={e => handleArea(e.target.value)} disabled={!selDistrictId || locLoading.areas}>
           <option value="">{!selDistrictId ? 'Select district first' : locLoading.areas ? 'Loading…' : 'Select Area'}</option>
           {areas.map(a => <option key={getId(a)} value={getId(a)}>{getLabel(a)}</option>)}
         </select>
       </div>
       <div>
         <label className="block text-xs font-medium text-gray-700 mb-1">Unit {required && <span className="text-red-500">*</span>}</label>
-        <select className="form-select text-[13px] sm:text-sm" value={value.unit ? getId(units.find(u => getLabel(u) === value.unit)) || '' : ''} onChange={e => handleUnit(e.target.value)} disabled={!selAreaId || locLoading.units}>
+        <select className="form-select text-[13px] sm:text-sm disabled:bg-gray-100 disabled:text-gray-700 disabled:opacity-100" value={value.unit ? getId(units.find(u => getLabel(u) === value.unit)) || '' : ''} onChange={e => handleUnit(e.target.value)} disabled={!selAreaId || locLoading.units}>
           <option value="">{!selAreaId ? 'Select area first' : locLoading.units ? 'Loading…' : 'Select Unit'}</option>
           {units.map(u => <option key={getId(u)} value={getId(u)}>{getLabel(u)}</option>)}
         </select>
@@ -165,13 +165,13 @@ const MemberFormModal = ({ isOpen, onClose, editUser, onSaved }) => {
   if (!isOpen) return null
   return (
     <div
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/30 p-4 backdrop-blur-sm sm:items-center"
       onClick={onClose}
     >
-      <div className="bg-white rounded-lg w-full max-w-2xl my-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">{editUser ? 'Edit Member' : 'Add New Member'}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-2 -m-2 rounded-full"><X className="w-5 h-5" /></button>
+      <div className="my-4 max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-lg bg-white" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between gap-3 border-b p-5">
+          <h3 className="min-w-0 flex-1 break-words text-lg font-semibold text-gray-900">{editUser ? 'Edit Member' : 'Add New Member'}</h3>
+          <button onClick={onClose} aria-label="Close" className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -192,7 +192,7 @@ const MemberFormModal = ({ isOpen, onClose, editUser, onSaved }) => {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Contact No</label>
-              <input className="form-input text-base sm:text-sm" value={form.contactNo} onChange={e => set('contactNo', e.target.value)} />
+              <input type="tel" inputMode="tel" autoComplete="tel" pattern="[+0-9 \(\)\-]+" title="Enter a phone number, including country code if needed" className="form-input text-base sm:text-sm" value={form.contactNo} onChange={e => set('contactNo', e.target.value)} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
@@ -237,7 +237,7 @@ const MemberFormModal = ({ isOpen, onClose, editUser, onSaved }) => {
           )}
 
           <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={saving} className="btn-primary flex-1 py-2.5">
+            <button type="submit" disabled={saving} className="btn-primary flex-1 py-2.5 disabled:bg-gray-300 disabled:text-gray-700 disabled:opacity-100">
               {saving ? 'Saving…' : editUser ? 'Save Changes' : 'Create Member'}
             </button>
             <button type="button" onClick={onClose} className="btn-ghost flex-1 py-2.5">Cancel</button>

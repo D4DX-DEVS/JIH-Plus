@@ -1,3 +1,4 @@
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, FileText, Activity } from 'lucide-react';
@@ -7,7 +8,6 @@ import AdminSidebar from '../components/sidebars/AdminSidebar';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import RowColumnReadonly from '../components/reportRenderer/RowColumnReadonly';
-import jihLogo from '../assets/LogoColor.png';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
 import { fieldWidthClass } from '../utils/fieldWidth';
 
@@ -400,7 +400,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
   // Helper function to wrap content with unit sidebar layout
   const wrapWithUnitSidebar = (content) => {
     return (
-      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+      <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
         <UnitAdminSidebar
           activeTab="dynamic-reports"
           onNavigate={handleUnitSidebarNavigate}
@@ -429,7 +429,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
   // Helper function to wrap content with sidebar layout
   const wrapWithSidebar = (content) => {
     return (
-      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+      <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
         <AdminSidebar
           activeTab=""
           onTabChange={handleTabChange}
@@ -697,7 +697,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                 {/* Desktop table */}
                 <div className="hidden lg:block bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <ResponsiveTable className="w-full">
                       <thead className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white">
                         <tr>
                           {isCrossReport && (
@@ -773,7 +773,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                           );
                         })}
                       </tbody>
-                    </table>
+                    </ResponsiveTable>
                   </div>
                 </div>
                 </>
@@ -817,4 +817,3 @@ const ReportSubmissionsPage = ({ onLogout }) => {
 };
 
 export default ReportSubmissionsPage;
-

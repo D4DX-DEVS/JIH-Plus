@@ -1,3 +1,4 @@
+import ResponsiveTable from "../tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Scissors, GitMerge, ArrowRightLeft, ChevronDown, ChevronUp, Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { api } from '../../utils/ihthisabi/api';
@@ -261,7 +262,7 @@ function MekhalasTab() {
             )}
           </div>
           {/* Desktop: table */}
-          <table className="hidden lg:table w-full text-sm">
+          <ResponsiveTable className="hidden lg:table w-full text-sm">
           <thead>
             <tr className="bg-gray-50 text-gray-600">
               <th className="text-left px-4 py-2 font-medium">#</th>
@@ -309,7 +310,7 @@ function MekhalasTab() {
               <tr><td colSpan={5} className="text-center py-8 text-gray-400">No mekhalas found</td></tr>
             )}
           </tbody>
-        </table>
+        </ResponsiveTable>
         </>
       )}
       <Pagination pagination={pagination} onPageChange={load} loading={loading} itemLabel="mekhalas" />
@@ -510,7 +511,7 @@ function DistrictsTab() {
             )}
           </div>
           {/* Desktop: table */}
-          <table className="hidden lg:table w-full text-sm">
+          <ResponsiveTable className="hidden lg:table w-full text-sm">
           <thead>
             <tr className="bg-gray-50 text-gray-600">
               <th className="text-left px-4 py-2 font-medium">#</th>
@@ -547,7 +548,7 @@ function DistrictsTab() {
               <tr><td colSpan={4} className="text-center py-8 text-gray-400">No districts found</td></tr>
             )}
           </tbody>
-        </table>
+        </ResponsiveTable>
         </>
       )}
       <Pagination pagination={pagination} onPageChange={load} loading={loading} itemLabel="districts" />
@@ -892,7 +893,7 @@ function AreasTab() {
             )}
           </div>
           {/* Desktop: table */}
-          <table className="hidden lg:table w-full text-sm">
+          <ResponsiveTable className="hidden lg:table w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -934,7 +935,7 @@ function AreasTab() {
                 <tr><td colSpan={5} className="text-center py-8 text-gray-400">No areas found</td></tr>
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -1371,7 +1372,7 @@ function UnitsTab() {
             )}
           </div>
           {/* Desktop: table */}
-          <table className="hidden lg:table w-full text-sm">
+          <ResponsiveTable className="hidden lg:table w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -1415,7 +1416,7 @@ function UnitsTab() {
                 <tr><td colSpan={6} className="text-center py-8 text-gray-400">No units found</td></tr>
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -1628,7 +1629,7 @@ export default function MasterDataManagement() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex w-fit max-w-full gap-1 overflow-x-auto bg-gray-100 rounded-xl p-1 mb-6">
+      <div className="mobile-tab-grid flex w-fit max-w-full gap-1 overflow-x-auto bg-gray-100 rounded-xl p-1 mb-6">
         {TABS.map(({ id, label }) => (
           <button
             key={id}

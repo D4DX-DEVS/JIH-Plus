@@ -1,3 +1,5 @@
+import NumericInput from "../../components/NumericInput";
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
@@ -1013,7 +1015,7 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
-                  <input
+                  <NumericInput
                     type="number"
                     value={replyFormData.year}
                     onChange={(e) => setReplyFormData(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
@@ -1459,7 +1461,7 @@ const AdminDashboard = () => {
                     </div>
                     {/* Desktop: table */}
                     <div className="hidden lg:block overflow-x-hidden sm:overflow-x-auto">
-                    <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+                    <ResponsiveTable className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1540,7 +1542,7 @@ const AdminDashboard = () => {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </ResponsiveTable>
                     </div>
                   </>
                 ) : (
@@ -1688,7 +1690,7 @@ const AdminDashboard = () => {
                     </div>
                     {/* Desktop: table */}
                     <div className="hidden lg:block overflow-x-hidden sm:overflow-x-auto">
-                    <table className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+                    <ResponsiveTable className="ih-table-compact w-full table-fixed divide-y divide-gray-200 text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District Admin</th>
@@ -1742,7 +1744,7 @@ const AdminDashboard = () => {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </ResponsiveTable>
                     </div>
                   </>
                 ) : (
@@ -2155,7 +2157,7 @@ const AdminDashboard = () => {
                     </div>
                     {/* Desktop: table */}
                     <div className="hidden lg:block overflow-x-auto">
-                      <table className="min-w-full text-sm">
+                      <ResponsiveTable className="min-w-full text-sm">
                         <thead>
                           <tr className="text-left text-xs text-gray-500 uppercase">
                             <th className="py-2 pr-4">Unit</th>
@@ -2172,7 +2174,7 @@ const AdminDashboard = () => {
                             </tr>
                           ))}
                         </tbody>
-                      </table>
+                      </ResponsiveTable>
                     </div>
                   </>
                 )}
@@ -2317,5 +2319,3 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard
-
-

@@ -211,7 +211,7 @@ const DistrictAreaDetails = () => {
           </div>
 
           {/* Section tabs — swipeable on phones so labels + counts never clip */}
-          <div className="ih-segment mb-3 overflow-x-auto scrollbar-hide">
+          <div className="mobile-tab-grid ih-segment mb-3 overflow-x-auto scrollbar-hide">
             {SECTIONS.map((s) => {
               const Icon = s.icon
               return (

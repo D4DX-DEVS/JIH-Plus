@@ -552,7 +552,7 @@ const DynamicFormsAdmin = () => {
           {/* Canvas */}
           <main className={`flex-1 flex flex-col min-w-0 ${lockedStructure ? 'pointer-events-none opacity-60' : ''}`}>
             <div className="bg-white border-b flex-shrink-0 px-4 pt-3 min-w-0">
-              <div className="flex items-end gap-0 overflow-x-auto pb-1">
+              <div className="mobile-tab-grid flex items-end gap-0 overflow-x-auto pb-1">
                 {pages.map((p, pi) => (
                   <button key={p.id ?? pi} onClick={() => setActivePage(pi)}
                     className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${

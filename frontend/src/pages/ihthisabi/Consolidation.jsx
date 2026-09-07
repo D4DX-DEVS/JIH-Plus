@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
@@ -313,7 +314,7 @@ const Consolidation = () => {
         </div>
         {/* Desktop: table */}
         <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Field</th>
@@ -335,7 +336,7 @@ const Consolidation = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
         {invalidTotal > 0 && (
           <p className="mt-2 text-[11px] text-amber-600">

@@ -15,6 +15,7 @@ export function JihFilterBar({
   search,
   onSearchChange,
   placeholder = 'Search…',
+  searchLabel = 'Search',
   activeFilterCount = 0,
   onClear,
   actions = null,
@@ -35,6 +36,7 @@ export function JihFilterBar({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={placeholder}
+            aria-label={searchLabel}
             className={`ih-field h-[44px] text-base sm:h-9 sm:text-sm ${search ? 'pr-10' : 'pr-3'}`}
           />
           {search && (
@@ -89,12 +91,12 @@ export function JihFilterBar({
 }
 
 /** One filter control: leading icon + filled pill select + trailing chevron. */
-export function JihFilterSelect({ icon, className = '', children, ...props }) {
+export function JihFilterSelect({ icon, className = '', label = 'Filter', children, 'aria-label': ariaLabel, ...props }) {
   const Icon = icon || Filter;
   return (
     <div className={`relative ${className}`}>
       <Icon className="ih-filter-icon" />
-      <select className="ih-filter-select truncate" {...props}>
+      <select className="ih-filter-select truncate" aria-label={ariaLabel || label} {...props}>
         {children}
       </select>
       <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Link2, Settings2, Users, Shield,
@@ -6,6 +6,8 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/members/AuthContext'
 import { api } from '../../utils/members/api'
+import BrandLogo from '../branding/BrandLogo'
+import useModalFocus from '../../hooks/useModalFocus'
 
 /**
  * Nav is derived from the logged-in account's Role record rather than a hardcoded
@@ -38,6 +40,8 @@ export default function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [moreOpen, setMoreOpen] = useState(false)
+  const closeMore = useCallback(() => setMoreOpen(false), [])
+  const { dialogRef: moreSheetRef, triggerRef: moreButtonRef } = useModalFocus(moreOpen, closeMore)
   const [unread, setUnread] = useState(0)
 
   useEffect(() => {
@@ -84,6 +88,9 @@ export default function Layout() {
   const BAR_LABELS = ['Dashboard', 'Applications', 'Notifications']
   const barItems = items.filter((item) => BAR_LABELS.includes(item.label))
   const moreItems = items.filter((item) => !BAR_LABELS.includes(item.label))
+  const hasActiveMoreItem = moreItems.some((item) =>
+    location.pathname === item.to || location.pathname.startsWith(item.to + '/')
+  )
 
   const handleLogout = () => {
     logout()
@@ -103,9 +110,7 @@ export default function Layout() {
   const sidebar = (
     <nav className="flex flex-col h-full w-full">
       <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
-        <div className="w-9 h-9 flex-shrink-0 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#5b21b6] text-white flex items-center justify-center font-bold text-sm shadow-sm">
-          MA
-        </div>
+        <BrandLogo alt="JIH Plus" size="sm" />
         <div className="min-w-0">
           <p className="font-semibold text-gray-900 leading-tight truncate">Members Application</p>
           <p className="text-xs text-gray-500 mt-0.5">Rukn &amp; Karkoon</p>
@@ -168,14 +173,15 @@ export default function Layout() {
     /* The shell is exactly one viewport tall and never scrolls itself — only
        <main> below scrolls. That keeps the sidebar (and its sign-out block)
        physically fixed no matter how long the page content is. */
-    <div className="h-screen overflow-hidden bg-gray-50 flex">
+    <div className="app-viewport bg-gray-50 flex">
       <aside className="hidden lg:flex w-64 flex-shrink-0 bg-white border-r border-gray-200 h-full">
         {sidebar}
       </aside>
 
       <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
-        <header className="lg:hidden flex-shrink-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
-          <span className="font-semibold text-gray-900 truncate">{pageTitle}</span>
+        <header className="app-mobile-header lg:hidden flex-shrink-0 z-30 bg-white border-b border-gray-200 px-3 py-2.5 flex items-center gap-3">
+          <BrandLogo alt="JIH Plus" size="xs" />
+          <span className="min-w-0 break-words font-semibold leading-snug text-gray-900 [overflow-wrap:anywhere]">{pageTitle}</span>
           {unread > 0 && (
             <NavLink to="/members/notifications" className="ml-auto relative p-3 -mr-1 text-gray-600">
               <Bell size={20} />
@@ -186,7 +192,7 @@ export default function Layout() {
           )}
         </header>
 
-        <main className="flex-1 min-w-0 overflow-y-auto px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8 ih-mobile-bottom-safe lg:pb-8">
+        <main data-app-scroll className="app-scroll-region flex-1 px-2 pt-3 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8 ih-mobile-bottom-safe lg:pb-8">
           {/* Every page renders inside the same centered container so widths stay uniform. */}
           <div className="mx-auto w-full max-w-6xl">
             <Outlet />
@@ -204,7 +210,7 @@ export default function Layout() {
           {/* "More" sheet — grows upward out of the bar, carrying only the
               destinations the bar itself doesn't already show. */}
           {moreOpen && (
-            <div className="ih-more-sheet max-h-[60vh] overflow-y-auto border-b border-gray-200 bg-white px-3 pb-2 pt-3">
+            <div ref={moreSheetRef} id="members-mobile-more-sheet" role="dialog" aria-modal="true" aria-label="More navigation" className="ih-more-sheet max-h-[60vh] overflow-y-auto border-b border-gray-200 bg-white px-3 pb-2 pt-3">
               <div className="space-y-1">
                 {moreItems.map((item) => {
                   const Icon = item.icon
@@ -268,7 +274,7 @@ export default function Layout() {
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) =>
-                    `flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1.5 text-[9px] font-semibold ${
+                    `flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1.5 text-xs font-semibold leading-tight ${
                       isActive ? 'text-[#7c3aed]' : 'text-gray-400'
                     }`
                   }
@@ -281,19 +287,24 @@ export default function Layout() {
                       </span>
                     )}
                   </span>
-                  <span className="max-w-full truncate">{item.label}</span>
+                  <span className="max-w-full break-words text-center [overflow-wrap:anywhere]">{item.label}</span>
                 </NavLink>
               )
             })}
             <button
               type="button"
+              ref={moreButtonRef}
               onClick={() => setMoreOpen((v) => !v)}
-              className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1.5 text-[9px] font-semibold ${
-                moreOpen ? 'text-[#7c3aed]' : 'text-gray-400'
+              className={`flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1.5 text-xs font-semibold leading-tight ${
+                moreOpen || hasActiveMoreItem ? 'text-[#7c3aed]' : 'text-gray-400'
               }`}
+              aria-current={hasActiveMoreItem ? 'page' : undefined}
+              aria-haspopup="dialog"
+              aria-expanded={moreOpen}
+              aria-controls="members-mobile-more-sheet"
             >
               <Menu size={18} className="shrink-0" />
-              <span className="max-w-full truncate">More</span>
+              <span className="max-w-full break-words text-center">More</span>
             </button>
           </nav>
         </div>

@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Plus, Trash2 } from 'lucide-react'
@@ -343,7 +344,7 @@ export default function MasterDataPage() {
             </div>
             {/* Desktop: table */}
             <TableWrap>
-            <table className="hidden lg:table w-full text-sm min-w-[560px]">
+            <ResponsiveTable className="hidden lg:table w-full text-sm min-w-[560px]">
               <thead className="bg-gray-50/80 border-b border-gray-100">
                 <tr>
                   <Th>Name</Th>
@@ -383,7 +384,7 @@ export default function MasterDataPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ResponsiveTable>
             </TableWrap>
           </>
         )}
