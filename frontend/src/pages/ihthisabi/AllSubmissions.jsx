@@ -692,55 +692,35 @@ const AllSubmissions = () => {
           )}
         </div>
 
-        {/* View switcher — one compact row instead of four stacked full-width buttons */}
-        <div className="ih-segment mb-3">
-          <button
-            onClick={() => {
-              setShowAlternativeSubmissions(false)
-              setShowAbroadSubmissions(false)
-              setShowNonSubmitted(false)
-            }}
-            className={`ih-segment-btn py-2.5 sm:py-1.5 ${
-              !showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted
-                ? 'ih-segment-btn-active' : ''
-            }`}
-          >
-            <BarChart3 className="w-3.5 h-3.5 shrink-0" />
-            <span>Regular</span>
-          </button>
-          <button
-            onClick={() => {
-              setShowAlternativeSubmissions(true)
-              setShowAbroadSubmissions(false)
-              setShowNonSubmitted(false)
-            }}
-            className={`ih-segment-btn py-2.5 sm:py-1.5 ${showAlternativeSubmissions ? 'ih-segment-btn-active text-orange-700' : ''}`}
-          >
-            <FileText className="w-3.5 h-3.5 shrink-0" />
-            <span>Alt</span>
-          </button>
-          <button
-            onClick={() => {
-              setShowAbroadSubmissions(true)
-              setShowAlternativeSubmissions(false)
-              setShowNonSubmitted(false)
-            }}
-            className={`ih-segment-btn py-2.5 sm:py-1.5 ${showAbroadSubmissions ? 'ih-segment-btn-active text-blue-700' : ''}`}
-          >
-            <Globe className="w-3.5 h-3.5 shrink-0" />
-            <span>Abroad</span>
-          </button>
-          <button
-            onClick={() => {
-              setShowNonSubmitted(true)
-              setShowAlternativeSubmissions(false)
-              setShowAbroadSubmissions(false)
-            }}
-            className={`ih-segment-btn py-2.5 sm:py-1.5 ${showNonSubmitted ? 'ih-segment-btn-active text-red-700' : ''}`}
-          >
-            <UserX className="w-3.5 h-3.5 shrink-0" />
-            <span>Pending</span>
-          </button>
+        {/* View switcher — one scrolling row of pills (the segmented control
+            folded into a 2x2 grid on phones). */}
+        <div className="ih-pill-tabs mb-3" role="tablist" aria-label="Submission views">
+          {[
+            { key: 'regular', label: 'Regular', icon: BarChart3,
+              active: !showAlternativeSubmissions && !showAbroadSubmissions && !showNonSubmitted,
+              select: () => { setShowAlternativeSubmissions(false); setShowAbroadSubmissions(false); setShowNonSubmitted(false) } },
+            { key: 'alt', label: 'Alternative', icon: FileText, active: showAlternativeSubmissions,
+              select: () => { setShowAlternativeSubmissions(true); setShowAbroadSubmissions(false); setShowNonSubmitted(false) } },
+            { key: 'abroad', label: 'Abroad', icon: Globe, active: showAbroadSubmissions,
+              select: () => { setShowAbroadSubmissions(true); setShowAlternativeSubmissions(false); setShowNonSubmitted(false) } },
+            { key: 'pending', label: 'Pending', icon: UserX, active: showNonSubmitted,
+              select: () => { setShowNonSubmitted(true); setShowAlternativeSubmissions(false); setShowAbroadSubmissions(false) } },
+          ].map(tab => {
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={tab.active}
+                onClick={tab.select}
+                className={`ih-pill-tab ${tab.active ? 'ih-pill-tab-active' : ''}`}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span>{tab.label}</span>
+              </button>
+            )
+          })}
         </div>
 
         {/* Filters — only shown in regular submissions mode (not non-submitted) */}

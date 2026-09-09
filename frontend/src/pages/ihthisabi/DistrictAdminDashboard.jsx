@@ -462,17 +462,19 @@ const DistrictAdminDashboard = () => {
         </p>
       </div>
 
-      {/* Tabs — on phones the icon sits above a short label so all five pills fit
-          the screen whole; from sm: up they return to icon-beside-full-label. */}
-      <div className="ih-segment mb-3 print:hidden">
+      {/* Tabs — one scrolling row of pills; short labels on phones. */}
+      <div className="ih-pill-tabs mb-3 print:hidden" role="tablist" aria-label="Dashboard sections">
         {TABS.map((tab) => {
           const Icon = tab.icon
           const active = activeTab === tab.key
           return (
             <button
               key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
               onClick={() => setActiveTab(tab.key)}
-              className={`ih-segment-btn flex-col gap-0.5 px-2.5 py-1.5 sm:flex-row sm:gap-1 sm:px-3 ${active ? 'bg-[#7B4FF2] text-white shadow-sm' : ''}`}
+              className={`ih-pill-tab ${active ? 'ih-pill-tab-active' : ''}`}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
               <span className="sm:hidden">{tab.shortLabel || tab.label}</span>
@@ -1128,7 +1130,7 @@ const DistrictAdminDashboard = () => {
                         <td className="px-3 sm:px-4 py-3 text-right">
                           <button
                             onClick={() => setSelectedAltSubmission(s)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-[#7B4FF2]/40 hover:text-[#7B4FF2] hover:bg-[#7B4FF2]/5 transition-colors text-xs font-medium"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors text-xs font-medium"
                           >
                             <Eye className="w-3.5 h-3.5" /> View
                           </button>

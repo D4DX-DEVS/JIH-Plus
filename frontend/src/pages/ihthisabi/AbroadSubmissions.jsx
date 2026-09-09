@@ -829,7 +829,7 @@ const AbroadSubmissions = () => {
           <h2 className="text-xl font-bold text-gray-900">Abroad Members</h2>
           <p className="text-sm text-gray-500 mt-1">Members marked as abroad — grouped by country</p>
         </div>
-        <div className="mobile-tab-grid -mx-1 flex items-center gap-1.5 overflow-x-auto px-1 sm:mx-0 sm:gap-2 sm:px-0 [scrollbar-width:none]">
+        <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 sm:mx-0 sm:gap-2 sm:px-0 [scrollbar-width:none]">
           <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium sm:px-3 sm:py-1.5 sm:text-sm bg-blue-50 text-blue-700 border border-blue-200">
             <Globe className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4" />
             {countryGroups.length} {countryGroups.length === 1 ? 'country' : 'countries'}

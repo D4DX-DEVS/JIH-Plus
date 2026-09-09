@@ -40,7 +40,8 @@ import {
   Search,
   Plus,
   MapPin,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Copy
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { downloadUnitReplyPDF } from '../../utils/unitReplyPdfGenerator'
@@ -917,10 +918,15 @@ const AdminDashboard = () => {
         ) : activeTab === 'users' ? (
           <UserManagement />
         ) : activeTab === 'unitreply' ? (
-          <div className="space-y-6">
-            <div className="ih-surface p-6">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Send Reply to Unit Admin</h3>
+          <div className="space-y-3 sm:space-y-6">
+            {/* Step 1 — pick the unit and quarter. Compact two-column grid on
+                phones; the template editor is a small toggle, not a header row. */}
+            <div className="ih-surface p-3 sm:p-6">
+              <div className="mb-3 flex items-center justify-between gap-2 sm:mb-4">
+                <div className="min-w-0">
+                  <h3 className="hidden text-lg font-semibold text-gray-900 lg:block">Send Reply to Unit Admin</h3>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 lg:hidden">Unit &amp; quarter</p>
+                </div>
                 <button
                   type="button"
                   onClick={() => {
@@ -928,16 +934,19 @@ const AdminDashboard = () => {
                     setTemplateEditing(next)
                     if (next) fetchFormFields(templateQuarter)
                   }}
-                  className="text-sm min-h-[44px] sm:min-h-0 px-3 py-2.5 border border-indigo-300 rounded-lg text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"
+                  aria-expanded={templateEditing}
+                  className={`inline-flex h-[40px] shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors sm:h-9 sm:text-sm ${
+                    templateEditing ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                  }`}
                 >
                   <Settings className="w-4 h-4" />
-                  {templateEditing ? 'Hide Template Editor' : 'Edit Reply Template'}
+                  {templateEditing ? 'Close template' : 'Reply template'}
                 </button>
               </div>
 
               {/* Template Builder (collapsible) */}
               {templateEditing && (
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   <ReplyTemplateBuilder
                     blocks={replyTemplate}
                     onChange={setReplyTemplate}
@@ -951,11 +960,11 @@ const AdminDashboard = () => {
                   />
                 </div>
               )}
-              
+
               {/* Cascading District → Area → Unit Selection */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">District</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">District</label>
                   <select
                     value={replyDistrict}
                     onChange={(e) => {
@@ -963,7 +972,7 @@ const AdminDashboard = () => {
                       if (e.target.value) fetchReplyAreas(e.target.value)
                       else { setReplyAreas([]); setReplyArea(''); setReplyUnits([]); setReplyFormData(prev => ({ ...prev, unit: '' })) }
                     }}
-                    className="form-select text-base"
+                    className="form-select truncate text-base sm:text-sm"
                   >
                     <option value="">Select District</option>
                     {replyDistricts.map(d => (
@@ -973,7 +982,7 @@ const AdminDashboard = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Area</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Area</label>
                   <select
                     value={replyArea}
                     onChange={(e) => {
@@ -981,7 +990,7 @@ const AdminDashboard = () => {
                       if (e.target.value) fetchReplyUnits(replyDistrict, e.target.value)
                       else { setReplyUnits([]); setReplyFormData(prev => ({ ...prev, unit: '' })) }
                     }}
-                    className="form-select text-base"
+                    className="form-select truncate text-base sm:text-sm"
                     disabled={!replyDistrict || replyAreasLoading}
                   >
                     <option value="">
@@ -993,12 +1002,12 @@ const AdminDashboard = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Unit</label>
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Unit</label>
                   <select
                     value={replyFormData.unit}
                     onChange={(e) => setReplyFormData(prev => ({ ...prev, unit: e.target.value }))}
-                    className="form-select text-base"
+                    className="form-select truncate text-base sm:text-sm"
                     disabled={!replyArea || replyUnitsLoading}
                   >
                     <option value="">
@@ -1012,25 +1021,25 @@ const AdminDashboard = () => {
               </div>
 
               {/* Year & Quarter */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-4 sm:max-w-md sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Year</label>
                   <NumericInput
                     type="number"
                     value={replyFormData.year}
                     onChange={(e) => setReplyFormData(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
-                    className="form-input text-base"
+                    className="form-input text-base sm:text-sm"
                     min="2020"
                     max={new Date().getFullYear() + 1}
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Quarter</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Quarter</label>
                   <select
                     value={replyFormData.quarter}
                     onChange={(e) => setReplyFormData(prev => ({ ...prev, quarter: parseInt(e.target.value) }))}
-                    className="form-select text-base"
+                    className="form-select truncate text-base sm:text-sm"
                   >
                     <option value={1}>Q1 (Jan-Mar)</option>
                     <option value={2}>Q2 (Apr-Jun)</option>
@@ -1039,11 +1048,11 @@ const AdminDashboard = () => {
                   </select>
                 </div>
               </div>
-              
+
               <button
                 onClick={fetchReplyData}
                 disabled={!replyFormData.unit || replyDataLoading}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary mt-3 w-full gap-2 sm:mt-4 sm:w-auto"
               >
                 {replyDataLoading ? (
                   <>
@@ -1053,99 +1062,98 @@ const AdminDashboard = () => {
                 ) : (
                   <>
                     <FileText className="w-4 h-4" />
-                    <span>Load Data & Generate Reply</span>
+                    <span>{formattedReply ? 'Reload data' : 'Load data & generate reply'}</span>
                   </>
                 )}
               </button>
-              
-              {/* Formatted Reply Preview */}
-              {formattedReply && (
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-md font-semibold text-gray-900">Formatted Reply Preview</h4>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(formattedReply)
-                          toast.success('Reply copied to clipboard')
-                        }}
-                        className="btn-ghost text-sm"
-                      >
-                        Copy
-                      </button>
-                      <button
-                        onClick={handleDownloadPDF}
-                        disabled={pdfGenerating || !formattedReply}
-                        className="btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {pdfGenerating ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                            <span>Generating...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Download className="w-4 h-4 mr-2" />
-                            <span>Download PDF</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+            </div>
+
+            {/* Step 2 — preview, copy / download, send */}
+            {formattedReply && (
+              <div className="ih-surface overflow-hidden">
+                <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-3 py-2.5 sm:px-6 sm:py-4">
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-semibold text-gray-900 sm:text-base">Reply preview</h4>
+                    <p className="text-[11px] text-gray-500 sm:text-xs">
+                      {replyFormData.unit} · Q{replyFormData.quarter} {replyFormData.year}
+                    </p>
                   </div>
-                  
-                  {/* Styled Letter Preview */}
-                  <div className="bg-white border-2 border-gray-300 rounded-lg shadow-lg overflow-hidden">
-                    <div className="bg-white" style={{ minHeight: '600px' }}>
-                      {/* Letterhead */}
-                      <div
-                        className="border-b-2 border-black text-center px-4 pt-5 pb-5 sm:px-[20mm] sm:pt-[15mm]"
-                      >
-                        <img 
-                          src={letterheadImage} 
-                          alt="Letterhead" 
-                          className="max-w-full h-auto mx-auto mb-2"
-                          style={{ maxHeight: '120px' }}
-                        />
-                      </div>
-                      
-                      {/* Letter Content */}
-                      <div
-                        className="malayalam-text px-4 pt-6 pb-6 sm:px-[20mm] sm:pt-[30px] sm:pb-[15mm]"
-                        style={{
-                          lineHeight: '1.8',
-                          fontSize: '14px',
-                          color: '#000',
-                          whiteSpace: 'pre-wrap',
-                          wordWrap: 'break-word'
-                        }}
-                      >
-                        {formattedReply}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 flex items-center space-x-3">
+                  <div className="flex shrink-0 items-center gap-1.5">
                     <button
-                      onClick={handleSendReply}
-                      disabled={replySending || !formattedReply}
-                      className="btn-primary bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(formattedReply)
+                        toast.success('Reply copied to clipboard')
+                      }}
+                      className="ih-action ih-action-neutral"
+                      aria-label="Copy reply text"
+                      title="Copy reply text"
                     >
-                      {replySending ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Sending...</span>
-                        </>
+                      <Copy className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadPDF}
+                      disabled={pdfGenerating}
+                      className="ih-action ih-action-neutral"
+                      aria-label="Download PDF"
+                      title="Download PDF"
+                    >
+                      {pdfGenerating ? (
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                       ) : (
-                        <>
-                          <Send className="w-4 h-4" />
-                          <span>Send Reply</span>
-                        </>
+                        <Download className="h-4 w-4" />
                       )}
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
+
+                {/* Letter preview — scaled paddings on phones, print-like from sm: */}
+                <div className="bg-gray-100 p-2 sm:p-4">
+                  <div className="overflow-hidden rounded-lg border border-gray-300 bg-white shadow-sm">
+                    <div className="border-b-2 border-black px-3 pb-3 pt-4 text-center sm:px-[20mm] sm:pb-5 sm:pt-[15mm]">
+                      <img
+                        src={letterheadImage}
+                        alt="Letterhead"
+                        className="mx-auto mb-2 h-auto max-w-full"
+                        style={{ maxHeight: '120px' }}
+                      />
+                    </div>
+                    <div
+                      className="malayalam-text px-3 py-4 text-[13px] sm:px-[20mm] sm:pb-[15mm] sm:pt-[30px] sm:text-sm"
+                      style={{
+                        lineHeight: '1.8',
+                        color: '#000',
+                        whiteSpace: 'pre-wrap',
+                        wordWrap: 'break-word'
+                      }}
+                    >
+                      {formattedReply}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 p-3 sm:px-6 sm:py-4">
+                  <button
+                    onClick={handleSendReply}
+                    disabled={replySending}
+                    className="btn-primary w-full gap-2 bg-green-600 hover:bg-green-700 sm:w-auto"
+                  >
+                    {replySending ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        <span>Send reply to unit admin</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : activeTab === 'unitadmins' ? (
           <div className="space-y-6">

@@ -67,5 +67,5 @@ userSchema.pre('save', function(next) {
   next();
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = require('../config/tenantModel').tenantModel('User', userSchema);
 

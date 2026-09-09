@@ -84,6 +84,13 @@ const ArchiveManagement = () => {
 
   return (
     <div className="space-y-6">
+      <button
+        onClick={() => { setShowForm(true); setFormData({ quarter: '', year: currentYear }) }}
+        title="Archive Quarter" aria-label="Archive Quarter" className="ih-fab"
+        disabled={showForm}
+      >
+        <Plus className="h-5 w-5" />
+      </button>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="hidden lg:block">
@@ -97,7 +104,7 @@ const ArchiveManagement = () => {
         </div>
         <button
           onClick={() => { setShowForm(true); setFormData({ quarter: '', year: currentYear }) }}
-          className="btn-primary flex items-center gap-2 ml-auto"
+          className="btn-primary hidden items-center gap-2 ml-auto sm:inline-flex"
           disabled={showForm}
         >
           <Plus className="w-4 h-4" />
@@ -194,7 +201,7 @@ const ArchiveManagement = () => {
                   <button
                     onClick={() => openDeleteModal(item)}
                     title="Unarchive"
-                    className="shrink-0 inline-flex min-h-[44px] items-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 text-red-600 text-xs font-medium hover:bg-red-100 transition-colors"
+                    className="shrink-0 inline-flex min-h-[44px] items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Unarchive
@@ -271,7 +278,7 @@ const ArchiveManagement = () => {
                     <button
                       onClick={() => openDeleteModal(item)}
                       title="Unarchive"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                       Unarchive

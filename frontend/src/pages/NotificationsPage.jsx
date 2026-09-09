@@ -394,6 +394,16 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
 
   const shouldUseAdminLayout = isCentralAdmin && !onBack;
 
+  // Mobile top-bar bell with the unread count, like a standard app header.
+  const unreadBell = unreadCount > 0 ? (
+    <span className="relative inline-flex h-11 w-11 items-center justify-center text-[#002349]" aria-label={`${unreadCount} unread`}>
+      <Bell className="h-5 w-5" />
+      <span className="absolute right-1 top-1 min-w-[18px] rounded-full bg-[#957C3D] px-1 text-center text-[10px] font-bold leading-[18px] text-white">
+        {unreadCount > 99 ? '99+' : unreadCount}
+      </span>
+    </span>
+  ) : null;
+
   const wrapWithAdminSidebar = (content) => (
     <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <AdminSidebar
@@ -413,6 +423,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
+          actions={unreadBell}
         />
         <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
@@ -438,6 +449,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
+          actions={unreadBell}
         />
         <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
@@ -464,6 +476,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
+          actions={unreadBell}
         />
         <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
@@ -488,6 +501,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
+          actions={unreadBell}
         />
         <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
@@ -706,7 +720,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       ) : (
         <>
           {(showReceivedTab && showSentTab || unreadCount > 0) && (
-            <div className="mobile-tab-grid flex items-center gap-2 text-sm font-semibold text-gray-500">
+            <div className={`${showReceivedTab && showSentTab ? 'mobile-tab-grid flex' : 'hidden lg:flex'} items-center gap-2 text-sm font-semibold text-gray-500`}>
               {showReceivedTab && showSentTab && (
                 <button
                   onClick={() => setActiveTab('received')}
@@ -724,7 +738,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
                 </button>
               )}
               {unreadCount > 0 && (
-                <div className="ml-auto inline-flex items-center gap-1 rounded-full bg-[#957C3D] px-3 py-1 text-xs font-semibold text-white">
+                <div className="ml-auto hidden lg:inline-flex items-center gap-1 rounded-full bg-[#957C3D] px-3 py-1 text-xs font-semibold text-white">
                   <Bell className="w-3.5 h-3.5" />
                   {unreadCount} unread
                 </div>

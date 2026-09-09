@@ -552,7 +552,7 @@ const DynamicFormsAdmin = () => {
           {/* Canvas */}
           <main className={`flex-1 flex flex-col min-w-0 ${lockedStructure ? 'pointer-events-none opacity-60' : ''}`}>
             <div className="bg-white border-b flex-shrink-0 px-4 pt-3 min-w-0">
-              <div className="mobile-tab-grid flex items-end gap-0 overflow-x-auto pb-1">
+              <div className="flex items-end gap-0 overflow-x-auto pb-1 [scrollbar-width:none]">
                 {pages.map((p, pi) => (
                   <button key={p.id ?? pi} onClick={() => setActivePage(pi)}
                     className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
@@ -679,7 +679,7 @@ const DynamicFormsAdmin = () => {
               <div className="flex gap-2">
                 <button onClick={() => navigate(`/ihthisabi/admin/dynamic-forms/${formId}/edit`)}
                   title="Edit"
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
                   <Edit2 className="w-4 h-4" /> <span className="hidden sm:inline">Edit</span>
                 </button>
                 <button onClick={() => navigate(`/ihthisabi/admin/dynamic-forms/${formId}/submissions`)}
@@ -902,7 +902,7 @@ const DynamicFormsAdmin = () => {
                 <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
                   {submission.reply?.message && (
                     <button onClick={() => setConfirmDeleteReply(true)} disabled={detailSaving}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50">
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50">
                       <Trash2 className="w-4 h-4" /> Delete Reply
                     </button>
                   )}
@@ -941,12 +941,16 @@ const DynamicFormsAdmin = () => {
             <p className="ih-page-subtitle">Build reports and assign them to a role</p>
           </div>
           <button onClick={() => navigate('/ihthisabi/admin/dynamic-forms/create')}
-            className="flex min-h-[44px] sm:min-h-0 shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:px-4 sm:py-2.5 sm:text-sm">
+            className="hidden min-h-[44px] sm:min-h-0 shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:flex sm:px-4 sm:py-2.5 sm:text-sm">
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="sm:hidden">New report</span>
             <span className="hidden sm:inline">Create New Report</span>
           </button>
         </div>
+
+        <button onClick={() => navigate('/ihthisabi/admin/dynamic-forms/create')} title="New report" aria-label="New report" className="ih-fab">
+          <Plus className="h-5 w-5" />
+        </button>
 
         {loading ? <Loader /> : forms.length === 0 ? (
           <div className="ih-surface px-4 py-8 text-center sm:py-12">
@@ -988,11 +992,11 @@ const DynamicFormsAdmin = () => {
 
                   <div className="flex shrink-0 items-center gap-0.5 rounded-full bg-gray-50 p-0.5">
                     <button onClick={() => navigate(`/ihthisabi/admin/dynamic-forms/${f._id}/edit`)} title="Edit"
-                      className="ih-icon-btn hover:bg-blue-50 hover:text-blue-600">
+                      className="ih-action ih-action-edit">
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => navigate(`/ihthisabi/admin/dynamic-forms/${f._id}`)} title="Preview"
-                      className="ih-icon-btn hover:bg-gray-200 hover:text-gray-700">
+                      className="ih-action ih-action-view">
                       <Eye className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => navigate(`/ihthisabi/admin/dynamic-forms/${f._id}/submissions`)} title="Submissions"
@@ -1000,7 +1004,7 @@ const DynamicFormsAdmin = () => {
                       <Inbox className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => setDeleteTarget(f)} title="Delete"
-                      className="ih-icon-btn hover:bg-red-50 hover:text-red-600">
+                      className="ih-action ih-action-delete">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>

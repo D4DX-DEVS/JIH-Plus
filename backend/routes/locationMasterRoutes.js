@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const adminAuth = require('../middlewares/adminAuth');
+const { getTenant } = require('../config/tenantContext');
 const State = require('../models/state');
 const District = require('../models/district');
 const AreaMaster = require('../models/area');
@@ -480,7 +481,7 @@ router.delete('/units/:id', adminAuth, async (req, res) => {
 async function withTransaction(fn) {
   let session = null;
   try {
-    session = await mongoose.startSession();
+    session = await getTenant().connection.startSession();
     session.startTransaction();
     const result = await fn(session);
     await session.commitTransaction();

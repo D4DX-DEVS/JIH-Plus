@@ -640,12 +640,16 @@ const FormManagement = () => {
             <p className="ih-page-subtitle">Create and manage quarterly submission forms</p>
           </div>
           <button onClick={handleCreateNew}
-            className="flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:min-h-0 sm:px-4 sm:py-2.5 sm:text-sm">
+            className="hidden min-h-[44px] shrink-0 items-center gap-1.5 rounded-full bg-[#161F2F] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#1a2538] sm:flex sm:min-h-0 sm:px-4 sm:py-2.5 sm:text-sm">
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span className="sm:hidden">New form</span>
             <span className="hidden sm:inline">Create New Form</span>
           </button>
         </div>
+
+        <button onClick={handleCreateNew} title="New form" aria-label="New form" className="ih-fab">
+          <Plus className="h-5 w-5" />
+        </button>
 
         {nextQuarterInfo && (
           <div className="ih-surface mb-3 grid grid-cols-2 divide-x divide-gray-100 overflow-hidden">
@@ -715,11 +719,11 @@ const FormManagement = () => {
 
                 <div className="flex shrink-0 items-center gap-0.5 rounded-full bg-gray-50 p-0.5">
                   <button onClick={() => handleEdit(form._id)} title="Edit"
-                    className="ih-icon-btn hover:bg-blue-50 hover:text-blue-600">
+                    className="ih-action ih-action-edit">
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button onClick={() => handleClone(form)} title="Clone to another quarter"
-                    className="ih-icon-btn hover:bg-purple-50 hover:text-purple-600">
+                    className="ih-action ih-action-neutral">
                     <Copy className="w-3.5 h-3.5" />
                   </button>
                   {!published && (
@@ -729,7 +733,7 @@ const FormManagement = () => {
                     </button>
                   )}
                   <button onClick={() => setConfirmAction({ type: 'delete', formId: form._id })} title="Delete"
-                    className="ih-icon-btn hover:bg-red-50 hover:text-red-600">
+                    className="ih-action ih-action-delete">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>

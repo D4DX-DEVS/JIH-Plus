@@ -12,4 +12,4 @@ const unitSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('UnitMaster', unitSchema);
+module.exports = require('../config/tenantModel').tenantModel('UnitMaster', unitSchema);

@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { AlertCircle, LifeBuoy, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { api } from '../../utils/ihthisabi/api'
-import SupportContactCard from '../../components/helpdesk/SupportContactCard'
+import HelpDeskContactList, { HelpDeskBadge } from '../../components/helpdesk/HelpDeskContactList'
 import { IHTHISABI_HELP_DESK_CONTACTS } from '../../data/helpDeskContacts'
 
 const HelpDeskPage = () => {
@@ -40,17 +40,14 @@ const HelpDeskPage = () => {
     if (user?.role === 'rukn' && unitAdminSupport?.contactNo) {
       baseContacts.push({
         id: 'unit-admin-support',
-        topic: 'Your Unit Admin',
+        topic: unitAdminSupport.unit ? `Your Unit Admin · ${unitAdminSupport.unit}` : 'Your Unit Admin',
         person: unitAdminSupport.name || 'Unit Admin',
-        designation: unitAdminSupport.unit ? `${unitAdminSupport.unit} Unit Admin` : 'Unit Admin',
-        description: [unitAdminSupport.area, unitAdminSupport.district].filter(Boolean).join(' • ') || 'Your assigned unit admin support contact.',
         phones: [
           {
             label: 'Mobile Number',
             value: unitAdminSupport.contactNo
           }
-        ],
-        email: unitAdminSupport.emailId
+        ]
       })
     }
 
@@ -58,55 +55,37 @@ const HelpDeskPage = () => {
   }, [unitAdminSupport, user?.role])
 
   return (
-    <div className="max-w-6xl mx-auto px-3 py-3 sm:px-6 sm:py-6">
-      <section className="mb-4 overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:rounded-[2rem] sm:p-8">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            {/* App bar already says "Help Desk" on mobile — badge is lg+ only */}
-            <div className="mb-2 hidden items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary sm:mb-4 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm lg:inline-flex">
-              <LifeBuoy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span>Ihthisabi Help Desk</span>
-            </div>
-            <h1 className="hidden lg:block text-xl font-bold tracking-tight text-gray-900 sm:text-3xl">Get Support Quickly</h1>
-            <p className="mt-1.5 text-xs leading-5 text-gray-600 sm:mt-3 sm:text-base sm:leading-6">
-              This page covers common Ihthisabi support contacts. Member application support is intentionally excluded here.
-            </p>
+    <div className="mx-auto w-full max-w-md px-3 py-3 sm:px-6 sm:py-6">
+      {/* Same sheet as the landing page help desk — the app bar already names
+          the screen on phones, so the badge is the only heading. */}
+      <div className="rounded-3xl border border-white/80 bg-[#fbfcff] p-4 shadow-sm sm:p-6">
+        <div className="flex items-center justify-between gap-4">
+          <HelpDeskBadge />
+        </div>
+
+        {user?.role === 'rukn' && loading && (
+          <div className="mt-4 flex items-center gap-2 rounded-xl bg-[#f6f7fc] px-3 py-2.5 text-xs text-[#8992ac]">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#7548e8]" />
+            <span>Loading your unit admin contact…</span>
           </div>
-          {/* Unit already shows in the mobile app bar context line */}
-          {user?.role === 'rukn' && user?.unit && (
-            <div className="hidden rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 text-xs text-gray-700 sm:rounded-2xl sm:px-5 sm:py-4 sm:text-sm lg:block">
-              Logged in as a member from <span className="font-semibold text-gray-900">{user.unit}</span>.
-            </div>
-          )}
-        </div>
-      </section>
+        )}
 
-      {user?.role === 'rukn' && loading && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs text-gray-600 shadow-sm sm:mb-6 sm:gap-3 sm:rounded-2xl sm:px-5 sm:py-4 sm:text-sm">
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary sm:h-4 sm:w-4" />
-          <span>Loading your unit admin contact details...</span>
-        </div>
-      )}
+        {user?.role === 'rukn' && error && (
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
 
-      {user?.role === 'rukn' && error && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 sm:mb-6 sm:gap-3 sm:rounded-2xl sm:px-5 sm:py-4 sm:text-sm">
-          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-          <span>{error}</span>
-        </div>
-      )}
+        {user?.role === 'rukn' && !loading && !error && !unitAdminSupport?.contactNo && (
+          <div className="mt-4 flex items-start gap-2 rounded-xl bg-[#f6f7fc] px-3 py-2.5 text-xs text-[#59677f]">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8992ac]" />
+            <span>Your unit admin contact is not in the system yet. Use the Ihthisabi help desk contacts below.</span>
+          </div>
+        )}
 
-      {user?.role === 'rukn' && !loading && !error && !unitAdminSupport?.contactNo && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600 sm:mb-6 sm:gap-3 sm:rounded-2xl sm:px-5 sm:py-4 sm:text-sm">
-          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500 sm:h-4 sm:w-4" />
-          <span>Your unit admin contact is not available in the system yet. You can still use the common Ihthisabi help desk contacts below.</span>
-        </div>
-      )}
-
-      <section className="grid gap-3 sm:gap-5 lg:grid-cols-2 xl:grid-cols-3">
-        {contacts.map((contact) => (
-          <SupportContactCard key={contact.id} {...contact} />
-        ))}
-      </section>
+        <HelpDeskContactList contacts={contacts} className="mt-4" />
+      </div>
     </div>
   )
 }

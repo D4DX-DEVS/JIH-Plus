@@ -310,12 +310,12 @@ const MekhalaNazimManagement = () => {
                 {isSuperAdmin && (
                   <div className="flex shrink-0 items-center gap-0.5 rounded-full bg-gray-50 p-0.5">
                     <button onClick={() => openForm(n)} title="Edit"
-                      className="ih-icon-btn hover:bg-blue-50 hover:text-blue-600">
-                      <Pencil className="w-3.5 h-3.5" />
+                      className="ih-action ih-action-edit">
+                      <Pencil className="h-4 w-4" />
                     </button>
                     <button onClick={() => setDeleteItem(n)} title="Remove nazim"
-                      className="ih-icon-btn hover:bg-red-50 hover:text-red-600">
-                      <Trash2 className="w-3.5 h-3.5" />
+                      className="ih-action ih-action-delete">
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 )}

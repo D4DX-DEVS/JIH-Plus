@@ -290,14 +290,14 @@ const DistrictAdminProfileModal = ({ districtAdminId, isOpen, onClose, onSaved, 
 
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-4 py-3 flex flex-wrap items-center justify-between gap-2">
           {!isCreate && !editing && (
-            <button onClick={() => setConfirmDelete(true)} disabled={saving} className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium disabled:bg-gray-100 disabled:text-gray-500 disabled:opacity-100">
+            <button onClick={() => setConfirmDelete(true)} disabled={saving} className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 px-3 py-2.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-sm font-medium disabled:bg-gray-100 disabled:text-gray-500 disabled:opacity-100">
               <Trash2 className="w-4 h-4" /> Delete
             </button>
           )}
           <div className="flex items-center gap-2 ml-auto">
             {!isCreate && !editing && (
               <>
-                <button onClick={handleToggleActive} disabled={saving} className="btn-ghost text-sm py-2.5 disabled:bg-gray-200 disabled:text-gray-700 disabled:opacity-100">
+                <button onClick={handleToggleActive} disabled={saving} className="inline-flex min-h-[44px] sm:min-h-0 items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 disabled:bg-gray-200 disabled:text-gray-700 disabled:opacity-100">
                   {districtAdmin?.isActive ? 'Deactivate' : 'Activate'}
                 </button>
                 <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 px-3 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium">

@@ -211,14 +211,17 @@ const DistrictAreaDetails = () => {
           </div>
 
           {/* Section tabs — swipeable on phones so labels + counts never clip */}
-          <div className="mobile-tab-grid ih-segment mb-3 overflow-x-auto scrollbar-hide">
+          <div className="ih-pill-tabs mb-3" role="tablist" aria-label="Sections">
             {SECTIONS.map((s) => {
               const Icon = s.icon
               return (
                 <button
                   key={s.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={section === s.key}
                   onClick={() => changeSection(s.key)}
-                  className={`ih-segment-btn py-2.5 sm:py-1.5 ${section === s.key ? 'bg-[#7B4FF2] text-white shadow-sm' : ''}`}
+                  className={`ih-pill-tab ${section === s.key ? 'ih-pill-tab-active' : ''}`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
                   <span>{s.label}</span>

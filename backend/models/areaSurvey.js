@@ -227,4 +227,4 @@ areaSurveySchema.statics.findAll = function (query = {}) {
   return this.find(query).sort({ submittedAt: -1 });
 };
 
-module.exports = mongoose.model('AreaSurvey', areaSurveySchema);
+module.exports = require('../config/tenantModel').tenantModel('AreaSurvey', areaSurveySchema);

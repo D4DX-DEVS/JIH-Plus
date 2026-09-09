@@ -68,4 +68,4 @@ targetAllocationSchema.index({ targetId: 1, level: 1 });
 targetAllocationSchema.index({ targetId: 1, districtId: 1 });
 targetAllocationSchema.index({ targetId: 1, areaId: 1 });
 
-module.exports = mongoose.model('TargetAllocation', targetAllocationSchema);
+module.exports = require('../config/tenantModel').tenantModel('TargetAllocation', targetAllocationSchema);

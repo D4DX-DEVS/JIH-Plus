@@ -20,7 +20,8 @@ import {
   CheckCircle,
   MapPin,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  Plus
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -470,6 +471,16 @@ const UserManagementDynamic = () => {
 
   return (
     <div className="space-y-5">
+      {view === 'members' && (
+        <button onClick={() => { setEditingUser(null); setShowUserForm(true) }} title="Add Member" aria-label="Add Member" className="ih-fab">
+          <Plus className="h-5 w-5" />
+        </button>
+      )}
+      {view === 'unitadmins' && (
+        <button onClick={() => { setEditingUA(null); setShowUAForm(true) }} title="Add Unit Admin" aria-label="Add Unit Admin" className="ih-fab">
+          <Plus className="h-5 w-5" />
+        </button>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         {/* Hidden on mobile — the app bar already names this screen there. */}
@@ -510,18 +521,16 @@ const UserManagementDynamic = () => {
           </button>
 
           {view === 'members' && (
-            <button onClick={() => { setEditingUser(null); setShowUserForm(true) }} className="btn-primary h-[44px] shrink-0 gap-1 px-3 text-[11px] sm:h-9 sm:px-4 sm:text-sm">
+            <button onClick={() => { setEditingUser(null); setShowUserForm(true) }} className="btn-primary hidden shrink-0 gap-1 px-3 text-[11px] sm:inline-flex sm:h-9 sm:px-4 sm:text-sm">
               <UserPlus className="h-4 w-4" />
-              <span className="sm:hidden">Add</span>
-              <span className="hidden sm:inline">Add Member</span>
+              <span>Add Member</span>
             </button>
           )}
           {view === 'unitadmins' && (
             <>
-              <button onClick={() => { setEditingUA(null); setShowUAForm(true) }} className="btn-primary h-[44px] shrink-0 gap-1 px-3 text-[11px] sm:h-9 sm:px-4 sm:text-sm">
+              <button onClick={() => { setEditingUA(null); setShowUAForm(true) }} className="btn-primary hidden shrink-0 gap-1 px-3 text-[11px] sm:inline-flex sm:h-9 sm:px-4 sm:text-sm">
                 <UserPlus className="h-4 w-4" />
-                <span className="sm:hidden">Add</span>
-                <span className="hidden sm:inline">Add Unit Admin</span>
+                <span>Add Unit Admin</span>
               </button>
               <button onClick={() => setShowAssign(true)} className="btn-primary h-[44px] shrink-0 gap-1 bg-indigo-600 px-3 text-[11px] hover:bg-indigo-700 sm:h-9 sm:px-4 sm:text-sm">
                 <ShieldCheck className="h-4 w-4" />
@@ -652,14 +661,14 @@ const UserManagementDynamic = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 flex items-center gap-2 whitespace-nowrap">
-                      <button title="Edit" onClick={() => { setEditingUser(u); setShowUserForm(true) }} className="p-1 text-blue-600 hover:bg-blue-50 rounded">
-                        <Edit className="w-4 h-4" />
+                      <button title="Edit" onClick={() => { setEditingUser(u); setShowUserForm(true) }} className="ih-action ih-action-edit">
+                        <Edit className="h-4 w-4" />
                       </button>
-                      <button title="Transfer" onClick={() => setTransferUser(u)} className="p-1 text-indigo-600 hover:bg-indigo-50 rounded">
-                        <ArrowRightLeft className="w-4 h-4" />
+                      <button title="Transfer" onClick={() => setTransferUser(u)} className="ih-action ih-action-neutral">
+                        <ArrowRightLeft className="h-4 w-4" />
                       </button>
-                      <button title="Delete" onClick={() => setDeleteModal({ isOpen: true, id: u._id, name: u.name, type: 'user' })} className="p-1 text-red-600 hover:bg-red-50 rounded">
-                        <Trash2 className="w-4 h-4" />
+                      <button title="Delete" onClick={() => setDeleteModal({ isOpen: true, id: u._id, name: u.name, type: 'user' })} className="ih-action ih-action-delete">
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -680,11 +689,11 @@ const UserManagementDynamic = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 flex items-center gap-2 whitespace-nowrap">
-                      <button title="Edit" onClick={() => { setEditingUA(ua); setShowUAForm(true) }} className="p-1 text-blue-600 hover:bg-blue-50 rounded">
-                        <Edit className="w-4 h-4" />
+                      <button title="Edit" onClick={() => { setEditingUA(ua); setShowUAForm(true) }} className="ih-action ih-action-edit">
+                        <Edit className="h-4 w-4" />
                       </button>
-                      <button title="Delete" onClick={() => setDeleteModal({ isOpen: true, id: ua._id, name: ua.name, type: 'ua' })} className="p-1 text-red-600 hover:bg-red-50 rounded">
-                        <Trash2 className="w-4 h-4" />
+                      <button title="Delete" onClick={() => setDeleteModal({ isOpen: true, id: ua._id, name: ua.name, type: 'ua' })} className="ih-action ih-action-delete">
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -731,21 +740,21 @@ const UserManagementDynamic = () => {
                         else { setEditingUA(row); setShowUAForm(true) }
                       }}
                       title="Edit"
-                      className="ih-icon-btn text-blue-600 hover:bg-blue-50"
+                      className="ih-action ih-action-edit"
                     >
-                      <Edit className="w-3.5 h-3.5" />
+                      <Edit className="h-4 w-4" />
                     </button>
                     {view === 'members' && (
-                      <button onClick={() => setTransferUser(row)} title="Transfer" className="ih-icon-btn text-indigo-600 hover:bg-indigo-50">
-                        <ArrowRightLeft className="w-3.5 h-3.5" />
+                      <button onClick={() => setTransferUser(row)} title="Transfer" className="ih-action ih-action-neutral">
+                        <ArrowRightLeft className="h-4 w-4" />
                       </button>
                     )}
                     <button
                       onClick={() => setDeleteModal({ isOpen: true, id: row._id, name: row.name, type: view === 'members' ? 'user' : 'ua' })}
                       title="Delete"
-                      className="ih-icon-btn text-red-600 hover:bg-red-50"
+                      className="ih-action ih-action-delete"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>

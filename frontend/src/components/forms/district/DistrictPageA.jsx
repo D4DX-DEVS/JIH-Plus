@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { useDistrictForm } from '../../../contexts/DistrictFormContext';
 import { validateNumericInput, handleNumericKeyDown, handleNumericPaste } from '../../../utils/validation';
+import { portalHref } from '../../../tenants/current';
 
 const DistrictPageA = () => {
   const { formData, updateFormData, nextStep, validateCurrentStep } = useDistrictForm();
@@ -128,7 +129,7 @@ const DistrictPageA = () => {
   const handleBack = () => {
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     if (userData.districtId) {
-      window.location.href = `/district-dashboard/${userData.districtId}`;
+      window.location.href = portalHref(`/district-dashboard/${userData.districtId}`);
     } else {
       // Fallback: try to get districtId from token
       const token = localStorage.getItem('userToken');
@@ -136,7 +137,7 @@ const DistrictPageA = () => {
         try {
           const tokenPayload = JSON.parse(atob(token.split('.')[1]));
           if (tokenPayload.districtId) {
-            window.location.href = `/district-dashboard/${tokenPayload.districtId}`;
+            window.location.href = portalHref(`/district-dashboard/${tokenPayload.districtId}`);
             return;
           }
         } catch (e) {

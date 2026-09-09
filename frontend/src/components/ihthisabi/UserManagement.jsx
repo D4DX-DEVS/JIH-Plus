@@ -11,9 +11,9 @@ import {
   Upload,
   UserPlus,
   Users,
-  Search, 
-  Filter, 
-  Trash2, 
+  Search,
+  Filter,
+  Trash2,
   Download,
   FileSpreadsheet,
   CheckCircle,
@@ -23,6 +23,7 @@ import {
   Edit,
   Settings,
   ArrowRightLeft,
+  Plus,
   X
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -388,6 +389,14 @@ const UserManagement = () => {
 
   return (
     <div className="space-y-2 sm:space-y-5">
+      {!showUnitAdminsOnly && (
+        <button
+          onClick={() => setShowAddMemberModal(true)}
+          title="Add Member" aria-label="Add Member" className="ih-fab"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+      )}
       {/* Header — title hidden on mobile, the app bar already names the page.
           Actions collapse to icons so they stay on one row. */}
       <div className="flex items-center justify-between gap-2">
@@ -426,11 +435,10 @@ const UserManagement = () => {
             <>
               <button
                 onClick={() => setShowAddMemberModal(true)}
-                className="btn-primary h-[44px] shrink-0 gap-1 px-3 text-[11px] sm:h-9 sm:px-4 sm:text-sm"
+                className="btn-primary hidden shrink-0 gap-1 px-3 text-[11px] sm:inline-flex sm:h-9 sm:px-4 sm:text-sm"
               >
                 <UserPlus className="h-4 w-4" />
-                <span className="sm:hidden">Add</span>
-                <span className="hidden sm:inline">Add Member</span>
+                <span>Add Member</span>
               </button>
               <button
                 onClick={() => { setUploadResult(null); setShowUploadModal(true) }}
@@ -691,16 +699,17 @@ const UserManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={(e) => openTransferModal(e, user)}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
+                          className="ih-action ih-action-neutral mr-1"
                           title="Transfer user"
                         >
-                          <ArrowRightLeft className="w-4 h-4" />
+                          <ArrowRightLeft className="h-4 w-4" />
                         </button>
                         <button
                           onClick={(e) => handleDeleteUser(e, user._id, user.name)}
-                          className="text-red-600 hover:text-red-900 mr-3"
+                          title="Delete user"
+                          className="ih-action ih-action-delete"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </td>
                     </tr>
@@ -769,17 +778,17 @@ const UserManagement = () => {
                         onClick={(e) => openTransferModal(e, row)}
                         title="Transfer user"
                         aria-label={`Transfer ${row.name || 'user'}`}
-                        className="ih-icon-btn h-[44px] w-[44px] text-blue-600 hover:bg-blue-50"
+                        className="ih-action ih-action-neutral"
                       >
-                        <ArrowRightLeft className="w-3.5 h-3.5" />
+                        <ArrowRightLeft className="h-4 w-4" />
                       </button>
                       <button
                         onClick={(e) => handleDeleteUser(e, row._id, row.name)}
                         title="Delete user"
                         aria-label={`Delete ${row.name || 'user'}`}
-                        className="ih-icon-btn h-[44px] w-[44px] text-red-600 hover:bg-red-50"
+                        className="ih-action ih-action-delete"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   )}

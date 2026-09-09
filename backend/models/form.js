@@ -274,4 +274,4 @@ updatedBy: { type: String } // Track which admin updated (optional)
 
 });
 
-module.exports = mongoose.model('Form', formSchema);
+module.exports = require('../config/tenantModel').tenantModel('Form', formSchema);

@@ -13,6 +13,7 @@
  *   node scripts/migrateLocationFromJson.js                  # asks to confirm
  *   node scripts/migrateLocationFromJson.js --yes            # no prompt
  *   node scripts/migrateLocationFromJson.js --state="Kerala" # override state name
+ *   node scripts/migrateLocationFromJson.js --file=bangaluru.json --state="Other State"
  */
 
 const path = require('path');
@@ -34,17 +35,17 @@ const {
   generateUnitPassword
 } = require('../utils/codeGenerator');
 
-const locationRows = require(path.join(__dirname, '..', 'location.json'));
-
 const norm = (v) => String(v || '').trim();
 
 const parseArgs = () => {
   const args = process.argv.slice(2);
   const stateArg = args.find((a) => a.startsWith('--state='));
+  const fileArg = args.find((a) => a.startsWith('--file='));
   return {
     dryRun: args.includes('--dry-run'),
     force: args.includes('--yes') || args.includes('-y'),
-    stateName: stateArg ? stateArg.split('=')[1].trim() : 'Kerala'
+    stateName: stateArg ? stateArg.split('=')[1].trim() : 'Kerala',
+    file: fileArg ? fileArg.split('=')[1].trim() : 'location.json'
   };
 };
 
@@ -76,7 +77,8 @@ const buildHierarchy = (rows) => {
 };
 
 const main = async () => {
-  const { dryRun, force, stateName } = parseArgs();
+  const { dryRun, force, stateName, file } = parseArgs();
+  const locationRows = require(path.resolve(__dirname, '..', file));
 
   if (!process.env.MONGODB_URI) {
     throw new Error('MONGODB_URI is missing in environment variables.');
@@ -99,6 +101,7 @@ const main = async () => {
   }
 
   console.log('\nLOCATION JSON MIGRATION PREVIEW');
+  console.log(`- Source file         : ${file}`);
   console.log(`- Source rows         : ${locationRows.length}`);
   console.log(`- Unique districts    : ${districtNames.length}`);
   console.log(`- Unique areas        : ${totalAreas}`);
@@ -146,8 +149,10 @@ const main = async () => {
 
   // ── 2. Districts ──────────────────────────────────────────────────────────
   for (const districtName of districtNames) {
+    // Case-insensitive match so "Chennai" in the JSON reuses an existing "CHENNAI" row.
+    const escaped = districtName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     let district = await District.findOne({
-      name: districtName,
+      name: { $regex: new RegExp(`^${escaped}$`, 'i') },
       stateId: state._id
     });
 

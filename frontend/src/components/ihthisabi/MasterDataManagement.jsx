@@ -211,11 +211,14 @@ function MekhalasTab() {
 
   return (
     <div>
+      <button onClick={() => openForm(null)} title="Add Mekhala" aria-label="Add Mekhala" className="ih-fab">
+        <Plus className="h-5 w-5" />
+      </button>
       <div className="flex items-center justify-between mb-3 gap-2">
         <SearchBox value={searchInput} onChange={setSearchInput} placeholder="Search mekhalas…" />
         <button
           onClick={() => openForm(null)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#002349] text-white text-sm rounded-lg hover:bg-[#002349]/90">
+          className="hidden shrink-0 items-center gap-1.5 px-3 py-1.5 bg-[#002349] text-white text-sm rounded-lg hover:bg-[#002349]/90 sm:inline-flex">
           <Plus className="w-4 h-4" /> Add Mekhala
         </button>
       </div>
@@ -248,13 +251,13 @@ function MekhalasTab() {
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <button title="Edit mekhala" onClick={() => openForm(m)}
-                        className="ih-icon-btn text-blue-600 hover:bg-blue-50">
-                        <Pencil className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-edit">
+                        <Pencil className="h-4 w-4" /></button>
                       <button
                         title={m.nazim ? 'Cannot delete: a nazim is assigned' : 'Delete mekhala'}
                         onClick={() => { setDeleteError(''); setDeleteItem(m); }}
-                        className="ih-icon-btn text-red-600 hover:bg-red-50">
-                        <Trash2 className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-delete">
+                        <Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
                 ))}
@@ -296,13 +299,13 @@ function MekhalasTab() {
                 </td>
                 <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                   <button title="Edit mekhala" onClick={() => openForm(m)}
-                    className="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded">
-                    <Pencil className="w-3.5 h-3.5" /></button>
+                    className="ih-action ih-action-edit">
+                    <Pencil className="h-4 w-4" /></button>
                   <button
                     title={m.nazim ? 'Cannot delete: a nazim is assigned' : 'Delete mekhala'}
                     onClick={() => { setDeleteError(''); setDeleteItem(m); }}
-                    className="inline-flex items-center p-2 text-red-600 hover:bg-red-50 rounded">
-                    <Trash2 className="w-3.5 h-3.5" /></button>
+                    className="ih-action ih-action-delete">
+                    <Trash2 className="h-4 w-4" /></button>
                 </td>
               </tr>
             ))}
@@ -465,11 +468,14 @@ function DistrictsTab() {
 
   return (
     <div>
+      <button onClick={() => { setAddOpen(true); setAddName(''); setAddError(''); }} title="Add District" aria-label="Add District" className="ih-fab">
+        <Plus className="h-5 w-5" />
+      </button>
       <div className="flex items-center justify-between mb-3 gap-2">
         <SearchBox value={searchInput} onChange={setSearchInput} placeholder="Search districts…" />
         <button
           onClick={() => { setAddOpen(true); setAddName(''); setAddError(''); }}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#002349] text-white text-sm rounded-lg hover:bg-[#002349]/90">
+          className="hidden shrink-0 items-center gap-1.5 px-3 py-1.5 bg-[#002349] text-white text-sm rounded-lg hover:bg-[#002349]/90 sm:inline-flex">
           <Plus className="w-4 h-4" /> Add District
         </button>
       </div>
@@ -491,19 +497,19 @@ function DistrictsTab() {
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <button title="Rename district" onClick={() => { setTxError(''); setRenameItem(d); setRenameValue(d.name); }}
-                        className="ih-icon-btn text-blue-600 hover:bg-blue-50">
-                        <Pencil className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-edit">
+                        <Pencil className="h-4 w-4" /></button>
                       <button title="Split district" onClick={() => handleSplitOpen(d)}
-                        className="ih-icon-btn text-purple-600 hover:bg-purple-50">
-                        <Scissors className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-neutral">
+                        <Scissors className="h-4 w-4" /></button>
                       <button title="Merge into another district" onClick={() => { setTxError(''); setMergeItem(d); setMergeSurvivor(''); }}
-                        className="ih-icon-btn text-indigo-600 hover:bg-indigo-50">
-                        <GitMerge className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-neutral">
+                        <GitMerge className="h-4 w-4" /></button>
                       <button
                         title={d.count > 0 ? `Cannot delete: ${d.count} member(s) assigned` : 'Delete district'}
                         onClick={() => { setTxError(''); setDeleteItem(d); }}
-                        className="ih-icon-btn text-red-600 hover:bg-red-50">
-                        <Trash2 className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-delete">
+                        <Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
                 ))}
@@ -528,19 +534,19 @@ function DistrictsTab() {
                 <td className="px-4 py-3 text-gray-600">{d.count}</td>
                 <td className="px-4 py-3 text-right space-x-2">
                   <button title="Rename district" onClick={() => { setTxError(''); setRenameItem(d); setRenameValue(d.name); }}
-                    className="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded">
-                    <Pencil className="w-3.5 h-3.5" /></button>
+                    className="ih-action ih-action-edit">
+                    <Pencil className="h-4 w-4" /></button>
                   <button title="Split district" onClick={() => handleSplitOpen(d)}
-                    className="inline-flex items-center p-2 text-purple-600 hover:bg-purple-50 rounded">
-                    <Scissors className="w-3.5 h-3.5" /></button>
+                    className="ih-action ih-action-neutral">
+                    <Scissors className="h-4 w-4" /></button>
                   <button title="Merge into another district" onClick={() => { setTxError(''); setMergeItem(d); setMergeSurvivor(''); }}
-                    className="inline-flex items-center p-2 text-indigo-600 hover:bg-indigo-50 rounded">
-                    <GitMerge className="w-3.5 h-3.5" /></button>
+                    className="ih-action ih-action-neutral">
+                    <GitMerge className="h-4 w-4" /></button>
                   <button
                     title={d.count > 0 ? `Cannot delete: ${d.count} member(s) assigned` : 'Delete district'}
                     onClick={() => { setTxError(''); setDeleteItem(d); }}
-                    className="inline-flex items-center p-2 text-red-600 hover:bg-red-50 rounded">
-                    <Trash2 className="w-3.5 h-3.5" /></button>
+                    className="ih-action ih-action-delete">
+                    <Trash2 className="h-4 w-4" /></button>
                 </td>
               </tr>
             ))}
@@ -835,6 +841,9 @@ function AreasTab() {
 
   return (
     <div>
+      <button onClick={() => { setAddOpen(true); setAddName(''); setAddDistrict(''); setAddError(''); }} title="Add Area" aria-label="Add Area" className="ih-fab">
+        <Plus className="h-5 w-5" />
+      </button>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <label className="text-sm text-gray-600">Filter by district:</label>
         <select value={selectedDistrict} onChange={(e) => { setSelectedDistrict(e.target.value); setPage(1); }}
@@ -843,7 +852,7 @@ function AreasTab() {
           {districts.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
         </select>
         <SearchBox value={searchInput} onChange={setSearchInput} placeholder="Search areas…" />
-        <div className="ml-auto">
+        <div className="ml-auto hidden sm:block">
           <button
             onClick={() => { setAddOpen(true); setAddName(''); setAddDistrict(''); setAddError(''); }}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#002349] text-white text-sm rounded-lg hover:bg-[#002349]/90">
@@ -870,22 +879,22 @@ function AreasTab() {
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
                       <button title="Rename area" onClick={() => { setTxError(''); setRenameItem(a); setRenameValue(a.name); }}
-                        className="ih-icon-btn text-blue-600 hover:bg-blue-50">
-                        <Pencil className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-edit">
+                        <Pencil className="h-4 w-4" /></button>
                       <button title="Split area" onClick={() => handleSplitOpen(a)}
-                        className="ih-icon-btn text-purple-600 hover:bg-purple-50">
-                        <Scissors className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-neutral">
+                        <Scissors className="h-4 w-4" /></button>
                       <button title="Merge into another area" onClick={() => { setTxError(''); setMergeItem(a); setMergeSurvivorKey(''); }}
-                        className="ih-icon-btn text-indigo-600 hover:bg-indigo-50">
-                        <GitMerge className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-neutral">
+                        <GitMerge className="h-4 w-4" /></button>
                       <button title="Transfer to another district" onClick={() => { setTxError(''); setTransferItem(a); setTransferTarget(''); }}
-                        className="ih-icon-btn text-teal-600 hover:bg-teal-50">
-                        <ArrowRightLeft className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-neutral">
+                        <ArrowRightLeft className="h-4 w-4" /></button>
                       <button
                         title={a.count > 0 ? `Cannot delete: ${a.count} member(s) assigned` : 'Delete area'}
                         onClick={() => { setTxError(''); setDeleteItem(a); }}
-                        className="ih-icon-btn text-red-600 hover:bg-red-50">
-                        <Trash2 className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-delete">
+                        <Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
                 ))}
@@ -912,22 +921,22 @@ function AreasTab() {
                   <td className="px-4 py-3 text-gray-600">{a.count}</td>
                   <td className="px-4 py-3 text-right space-x-2">
                     <button title="Rename area" onClick={() => { setTxError(''); setRenameItem(a); setRenameValue(a.name); }}
-                      className="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded">
-                      <Pencil className="w-3.5 h-3.5" /></button>
+                      className="ih-action ih-action-edit">
+                      <Pencil className="h-4 w-4" /></button>
                     <button title="Split area" onClick={() => handleSplitOpen(a)}
-                      className="inline-flex items-center p-2 text-purple-600 hover:bg-purple-50 rounded">
-                      <Scissors className="w-3.5 h-3.5" /></button>
+                      className="ih-action ih-action-neutral">
+                      <Scissors className="h-4 w-4" /></button>
                     <button title="Merge into another area" onClick={() => { setTxError(''); setMergeItem(a); setMergeSurvivorKey(''); }}
-                      className="inline-flex items-center p-2 text-indigo-600 hover:bg-indigo-50 rounded">
-                      <GitMerge className="w-3.5 h-3.5" /></button>
+                      className="ih-action ih-action-neutral">
+                      <GitMerge className="h-4 w-4" /></button>
                     <button title="Transfer to another district" onClick={() => { setTxError(''); setTransferItem(a); setTransferTarget(''); }}
-                      className="inline-flex items-center p-2 text-teal-600 hover:bg-teal-50 rounded">
-                      <ArrowRightLeft className="w-3.5 h-3.5" /></button>
+                      className="ih-action ih-action-neutral">
+                      <ArrowRightLeft className="h-4 w-4" /></button>
                     <button
                       title={a.count > 0 ? `Cannot delete: ${a.count} member(s) assigned` : 'Delete area'}
                       onClick={() => { setTxError(''); setDeleteItem(a); }}
-                      className="inline-flex items-center p-2 text-red-600 hover:bg-red-50 rounded">
-                      <Trash2 className="w-3.5 h-3.5" /></button>
+                      className="ih-action ih-action-delete">
+                      <Trash2 className="h-4 w-4" /></button>
                   </td>
                 </tr>
               ))}
@@ -1308,6 +1317,9 @@ function UnitsTab() {
 
   return (
     <div>
+      <button onClick={() => { setAddOpen(true); setAddName(''); setAddDistrict(''); setAddArea(''); setAddAreas([]); setAddError(''); }} title="Add Unit" aria-label="Add Unit" className="ih-fab">
+        <Plus className="h-5 w-5" />
+      </button>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <label className="text-sm text-gray-600">District:</label>
         <select value={selectedDistrict} onChange={(e) => { setSelectedDistrict(e.target.value); setSelectedArea(''); setPage(1); }}
@@ -1322,7 +1334,7 @@ function UnitsTab() {
           {filteredAreas.map((a) => <option key={`${a.district}-${a.name}`} value={a.name}>{a.name}</option>)}
         </select>
         <SearchBox value={searchInput} onChange={setSearchInput} placeholder="Search units…" />
-        <div className="ml-auto">
+        <div className="ml-auto hidden sm:block">
           <button
             onClick={() => { setAddOpen(true); setAddName(''); setAddDistrict(''); setAddArea(''); setAddAreas([]); setAddError(''); }}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#002349] text-white text-sm rounded-lg hover:bg-[#002349]/90">
@@ -1349,22 +1361,22 @@ function UnitsTab() {
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
                       <button title="Rename unit" onClick={() => { setTxError(''); setRenameItem(u); setRenameValue(u.name); }}
-                        className="ih-icon-btn text-blue-600 hover:bg-blue-50">
-                        <Pencil className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-edit">
+                        <Pencil className="h-4 w-4" /></button>
                       <button title="Split unit" onClick={() => { setTxError(''); setSplitSideA(u.name); setSplitSideB(''); setSplitItem(u); }}
-                        className="ih-icon-btn text-purple-600 hover:bg-purple-50">
-                        <Scissors className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-neutral">
+                        <Scissors className="h-4 w-4" /></button>
                       <button title="Merge into another unit" onClick={() => { setTxError(''); setMergeItem(u); setMergeSurvivorKey(''); }}
-                        className="ih-icon-btn text-indigo-600 hover:bg-indigo-50">
-                        <GitMerge className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-neutral">
+                        <GitMerge className="h-4 w-4" /></button>
                       <button title="Transfer to another area" onClick={() => { setTxError(''); setTransferItem(u); setTransferDistrictFilter(''); setTransferTargetKey(''); }}
-                        className="ih-icon-btn text-teal-600 hover:bg-teal-50">
-                        <ArrowRightLeft className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-neutral">
+                        <ArrowRightLeft className="h-4 w-4" /></button>
                       <button
                         title={u.count > 0 ? `Cannot delete: ${u.count} member(s) assigned` : 'Delete unit'}
                         onClick={() => { setTxError(''); setDeleteItem(u); }}
-                        className="ih-icon-btn text-red-600 hover:bg-red-50">
-                        <Trash2 className="w-3.5 h-3.5" /></button>
+                        className="ih-action ih-action-delete">
+                        <Trash2 className="h-4 w-4" /></button>
                     </div>
                   </div>
                 ))}
@@ -1393,22 +1405,22 @@ function UnitsTab() {
                   <td className="px-4 py-3 text-gray-600">{u.count}</td>
                   <td className="px-4 py-3 text-right space-x-2">
                     <button title="Rename unit" onClick={() => { setTxError(''); setRenameItem(u); setRenameValue(u.name); }}
-                      className="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded">
-                      <Pencil className="w-3.5 h-3.5" /></button>
+                      className="ih-action ih-action-edit">
+                      <Pencil className="h-4 w-4" /></button>
                     <button title="Split unit" onClick={() => { setTxError(''); setSplitSideA(u.name); setSplitSideB(''); setSplitItem(u); }}
-                      className="inline-flex items-center p-2 text-purple-600 hover:bg-purple-50 rounded">
-                      <Scissors className="w-3.5 h-3.5" /></button>
+                      className="ih-action ih-action-neutral">
+                      <Scissors className="h-4 w-4" /></button>
                     <button title="Merge into another unit" onClick={() => { setTxError(''); setMergeItem(u); setMergeSurvivorKey(''); }}
-                      className="inline-flex items-center p-2 text-indigo-600 hover:bg-indigo-50 rounded">
-                      <GitMerge className="w-3.5 h-3.5" /></button>
+                      className="ih-action ih-action-neutral">
+                      <GitMerge className="h-4 w-4" /></button>
                     <button title="Transfer to another area" onClick={() => { setTxError(''); setTransferItem(u); setTransferDistrictFilter(''); setTransferTargetKey(''); }}
-                      className="inline-flex items-center p-2 text-teal-600 hover:bg-teal-50 rounded">
-                      <ArrowRightLeft className="w-3.5 h-3.5" /></button>
+                      className="ih-action ih-action-neutral">
+                      <ArrowRightLeft className="h-4 w-4" /></button>
                     <button
                       title={u.count > 0 ? `Cannot delete: ${u.count} member(s) assigned` : 'Delete unit'}
                       onClick={() => { setTxError(''); setDeleteItem(u); }}
-                      className="inline-flex items-center p-2 text-red-600 hover:bg-red-50 rounded">
-                      <Trash2 className="w-3.5 h-3.5" /></button>
+                      className="ih-action ih-action-delete">
+                      <Trash2 className="h-4 w-4" /></button>
                   </td>
                 </tr>
               ))}
@@ -1629,14 +1641,12 @@ export default function MasterDataManagement() {
       </div>
 
       {/* Tab bar */}
-      <div className="mobile-tab-grid flex w-fit max-w-full gap-1 overflow-x-auto bg-gray-100 rounded-xl p-1 mb-6">
+      <div className="ih-pill-tabs mb-4">
         {TABS.map(({ id, label }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`shrink-0 whitespace-nowrap min-h-[44px] sm:min-h-0 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-              activeTab === id ? 'bg-white text-[#002349] shadow' : 'text-gray-600 hover:bg-gray-200'
-            }`}
+            className={`ih-pill-tab ${activeTab === id ? 'ih-pill-tab-active' : ''}`}
           >
             {label}
           </button>

@@ -146,12 +146,12 @@ function ReportsList() {
                     {status === 'submitted' ? (
                       <>
                         <button onClick={() => navigate(`/ihthisabi/mekhalanazim/submissions/${sub._id}`)}
-                          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:flex-none sm:text-sm">
+                          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-violet-50 px-3.5 py-2 text-xs font-semibold text-violet-700 transition-colors hover:bg-violet-100 sm:flex-none sm:text-sm">
                           <Eye className="w-3.5 h-3.5" /> View
                         </button>
                         {!locked && (
                           <button onClick={() => navigate(`/ihthisabi/mekhalanazim/reports/${r._id}`)}
-                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-50 sm:flex-none sm:text-sm">
+                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-blue-50 px-3.5 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 sm:flex-none sm:text-sm">
                             <Pencil className="w-3.5 h-3.5" /> Edit
                           </button>
                         )}
@@ -187,8 +187,8 @@ function ReportsList() {
                   <StatusBadge status={s.status} />
                   {s.status === 'submitted' && (
                     <button onClick={() => navigate(`/ihthisabi/mekhalanazim/submissions/${s._id}`)}
-                      title="View" className="ih-icon-btn hover:bg-gray-200 hover:text-gray-700">
-                      <Eye className="w-3.5 h-3.5" />
+                      title="View" className="ih-action ih-action-view">
+                      <Eye className="h-4 w-4" />
                     </button>
                   )}
                 </div>
@@ -372,7 +372,7 @@ function SubmissionView() {
           </div>
           {!locked && submission.status === 'submitted' && (
             <button onClick={() => navigate(`/ihthisabi/mekhalanazim/reports/${reportIdOf(submission)}`)}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3.5 py-2 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-50 sm:text-sm">
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3.5 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 sm:text-sm">
               <Pencil className="w-3.5 h-3.5" /> Edit Submission
             </button>
           )}

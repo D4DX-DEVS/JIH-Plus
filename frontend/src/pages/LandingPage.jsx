@@ -6,7 +6,6 @@ import {
   Clock,
   FileBarChart,
   MapPin,
-  MessageCircle,
   PhoneCall,
   PieChart,
   Shield,
@@ -17,7 +16,31 @@ import {
 import { useNavigate } from 'react-router-dom';
 import BrandLogo from '../components/branding/BrandLogo';
 import d4dxLogo from '../assets/d4dx_logo.png';
-import { PUBLIC_HELP_DESK_CONTACTS, getTelHref, getWhatsAppHref } from '../data/helpDeskContacts';
+import { PUBLIC_HELP_DESK_CONTACTS } from '../data/helpDeskContacts';
+import HelpDeskContactList, { HelpDeskBadge } from '../components/helpdesk/HelpDeskContactList';
+import { FRANCHISES } from '../tenants/registry';
+
+// Franchises of the JIH Portal (same pages, own database) get a card each,
+// right after the master portal. They run under their own router basename, so
+// their action is a full page navigation rather than a client-side route.
+const franchiseCards = FRANCHISES.map((franchise) => ({
+  id: `${franchise.key}-portal`,
+  title: franchise.label,
+  description: franchise.description,
+  mobileDescription: franchise.mobileDescription,
+  icon: Shield,
+  accent: franchise.accent,
+  illustration: 'expansion',
+  actions: [
+    {
+      label: `Access ${franchise.label}`,
+      icon: null,
+      className: franchise.gradientClass,
+      path: `${franchise.basePath}/expansion-portal/login`,
+      hard: true,
+    },
+  ],
+}));
 
 const portalCards = [
   {
@@ -37,6 +60,7 @@ const portalCards = [
       },
     ],
   },
+  ...franchiseCards,
   {
     id: 'ihthisabi-report',
     title: 'IHTHISABI Report',
@@ -98,6 +122,12 @@ const accentClasses = {
     glow: 'bg-[#e8f8f0]',
     underline: 'bg-[#15945a]',
   },
+  rose: {
+    iconWrap: 'bg-[#fdf2f8]',
+    icon: 'text-[#be185d]',
+    glow: 'bg-[#fce7f3]',
+    underline: 'bg-[#db2777]',
+  },
 };
 
 const LandingPage = () => {
@@ -112,9 +142,13 @@ const LandingPage = () => {
   }, [showHelpDesk]);
 
   const handleAction = (action) => {
-    if (action.path) {
-      navigate(action.path);
+    if (!action.path) return;
+    if (action.hard) {
+      // Crosses into a franchise router basename: needs a real navigation.
+      window.location.assign(action.path);
+      return;
     }
+    navigate(action.path);
   };
 
   return (
@@ -180,7 +214,7 @@ const LandingPage = () => {
             <p className="mt-0.5 text-xs text-[#59677f]">All JIH services in one place</p>
           </div>
 
-          <section className="grid min-h-0 gap-2.5 sm:mt-3 md:mt-4 md:grid-cols-3 md:gap-4 lg:gap-5 xl:mt-5">
+          <section className="grid min-h-0 gap-2.5 sm:mt-3 md:mt-4 md:grid-cols-2 md:gap-4 lg:gap-5 xl:mt-5 xl:grid-cols-4">
             {orderedPortalCards.map((card, index) => (
               <PortalCard
                 key={card.id}
@@ -314,6 +348,7 @@ const DecorativeIllustration = ({ type, accent }) => {
     blue: ['#dfeaff', '#c9dcff', '#aac7fb', '#8db3f4'],
     purple: ['#eee7ff', '#ddd1ff', '#c5b1fb', '#a88af2'],
     green: ['#e2f8ed', '#ccefdc', '#9cddb9', '#69c990'],
+    rose: ['#fce7f3', '#fbcfe8', '#f9a8d4', '#f472b6'],
   };
 
   if (type === 'expansion') {
@@ -379,10 +414,7 @@ const HelpDeskModal = ({ onClose }) => {
       onClick={(event) => event.stopPropagation()}
     >
       <div className="flex items-center justify-between gap-4">
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#7548e8]/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[#5a34b0]">
-          <PhoneCall className="h-3.5 w-3.5" />
-          <span>Help Desk</span>
-        </div>
+        <HelpDeskBadge />
         <button
           type="button"
           onClick={onClose}
@@ -393,45 +425,8 @@ const HelpDeskModal = ({ onClose }) => {
         </button>
       </div>
 
-      <div className="mt-4 max-h-[70vh] space-y-3 overflow-y-auto pr-1">
-        {PUBLIC_HELP_DESK_CONTACTS.map((contact) => (
-          <div key={contact.id} className="rounded-2xl border border-[#e6e8f5] bg-white p-4">
-            <p className="text-[0.65rem] font-bold uppercase tracking-wide text-[#7548e8]">{contact.topic}</p>
-            <p className="mt-0.5 text-sm font-extrabold text-[#14305c]">{contact.person}</p>
-
-            <div className="mt-3 space-y-2">
-              {contact.phones.map((phone) => (
-                <div
-                  key={`${contact.id}-${phone.value}`}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-[#f6f7fc] px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-[0.65rem] font-semibold uppercase tracking-wide text-[#8992ac]">{phone.label}</p>
-                    <p className="text-sm font-bold text-[#14305c]">{phone.value}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <a
-                      href={getTelHref(phone.value)}
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-[#10274f] text-white transition hover:bg-[#17325b]"
-                      aria-label={`Call ${contact.person}`}
-                    >
-                      <PhoneCall className="h-4 w-4" />
-                    </a>
-                    <a
-                      href={getWhatsAppHref(phone.value, contact.topic)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full border border-[#957C3D]/40 bg-[#957C3D]/10 text-[#7b652f] transition hover:bg-[#957C3D]/20"
-                      aria-label={`Message ${contact.person}`}
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+      <div className="mt-4 max-h-[70vh] overflow-y-auto pr-1">
+        <HelpDeskContactList contacts={PUBLIC_HELP_DESK_CONTACTS} />
       </div>
     </div>
   </div>

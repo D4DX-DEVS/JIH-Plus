@@ -318,7 +318,7 @@ const DynamicFormsUser = () => {
                         {mine && (
                           <button
                             onClick={() => navigate(`/ihthisabi/dynamic-forms/submissions/${mine._id}`)}
-                            className="inline-flex min-h-[44px] items-center rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
+                            className="inline-flex min-h-[44px] items-center rounded-lg bg-violet-50 px-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -367,7 +367,7 @@ const DynamicFormsUser = () => {
                           {mine && (
                             <button
                               onClick={() => navigate(`/ihthisabi/dynamic-forms/submissions/${mine._id}`)}
-                              className="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-gray-800 hover:bg-gray-100 transition"
+                              className="inline-flex items-center px-3 py-1.5 rounded-md bg-violet-50 text-violet-700 hover:bg-violet-100 transition"
                             >
                               <Eye className="w-4 h-4 mr-1" /> View
                             </button>

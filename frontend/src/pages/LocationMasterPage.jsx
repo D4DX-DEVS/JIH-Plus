@@ -656,7 +656,7 @@ function DistrictsTab() {
                 <span className="font-medium text-gray-800 truncate">{d.name}</span>
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
               </button>
-              <div className="flex items-center gap-2 flex-wrap px-4 pb-2.5">
+              <div className="grid grid-flow-col auto-cols-fr gap-1 px-2 pb-2">
                 <button title="Reset password" onClick={() => handleResetPassword(d._id)}
                   className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-amber-600 hover:bg-amber-50 rounded">
                   <RefreshCw className="w-4 h-4" /></button>
@@ -1147,7 +1147,7 @@ function AreasTab() {
                 <span className="font-medium text-gray-800 truncate">{a.name}</span>
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
               </button>
-              <div className="flex items-center gap-2 flex-wrap px-4 pb-2.5">
+              <div className="grid grid-flow-col auto-cols-fr gap-1 px-2 pb-2">
                 <button title="Reset password" onClick={() => handleResetPassword(a._id)}
                   className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-amber-600 hover:bg-amber-50 rounded">
                   <RefreshCw className="w-4 h-4" /></button>
@@ -1696,7 +1696,7 @@ function UnitsTab() {
                 <span className="font-medium text-gray-800 truncate">{u.name}</span>
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
               </button>
-              <div className="flex items-center gap-2 flex-wrap px-4 pb-2.5">
+              <div className="grid grid-flow-col auto-cols-fr gap-1 px-2 pb-2">
                 <button title="Reset password" onClick={() => handleResetPassword(u._id)}
                   className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-amber-600 hover:bg-amber-50 rounded">
                   <RefreshCw className="w-4 h-4" /></button>

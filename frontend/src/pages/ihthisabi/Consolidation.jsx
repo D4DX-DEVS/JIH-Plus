@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { api } from '../../utils/ihthisabi/api'
-import { BarChart3, CalendarRange, Filter, AlertCircle, Users, RefreshCcw, Trophy, X, FileText } from 'lucide-react'
+import { AlertCircle, Users, RefreshCcw, Trophy, X, FileText, SlidersHorizontal, ChevronDown, MapPin } from 'lucide-react'
 import { getAvailableQuarters, getQuarterName } from '../../utils/ihthisabi/quarterHelper'
 
 // Consolidation: pick a year + quarter, the published dynamic form for that
@@ -14,9 +14,17 @@ const Consolidation = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
-  // Step 1 — period selection
-  const [selectedYear, setSelectedYear] = useState('')
-  const [selectedQuarter, setSelectedQuarter] = useState('')
+  // Step 1 — period selection. Starts on the quarter currently open for
+  // submission (the previous calendar quarter) so the page shows numbers on
+  // first paint instead of an empty prompt.
+  const _currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3)
+  const _defaultQuarter = _currentQuarter === 1 ? 4 : _currentQuarter - 1
+  const _defaultYear = _currentQuarter === 1 ? new Date().getFullYear() - 1 : new Date().getFullYear()
+  const [selectedYear, setSelectedYear] = useState(String(_defaultYear))
+  const [selectedQuarter, setSelectedQuarter] = useState(
+    String(getAvailableQuarters().includes(_defaultQuarter) ? _defaultQuarter : 2)
+  )
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   // Step 2 — location filters (default all)
   const [district, setDistrict] = useState('all')
@@ -41,8 +49,8 @@ const Consolidation = () => {
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: currentYear - 2023 + 1 }, (_, i) => currentYear - i)
   const quarters = getAvailableQuarters()
-  const periodChosen = Boolean(selectedYear && selectedQuarter)
   const isAdmin = user?.role === 'admin'
+  const activeFilterCount = [district, area, unit].filter(v => v !== 'all').length
 
   // Filter dropdown options come from the master-data endpoints (cascading)
   useEffect(() => {
@@ -78,7 +86,7 @@ const Consolidation = () => {
   // The endpoint returns the published form itself, so a 404 means no
   // dynamic form is published for the chosen quarter.
   useEffect(() => {
-    if (!periodChosen || !isAdmin) return
+    if (!isAdmin) return
     let cancelled = false
 
     const fetchConsolidation = async () => {
@@ -109,7 +117,7 @@ const Consolidation = () => {
 
     fetchConsolidation()
     return () => { cancelled = true }
-  }, [periodChosen, isAdmin, selectedYear, selectedQuarter, district, area, unit])
+  }, [isAdmin, selectedYear, selectedQuarter, district, area, unit])
 
   const form = data?.form || null
   const breakdowns = data?.breakdowns || {}
@@ -411,66 +419,98 @@ const Consolidation = () => {
     questionBlocks.push(renderQuestionCard(question))
   })
 
+  const selectClass = 'form-select min-h-[44px] w-full truncate text-[13px] sm:min-h-0 sm:text-sm'
+
   return (
     <div className="ih-screen bg-gray-50">
       <div className="ih-page-shell">
-        <div className="mb-4">
-          <div className="ih-page-header">
-            <div>
-              <h1 className="ih-page-title hidden lg:block">Consolidation</h1>
-              <p className="ih-page-subtitle">Select a year and quarter to see the combined results of every answer</p>
-            </div>
-          </div>
+        {/* Desktop-only heading — the app bar names the screen on phones. */}
+        <div className="mb-4 hidden lg:block">
+          <h1 className="ih-page-title">Consolidation</h1>
+          <p className="ih-page-subtitle">Pick a quarter to see the combined results of every answer</p>
         </div>
 
-        {/* Step 1 — period selection */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <CalendarRange className="w-4 h-4 text-[#7B4FF2]" />
-            <span className="text-sm font-semibold text-gray-900">1. Choose the report period</span>
+        {/* Period + scope in one compact strip. Location filters are folded
+            away on phones (toggle on the right) and always open from sm:. */}
+        <div className="ih-surface mb-3 p-2.5 sm:mb-4 sm:p-3">
+          <div className="grid grid-cols-[1fr_1fr_auto] gap-2 sm:flex sm:flex-wrap sm:items-center">
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              aria-label="Year"
+              className={`${selectClass} sm:w-32`}
+            >
+              {years.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <select
+              value={selectedQuarter}
+              onChange={(e) => setSelectedQuarter(e.target.value)}
+              aria-label="Quarter"
+              className={`${selectClass} sm:w-40`}
+            >
+              {quarters.map(q => (
+                <option key={q} value={q}>{getQuarterName(q)}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(o => !o)}
+              aria-expanded={filtersOpen}
+              aria-label="Filter by location"
+              title="Filter by location"
+              className={`inline-flex h-[44px] shrink-0 items-center gap-1 rounded-full px-3 text-[11px] font-medium transition-colors sm:hidden ${
+                activeFilterCount > 0 ? 'bg-primary/10 text-primary' : 'text-gray-500'
+              }`}
+              style={activeFilterCount > 0 ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              {activeFilterCount > 0 && <span>{activeFilterCount}</span>}
+              <ChevronDown className={`h-3 w-3 transition-transform duration-300 ${filtersOpen ? 'rotate-180' : ''}`} />
+            </button>
           </div>
-          <div className="grid grid-cols-2 gap-3 max-w-md">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Year</label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
+
+          <div className={`${filtersOpen ? 'grid' : 'hidden'} mt-2 grid-cols-2 gap-2 sm:!grid sm:grid-cols-3 sm:gap-3`}>
+            <select value={district} onChange={(e) => setDistrict(e.target.value)} aria-label="District" className={selectClass}>
+              <option value="all">All Districts</option>
+              {districts.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <select
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+              aria-label="Area"
+              className={selectClass}
+              disabled={district === 'all'}
+            >
+              <option value="all">All Areas</option>
+              {areas.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+            <select
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              aria-label="Unit"
+              className={`${selectClass} col-span-2 sm:col-span-1`}
+              disabled={district === 'all' || area === 'all'}
+            >
+              <option value="all">All Units</option>
+              {units.map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={() => { setDistrict('all'); setArea('all'); setUnit('all') }}
+                className="col-span-2 inline-flex min-h-[44px] items-center justify-center gap-1 rounded-full text-xs font-medium text-gray-500 hover:text-gray-800 sm:col-span-3 sm:min-h-0 sm:justify-start"
               >
-                <option value="">Select year</option>
-                {years.map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Quarter</label>
-              <select
-                value={selectedQuarter}
-                onChange={(e) => setSelectedQuarter(e.target.value)}
-                className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
-              >
-                <option value="">Select quarter</option>
-                {quarters.map(q => (
-                  <option key={q} value={q}>{getQuarterName(q)}</option>
-                ))}
-              </select>
-            </div>
+                <X className="h-3.5 w-3.5" /> Clear location filters
+              </button>
+            )}
           </div>
         </div>
-
-        {/* Nothing selected yet */}
-        {!periodChosen && (
-          <div className="bg-white rounded-xl shadow-sm border border-dashed border-gray-300 p-10 text-center">
-            <BarChart3 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-sm font-medium text-gray-700">Pick a year and quarter above</p>
-            <p className="text-xs text-gray-500 mt-1">The consolidated report of that quarter's form will appear here.</p>
-          </div>
-        )}
 
         {/* No published form for the chosen quarter */}
-        {periodChosen && !fetching && formMissing && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-start gap-3">
+        {!fetching && formMissing && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 sm:p-6 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-amber-800">
@@ -484,15 +524,15 @@ const Consolidation = () => {
         )}
 
         {/* Error */}
-        {periodChosen && !fetching && error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-3">
+        {!fetching && error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-6 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
 
         {/* Loading */}
-        {periodChosen && fetching && (
+        {fetching && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-10 flex items-center justify-center gap-2 text-sm text-gray-600">
             <RefreshCcw className="w-4 h-4 animate-spin" />
             ലോഡ് ചെയ്യുന്നു…
@@ -500,72 +540,39 @@ const Consolidation = () => {
         )}
 
         {/* Results */}
-        {periodChosen && !fetching && !formMissing && !error && data && (
+        {!fetching && !formMissing && !error && data && (
           <>
-            {/* Step 2 — location filters */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Filter className="w-4 h-4 text-[#7B4FF2]" />
-                <span className="text-sm font-semibold text-gray-900">2. Filter by location (optional)</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">District</label>
-                  <select value={district} onChange={(e) => setDistrict(e.target.value)} className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm">
-                    <option value="all">All Districts</option>
-                    {districts.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
+            {/* Summary card — the count is the headline. (No bg-white/… tints
+                in here: the global surface rule turns those solid white.) */}
+            <div className="mb-3 rounded-2xl bg-gradient-to-br from-[#1E1040] to-[#2D1B69] p-4 text-white sm:mb-4 sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-purple-300">{form?.title}</p>
+                  <p className="mt-0.5 text-lg font-bold leading-tight sm:text-xl">
+                    {getQuarterName(Number(selectedQuarter))} {selectedYear}
+                  </p>
+                  <p className="mt-1.5 inline-flex max-w-full items-center gap-1 rounded-full bg-[#7B4FF2]/25 px-2 py-0.5 text-[11px] font-medium text-purple-100">
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    <span className="min-w-0 break-words">{scopeLabel}</span>
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Area</label>
-                  <select
-                    value={area}
-                    onChange={(e) => setArea(e.target.value)}
-                    className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
-                    disabled={district === 'all'}
-                  >
-                    <option value="all">All Areas</option>
-                    {areas.map(a => <option key={a} value={a}>{a}</option>)}
-                  </select>
+                <div className="shrink-0 text-right">
+                  <p className="text-3xl font-extrabold leading-none sm:text-4xl">{totalSubmissions}</p>
+                  <p className="mt-1 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-purple-300">
+                    <Users className="h-3 w-3" /> submissions
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Unit</label>
-                  <select
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    className="form-select truncate min-h-[44px] sm:min-h-0 text-[13px] sm:text-sm"
-                    disabled={district === 'all' || area === 'all'}
-                  >
-                    <option value="all">All Units</option>
-                    {units.map(u => <option key={u} value={u}>{u}</option>)}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Summary bar */}
-            <div className="bg-gradient-to-r from-[#1E1040] to-[#2D1B69] rounded-xl shadow-sm p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs text-purple-300">{form?.title}</p>
-                <p className="text-sm font-semibold text-white">
-                  {getQuarterName(Number(selectedQuarter))} {selectedYear} · {scopeLabel}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
-                <Users className="w-4 h-4 text-purple-300" />
-                <span className="text-lg font-bold text-white">{totalSubmissions}</span>
-                <span className="text-xs text-purple-300">submissions consolidated</span>
               </div>
             </div>
 
             {totalSubmissions === 0 ? (
-              <div className="bg-white rounded-xl shadow-sm border border-dashed border-gray-300 p-10 text-center">
+              <div className="bg-white rounded-xl shadow-sm border border-dashed border-gray-300 p-8 sm:p-10 text-center">
                 <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                 <p className="text-sm font-medium text-gray-700">No submissions found</p>
                 <p className="text-xs text-gray-500 mt-1">No one in {scopeLabel} has submitted this quarter's form yet.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {questionBlocks}
               </div>
             )}

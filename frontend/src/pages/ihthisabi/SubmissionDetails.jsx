@@ -278,7 +278,7 @@ const SubmissionDetails = ({ userRole }) => {
               </button>
               <button
                 onClick={handleDelete}
-                className="min-h-[44px] lg:min-h-0 flex-1 sm:flex-none px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 hover:border-red-300"
+                className="min-h-[44px] lg:min-h-0 flex-1 sm:flex-none px-4 py-2 bg-red-50 text-red-700 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 hover:bg-red-100"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete

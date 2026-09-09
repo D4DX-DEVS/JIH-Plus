@@ -218,17 +218,20 @@ const UnitAdminDetails = () => {
           </div>
 
           {/* Section tabs */}
-          <div className="ih-segment mb-3">
+          <div className="ih-pill-tabs mb-3" role="tablist" aria-label="Sections">
             {SECTIONS.map((s) => {
               const Icon = s.icon
               return (
                 <button
                   key={s.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={section === s.key}
                   onClick={() => changeSection(s.key)}
-                  className={`ih-segment-btn min-h-[44px] lg:min-h-0 ${section === s.key ? 'bg-[#7B4FF2] text-white shadow-sm' : ''}`}
+                  className={`ih-pill-tab ${section === s.key ? 'ih-pill-tab-active' : ''}`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">{s.label}</span>
+                  <span>{s.label}</span>
                   <span className={`text-[10px] font-semibold ${section === s.key ? 'text-white/80' : 'text-gray-400'}`}>{sectionCounts[s.key]}</span>
                 </button>
               )

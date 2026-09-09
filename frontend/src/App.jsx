@@ -1,29 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { ErrorProvider } from './contexts/ErrorContext';
 import LandingPage from './pages/LandingPage';
-import AdminLoginPage from './pages/AdminLoginPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
-import AreaDashboardPage from './pages/AreaDashboardPage';
-import UnitDashboardPage from './pages/UnitDashboardPage';
-import DistrictDashboardPage from './pages/DistrictDashboardPage';
-import AreaSurveyPage from './pages/AreaSurveyPage';
-import AreaSurveyDetailPage from './pages/AreaSurveyDetailPage';
-import AreaSurveyEditPage from './pages/AreaSurveyEditPage';
-import DistrictSurveyPage from './pages/DistrictSurveyPage';
-import { validateUserToken, validateAdminToken } from './utils/auth';
-import DistrictMonthlyDetailPage from './pages/DistrictMonthlyDetailPage';
-import AreaMonthlyDetailPage from './pages/AreaMonthlyDetailPage';
-import UnitMonthlyDetailPage from './pages/UnitMonthlyDetailPage';
-import ReportsPage from './pages/ReportsPage';
-import UserReportsPage from './pages/UserReportsPage';
-import ReportSubmissionsPage from './pages/ReportSubmissionsPage';
-import NotificationsPage from './pages/NotificationsPage';
-import HelpDeskPage from './pages/HelpDeskPage';
-import LocationMasterPage from './pages/LocationMasterPage';
-import DynamicSubmissionsPage from './pages/DynamicSubmissionsPage';
-import TargetsPage from './pages/TargetsPage';
+import { currentTenant } from './tenants/current';
+import FranchiseApp from './portal/FranchiseApp';
+import { useJihPortalSession, renderJihRoutes } from './portal/JihPortalRoutes';
 
 // IHTHISABI imports
 import { AuthProvider as IhthisabiAuthProvider, useAuth as useIhthisabiAuth } from './contexts/ihthisabi/AuthContext';
@@ -68,79 +49,12 @@ import MembersRolesPage from './pages/members/RolesPage';
 import MembersAccountsPage from './pages/members/AccountsPage';
 import MembersMasterDataPage from './pages/members/MasterDataPage';
 import MembersNotificationsPage from './pages/members/NotificationsPage';
-import ExpansionPortalLoginPage from './pages/ExpansionPortalLoginPage';
-import ExpansionPortalDashboardPage from './pages/ExpansionPortalDashboardPage';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      try {
-        // Validate both user and admin tokens
-        const [userValid, adminValid] = await Promise.all([
-          validateUserToken(),
-          validateAdminToken()
-        ]);
-        
-        setIsAuthenticated(userValid);
-        setIsAdminAuthenticated(adminValid);
-      } catch (error) {
-        console.error('Error checking authentication:', error);
-        // On error, assume not authenticated
-        setIsAuthenticated(false);
-        setIsAdminAuthenticated(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuthentication();
-  }, []);
-
-  const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-  };
-
-  const handleAdminLoginSuccess = () => {
-    setIsAdminAuthenticated(true);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('userToken');
-    localStorage.removeItem('userData');
-    setIsAuthenticated(false);
-    toast.success('Logged out successfully');
-  };
-
-  const handleAdminLogout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminData');
-    setIsAdminAuthenticated(false);
-    toast.success('Logged out successfully');
-  };
-
-  // Helper function to determine default dashboard based on user data
-  const getDefaultDashboard = () => {
-    try {
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-      const role = userData.role;
-      
-      if (role === 'area' && userData.areaId) {
-        return `/area-dashboard/${userData.areaId}`;
-      } else if (role === 'unit' && userData.unitId) {
-        return `/unit-dashboard/${userData.unitId}`;
-      } else if (role === 'district' && userData.districtId) {
-        return `/district-dashboard/${userData.districtId}`;
-      }
-      return '/dashboard'; // fallback to default dashboard
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      return '/dashboard';
-    }
-  };
+  // JIH Portal session (tokens + logout handlers). A franchise reuses it as-is:
+  // the storage adapter installed in main.jsx namespaces its tokens.
+  const session = useJihPortalSession();
+  const { isAuthenticated, isAdminAuthenticated, isLoading, handleLoginSuccess, getDefaultDashboard } = session;
 
   if (isLoading) {
     return (
@@ -153,322 +67,27 @@ function App() {
     );
   }
 
+  // Franchise portals (e.g. /womens) render the JIH route tree under their own
+  // basename and never see the master landing page, IHTHISABI or Members.
+  if (currentTenant.isFranchise) {
+    return <FranchiseApp tenant={currentTenant} session={session} />;
+  }
+
   return (
     <ErrorProvider>
     <BrowserRouter>
       <Routes>
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             isAuthenticated || isAdminAuthenticated ? (
               <Navigate to={isAdminAuthenticated ? "/expansion-portal/dashboard" : getDefaultDashboard()} replace />
             ) : (
               <LandingPage onLoginSuccess={handleLoginSuccess} />
             )
-          } 
-        />
-        <Route 
-          path="/dashboard" 
-          element={
-            isAuthenticated ? (
-              <Navigate to={getDefaultDashboard()} replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/admin-login" 
-          element={
-            isAdminAuthenticated ? (
-              <Navigate to="/admin-dashboard" replace />
-            ) : (
-              <AdminLoginPage onLoginSuccess={handleAdminLoginSuccess} />
-            )
-          } 
-        />
-        <Route
-          path="/expansion-portal/login"
-          element={
-            isAdminAuthenticated ? (
-              <Navigate to="/expansion-portal/dashboard" replace />
-            ) : isAuthenticated ? (
-              <Navigate to={getDefaultDashboard()} replace />
-            ) : (
-              <ExpansionPortalLoginPage
-                onLoginSuccess={handleLoginSuccess}
-                onAdminLoginSuccess={handleAdminLoginSuccess}
-              />
-            )
           }
         />
-        <Route
-          path="/expansion-portal/dashboard"
-          element={
-            isAdminAuthenticated ? (
-              <ExpansionPortalDashboardPage onLogout={handleAdminLogout} />
-            ) : (
-              <Navigate to="/expansion-portal/login" replace />
-            )
-          }
-        />
-        <Route 
-          path="/admin-dashboard" 
-          element={
-            isAdminAuthenticated ? (
-              <AdminDashboardPage onLogout={handleAdminLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/admin/master-data"
-          element={
-            isAdminAuthenticated ? (
-              <LocationMasterPage onLogout={handleAdminLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/admin/dynamic-submissions/:type"
-          element={
-            isAdminAuthenticated ? (
-              <DynamicSubmissionsPage scope="admin" onLogout={handleAdminLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/district/dynamic-submissions/:type"
-          element={
-            isAuthenticated ? (
-              <DynamicSubmissionsPage scope="district" onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/area/dynamic-submissions/:type"
-          element={
-            isAuthenticated ? (
-              <DynamicSubmissionsPage scope="area" onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route 
-          path="/create-report" 
-          element={
-            isAdminAuthenticated ? (
-              <ReportsPage onLogout={handleAdminLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/view-reports" 
-          element={
-            isAdminAuthenticated ? (
-              <ReportsPage onLogout={handleAdminLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/view-report/:id" 
-          element={
-            isAdminAuthenticated ? (
-              <ReportsPage onLogout={handleAdminLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/edit-report/:id" 
-          element={
-            isAdminAuthenticated ? (
-              <ReportsPage onLogout={handleAdminLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route
-          path="/targets"
-          element={
-            isAdminAuthenticated || isAuthenticated ? (
-              <TargetsPage onLogout={isAdminAuthenticated ? handleAdminLogout : handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route 
-          path="/report-submissions" 
-          element={
-            isAdminAuthenticated ? (
-              <ReportSubmissionsPage onLogout={handleAdminLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/report-submissions/:id" 
-          element={
-            isAdminAuthenticated ? (
-              <ReportSubmissionsPage onLogout={handleAdminLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/form" 
-          element={
-            isAuthenticated ? (
-              <Navigate to={getDefaultDashboard()} replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/district-dashboard/:districtId"
-          element={
-            isAuthenticated ? (
-              <DistrictDashboardPage onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route 
-          path="/area-dashboard/:areaId" 
-          element={
-            isAuthenticated ? (
-              <AreaDashboardPage onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route 
-          path="/unit-dashboard/:unitId" 
-          element={
-            isAuthenticated || isAdminAuthenticated ? (
-              <UnitDashboardPage onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/user-reports"
-          element={
-            isAuthenticated ? (
-              <UserReportsPage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/notifications"
-          element={
-            isAuthenticated || isAdminAuthenticated ? (
-              <NotificationsPage 
-                onLogout={isAdminAuthenticated ? handleAdminLogout : handleLogout}
-              />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/help-desk"
-          element={<HelpDeskPage />}
-        />
-        <Route 
-          path="/area-survey" 
-          element={
-            isAuthenticated || isAdminAuthenticated ? (
-              <AreaSurveyPage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route 
-          path="/area-survey-detail/:surveyId" 
-          element={
-            isAuthenticated ? (
-              <AreaSurveyDetailPage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route 
-          path="/area-survey-edit/:surveyId" 
-          element={
-            isAuthenticated ? (
-              <AreaSurveyEditPage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route 
-          path="/district-survey" 
-          element={
-            isAuthenticated || isAdminAuthenticated ? (
-              <DistrictSurveyPage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        {/* Monthly detail routes (admin or user with access) */}
-        <Route
-          path="/monthly/district/:id"
-          element={
-            isAuthenticated || isAdminAuthenticated ? (
-              <DistrictMonthlyDetailPage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/monthly/area/:id"
-          element={
-            isAuthenticated || isAdminAuthenticated ? (
-              <AreaMonthlyDetailPage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
-        <Route
-          path="/monthly/unit/:id"
-          element={
-            isAuthenticated || isAdminAuthenticated ? (
-              <UnitMonthlyDetailPage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+        {renderJihRoutes(session)}
         
         {/* IHTHISABI Routes - Wrapped in AuthProvider */}
         <Route path="/ihthisabi/*" element={

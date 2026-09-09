@@ -12,4 +12,4 @@ const districtSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('District', districtSchema);
+module.exports = require('../config/tenantModel').tenantModel('District', districtSchema);

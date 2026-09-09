@@ -3,6 +3,7 @@ import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { portalHref } from '../tenants/current';
 import { ArrowLeft, CheckCircle2, Clock, Loader2, Search, SendHorizontal, Save, AlertCircle, Pencil, Trash2, Eye, Download, FileText } from 'lucide-react';
 import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
@@ -260,11 +261,11 @@ const UserReportsPage = ({ onBack, userData }) => {
       // Try to redirect to appropriate dashboard based on user role
       const userData = JSON.parse(localStorage.getItem('userData') || '{}');
       if (userData.districtId) {
-        window.location.href = `/district-dashboard/${userData.districtId}`;
+        window.location.href = portalHref(`/district-dashboard/${userData.districtId}`);
       } else if (userData.areaId) {
-        window.location.href = `/area-dashboard/${userData.areaId}`;
+        window.location.href = portalHref(`/area-dashboard/${userData.areaId}`);
       } else if (userData.unitId) {
-        window.location.href = `/unit-dashboard/${userData.unitId}`;
+        window.location.href = portalHref(`/unit-dashboard/${userData.unitId}`);
       } else {
         window.location.href = '/';
       }

@@ -68,4 +68,4 @@ notificationSchema.index({ 'recipients.areas.areaId': 1 });
 notificationSchema.index({ 'recipients.units.unitId': 1 });
 notificationSchema.index({ 'recipients.district.districtId': 1 });
 
-module.exports = mongoose.model('Notification', notificationSchema);
+module.exports = require('../config/tenantModel').tenantModel('Notification', notificationSchema);

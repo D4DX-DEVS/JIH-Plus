@@ -130,10 +130,10 @@ function CountriesTab() {
                         <span className="text-[13px] font-semibold text-gray-900 truncate">{c.title}</span>
                       </div>
                       <div className="flex shrink-0 items-center gap-1.5">
-                        <button onClick={() => { setEditingId(c._id); setEditValue(c.title) }} aria-label="Edit" className="ih-icon-btn text-gray-700 hover:bg-gray-100">
-                          <Pencil className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => setDeleteModal({ isOpen: true, id: c._id, title: c.title })} aria-label="Delete" className="ih-icon-btn text-red-600 hover:bg-red-50">
-                          <Trash2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => { setEditingId(c._id); setEditValue(c.title) }} aria-label="Edit" className="ih-action ih-action-edit">
+                          <Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => setDeleteModal({ isOpen: true, id: c._id, title: c.title })} aria-label="Delete" className="ih-action ih-action-delete">
+                          <Trash2 className="w-4 h-4" /></button>
                       </div>
                     </div>
                   )}
@@ -177,10 +177,10 @@ function CountriesTab() {
                 <td className="px-6 py-4 text-right">
                   {editingId !== c._id && (
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => { setEditingId(c._id); setEditValue(c.title) }} aria-label="Edit" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50">
+                      <button onClick={() => { setEditingId(c._id); setEditValue(c.title) }} aria-label="Edit" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium hover:bg-blue-100">
                         <Pencil className="w-3.5 h-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Edit</span>
                       </button>
-                      <button onClick={() => setDeleteModal({ isOpen: true, id: c._id, title: c.title })} aria-label="Delete" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50">
+                      <button onClick={() => setDeleteModal({ isOpen: true, id: c._id, title: c.title })} aria-label="Delete" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100">
                         <Trash2 className="w-3.5 h-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Delete</span>
                       </button>
                     </div>
@@ -305,10 +305,10 @@ function AreasTab() {
                           <span className="text-[13px] font-semibold text-gray-900 truncate">{a.title}</span>
                         </div>
                         <div className="flex shrink-0 items-center gap-1.5">
-                          <button onClick={() => { setEditingId(a._id); setEditValue(a.title) }} aria-label="Edit" className="ih-icon-btn text-gray-700 hover:bg-gray-100">
-                            <Pencil className="w-3.5 h-3.5" /></button>
-                          <button onClick={() => setDeleteModal({ isOpen: true, id: a._id, title: a.title })} aria-label="Delete" className="ih-icon-btn text-red-600 hover:bg-red-50">
-                            <Trash2 className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => { setEditingId(a._id); setEditValue(a.title) }} aria-label="Edit" className="ih-action ih-action-edit">
+                            <Pencil className="w-4 h-4" /></button>
+                          <button onClick={() => setDeleteModal({ isOpen: true, id: a._id, title: a.title })} aria-label="Delete" className="ih-action ih-action-delete">
+                            <Trash2 className="w-4 h-4" /></button>
                         </div>
                       </div>
                     )}
@@ -350,8 +350,8 @@ function AreasTab() {
                   <td className="px-6 py-4 text-right">
                     {editingId !== a._id && (
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => { setEditingId(a._id); setEditValue(a.title) }} aria-label="Edit" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50"><Pencil className="w-3.5 h-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Edit</span></button>
-                        <button onClick={() => setDeleteModal({ isOpen: true, id: a._id, title: a.title })} aria-label="Delete" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50"><Trash2 className="w-3.5 h-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Delete</span></button>
+                        <button onClick={() => { setEditingId(a._id); setEditValue(a.title) }} aria-label="Edit" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium hover:bg-blue-100"><Pencil className="w-3.5 h-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Edit</span></button>
+                        <button onClick={() => setDeleteModal({ isOpen: true, id: a._id, title: a.title })} aria-label="Delete" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100"><Trash2 className="w-3.5 h-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Delete</span></button>
                       </div>
                     )}
                   </td>
@@ -489,8 +489,8 @@ function AssignAdminModal({ unit, onClose, onChanged }) {
                       <span className={`text-xs px-2 py-0.5 rounded-full ${a.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{a.isActive ? 'Active' : 'Inactive'}</span>
                     </div>
                     <div className="flex shrink-0 gap-1">
-                      <button onClick={() => { setEditingId(a._id); setEditForm({ name: a.name, contactNo: a.contactNo, emailId: a.emailId }) }} aria-label="Edit" className="p-2.5 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700"><Pencil className="w-4 h-4" /></button>
-                      <button onClick={() => handleRemove(a._id)} aria-label="Remove" className="p-2.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => { setEditingId(a._id); setEditForm({ name: a.name, contactNo: a.contactNo, emailId: a.emailId }) }} aria-label="Edit" className="ih-action ih-action-edit"><Pencil className="w-4 h-4" /></button>
+                      <button onClick={() => handleRemove(a._id)} aria-label="Remove" className="ih-action ih-action-delete"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
                 )}
@@ -634,8 +634,8 @@ function AbroadUnitAdminsTab() {
                     </button>
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
-                    <button onClick={() => handleRemove(a._id)} aria-label="Remove" className="ih-icon-btn text-red-500 hover:bg-red-50 hover:text-red-700">
-                      <Trash2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => handleRemove(a._id)} aria-label="Remove" className="ih-action ih-action-delete">
+                      <Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
               ))}
@@ -679,7 +679,7 @@ function AbroadUnitAdminsTab() {
                   </button>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button onClick={() => handleRemove(a._id)} aria-label="Remove" className="p-2.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => handleRemove(a._id)} aria-label="Remove" className="ih-action ih-action-delete"><Trash2 className="w-4 h-4" /></button>
                 </td>
               </tr>
             ))}
@@ -829,7 +829,7 @@ function UnitsTab() {
                             </div>
                             <button
                               onClick={() => setAssignModalUnit(u)}
-                              className="mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-gray-300 px-2.5 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+                              className="mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary hover:bg-primary/20"
                             >
                               <Users className="w-3 h-3 shrink-0" />
                               <span className="truncate">
@@ -840,10 +840,10 @@ function UnitsTab() {
                             </button>
                           </div>
                           <div className="flex shrink-0 items-center gap-1.5">
-                            <button onClick={() => { setEditingId(u._id); setEditValue(u.title) }} aria-label="Edit" className="ih-icon-btn text-gray-700 hover:bg-gray-100">
-                              <Pencil className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => setDeleteModal({ isOpen: true, id: u._id, title: u.title })} aria-label="Delete" className="ih-icon-btn text-red-600 hover:bg-red-50">
-                              <Trash2 className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => { setEditingId(u._id); setEditValue(u.title) }} aria-label="Edit" className="ih-action ih-action-edit">
+                              <Pencil className="w-4 h-4" /></button>
+                            <button onClick={() => setDeleteModal({ isOpen: true, id: u._id, title: u.title })} aria-label="Delete" className="ih-action ih-action-delete">
+                              <Trash2 className="w-4 h-4" /></button>
                           </div>
                         </div>
                       )}
@@ -889,7 +889,7 @@ function UnitsTab() {
                   <td className="px-6 py-4">
                     <button
                       onClick={() => setAssignModalUnit(u)}
-                      className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/20"
                     >
                       <Users className="w-3.5 h-3.5 shrink-0" />
                       <span className="truncate">
@@ -902,8 +902,8 @@ function UnitsTab() {
                   <td className="px-6 py-4 text-right">
                     {editingId !== u._id && (
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => { setEditingId(u._id); setEditValue(u.title) }} aria-label="Edit" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50"><Pencil className="w-3.5 h-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Edit</span></button>
-                        <button onClick={() => setDeleteModal({ isOpen: true, id: u._id, title: u.title })} aria-label="Delete" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50"><Trash2 className="w-3.5 h-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Delete</span></button>
+                        <button onClick={() => { setEditingId(u._id); setEditValue(u.title) }} aria-label="Edit" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium hover:bg-blue-100"><Pencil className="w-3.5 h-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Edit</span></button>
+                        <button onClick={() => setDeleteModal({ isOpen: true, id: u._id, title: u.title })} aria-label="Delete" className="inline-flex items-center justify-center p-2.5 sm:px-3 sm:py-1.5 rounded-lg bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100"><Trash2 className="w-3.5 h-3.5 sm:mr-1.5" /><span className="hidden sm:inline">Delete</span></button>
                       </div>
                     )}
                   </td>
@@ -950,14 +950,20 @@ const AbroadCountryManagement = () => {
         <h2 className="text-xl font-bold text-gray-900">Abroad Countries</h2>
         <p className="text-sm text-gray-500 mt-1">Manage the Country → Area → Unit hierarchy for abroad members</p>
       </div>
-      <div className="ih-segment lg:w-fit">
+      {/* One scrolling row of pills: the old segmented control folded into a
+          2x2 grid on phones, which read as four cards rather than a switcher. */}
+      <div className="ih-pill-tabs" role="tablist" aria-label="Abroad hierarchy">
         {TABS.map(tab => {
           const Icon = tab.icon
+          const active = activeTab === tab.id
           return (
             <button
               key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
               onClick={() => setActiveTab(tab.id)}
-              className={`ih-segment-btn py-2.5 sm:py-1.5 ${activeTab === tab.id ? 'ih-segment-btn-active' : ''}`}
+              className={`ih-pill-tab ${active ? 'ih-pill-tab-active' : ''}`}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
               <span className="sm:hidden">{tab.short || tab.label}</span>

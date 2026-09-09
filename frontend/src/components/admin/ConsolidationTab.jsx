@@ -2,7 +2,7 @@ import ResponsiveTable from "../tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { RefreshCw, BarChart3, Hash, Table2, Type, ListChecks, Users } from 'lucide-react';
+import { RefreshCw, BarChart3, Hash, Table2, Type, ListChecks, Users, ChevronDown, SlidersHorizontal } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -59,6 +59,8 @@ export default function ConsolidationTab() {
   const [loading, setLoading] = useState(false);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [error, setError] = useState('');
+  // Mobile only: filters collapse into a single toggle row once a result is showing.
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   // Load districts on mount
   useEffect(() => {
@@ -136,7 +138,7 @@ export default function ConsolidationTab() {
     if (areaId) params.append('areaId', areaId);
     if (unitId) params.append('unitId', unitId);
     axios.get(`${API_BASE_URL}/api/admin/reports/consolidation?${params}`, { headers })
-      .then(r => { if (!cancelled) setResult(r.data); })
+      .then(r => { if (!cancelled) { setResult(r.data); setFiltersOpen(false); } })
       .catch(e => {
         if (!cancelled) {
           setResult(null);
@@ -314,8 +316,23 @@ export default function ConsolidationTab() {
     <div className="space-y-4">
       {/* Step 1: pick the form */}
       <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-        <h3 className="text-base font-semibold text-[#002349] mb-3">ഫിൽറ്ററുകൾ / Filters</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(o => !o)}
+          aria-expanded={filtersOpen}
+          className="lg:hidden w-full flex items-center gap-2 min-h-[44px] -my-2 text-left"
+        >
+          <SlidersHorizontal className="w-4 h-4 text-[#002349] shrink-0" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-semibold text-[#002349]">ഫിൽറ്ററുകൾ / Filters</span>
+            {!filtersOpen && result && (
+              <span className="block text-xs text-gray-500 truncate">{result.report.title}</span>
+            )}
+          </span>
+          <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+        </button>
+        <h3 className="hidden lg:block text-base font-semibold text-[#002349] mb-3">ഫിൽറ്ററുകൾ / Filters</h3>
+        <div className={`${filtersOpen ? 'grid mt-3' : 'hidden'} lg:mt-0 lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3`}>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Report Type / ഫോം തരം</label>
             <select value={type} onChange={e => setType(e.target.value)} className={selectCls}>
@@ -383,7 +400,7 @@ export default function ConsolidationTab() {
 
       {/* Step 2: location scope (only once a report is chosen) */}
       {reportId && (
-        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+        <div className={`${filtersOpen ? '' : 'hidden lg:block'} bg-white rounded-xl shadow-md border border-gray-200 p-4`}>
           <h3 className="text-base font-semibold text-[#002349] mb-3">സ്ഥലം / Location</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>

@@ -473,7 +473,7 @@ const UserDashboard = () => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => navigate(`/ihthisabi/submissions/${submission._id}`)}
-                          className="flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 lg:min-h-0 lg:min-w-0"
+                          className="ih-action ih-action-view"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
@@ -481,7 +481,7 @@ const UserDashboard = () => {
 
                         <button
                           onClick={() => navigate(`/ihthisabi/submit?edit=${submission._id}`)}
-                          className="flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 lg:min-h-0 lg:min-w-0"
+                          className="ih-action ih-action-edit"
                           title="Edit Submission"
                         >
                           <Edit className="w-4 h-4" />
@@ -489,7 +489,7 @@ const UserDashboard = () => {
 
                         <button
                           onClick={(e) => handleDeleteSubmission(submission._id, e)}
-                          className="flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 lg:min-h-0 lg:min-w-0"
+                          className="ih-action ih-action-delete"
                           title="Delete Submission"
                         >
                           <Trash2 className="w-4 h-4" />

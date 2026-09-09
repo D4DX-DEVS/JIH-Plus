@@ -3,9 +3,11 @@ import { ArrowLeft, ArrowRight, Shield, Users, Eye, EyeOff, AlertCircle } from '
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import BrandLogo from '../components/branding/BrandLogo';
+import { useTenant } from '../tenants/TenantContext';
 
 const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
   const navigate = useNavigate();
+  const tenant = useTenant();
   const [activeTab, setActiveTab] = useState('user'); // 'user' | 'admin'
 
   // User login state
@@ -133,7 +135,7 @@ const ExpansionPortalLoginPage = ({ onLoginSuccess, onAdminLoginSuccess }) => {
                 className="text-2xl sm:text-3xl font-bold text-[#002349] mb-3 tracking-tight"
                 style={{ fontFamily: 'Cinzel, serif' }}
               >
-                JIH Portal
+                {tenant.label}
               </h1>
               <p className="text-sm text-gray-600">Choose your account type to continue.</p>
             </div>

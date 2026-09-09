@@ -1,0 +1,352 @@
+[
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Bellandur Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Bellandur Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Bellandur Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Bellandur Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Kagadaspura Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Kagadaspura Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Mahadevpura Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Mahadevpura Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Mahadhevpura Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Mahadhevpura Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Marathahalli Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Marathahalli Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Edifis Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Edifis Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Sarjapura Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Sarjapura Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Sarjapura Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Sarjapura Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Kagadaspura Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Kagadaspura Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "LBS Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "LBS Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Whitefield Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Whitefield Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Whitefield Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU EAST",
+    "Unit": "Whitefield Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Banaswadi Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Banaswadi Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "BEL Road Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "BEL Road Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "BEL Road Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "BEL Road Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Coles Park Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Coles Park Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Coles Park Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Coles Park Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Hegde Nagar Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Hegde Nagar Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Hegde Nagar Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Hegde Nagar Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Kammanahalli Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Kammanahalli Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "RT Nagar Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "RT Nagar Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "RT Nagar Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "RT Nagar Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Yelahanka Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU NORTH",
+    "Unit": "Yelahanka Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Bannerghatta Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Bannerghatta Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Bannerghatta Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Bannerghatta Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Electronic City Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Electronic City Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Electronic City Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Electronic City Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Koramangala Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Koramangala Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Madiwala Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU SOUTH",
+    "Unit": "Madiwala Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU WEST",
+    "Unit": "Kengeri Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU WEST",
+    "Unit": "Kengeri Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU WEST",
+    "Unit": "Keengeri Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU WEST",
+    "Unit": "Keengeri Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU WEST",
+    "Unit": "Majestic Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU WEST",
+    "Unit": "Majestic Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU WEST",
+    "Unit": "Nagarbhavi Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU WEST",
+    "Unit": "Nagarbhavi Gents Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU WEST",
+    "Unit": "Nagarbhavi Ladies Halqa"
+  },
+  {
+    "District": "BANGALORE",
+    "Area": "BENGALURU WEST",
+    "Unit": "Nagarbhavi Ladies Halqa"
+  }
+]

@@ -85,10 +85,10 @@ function BlockCard({ block, index, total, onChange, onDelete, onMoveUp, onMoveDo
           <button
             type="button"
             onClick={onDelete}
-            className="p-2 rounded text-red-500 hover:bg-red-50"
+            className="ih-action ih-action-delete"
             title="Delete block"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </div>

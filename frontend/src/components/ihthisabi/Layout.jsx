@@ -235,7 +235,8 @@ const Layout = () => {
 
   // Curated mobile bottom nav — a minimal set of the most important destinations
   // plus a "More" button that opens the full sidebar. `match` lets a tab stay
-  // highlighted across a section's related sub-routes.
+  // highlighted across a section's related sub-routes. Account destinations
+  // (Profile, Help Desk) are deliberately absent — see accountPaths below.
   const buildBottomNav = () => {
     if (user?.role === 'rukn') {
       return [
@@ -252,8 +253,6 @@ const Layout = () => {
             '/ihthisabi/alternative-submissions',
           ],
         },
-        { name: 'Profile', href: '/ihthisabi/profile', icon: User },
-        { name: 'Help', href: '/ihthisabi/help-desk', icon: LifeBuoy },
       ]
     }
     if (user?.role === 'unitAdmin') {
@@ -261,7 +260,6 @@ const Layout = () => {
         { name: 'Home', href: dashboardHref, icon: Home },
         { name: 'Forms', href: '/ihthisabi/unitadmin/submissions', icon: BarChart3 },
         { name: 'Members', href: '/ihthisabi/unitadmin/members', icon: Users },
-        { name: 'Profile', href: '/ihthisabi/profile', icon: User },
         { name: 'More', icon: Menu, action: 'menu' },
       ]
     }
@@ -270,15 +268,12 @@ const Layout = () => {
         { name: 'Home', href: dashboardHref, icon: Home },
         { name: 'Forms', href: '/ihthisabi/districtadmin/submissions', icon: BarChart3 },
         { name: 'Members', href: '/ihthisabi/districtadmin/members', icon: Users },
-        { name: 'Profile', href: '/ihthisabi/profile', icon: User },
         { name: 'More', icon: Menu, action: 'menu' },
       ]
     }
     if (user?.role === 'mekhalaNazim') {
       return [
         { name: 'Reports', href: dashboardHref, icon: FileText },
-        { name: 'Profile', href: '/ihthisabi/profile', icon: User },
-        { name: 'Help', href: '/ihthisabi/help-desk', icon: LifeBuoy },
       ]
     }
     if (user?.role === 'admin') {
@@ -295,10 +290,12 @@ const Layout = () => {
     }
     return [
       { name: 'Home', href: dashboardHref, icon: Home },
-      { name: 'Profile', href: '/ihthisabi/profile', icon: User },
     ]
   }
 
+  // Profile and Help Desk are account destinations: they live only in the
+  // header avatar menu (same as the members portal), never in the bottom bar
+  // or its "More" sheet. The filter below keeps that true for every role.
   const accountPaths = new Set(['/ihthisabi/profile', '/ihthisabi/help-desk'])
   const bottomNavItems = buildBottomNav().filter(item => !accountPaths.has(item.href))
 

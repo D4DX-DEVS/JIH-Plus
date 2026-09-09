@@ -430,36 +430,40 @@ const QuarterlySelection = ({ submissions = [], alternativeSubmissions = [], onQ
                   </span>
                 </div>
 
-                {/* Action Hint */}
-                {status.status !== 'locked' && status.status !== 'current' && (
+                {/* Action Hint — the available quarter gets real buttons below instead */}
+                {(status.status === 'submitted' || status.status === 'alternative-submitted') && (
                   <div className="mt-1.5 space-y-1">
                     {status.status === 'submitted' ? (
                       <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500 sm:text-sm">
                         <span>View Report</span>
                         <ArrowRight className="h-3 w-3" />
                       </div>
-                    ) : status.status === 'alternative-submitted' ? (
+                    ) : (
                       <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500 sm:text-sm">
                         <span className="break-words">View Alternative</span>
                         <ArrowRight className="h-3 w-3 shrink-0" />
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500 sm:text-sm">
-                        <span>Submit Report</span>
-                        <ArrowRight className="h-3 w-3" />
                       </div>
                     )}
                   </div>
                 )}
               </button>
 
+              {/* Primary action is the regular report; the alternative is the
+                  quiet fallback so a member never mistakes it for the main path. */}
               {status.status === 'available' && (
-                <div className="px-2.5 pb-2.5 sm:px-5 sm:pb-5">
+                <div className="space-y-1.5 px-2.5 pb-2.5 sm:px-5 sm:pb-5">
+                  <button
+                    type="button"
+                    onClick={() => handleQuarterClick(quarter, year)}
+                    className="inline-flex min-h-[44px] w-full items-center justify-center gap-1 rounded-full bg-blue-700 px-2 py-2 text-[11px] font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:min-h-0 sm:py-1.5 sm:text-xs"
+                  >
+                    <span>Submit Report</span>
+                    <ArrowRight className="h-3 w-3 shrink-0" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => navigate(`/ihthisabi/alternative-submission?quarter=${quarter}&year=${year}`)}
-                    className="inline-flex min-h-[44px] w-full items-center justify-center gap-1 rounded-full px-2 py-2 text-[10px] font-medium text-white shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7B4FF2] focus-visible:ring-offset-2 sm:min-h-0 sm:py-1.5 sm:text-xs"
-                    style={{ backgroundColor: '#1A3A5C' }}
+                    className="inline-flex min-h-[44px] w-full items-center justify-center gap-1 rounded-full border border-gray-300 bg-white px-2 py-2 text-[10px] font-medium text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7B4FF2] focus-visible:ring-offset-2 sm:min-h-0 sm:py-1.5 sm:text-xs"
                     title="Submit alternative submission if unable to complete regular report"
                   >
                     <FileText className="h-3 w-3 shrink-0" />

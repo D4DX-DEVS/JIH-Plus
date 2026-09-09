@@ -8,4 +8,4 @@ const stateSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('State', stateSchema);
+module.exports = require('../config/tenantModel').tenantModel('State', stateSchema);
