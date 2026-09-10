@@ -1,10 +1,15 @@
 import React, { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowLeft, ExternalLink, Link2, ShieldCheck } from 'lucide-react'
+import { ArrowRight, ExternalLink, Link2, Lock, ShieldCheck, User, Users } from 'lucide-react'
 import { useAuth } from '../../contexts/members/AuthContext'
-import { Button, Field, Input } from '../../components/members/ui'
-import BrandLogo from '../../components/branding/BrandLogo'
+import AuthShell from '../../components/auth/AuthShell'
+import { AuthButton, AuthField, AuthInfoBanner, AuthTabs } from '../../components/auth/AuthControls'
+
+const ACCESS_TABS = [
+  { value: 'staff', label: 'Staff login', icon: ShieldCheck },
+  { value: 'applicant', label: 'Applicant form', icon: Link2 },
+]
 
 export default function LoginPage() {
   const { login, isAuthenticated, initializing } = useAuth()
@@ -54,102 +59,74 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mobile-readable-content min-h-screen bg-gradient-to-br from-[#f5f3ff] to-[#ede9fe] px-3 py-4 sm:flex sm:items-center sm:justify-center sm:px-6 sm:py-10">
-      <div className="mx-auto w-full max-w-md">
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="mb-3 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-gray-600 transition-colors hover:bg-white/70 hover:text-gray-900"
-        >
-          <ArrowLeft size={16} /> All portals
-        </button>
+    <AuthShell title="Members Application" subtitle="Rukn & Karkoon application portal">
+      <AuthTabs variant="soft" label="Access type" tabs={ACCESS_TABS} value={mode} onChange={setMode} />
 
-        <div className="mb-4 text-center">
-          <BrandLogo alt="JIH Plus" size="md" className="mx-auto mb-2" />
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Members Application</h1>
-          <p className="mt-1 text-sm text-gray-600">Rukn &amp; Karkoon application portal</p>
-        </div>
+      {mode === 'staff' ? (
+        <form onSubmit={submit} className="mt-5 space-y-5" aria-busy={busy}>
+          <AuthInfoBanner
+            icon={Users}
+            title="Administration access"
+            description="For authorised administrators and reviewers."
+          />
+          <AuthField
+            id="members-username"
+            label="Username"
+            required
+            icon={User}
+            value={form.username}
+            onChange={e => setForm({ ...form, username: e.target.value })}
+            placeholder="Enter username"
+            autoComplete="username"
+            autoFocus
+          />
+          <AuthField
+            id="members-password"
+            label="Password"
+            required
+            icon={Lock}
+            type="password"
+            value={form.password}
+            onChange={e => setForm({ ...form, password: e.target.value })}
+            placeholder="Enter password"
+            autoComplete="current-password"
+          />
+          <AuthButton type="submit" loading={busy} loadingLabel="Signing in..." className="w-full">
+            Sign in
+            <ArrowRight className="h-5 w-5" strokeWidth={2.4} />
+          </AuthButton>
+        </form>
+      ) : (
+        <form onSubmit={openApplicantForm} className="mt-5 space-y-5">
+          <AuthInfoBanner
+            icon={Link2}
+            title="Open your application"
+            description="Paste the personal link shared by your unit administrator. Your username and password will be requested on the next screen."
+          />
+          <AuthField
+            id="members-access-link"
+            label="Personal application link"
+            required
+            icon={Link2}
+            value={accessLink}
+            onChange={e => setAccessLink(e.target.value)}
+            placeholder="Paste link here"
+            inputMode="url"
+            autoComplete="off"
+            autoFocus
+            hint="Only a valid Members Application link can be opened."
+          />
+          <AuthButton type="submit" className="w-full">
+            Open application form
+            <ExternalLink className="h-5 w-5" strokeWidth={2.2} />
+          </AuthButton>
+        </form>
+      )}
 
-        <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-lg shadow-violet-100">
-          <div className="grid grid-cols-2 gap-1 border-b border-gray-100 bg-gray-50 p-1.5">
-            <button
-              type="button"
-              onClick={() => setMode('staff')}
-              aria-pressed={mode === 'staff'}
-              className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${mode === 'staff' ? 'bg-white text-[#5b21b6] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
-            >
-              <ShieldCheck size={17} /> Staff login
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('applicant')}
-              aria-pressed={mode === 'applicant'}
-              className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${mode === 'applicant' ? 'bg-white text-[#5b21b6] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
-            >
-              <Link2 size={17} /> Applicant form
-            </button>
-          </div>
-
-          {mode === 'staff' ? (
-            <form onSubmit={submit} className="space-y-4 p-4 sm:p-6">
-              <div>
-                <h2 className="font-semibold text-gray-900">Administration access</h2>
-                <p className="mt-1 text-sm leading-relaxed text-gray-500">For authorised administrators and reviewers.</p>
-              </div>
-              <Field label="Username" required>
-                <Input
-                  value={form.username}
-                  onChange={e => setForm({ ...form, username: e.target.value })}
-                  autoComplete="username"
-                  autoFocus
-                  required
-                />
-              </Field>
-
-              <Field label="Password" required>
-                <Input
-                  type="password"
-                  value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                  autoComplete="current-password"
-                  required
-                />
-              </Field>
-
-              <Button type="submit" disabled={busy} className="w-full">
-                {busy ? 'Signing in...' : 'Sign in'}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={openApplicantForm} className="space-y-4 p-4 sm:p-6">
-              <div>
-                <h2 className="font-semibold text-gray-900">Open your application</h2>
-                <p className="mt-1 text-sm leading-relaxed text-gray-500">
-                  Paste the personal link shared by your unit administrator. Your username and password will be requested on the next screen.
-                </p>
-              </div>
-              <Field label="Personal application link" required hint="Only a valid Members Application link can be opened.">
-                <Input
-                  value={accessLink}
-                  onChange={e => setAccessLink(e.target.value)}
-                  placeholder="Paste link here"
-                  inputMode="url"
-                  autoComplete="off"
-                  autoFocus
-                  required
-                />
-              </Field>
-              <Button type="submit" className="w-full">
-                Open application form <ExternalLink size={16} />
-              </Button>
-            </form>
-          )}
-        </div>
-
-        <p className="mt-4 text-center text-xs leading-relaxed text-gray-500">
-          Application access is private. Use only the link and credentials issued to you.
-        </p>
-      </div>
-    </div>
+      <p className="mt-6 flex items-start justify-center gap-2 px-2 text-center text-sm leading-relaxed text-[#5b6b85]">
+        <Lock className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+        <span>Application access is private. Use only the link and credentials issued to you.</span>
+      </p>
+    </AuthShell>
   )
 }

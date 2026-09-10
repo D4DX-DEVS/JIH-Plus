@@ -23,10 +23,8 @@ export const FRANCHISES = Object.freeze([
     basePath: '/womens',
     apiPrefix: '/api/womens',
     label: 'JIH Womens Portal',
-    description: 'Access dashboards for district, area and unit management',
-    mobileDescription: 'Womens wing district, area and unit management',
+    description: 'Womens wing district, area and unit management',
     accent: 'rose',
-    gradientClass: 'from-[#be185d] to-[#831843] hover:from-[#db2777] hover:to-[#9d174d]',
     isFranchise: true,
   }),
 ]);

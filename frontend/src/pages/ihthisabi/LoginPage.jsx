@@ -1,8 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
-import { User, Shield, AlertCircle, Users, Building2, ArrowLeft, Landmark } from 'lucide-react'
-import BrandLogo from '../../components/branding/BrandLogo'
+import { User, Shield, Users, Building2, ArrowLeft, ArrowRight, Landmark, Lock, Mail, KeyRound } from 'lucide-react'
+import AuthShell from '../../components/auth/AuthShell'
+import { AuthButton, AuthError, AuthField, AuthInfoBanner, AuthTabs } from '../../components/auth/AuthControls'
+
+const LOGIN_TABS = [
+  { value: 'rukn', label: 'RUKN Login', icon: User },
+  { value: 'admin', label: 'Admin Login', icon: Shield },
+]
+
+const ROLE_ICONS = {
+  mekhalaNazim: Landmark,
+  districtAdmin: Building2,
+  unitAdmin: Users,
+}
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -19,7 +31,7 @@ const LoginPage = () => {
   const [adminError, setAdminError] = useState(null)
   // Set when the RUKN ID holds multiple roles: { ruknId, name, availableRoles }
   const [roleSelection, setRoleSelection] = useState(null)
-  
+
   const { login, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -28,12 +40,12 @@ const LoginPage = () => {
   // This handles the case where user visits /login while already logged in
   // We use a ref to track if this is the initial mount
   const hasCheckedInitialAuth = useRef(false)
-  
+
   useEffect(() => {
     // Only check on initial mount, not on subsequent auth state changes
     if (!hasCheckedInitialAuth.current) {
       hasCheckedInitialAuth.current = true
-      
+
       // If user is already authenticated on page load, redirect them
       if (isAuthenticated && user) {
         let redirectPath = '/ihthisabi/dashboard'
@@ -59,7 +71,7 @@ const LoginPage = () => {
     const value = e.target.value
     // Only allow numeric input and limit to 6 digits
     const numericValue = value.replace(/\D/g, '').slice(0, 6)
-    
+
     setFormData({
       ...formData,
       [e.target.name]: numericValue
@@ -110,7 +122,7 @@ const LoginPage = () => {
         // Clear error state before navigation
         setError(null)
         setLoading(false)
-        
+
         // Small delay to ensure state is updated, then navigate
         setTimeout(() => {
           // Redirect based on the role returned from backend
@@ -197,20 +209,20 @@ const LoginPage = () => {
     try {
       console.log('Main Admin login data:', mainAdminFormData)
       const result = await login(mainAdminFormData)
-      
+
       // Check for explicit failure - DO NOT navigate
       if (result.success === false) {
         setAdminError(result.error || 'Invalid email or password. Please check and try again.')
         setLoading(false)
         return // Stay on login page
       }
-      
+
       // Only navigate on successful login
       if (result.success) {
         // Clear error state before navigation
         setAdminError(null)
         setLoading(false)
-        
+
         // Small delay to ensure state is updated, then navigate
         setTimeout(() => {
           navigate('/ihthisabi/admin', { replace: true })
@@ -228,314 +240,166 @@ const LoginPage = () => {
     }
   }
 
+  const handleTabChange = (tab) => {
+    setShowMainAdminLogin(tab === 'admin')
+    setError(null)
+    setAdminError(null)
+    if (tab === 'admin') setRoleSelection(null)
+  }
+
   return (
-    <>
-      <style>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out;
-        }
-      `}</style>
-      <div className="mobile-readable-content min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative">
-      {/* Return to portal selection */}
-      <button
-        type="button"
-        onClick={() => navigate('/')}
-        className="fixed left-3.5 top-3.5 z-50 inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-[#002349] transition-colors duration-300 hover:bg-white/70 hover:text-[#1a3a5c]"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        All portals
-      </button>
+    <AuthShell title="IHTHISABI Report" caps subtitle="For RUKN members and IHTHISABI administrators.">
+      <AuthTabs tabs={LOGIN_TABS} value={showMainAdminLogin ? 'admin' : 'rukn'} onChange={handleTabChange} />
 
-      {/* Main Content */}
-      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-        <div className="max-w-md w-full space-y-6">
-          {/* Header with Logo */}
-          <div className="text-center mb-8">
-            {/* Logo */}
-            <div className="mx-auto flex items-center justify-center mb-4">
-              <BrandLogo alt="JIH Logo" size="xl" />
-            </div>
-            
-            {/* Branding */}
-            <div className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-bold text-[#002349] mb-3 tracking-tight" style={{ fontFamily: 'Cinzel, serif' }}>
-                IHTHISABI REPORT
-              </h1>
-              <p className="text-sm text-gray-600">For RUKN members and IHTHISABI administrators.</p>
-            </div>
+      {/* Role Selection (multi-role RUKN IDs) */}
+      {!showMainAdminLogin && roleSelection && (
+        <div className="mt-5 space-y-4">
+          <AuthInfoBanner
+            icon={Users}
+            title={`Welcome${roleSelection.name ? `, ${roleSelection.name}` : ''}!`}
+            description="Your RUKN ID has multiple roles. Choose which dashboard you want to access."
+          />
+
+          <div className="space-y-3">
+            {roleSelection.availableRoles.map((roleOption) => {
+              const Icon = ROLE_ICONS[roleOption.role] || User
+              return (
+                <button
+                  key={roleOption.role}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleRoleSelect(roleOption.role)}
+                  className="flex min-h-[64px] w-full items-center gap-4 rounded-2xl border border-[#dfe5f0] bg-white/90 px-4 py-3 text-left shadow-[0_8px_24px_rgba(30,56,110,0.06)] transition hover:border-[#2a5fc4] hover:bg-[#f3f6fb] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2a5fc4]/40 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#e4edfb] text-[#1d4fa8]" aria-hidden="true">
+                    <Icon className="h-6 w-6" strokeWidth={1.8} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-bold text-[#10274f]">{roleOption.label}</span>
+                    {roleOption.scope && (
+                      <span className="block truncate text-sm text-[#5b6b85]">{roleOption.scope}</span>
+                    )}
+                  </span>
+                  <ArrowRight className="h-5 w-5 shrink-0 text-[#1d4fa8]" strokeWidth={2.4} aria-hidden="true" />
+                </button>
+              )
+            })}
           </div>
 
-          {/* Toggle Button */}
-          <div className="flex justify-center gap-4 mb-6">
-            <button
-              onClick={() => {
-                setShowMainAdminLogin(false)
-                setError(null)
-                setAdminError(null)
-              }}
-              className={`min-h-[44px] px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                !showMainAdminLogin
-                  ? 'bg-[#7B4FF2] text-white shadow-md'
-                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-              }`}
-            >
-              RUKN Login
-            </button>
-            <button
-              onClick={() => {
-                setShowMainAdminLogin(true)
-                setError(null)
-                setAdminError(null)
-                setRoleSelection(null)
-              }}
-              className={`min-h-[44px] px-6 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                showMainAdminLogin
-                  ? 'bg-[#7B4FF2] text-white shadow-md'
-                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-              }`}
-            >
-              Admin Login
-            </button>
-          </div>
+          {error && <AuthError id="rukn-role-error" message={error} />}
 
-          {/* Role Selection (multi-role RUKN IDs) */}
-          {!showMainAdminLogin && roleSelection && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="text-center">
-                <p className="text-sm font-semibold text-[#002349]">
-                  Welcome{roleSelection.name ? `, ${roleSelection.name}` : ''}!
-                </p>
-                <p className="text-xs text-gray-600 mt-1">
-                  Your RUKN ID has multiple roles. Choose which dashboard you want to access.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {roleSelection.availableRoles.map((roleOption) => {
-                  const Icon = roleOption.role === 'mekhalaNazim'
-                    ? Landmark
-                    : roleOption.role === 'districtAdmin'
-                      ? Building2
-                      : roleOption.role === 'unitAdmin'
-                        ? Users
-                        : User
-                  return (
-                    <button
-                      key={roleOption.role}
-                      type="button"
-                      disabled={loading}
-                      onClick={() => handleRoleSelect(roleOption.role)}
-                      className="w-full flex items-center gap-3 p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-[#7B4FF2] hover:bg-[#7B4FF2]/5 transition-all duration-200 text-left disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#7B4FF2]/10 flex items-center justify-center">
-                        <Icon className="h-5 w-5 text-[#7B4FF2]" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-[#002349]">{roleOption.label}</p>
-                        {roleOption.scope && (
-                          <p className="truncate text-xs text-gray-500">{roleOption.scope}</p>
-                        )}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 flex items-start space-x-2 animate-fade-in">
-                  <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700 font-medium">{error}</p>
-                </div>
-              )}
-
-              {loading && (
-                <div className="flex items-center justify-center text-xs text-gray-600">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#7B4FF2] border-t-transparent mr-2"></div>
-                  Signing in...
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={() => {
-                  setRoleSelection(null)
-                  setError(null)
-                }}
-                className="w-full flex items-center justify-center gap-1 py-2.5 text-xs text-gray-500 hover:text-[#002349] transition-colors duration-200"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Use a different RUKN ID
-              </button>
+          {loading && (
+            <div className="flex items-center justify-center gap-2 text-sm text-[#5b6b85]">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#1d4fa8] border-t-transparent" aria-hidden="true" />
+              Signing in...
             </div>
           )}
 
-          {/* RUKN Login Form */}
-          {!showMainAdminLogin && !roleSelection && (
-            <div className="space-y-5">
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="rounded-lg border border-purple-100 bg-purple-50 px-3 py-2.5 text-sm text-[#30205f]">
-                  <p className="font-semibold">RUKN member access</p>
-                  <p className="mt-0.5 text-xs text-gray-600">Enter your 6-digit RUKN ID to open the appropriate dashboard.</p>
-                </div>
-                {/* RUKN ID Field */}
-                <div>
-                  <label htmlFor="ruknId" className="block text-xs font-semibold text-[#002349] mb-2">
-                    RUKN ID
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="ruknId"
-                      name="ruknId"
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]{6}"
-                      maxLength={6}
-                      required
-                      value={formData.ruknId}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-2.5 pl-10 border-2 rounded-lg focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white ${
-                        error ? 'border-red-300 focus:border-red-400 focus:ring-red-200' : 'border-gray-200'
-                      }`}
-                      placeholder="Enter 6-digit RUKN ID (e.g., 109702)"
-                      autoFocus
-                    />
-                  </div>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                  <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 flex items-start space-x-2 animate-fade-in">
-                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-xs text-red-700 font-medium">{error}</p>
-                  </div>
-                )}
-
-                {/* Submit Button */}
-                <div className="flex justify-center">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="mx-auto max-w-xs bg-[#7B4FF2] hover:bg-[#6a3dd9] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold min-h-[44px] py-3 px-6 rounded-lg transition-all duration-200 text-sm shadow-md hover:shadow-lg"
-                  >
-                    {loading ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                        Signing in...
-                      </div>
-                    ) : (
-                      'Sign In'
-                    )}
-                  </button>
-                </div>
-              </form>
-
-              {/* Help Text */}
-              <div className="mt-8 text-center">
-                <p className="text-xs text-gray-600">
-                  Enter your <strong>6-digit RUKN ID</strong> to login. You will be automatically directed to your dashboard.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Admin Login Form */}
-          {showMainAdminLogin && (
-            <div className="space-y-5">
-              <form onSubmit={handleMainAdminSubmit} className="space-y-5">
-                <div className="rounded-lg border border-purple-100 bg-purple-50 px-3 py-2.5 text-sm text-[#30205f]">
-                  <p className="font-semibold">IHTHISABI administrator</p>
-                  <p className="mt-0.5 text-xs text-gray-600">Use your administrator email and password.</p>
-                </div>
-                <div>
-                  <label htmlFor="mainAdminEmail" className="block text-xs font-semibold text-[#002349] mb-2">
-                    Email
-                  </label>
-                  <input
-                    id="mainAdminEmail"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={mainAdminFormData.email}
-                    onChange={(e) => {
-                      setMainAdminFormData({...mainAdminFormData, [e.target.name]: e.target.value})
-                      if (adminError) setAdminError(null)
-                    }}
-                    className={`w-full px-4 py-2.5 border-2 rounded-lg focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white ${
-                      adminError ? 'border-red-300 focus:border-red-400 focus:ring-red-200' : 'border-gray-200'
-                    }`}
-                    placeholder="admin@example.com"
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <label htmlFor="mainAdminPassword" className="block text-xs font-semibold text-[#002349] mb-2">
-                    Password
-                  </label>
-                  <input
-                    id="mainAdminPassword"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    value={mainAdminFormData.password}
-                    onChange={(e) => {
-                      setMainAdminFormData({...mainAdminFormData, [e.target.name]: e.target.value})
-                      if (adminError) setAdminError(null)
-                    }}
-                    className={`w-full px-4 py-2.5 border-2 rounded-lg focus:ring-2 focus:ring-[#7B4FF2] focus:border-[#7B4FF2] text-center text-base transition-all duration-200 bg-gray-50 hover:bg-white ${
-                      adminError ? 'border-red-300 focus:border-red-400 focus:ring-red-200' : 'border-gray-200'
-                    }`}
-                    placeholder="••••••••"
-                  />
-                </div>
-
-                {/* Error Message */}
-                {adminError && (
-                  <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 flex items-start space-x-2 animate-fade-in">
-                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-xs text-red-700 font-medium">{adminError}</p>
-                  </div>
-                )}
-
-                <div className="flex justify-center">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="mx-auto max-w-xs bg-[#7B4FF2] hover:bg-[#6a3dd9] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold min-h-[44px] py-3 px-6 rounded-lg transition-all duration-200 text-sm shadow-md hover:shadow-lg"
-                  >
-                    {loading ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                        Signing in...
-                      </div>
-                    ) : (
-                      'Sign In as Admin'
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
+          <button
+            type="button"
+            onClick={() => {
+              setRoleSelection(null)
+              setError(null)
+            }}
+            className="flex min-h-[44px] w-full items-center justify-center gap-1.5 text-sm font-semibold text-[#5b6b85] transition hover:text-[#10274f]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Use a different RUKN ID
+          </button>
         </div>
-      </div>
-    </div>
-    </>
+      )}
+
+      {/* RUKN Login Form */}
+      {!showMainAdminLogin && !roleSelection && (
+        <form onSubmit={handleSubmit} className="mt-5 space-y-5" aria-busy={loading}>
+          <AuthInfoBanner
+            icon={User}
+            title="RUKN member access"
+            description="Enter your 6-digit RUKN ID to open the appropriate dashboard."
+          />
+          <AuthField
+            id="ruknId"
+            name="ruknId"
+            label="RUKN ID"
+            icon={KeyRound}
+            inputMode="numeric"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            required
+            value={formData.ruknId}
+            onChange={handleChange}
+            placeholder="Enter 6-digit RUKN ID"
+            invalid={Boolean(error)}
+            describedBy={error ? 'rukn-login-error' : undefined}
+            autoFocus
+          />
+
+          {error && <AuthError id="rukn-login-error" message={error} />}
+
+          <AuthButton type="submit" loading={loading} loadingLabel="Signing in..." className="w-full">
+            Sign In
+            <ArrowRight className="h-5 w-5" strokeWidth={2.4} />
+          </AuthButton>
+
+          <p className="text-center text-sm leading-relaxed text-[#5b6b85]">
+            Enter your <strong>6-digit RUKN ID</strong> to login. You will be automatically directed to your dashboard.
+          </p>
+        </form>
+      )}
+
+      {/* Admin Login Form */}
+      {showMainAdminLogin && (
+        <form onSubmit={handleMainAdminSubmit} className="mt-5 space-y-5" aria-busy={loading}>
+          <AuthInfoBanner
+            icon={Shield}
+            title="IHTHISABI administrator"
+            description="Use your administrator email and password."
+          />
+          <AuthField
+            id="mainAdminEmail"
+            name="email"
+            label="Email"
+            icon={Mail}
+            type="email"
+            autoComplete="email"
+            required
+            value={mainAdminFormData.email}
+            onChange={(e) => {
+              setMainAdminFormData({...mainAdminFormData, [e.target.name]: e.target.value})
+              if (adminError) setAdminError(null)
+            }}
+            placeholder="Enter admin email"
+            invalid={Boolean(adminError)}
+            describedBy={adminError ? 'admin-login-error' : undefined}
+            autoFocus
+          />
+          <AuthField
+            id="mainAdminPassword"
+            name="password"
+            label="Password"
+            icon={Lock}
+            type="password"
+            autoComplete="current-password"
+            required
+            value={mainAdminFormData.password}
+            onChange={(e) => {
+              setMainAdminFormData({...mainAdminFormData, [e.target.name]: e.target.value})
+              if (adminError) setAdminError(null)
+            }}
+            placeholder="Enter password"
+            invalid={Boolean(adminError)}
+            describedBy={adminError ? 'admin-login-error' : undefined}
+          />
+
+          {adminError && <AuthError id="admin-login-error" message={adminError} />}
+
+          <AuthButton type="submit" loading={loading} loadingLabel="Signing in..." className="w-full">
+            Sign In as Admin
+            <ArrowRight className="h-5 w-5" strokeWidth={2.4} />
+          </AuthButton>
+        </form>
+      )}
+    </AuthShell>
   )
 }
 
