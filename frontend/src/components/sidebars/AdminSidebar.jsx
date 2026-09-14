@@ -4,6 +4,7 @@ import {
   LogOut,
   Eye,
   Bell,
+  Inbox,
   Calendar,
   CalendarDays,
   Star,
@@ -143,8 +144,8 @@ const AdminSidebar = ({
       onClick: () => navigate('/view-reports') },
     { key: 'data', label: 'Data', icon: MapPin, active: isMasterDataRoute,
       onClick: () => navigate('/admin/master-data') },
-    { key: 'notifications', label: 'Alerts', icon: Bell, active: isNotificationsRoute,
-      onClick: () => { if (onNavigateToNotifications) onNavigateToNotifications(); else navigate('/notifications'); } },
+    { key: 'submissions', label: 'Submits', icon: Inbox, active: isDynamicSubmissionsRoute,
+      onClick: () => navigate('/admin/dynamic-submissions/monthly') },
     { key: 'more', label: 'More', icon: Menu, action: 'more' },
   ];
 
@@ -170,10 +171,13 @@ const AdminSidebar = ({
   };
 
   // "More" sheet lists only what the bottom bar doesn't already carry —
-  // dashboard, reports, notifications and master data are one tap away.
-  const barIds = new Set(['dashboard', 'view-reports', 'notifications', 'master-data']);
+  // dashboard, reports, submissions and master data are one tap away (the
+  // submissions page switches type in-page). Notifications stay here because
+  // only the dashboard's top bar carries the bell.
+  const barIds = new Set(['dashboard', 'view-reports', 'dynamic-submissions', 'master-data']);
   const moreItems = [];
   navItems.forEach((item) => {
+    if (barIds.has(item.id)) return;
     if (item.type === 'group') {
       item.children.forEach((child) => {
         const meta = DYNAMIC_REPORT_META[child.reportType];
@@ -185,7 +189,7 @@ const AdminSidebar = ({
           onClick: child.onClick,
         });
       });
-    } else if (!barIds.has(item.id)) {
+    } else {
       moreItems.push({
         key: item.id,
         label: item.label,

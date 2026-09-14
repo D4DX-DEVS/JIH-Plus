@@ -9,6 +9,7 @@ import {
   BarChart2,
   FileText,
   Bell,
+  Inbox,
   LogOut,
   Menu,
   ChevronDown,
@@ -22,6 +23,17 @@ import BrandLogo from '../branding/BrandLogo';
 import PoweredByD4DX from './PoweredByD4DX';
 import MobileBottomNav from './MobileBottomNav';
 import { SIDEBAR_THEME, DYNAMIC_REPORT_META, REPORT_TYPE_STYLES } from './sidebarTheme';
+
+// One-line hints under each row of the mobile "More" sheet, keyed by nav id.
+const MORE_DESCRIPTIONS = {
+  stats: 'വിവരങ്ങളുടെ സംഗ്രഹവും വിശകലനവും',
+  targets: 'ലക്ഷ്യങ്ങളും പുരോഗതിയും',
+  notifications: 'അറിയിപ്പുകളും അപ്ഡേറ്റുകളും',
+  'monthly-report-type': 'ഡൈനാമിക് മാസാന്ത്യ റിപ്പോർട്ടുകൾ',
+  'quarterly-report-type': 'ഡൈനാമിക് ത്രൈമാസ റിപ്പോർട്ടുകൾ',
+  'yearly-report-type': 'ഡൈനാമിക് വാർഷിക റിപ്പോർട്ടുകൾ',
+  'special-report-type': 'പ്രത്യേക ഡൈനാമിക് റിപ്പോർട്ടുകൾ',
+};
 
 /**
  * Sidebar component for district administrators.
@@ -71,8 +83,8 @@ const DistrictAdminSidebar = ({
       onClick: () => goView('locations') },
     { key: 'reports', label: 'Reports', icon: FileText, active: location.pathname.startsWith('/user-reports'),
       onClick: () => navigate('/user-reports') },
-    { key: 'notifications', label: 'Alerts', icon: Bell, active: location.pathname.startsWith('/notifications'),
-      onClick: () => { if (onNotifications) onNotifications(); else navigate('/notifications'); } },
+    { key: 'submissions', label: 'Received', icon: Inbox, active: location.pathname.startsWith('/district/dynamic-submissions'),
+      onClick: () => navigate('/district/dynamic-submissions/monthly') },
     { key: 'more', label: 'More', icon: Menu, action: 'more' },
   ];
 
@@ -109,26 +121,31 @@ const DistrictAdminSidebar = ({
   ];
 
   // "More" sheet lists only what the bottom bar doesn't already carry —
-  // dashboard, areas and notifications are one tap away via the bar itself.
-  const barIds = new Set(['dashboard', 'locations', 'notifications']);
+  // dashboard, areas and submissions are one tap away via the bar itself
+  // (the submissions page switches type in-page). Notifications stay here
+  // because only the dashboard's top bar carries the bell.
+  const barIds = new Set(['dashboard', 'locations', 'submissions']);
   const moreItems = [];
   navItems.forEach((item) => {
+    if (barIds.has(item.id)) return;
     if (item.type === 'group') {
       item.children.forEach((child) => {
         const meta = DYNAMIC_REPORT_META[child.reportType];
         moreItems.push({
           key: child.id,
           label: `${item.label} · ${meta.label}`,
+          description: MORE_DESCRIPTIONS[child.id],
           icon: child.icon,
           active: activeView === child.id,
           count: child.count,
           onClick: child.onClick,
         });
       });
-    } else if (!barIds.has(item.id)) {
+    } else {
       moreItems.push({
         key: item.id,
         label: item.label,
+        description: MORE_DESCRIPTIONS[item.id],
         icon: item.icon,
         active:
           item.id === 'stats' ? activeView === 'stats' :

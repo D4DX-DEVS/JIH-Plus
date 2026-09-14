@@ -511,7 +511,16 @@ function ReportBuilderView({ reportId, onLogout }) {
     ];
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        <header className="bg-white border-b px-4 py-3 flex items-center gap-3 shadow-sm">
+        <MobileTopBar
+          title="What type of report?"
+          subtitle="Step 1 of 2"
+          actions={
+            <button onClick={() => navigate('/view-reports')} className="ih-icon-btn" aria-label="Back" title="Back">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          }
+        />
+        <header className="hidden lg:flex bg-white border-b px-4 py-3 items-center gap-3 shadow-sm">
           <button onClick={() => navigate('/view-reports')} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-400 hover:text-gray-700">
             <ArrowLeft size={20} />
           </button>
@@ -528,7 +537,7 @@ function ReportBuilderView({ reportId, onLogout }) {
               <div className="flex-1 h-1.5 rounded-full bg-gray-200" />
             </div>
 
-            <h1 className="text-2xl font-bold text-[#002349] mb-1">What type of report?</h1>
+            <h1 className="hidden lg:block text-2xl font-bold text-[#002349] mb-1">What type of report?</h1>
             <p className="text-sm text-gray-500 mb-8">Choose the report type before configuring the form.</p>
 
             <div className="space-y-3">
@@ -592,7 +601,16 @@ function ReportBuilderView({ reportId, onLogout }) {
     ];
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        <header className="bg-white border-b px-4 py-3 flex items-center gap-3 shadow-sm">
+        <MobileTopBar
+          title="Who are the target users?"
+          subtitle={`Step 2 of 2 · ${TYPE_LABELS[reportMeta.type] || ''}`}
+          actions={
+            <button onClick={() => setSetupStep(0)} className="ih-icon-btn" aria-label="Back" title="Back">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          }
+        />
+        <header className="hidden lg:flex bg-white border-b px-4 py-3 items-center gap-3 shadow-sm">
           <button onClick={() => setSetupStep(0)} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-400 hover:text-gray-700">
             <ArrowLeft size={20} />
           </button>
@@ -612,7 +630,7 @@ function ReportBuilderView({ reportId, onLogout }) {
               <div className="flex-1 h-1.5 rounded-full bg-[#002349]" />
             </div>
 
-            <h1 className="text-2xl font-bold text-[#002349] mb-1">Who are the target users?</h1>
+            <h1 className="hidden lg:block text-2xl font-bold text-[#002349] mb-1">Who are the target users?</h1>
             <p className="text-sm text-gray-500 mb-8">Select who will submit this report.</p>
 
             <div className="space-y-3">

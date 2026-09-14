@@ -916,6 +916,15 @@ input[type="number"] {
     @apply opacity-50;
   }
 
+  /* White content card for the JIH portal screens: soft shadow and a faint
+     border. A dedicated class so it sidesteps the global rule that flattens
+     any `rounded … bg-white` div into an outlined, shadowless box. */
+  .jih-card {
+    @apply rounded-[18px] border border-[#e6ecf5];
+    background-color: #fff;
+    box-shadow: 0 6px 20px rgba(15, 35, 65, 0.06);
+  }
+
   /* "More" panel unfolding upward out of the bottom bar. */
   .ih-more-sheet {
     animation: ihMoreSheetUp 0.2s ease both;
@@ -1250,5 +1259,22 @@ input[type="number"] {
   .ih-profile-details > .group:has([title="Copy Contact Number"]),
   .ih-profile-details > .group:has(> p + p) {
     grid-column: 1 / -1;
+  }
+}
+
+/* JIH portal mobile type scale. Below lg the 16px MobileTopBar title names the
+   screen, so it must be the largest text: everything else settles on a
+   16 / 14 / 12 scale (title / headings, labels and body / captions), with
+   headings distinguished by weight rather than size. Scoped to whatever follows the
+   `.jih-mobile-header` in the content column, so the ihthisabi and members
+   portals (which share .app-viewport) are untouched. Stat-tile numbers
+   (text-[18px], text-2xl+) and emoji icons keep their size on purpose. */
+@media (max-width: 1023px) {
+  #root .jih-mobile-header ~ * {
+    font-size: 14px;
+  }
+  #root .jih-mobile-header ~ * :is(h1, h2, h3, h4, h5, h6, label, .text-base, .text-lg, .text-xl) {
+    font-size: 14px;
+    line-height: 1.5;
   }
 }

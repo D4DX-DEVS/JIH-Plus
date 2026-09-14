@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { portalHref } from '../tenants/current';
-import { ArrowLeft, CheckCircle2, Clock, Loader2, Search, SendHorizontal, Save, AlertCircle, Pencil, Trash2, Eye, Download, FileText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, CheckCircle2, Clock, Loader2, MoreVertical, Search, SendHorizontal, Save, AlertCircle, Pencil, Trash2, Eye, Download, FileText } from 'lucide-react';
 import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
@@ -31,6 +31,11 @@ const typeBadgeClass = (type) => {
   }
   return 'bg-gray-100 text-gray-800';
 };
+
+const REPORT_TYPE_LABEL = { monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly', special: 'Special' };
+
+const formatReportDate = (value) =>
+  value ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
 
 const UserReportsPage = ({ onBack, userData }) => {
   const API_BASE_URL = import.meta.env.VITE_API_URL || '';
@@ -61,6 +66,7 @@ const UserReportsPage = ({ onBack, userData }) => {
   const [previewData, setPreviewData] = useState(null); // { report, submission }
   const [downloadingId, setDownloadingId] = useState(null);
   const [showBackDiscardModal, setShowBackDiscardModal] = useState(false);
+  const [menuReportId, setMenuReportId] = useState(null); // mobile kebab menu
 
   const storedUserData = useMemo(() => {
     try {
@@ -609,8 +615,80 @@ const UserReportsPage = ({ onBack, userData }) => {
     }
   };
 
+  // Phone listing: one card per report. Submitted reports expose the
+  // preview / PDF / edit / delete actions behind a kebab menu.
+  const renderMobileReportCard = (report) => {
+    const submitted = report.status === 'submitted';
+    const menuOpen = menuReportId === report._id;
+    const dateLabel = formatReportDate(report.submission?.submittedAt || report.createdAt);
+    const menuItemClass = 'flex w-full items-center gap-2.5 px-4 py-3 text-left text-[12px] font-semibold text-[#0f2a5c] hover:bg-[#f4f7fc] disabled:opacity-50';
+
+    return (
+      <article key={report._id} className="jih-card relative p-3">
+        <div className="flex items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e4edfb] text-[#1d4fa8]">
+            <FileText className="h-4 w-4" strokeWidth={1.8} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="break-words text-[14px] font-extrabold leading-snug text-[#0f2a5c] [overflow-wrap:anywhere]">{report.title}</p>
+            <p className="mt-0.5 text-[12px] text-[#5b6b85]">{REPORT_TYPE_LABEL[report.type] || report.type} Report</p>
+          </div>
+          {submitted && (
+            <button
+              type="button"
+              onClick={() => setMenuReportId(menuOpen ? null : report._id)}
+              aria-label="More actions"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              className="ih-icon-btn -mr-2 -mt-1 text-[#1f3560]"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          {dateLabel && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#eef2f8] px-2 py-1 text-[12px] font-semibold text-[#5b6b85]">
+              <Calendar className="h-3.5 w-3.5" /> {dateLabel}
+            </span>
+          )}
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-bold ${submitted ? 'bg-[#e3f4ea] text-[#1e8a4c]' : 'bg-[#fdf1dc] text-[#a06a12]'}`}>
+            {submitted ? <><CheckCircle2 className="h-3.5 w-3.5" /> Submitted</> : <><Clock className="h-3.5 w-3.5" /> Pending</>}
+          </span>
+          <button
+            onClick={() => handleSelectReport(report._id)}
+            className="ml-auto inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-[#14346b] px-3 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-[#1d4487]"
+          >
+            Open Report <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        {menuOpen && (
+          <>
+            <button type="button" className="fixed inset-0 z-10 cursor-default" aria-label="Close menu" onClick={() => setMenuReportId(null)} />
+            <div role="menu" className="jih-card absolute right-3 top-14 z-20 w-52 overflow-hidden py-1">
+              <button role="menuitem" onClick={() => { setMenuReportId(null); openPreview(report._id); }} className={menuItemClass}>
+                <Eye className="h-4 w-4" /> Preview
+              </button>
+              <button role="menuitem" onClick={() => { setMenuReportId(null); handleDownloadPdf(report._id); }} disabled={downloadingId === report._id} className={menuItemClass}>
+                {downloadingId === report._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Download PDF
+              </button>
+              <button role="menuitem" onClick={() => { setMenuReportId(null); handleEditFromList(report._id); }} className={menuItemClass}>
+                <Pencil className="h-4 w-4" /> Edit
+              </button>
+              <button role="menuitem" onClick={() => { setMenuReportId(null); openDeleteModal(report._id, report.title); }} className={`${menuItemClass} text-red-600 hover:bg-red-50`}>
+                <Trash2 className="h-4 w-4" /> Delete
+              </button>
+            </div>
+          </>
+        )}
+      </article>
+    );
+  };
+
   const pageContent = (
-    <div className="min-w-0 space-y-4 overflow-x-hidden sm:space-y-6">
+    <div className="min-w-0 space-y-3 overflow-x-hidden sm:space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           {selectedReport && (
@@ -624,36 +702,36 @@ const UserReportsPage = ({ onBack, userData }) => {
           )}
           <h1 className={`text-xl sm:text-2xl font-bold text-[#002349] break-words ${hasMobileTopBar ? 'hidden lg:block' : ''}`}>റിപ്പോർട്ട് ശേഖരണം</h1>
         </div>
-        <div className="grid w-full grid-cols-3 gap-1.5 sm:w-auto sm:gap-3">
-          <div className="flex min-w-0 flex-col items-start justify-center rounded-xl border border-gray-200 bg-white px-2 py-2.5 shadow-sm sm:flex-row sm:items-center sm:gap-2.5 sm:rounded-2xl sm:p-3">
-            <span className="hidden h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#002349]/10 text-[#002349] sm:flex">
-              <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <div className="grid w-full grid-cols-3 gap-2 sm:w-auto">
+          <div className="flex min-w-0 flex-col items-start gap-2 rounded-[18px] border border-[#d9e5f7] bg-[#e9f0fb] p-2.5 sm:min-w-[9rem] sm:p-4">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#d3e0f6] text-[#1d4fa8]">
+              <FileText className="h-3.5 w-3.5" strokeWidth={1.9} />
             </span>
             <div className="min-w-0">
-              <p className="text-xl font-bold leading-tight text-[#002349]">{reports.length}</p>
-              <p className="mt-1 text-xs font-medium leading-snug text-gray-600">ആകെ</p>
+              <p className="text-[18px] font-extrabold leading-none text-[#0f2a5c]">{reports.length}</p>
+              <p className="mt-1 text-[12px] font-semibold leading-snug text-[#2a3f66]">ആകെ</p>
             </div>
           </div>
-          <div className="flex min-w-0 flex-col items-start justify-center rounded-xl border border-green-200 bg-green-50 px-2 py-2.5 shadow-sm sm:flex-row sm:items-center sm:gap-2.5 sm:rounded-2xl sm:p-3">
-            <span className="hidden h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700 sm:flex">
-              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <div className="flex min-w-0 flex-col items-start gap-2 rounded-[18px] border border-[#cfe9da] bg-[#e6f5ec] p-2.5 sm:min-w-[9rem] sm:p-4">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#c9e9d6] text-[#1e8a4c]">
+              <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={1.9} />
             </span>
             <div className="min-w-0">
-              <p className="text-xl font-bold leading-tight text-green-700">
+              <p className="text-[18px] font-extrabold leading-none text-[#0f2a5c]">
                 {reports.filter((r) => r.status === 'submitted').length}
               </p>
-              <p className="mt-1 text-xs font-medium leading-snug text-green-800">സമർപ്പിച്ചത്</p>
+              <p className="mt-1 text-[12px] font-semibold leading-snug text-[#2a3f66]">സമർപ്പിച്ചത്</p>
             </div>
           </div>
-          <div className="flex min-w-0 flex-col items-start justify-center rounded-xl border border-amber-200 bg-amber-50 px-2 py-2.5 shadow-sm sm:flex-row sm:items-center sm:gap-2.5 sm:rounded-2xl sm:p-3">
-            <span className="hidden h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 sm:flex">
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <div className="flex min-w-0 flex-col items-start gap-2 rounded-[18px] border border-[#f5e4c4] bg-[#fdf3df] p-2.5 sm:min-w-[9rem] sm:p-4">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f8e4bd] text-[#c47a12]">
+              <Clock className="h-3.5 w-3.5" strokeWidth={1.9} />
             </span>
             <div className="min-w-0">
-              <p className="text-xl font-bold leading-tight text-amber-700">
+              <p className="text-[18px] font-extrabold leading-none text-[#0f2a5c]">
                 {reports.filter((r) => r.status !== 'submitted').length}
               </p>
-              <p className="mt-1 text-xs font-medium leading-snug text-amber-800">ബാക്കിയായത്</p>
+              <p className="mt-1 text-[12px] font-semibold leading-snug text-[#2a3f66]">ബാക്കിയായത്</p>
             </div>
           </div>
         </div>
@@ -692,37 +770,28 @@ const UserReportsPage = ({ onBack, userData }) => {
             </JihFilterSelect>
           </JihFilterBar>
 
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden min-w-0">
+          <div className="min-w-0">
             {listLoading ? (
-              <div className="flex items-center justify-center py-12 text-gray-600 text-sm">
+              <div className="jih-card flex items-center justify-center py-12 text-gray-600 text-sm">
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 Loading reports...
               </div>
             ) : filteredReports.length === 0 ? (
-              <div className="py-12 px-6 text-center text-gray-600 text-sm">
+              <div className="jih-card py-12 px-6 text-center text-gray-600 text-sm">
                 No reports found. Try adjusting your search.
               </div>
             ) : (
               <>
-                {/* Mobile: report name + a single Open action only — the full
-                    table needs horizontal scroll to reach the action column,
-                    which is a critical UX problem on small screens. */}
-                <div className="sm:hidden divide-y divide-gray-200">
-                  {filteredReports.map((report) => (
-                    <div key={report._id} className="flex items-center justify-between gap-3 px-4 py-3.5">
-                      <p className="flex-1 min-w-0 text-sm font-semibold text-[#002349] break-words">{report.title}</p>
-                      <button
-                        onClick={() => handleSelectReport(report._id)}
-                        className="flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg bg-[#002349] text-white font-semibold text-xs shadow-sm hover:bg-[#1a3a5c] transition-colors"
-                      >
-                        Open Report
-                      </button>
-                    </div>
-                  ))}
+                {/* Mobile: one card per report — the full table needs
+                    horizontal scroll to reach its action column, which is a
+                    critical UX problem on small screens. */}
+                <div className="space-y-3 sm:hidden">
+                  {filteredReports.map((report) => renderMobileReportCard(report))}
                 </div>
 
                 {/* Tablet / desktop: full detail table */}
-                <div className="hidden sm:block overflow-x-auto">
+                <div className="hidden sm:block bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
                 <ResponsiveTable className="w-full min-w-[640px]">
                   <thead className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white">
                     <tr>
@@ -833,6 +902,7 @@ const UserReportsPage = ({ onBack, userData }) => {
                     ))}
                   </tbody>
                 </ResponsiveTable>
+                </div>
                 </div>
               </>
             )}
@@ -1141,6 +1211,7 @@ const UserReportsPage = ({ onBack, userData }) => {
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <MobileTopBar
               title="റിപ്പോർട്ടുകൾ"
+              subtitle="വിവരങ്ങൾ ഒരു നോട്ടത്തിൽ"
             />
             <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
               <div className="mx-auto min-w-0 max-w-7xl px-2 pb-24 pt-3 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">{pageContent}</div>
@@ -1199,6 +1270,7 @@ const UserReportsPage = ({ onBack, userData }) => {
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <MobileTopBar
               title="റിപ്പോർട്ടുകൾ"
+              subtitle="വിവരങ്ങൾ ഒരു നോട്ടത്തിൽ"
             />
             <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
               <div className="mx-auto min-w-0 max-w-7xl px-2 pb-24 pt-3 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">{pageContent}</div>
@@ -1259,6 +1331,7 @@ const UserReportsPage = ({ onBack, userData }) => {
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <MobileTopBar
               title="റിപ്പോർട്ടുകൾ"
+              subtitle="വിവരങ്ങൾ ഒരു നോട്ടത്തിൽ"
             />
             <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
               <div className="mx-auto min-w-0 max-w-7xl px-2 pb-24 pt-3 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">{pageContent}</div>

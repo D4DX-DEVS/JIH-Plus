@@ -5,9 +5,15 @@ import BrandLogo from '../components/branding/BrandLogo';
 import PortalBackdrop from '../components/branding/PortalBackdrop';
 import { DISPLAY_SERIF } from '../components/branding/displayFonts';
 import d4dxLogo from '../assets/d4dx_logo.png';
+import jihBlueLogo from '../assets/jih-blue.png';
+import jihPinkLogo from '../assets/jih-pink.png';
 import { PUBLIC_HELP_DESK_CONTACTS } from '../data/helpDeskContacts';
 import HelpDeskContactList, { HelpDeskBadge } from '../components/helpdesk/HelpDeskContactList';
 import { FRANCHISES } from '../tenants/registry';
+
+const FRANCHISE_LOGOS = {
+  womens: jihPinkLogo,
+};
 
 // Franchises of the JIH Portal (same pages, own database) get a card each,
 // right after the master portal. They run under their own router basename, so
@@ -17,6 +23,7 @@ const franchiseCards = FRANCHISES.map((franchise) => ({
   title: franchise.label,
   description: franchise.description,
   icon: Shield,
+  iconImage: FRANCHISE_LOGOS[franchise.key],
   accent: franchise.accent,
   path: `${franchise.basePath}/expansion-portal/login`,
   hard: true,
@@ -28,6 +35,7 @@ const portalCards = [
     title: 'JIH Portal',
     description: 'District, area and unit management',
     icon: Shield,
+    iconImage: jihBlueLogo,
     accent: 'blue',
     path: '/expansion-portal/login',
   },
@@ -170,7 +178,11 @@ const PortalCard = ({ card, index, onOpen }) => {
         <path d="M0 48 C60 14 120 46 180 26 C240 6 280 22 300 10 L300 48 Z" fill={accent.wave} />
       </svg>
       <span className={`relative flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-2xl ${accent.tint}`} aria-hidden="true">
-        <Icon className={`h-8 w-8 ${accent.icon}`} strokeWidth={1.8} />
+        {card.iconImage ? (
+          <img src={card.iconImage} alt="" className="h-9 w-9 object-contain" />
+        ) : (
+          <Icon className={`h-8 w-8 ${accent.icon}`} strokeWidth={1.8} />
+        )}
       </span>
       <span className="relative min-w-0 flex-1">
         <span className="block text-[19px] font-extrabold leading-tight text-[#14305c]">{card.title}</span>

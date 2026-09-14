@@ -1,6 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, X } from 'lucide-react';
 import PoweredByD4DX from './PoweredByD4DX';
+
+// Tinted icon squares for the "More" rows, cycled by position so a long list
+// stays scannable without every sidebar having to pick colours.
+const ROW_TONES = [
+  'bg-[#e4edfb] text-[#1d4fa8]',
+  'bg-[#e3f4ea] text-[#1e8a4c]',
+  'bg-[#ede6fb] text-[#6a3bd8]',
+  'bg-[#fdf1dc] text-[#a06a12]',
+  'bg-[#e0f3f2] text-[#178582]',
+  'bg-[#fbe6ee] text-[#b8244f]',
+];
 
 /**
  * Shared mobile bottom navigation for the expansion portal.
@@ -10,9 +21,9 @@ import PoweredByD4DX from './PoweredByD4DX';
  * An item with `action: 'more'` toggles this component's own "More" sheet
  * instead of calling `onClick`, and renders active while the sheet is open.
  *
- * `moreItems`: [{ key, label, icon, active, count, onClick }] — destinations
- * the bar itself doesn't carry, shown in the sheet above a Logout row and
- * PoweredByD4DX. `onLogout` fires when that row is tapped.
+ * `moreItems`: [{ key, label, description, icon, active, count, onClick }] —
+ * destinations the bar itself doesn't carry, shown in the sheet above a Logout
+ * row and PoweredByD4DX. `onLogout` fires when that row is tapped.
  */
 const MobileBottomNav = ({ items, hidden = false, moreItems = [], onLogout }) => {
   const [moreOpen, setMoreOpen] = useState(false);
@@ -96,41 +107,60 @@ const MobileBottomNav = ({ items, hidden = false, moreItems = [], onLogout }) =>
     <>
       {moreOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-30 bg-gray-900/40"
+          className="lg:hidden fixed inset-0 z-30 bg-[#101936]/45"
           onClick={() => closeMore()}
           aria-hidden="true"
         />
       )}
-      <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur shadow-[0_-8px_24px_rgba(15,23,42,0.08)] ih-mobile-nav-safe">
+      <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 rounded-t-3xl bg-white shadow-[0_-10px_30px_rgba(15,35,65,0.10)] ih-mobile-nav-safe">
         {moreOpen && (
           <div
             ref={moreSheetRef}
             id="jih-mobile-more-sheet"
             role="dialog"
             aria-modal="true"
-            aria-label="കൂടുതൽ നാവിഗേഷൻ"
-            className="ih-more-sheet max-h-[60vh] overflow-y-auto border-b border-gray-200 bg-white px-3 pb-2 pt-3"
+            aria-label="കൂടുതൽ ഓപ്ഷനുകൾ"
+            className="ih-more-sheet max-h-[70vh] overflow-y-auto bg-white px-4 pb-2 pt-3"
           >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[16px] font-extrabold leading-tight text-[#0f2a5c]">കൂടുതൽ ഓപ്ഷനുകൾ</p>
+                <p className="mt-0.5 text-[12px] leading-snug text-[#5b6b85]">നിങ്ങൾക്ക് വേണ്ട സേവനം തിരഞ്ഞെടുക്കുക</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => closeMore()}
+                aria-label="Close"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#eef2f8] text-[#1f3560] transition-colors hover:bg-[#e3e9f4]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
             {moreItems.length > 0 && (
-              <div className="space-y-1">
-                {moreItems.map((item) => {
+              <div>
+                {moreItems.map((item, index) => {
                   const Icon = item.icon;
                   return (
                     <button
                       key={item.key}
                       onClick={() => handleMoreItemClick(item)}
-                      className={`flex w-full min-h-[52px] items-center gap-3 rounded-xl px-3 text-left text-sm font-medium transition-colors ${
-                        item.active ? 'bg-[#002349] text-white' : 'text-gray-700 active:bg-gray-100'
+                      style={item.active ? { borderColor: '#bcd0f0' } : undefined}
+                      className={`flex w-full min-h-[52px] items-center gap-2.5 rounded-xl px-2.5 text-left transition-colors ${
+                        item.active ? 'bg-[#e9f0fb]' : 'bg-white active:bg-[#f4f7fc]'
                       }`}
                     >
-                      <Icon className={`h-[18px] w-[18px] shrink-0 ${item.active ? 'text-white' : 'text-gray-400'}`} />
-                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${ROW_TONES[index % ROW_TONES.length]}`}>
+                        <Icon className="h-[18px] w-[18px]" strokeWidth={1.9} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block break-words text-[14px] font-bold leading-snug text-[#0f2a5c] [overflow-wrap:anywhere]">{item.label}</span>
+                        {item.description && (
+                          <span className="mt-0.5 block text-[12px] leading-snug text-[#5b6b85]">{item.description}</span>
+                        )}
+                      </span>
                       {item.count > 0 && (
-                        <span
-                          className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                            item.active ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
-                          }`}
-                        >
+                        <span className="shrink-0 rounded-full bg-[#e4edfb] px-2 py-0.5 text-[11px] font-bold text-[#1d4fa8]">
                           {item.count}
                         </span>
                       )}
@@ -140,12 +170,14 @@ const MobileBottomNav = ({ items, hidden = false, moreItems = [], onLogout }) =>
               </div>
             )}
 
-            <div className="mt-2 border-t border-gray-100 pt-2">
+            <div className="mt-2 border-t border-[#e6ecf5] pt-2">
               <button
                 onClick={handleLogoutClick}
-                className="flex w-full min-h-[52px] items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold text-red-600 transition-colors active:bg-red-50"
+                className="flex w-full min-h-[48px] items-center gap-2.5 rounded-xl px-2.5 text-left text-[13px] font-bold text-red-600 transition-colors active:bg-red-50"
               >
-                <LogOut className="h-[18px] w-[18px] shrink-0" />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                  <LogOut className="h-[18px] w-[18px]" strokeWidth={1.9} />
+                </span>
                 <span>Logout</span>
               </button>
               <PoweredByD4DX />
@@ -154,7 +186,7 @@ const MobileBottomNav = ({ items, hidden = false, moreItems = [], onLogout }) =>
         )}
 
         <nav
-          className="grid gap-1 px-2 py-1.5"
+          className="grid gap-1 px-2 pb-1 pt-1"
           style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
         >
           {items.map((item) => {
@@ -165,15 +197,17 @@ const MobileBottomNav = ({ items, hidden = false, moreItems = [], onLogout }) =>
                 key={item.key}
                 ref={item.action === 'more' ? moreButtonRef : undefined}
                 onClick={() => handleItemClick(item)}
-                className={`flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-xs font-semibold leading-tight transition-all duration-200 ${
-                  active ? 'bg-[#002349] text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                className={`flex min-h-[50px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-[12px] font-semibold leading-tight transition-all duration-200 ${
+                  active
+                    ? 'bg-[#14346b] text-white shadow-[0_8px_18px_rgba(20,52,107,0.28)]'
+                    : 'text-[#5b6b85] hover:bg-[#f1f4fa] hover:text-[#0f2a5c]'
                 }`}
                 aria-current={active ? 'page' : undefined}
                 aria-haspopup={item.action === 'more' ? 'dialog' : undefined}
                 aria-expanded={item.action === 'more' ? moreOpen : undefined}
                 aria-controls={item.action === 'more' ? 'jih-mobile-more-sheet' : undefined}
               >
-                <Icon className={`h-5 w-5 shrink-0 ${active ? 'scale-110' : ''}`} />
+                <Icon className={`h-5 w-5 shrink-0 ${active ? '' : 'text-[#1f3560]'}`} strokeWidth={1.9} />
                 <span className="max-w-full break-words text-center [overflow-wrap:anywhere]">{item.label}</span>
               </button>
             );
