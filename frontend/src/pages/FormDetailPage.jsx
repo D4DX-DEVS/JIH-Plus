@@ -1,3 +1,4 @@
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 
 import React, { useState, useEffect } from 'react';
 import { FileText, Calendar, User, Edit, Trash2, Download } from 'lucide-react';
@@ -234,7 +235,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
       <div className="mb-6">
         <h4 className="font-semibold text-[#002349] mb-4">വിദ്യാഭ്യാസ സ്ഥാപനങ്ങൾ</h4>
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="ih-table-compact w-full min-w-full">
+          <ResponsiveTable className="ih-table-compact w-full min-w-full">
             <thead>
               <tr className="bg-gray-50">
                 <th className="sticky left-0 z-10 bg-gray-50 border border-gray-200 px-4 py-3 text-left font-semibold text-[#002349]">വിവരങ്ങൾ</th>
@@ -320,7 +321,7 @@ const FormDetailPage = ({ formId, formData, onBack, onEdit, onDelete, isAdmin = 
                 <td className="border border-gray-300 px-4 py-3 text-center bg-gray-100">-</td>
               </tr>
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
 

@@ -12,4 +12,4 @@ const areaSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('AreaMaster', areaSchema);
+module.exports = require('../config/tenantModel').tenantModel('AreaMaster', areaSchema);

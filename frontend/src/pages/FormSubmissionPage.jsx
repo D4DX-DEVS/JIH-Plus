@@ -1,3 +1,4 @@
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react';
 import { FileText, Trash2, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -259,7 +260,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
 
           {/* Desktop table */}
           <div className="hidden lg:block bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <table className="w-full">
+            <ResponsiveTable className="w-full">
               <thead>
                 <tr className="bg-[#002349] border-b border-gray-200">
                   <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Name</th>
@@ -307,7 +308,7 @@ const FormSubmissionPage = ({ onLogout, onBack, onCreateNew, onEdit, userData: p
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ResponsiveTable>
           </div>
         </>
       )}

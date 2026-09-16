@@ -1,8 +1,10 @@
+import ResponsiveTable from "../../tables/ResponsiveTable.jsx";
 import React, { useState } from 'react';
 import { ArrowLeft, Check, CheckCircle } from 'lucide-react';
 import { useDistrictForm } from '../../../contexts/DistrictFormContext';
 import { getAuthToken, isAdminUser } from '../../../utils/auth';
 import { validateNumericInput, handleNumericKeyDown, handleNumericPaste } from '../../../utils/validation';
+import { portalHref } from '../../../tenants/current';
 
 const DistrictPageB = ({ onSave, isEditing = false }) => {
   const { formData, updateFormData, prevStep, validateCurrentStep } = useDistrictForm();
@@ -166,12 +168,12 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
         // Navigate after a short delay to show success message
         setTimeout(() => {
           if (isAdminUser()) {
-            window.location.href = '/admin-dashboard';
+            window.location.href = portalHref('/admin-dashboard');
           } else {
             // Reset form or redirect back to the dashboard
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             if (userData.districtId) {
-              window.location.href = `/district-dashboard/${userData.districtId}`;
+              window.location.href = portalHref(`/district-dashboard/${userData.districtId}`);
             } else {
               // Fallback: try to get districtId from token
               const token = localStorage.getItem('userToken');
@@ -179,7 +181,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
                 try {
                   const tokenPayload = JSON.parse(atob(token.split('.')[1]));
                   if (tokenPayload.districtId) {
-                    window.location.href = `/district-dashboard/${tokenPayload.districtId}`;
+                    window.location.href = portalHref(`/district-dashboard/${tokenPayload.districtId}`);
                     return;
                   }
                 } catch (e) {
@@ -395,7 +397,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
         </h3>
         
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="ih-table-compact w-full border-collapse">
+          <ResponsiveTable className="ih-table-compact w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
                 <th className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
@@ -431,7 +433,7 @@ const DistrictPageB = ({ onSave, isEditing = false }) => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
 

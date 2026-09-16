@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import MobileRecordCards from './MobileRecordCards';
 
 const MONTHS = [
 	'January', 'February', 'March', 'April', 'May', 'June',
@@ -68,12 +69,24 @@ export default function DistrictMonthlyStatsTable({ surveys, onRowClick }) {
 
 	// Helper function to create a statistics table with horizontal layout
 	const createStatsTable = (title, columns, getData) => {
+		const records = rows.map((monthName, rIdx) => {
+			const candidates = (surveys || []).filter(s => s.month === monthName);
+			const survey = candidates.sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
+			return {
+				key: `${monthName}-${rIdx}`,
+				month: monthName,
+				year: survey?.year ?? (survey?.submittedAt ? new Date(survey.submittedAt).getFullYear() : ''),
+				survey,
+				fields: getData(survey).map((value, idx) => ({ label: columns[idx], value }))
+			};
+		});
 		return (
 			<div className="bg-white rounded-2xl shadow-lg border border-gray-200 w-full mb-6 hover:shadow-xl transition-all duration-300">
 				<div className="px-6 py-4 border-b border-gray-200">
 					<h3 className="text-lg font-bold text-[#002349]">{title}</h3>
 				</div>
-				<div className="overflow-x-auto">
+				<MobileRecordCards records={records} onRowClick={onRowClick} />
+				<div className="hidden overflow-x-auto sm:block">
 					<table className="ih-table-compact w-full">
 						<thead className="bg-gray-50">
 							<tr>
@@ -87,9 +100,7 @@ export default function DistrictMonthlyStatsTable({ surveys, onRowClick }) {
 							</tr>
 						</thead>
 						<tbody className="bg-white divide-y divide-gray-200">
-							{rows.map((monthName, rIdx) => {
-								const candidates = (surveys || []).filter(s => s.month === monthName);
-								const survey = candidates.sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
+							{records.map(({ month: monthName, key, survey }) => {
 								const data = getData(survey);
 
 								const handleRowClick = (e) => {
@@ -101,7 +112,7 @@ export default function DistrictMonthlyStatsTable({ surveys, onRowClick }) {
 
 								return (
 									<tr
-										key={`${monthName}-${rIdx}`}
+										key={key}
 										className="hover:bg-gradient-to-br hover:from-white hover:to-gray-50 cursor-pointer transition-all duration-200 group"
 										onClick={handleRowClick}
 										tabIndex={0}
@@ -224,12 +235,12 @@ export default function DistrictMonthlyStatsTable({ surveys, onRowClick }) {
 		<div className="space-y-6">
 			{/* Part Selection Buttons */}
 			<div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-3">
-				<div className="flex gap-3 overflow-x-auto pb-1">
+				<div className="grid grid-cols-1 gap-2 sm:flex sm:gap-3 sm:overflow-x-auto sm:pb-1">
 					{partButtons.map((part) => (
 						<button
 							key={part.key}
 							onClick={() => setActivePart(part.key)}
-							className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
+							className={`min-w-0 whitespace-normal break-words px-4 py-2.5 text-left rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 sm:shrink-0 sm:whitespace-nowrap sm:text-center ${
 								activePart === part.key
 									? 'bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white shadow-md'
 									: 'bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-100 hover:shadow-sm'
@@ -246,8 +257,5 @@ export default function DistrictMonthlyStatsTable({ surveys, onRowClick }) {
 		</div>
 	);
 }
-
-
-
 
 

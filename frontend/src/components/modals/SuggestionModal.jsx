@@ -43,24 +43,24 @@ const SuggestionModal = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="fixed inset-0 backdrop-blur-sm transition-opacity" onClick={handleClose}></div>
+      <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={handleClose}></div>
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-auto">
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
+        <div className="relative flex max-h-[90dvh] w-full max-w-md flex-col overflow-hidden rounded-lg bg-white shadow-xl">
+          <div className="flex items-center justify-between gap-3 border-b border-gray-200 p-6">
+            <div className="flex min-w-0 items-center space-x-3">
               <Lightbulb className="w-6 h-6 text-[#002349]" />
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+              <h3 className="break-words text-lg font-semibold text-gray-900">{title}</h3>
             </div>
             <button
               onClick={handleClose}
               aria-label="Close"
-              className="text-gray-400 hover:text-gray-600 transition-colors p-2"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <div className="p-6">
+          <div className="min-h-0 flex-1 overflow-y-auto p-6">
             <p className="text-gray-600 mb-4">{message}</p>
             <textarea
               value={value}
@@ -98,6 +98,5 @@ const SuggestionModal = ({
 };
 
 export default SuggestionModal;
-
 
 

@@ -1,3 +1,4 @@
+import FormSection from '../FormSection';
 import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { validateNumericInput, handleNumericKeyDown, handleNumericPaste, createNumericInputHandler } from '../../../utils/validation';
@@ -310,7 +311,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
+    <FormSection className="unit-report-section">
       <div className="hidden lg:block mb-8">
         <h2 className="text-xl font-bold text-[#002349] mb-1.5">ഭാഗം A: പ്രാഥമിക വിവരങ്ങൾ</h2>
         <p className="text-sm text-gray-600">ജില്ല, ഏരിയ, യൂണിറ്റ് വിവരങ്ങൾ</p>
@@ -486,7 +487,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
               return (
                 <div key={option.key} className="border border-gray-200 rounded-lg p-4">
                   <div className="text-sm font-semibold text-gray-700 mb-3">{option.label}</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     {/* Male Section */}
                     <div className="flex flex-col space-y-2">
                       <label className="inline-flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
@@ -574,7 +575,7 @@ const UnitPageA = ({ onNext, formData, setFormData }) => {
           <ArrowRight className="ml-2 h-4 w-4" />
         </button>
       </div>
-    </div>
+    </FormSection>
   );
 };
 

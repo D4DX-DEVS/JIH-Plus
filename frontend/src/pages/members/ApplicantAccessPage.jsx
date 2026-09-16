@@ -5,6 +5,7 @@ import { CheckCircle2 } from 'lucide-react'
 import { applicantApi, apiError, APPLICANT_TOKEN_KEY } from '../../utils/members/api'
 import DynamicFormRenderer from '../../components/reportRenderer/DynamicFormRenderer'
 import { Button, Field, Input, Spinner } from '../../components/members/ui'
+import BrandLogo from '../../components/branding/BrandLogo'
 
 /**
  * The only members screen an applicant ever sees.
@@ -178,14 +179,18 @@ export default function ApplicantAccessPage() {
   if (loading || !template) return <Shell><Spinner label="Loading the form..." /></Shell>
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6 px-3 sm:px-6">
+    <div className="mobile-readable-content min-h-screen bg-gray-50 px-3 py-4 sm:px-6 sm:py-6">
       <div className="max-w-3xl mx-auto">
-        <div className="mb-4">
-          <h1 className="text-xl font-semibold text-gray-900 break-words">{template.title}</h1>
-          {template.description && <p className="text-sm text-gray-600 mt-1 break-words">{template.description}</p>}
+        <div className="mb-3 flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:mb-4">
+          <BrandLogo alt="JIH Plus" size="sm" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#6d28d9]">Members Application</p>
+            <h1 className="break-words text-xl font-semibold leading-snug text-gray-900 [overflow-wrap:anywhere]">{template.title}</h1>
+            {template.description && <p className="mt-1 break-words text-sm leading-relaxed text-gray-600 [overflow-wrap:anywhere]">{template.description}</p>}
+          </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
+        <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
           <DynamicFormRenderer
             report={template}
             initialData={draft.formData}
@@ -202,8 +207,17 @@ export default function ApplicantAccessPage() {
 
 function Shell({ children }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5f3ff] to-[#ede9fe] flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-sm bg-white border border-gray-200/80 rounded-2xl shadow-lg shadow-violet-100 p-6">{children}</div>
+    <div className="mobile-readable-content min-h-screen bg-gradient-to-br from-[#f5f3ff] to-[#ede9fe] px-3 py-4 sm:flex sm:items-center sm:justify-center sm:px-6 sm:py-10">
+      <div className="mx-auto w-full max-w-md">
+        <div className="mb-3 text-center">
+          <BrandLogo alt="JIH Plus" size="md" className="mx-auto mb-2" />
+          <p className="text-sm font-semibold text-gray-700">Members Application</p>
+        </div>
+        <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-lg shadow-violet-100 sm:p-6">{children}</div>
+        <p className="mt-4 text-center text-xs leading-relaxed text-gray-500">
+          Your application link and credentials are private. Do not share them.
+        </p>
+      </div>
     </div>
   )
 }

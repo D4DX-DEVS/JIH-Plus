@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Copy, Plus, Ban, RotateCcw, Trash2 } from 'lucide-react'
@@ -227,7 +228,7 @@ export default function AccessLinksPage() {
             </div>
             {/* Desktop: table */}
             <TableWrap>
-            <table className="hidden lg:table w-full text-sm min-w-[760px]">
+            <ResponsiveTable className="hidden lg:table w-full text-sm min-w-[760px]">
               <thead className="bg-gray-50/80 border-b border-gray-100">
                 <tr>
                   <Th>Applicant</Th>
@@ -297,7 +298,7 @@ export default function AccessLinksPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ResponsiveTable>
             </TableWrap>
           </>
         )}

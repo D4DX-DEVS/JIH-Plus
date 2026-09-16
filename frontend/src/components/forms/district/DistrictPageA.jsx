@@ -1,7 +1,9 @@
+import ResponsiveTable from "../../tables/ResponsiveTable.jsx";
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { useDistrictForm } from '../../../contexts/DistrictFormContext';
 import { validateNumericInput, handleNumericKeyDown, handleNumericPaste } from '../../../utils/validation';
+import { portalHref } from '../../../tenants/current';
 
 const DistrictPageA = () => {
   const { formData, updateFormData, nextStep, validateCurrentStep } = useDistrictForm();
@@ -127,7 +129,7 @@ const DistrictPageA = () => {
   const handleBack = () => {
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     if (userData.districtId) {
-      window.location.href = `/district-dashboard/${userData.districtId}`;
+      window.location.href = portalHref(`/district-dashboard/${userData.districtId}`);
     } else {
       // Fallback: try to get districtId from token
       const token = localStorage.getItem('userToken');
@@ -135,7 +137,7 @@ const DistrictPageA = () => {
         try {
           const tokenPayload = JSON.parse(atob(token.split('.')[1]));
           if (tokenPayload.districtId) {
-            window.location.href = `/district-dashboard/${tokenPayload.districtId}`;
+            window.location.href = portalHref(`/district-dashboard/${tokenPayload.districtId}`);
             return;
           }
         } catch (e) {
@@ -240,7 +242,7 @@ const DistrictPageA = () => {
         </h3>
         
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="ih-table-compact w-full border-collapse">
+          <ResponsiveTable className="ih-table-compact w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
                 <th className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
@@ -306,7 +308,7 @@ const DistrictPageA = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
 
@@ -352,7 +354,7 @@ const DistrictPageA = () => {
         </h3>
         
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="ih-table-compact w-full border-collapse">
+          <ResponsiveTable className="ih-table-compact w-full border-collapse">
             <thead>
               <tr className="bg-gray-50">
                 <th className="sticky left-0 bg-white z-[1] border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700">വിംഗ്</th>
@@ -433,7 +435,7 @@ const DistrictPageA = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
 

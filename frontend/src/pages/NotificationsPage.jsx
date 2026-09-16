@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Calendar, AlertCircle, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bell, Calendar, AlertCircle, Pencil, ChevronLeft, ChevronRight, Send, Mail, Users, ArrowLeft, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CreateNotificationModal from '../components/modals/CreateNotificationModal';
 import NotificationDetailModal from '../components/modals/NotificationDetailModal';
@@ -11,7 +11,7 @@ import UnitAdminSidebar from '../components/sidebars/UnitAdminSidebar';
 import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
 import axios from 'axios';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
-import { JihFab, JihAddButton } from '../components/JihToolbar';
+import { JihFab, JihAddButton, JihFilterBar, JihFilterSelect } from '../components/JihToolbar';
 
 const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLogout }) => {
   const navigate = useNavigate();
@@ -34,6 +34,9 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   const [notificationToDelete, setNotificationToDelete] = useState(null);
   const [showDeleteNotifModal, setShowDeleteNotifModal] = useState(false);
   const [isDeletingNotif, setIsDeletingNotif] = useState(false);
+  // Client-side narrowing of the loaded page (the API only pages by tab).
+  const [searchTerm, setSearchTerm] = useState('');
+  const [readFilter, setReadFilter] = useState(''); // '' | 'unread' | 'read'
 
   // Load userData synchronously on mount if not provided as prop
   const [loadedUserData] = useState(() => {
@@ -169,6 +172,8 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   // Reset to page 1 whenever the tab changes (each tab paginates independently)
   useEffect(() => {
     setPage(1);
+    setSearchTerm('');
+    setReadFilter('');
   }, [activeTab]);
 
   // Fetch data when activeTab, userRole, or page changes
@@ -394,8 +399,25 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
 
   const shouldUseAdminLayout = isCentralAdmin && !onBack;
 
+  // Mobile top-bar bell with the unread count, like a standard app header.
+  const unreadBell = (
+    <span
+      role="img"
+      aria-label={unreadCount > 0 ? `${unreadCount} unread` : 'Notifications'}
+      className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1f3560] shadow-[0_6px_18px_rgba(15,35,65,0.12)]"
+    >
+      <Bell className="h-4 w-4" strokeWidth={1.9} />
+      {unreadCount > 0 && (
+        <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-[#e0334c] px-1 text-center text-[11px] font-bold leading-[18px] text-white ring-2 ring-white">
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </span>
+      )}
+    </span>
+  );
+  const topBarSubtitle = activeTab === 'sent' ? 'അയച്ച സന്ദേശങ്ങൾ' : 'പ്രധാന അറിയിപ്പുകൾ';
+
   const wrapWithAdminSidebar = (content) => (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <AdminSidebar
         activeTab="notifications"
         onTabChange={handleTabChange}
@@ -413,8 +435,10 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
+          subtitle={topBarSubtitle}
+          actions={unreadBell}
         />
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
+        <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>
@@ -422,7 +446,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   );
 
   const wrapWithAreaSidebar = (content) => (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <AreaAdminSidebar
         activeTab="notifications"
         onNavigate={handleAreaSidebarNavigate}
@@ -438,8 +462,10 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
+          subtitle={topBarSubtitle}
+          actions={unreadBell}
         />
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
+        <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>
@@ -447,7 +473,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   );
 
   const wrapWithUnitSidebar = (content) => (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <UnitAdminSidebar
         activeTab="notifications"
         onNavigate={handleUnitSidebarNavigate}
@@ -464,8 +490,10 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
+          subtitle={topBarSubtitle}
+          actions={unreadBell}
         />
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
+        <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>
@@ -473,7 +501,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   );
 
   const wrapWithDistrictSidebar = (content) => (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <DistrictAdminSidebar
         activeView="notifications"
         onNavigate={handleDistrictSidebarNavigate}
@@ -488,8 +516,10 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <MobileTopBar
           title="നോട്ടിഫിക്കേഷൻ"
+          subtitle={topBarSubtitle}
+          actions={unreadBell}
         />
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 py-4 pb-24 lg:pb-4 min-w-0">
+        <div className="mobile-readable-content flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 pb-24 sm:px-6 sm:py-4 lg:px-8 lg:pb-4 min-w-0">
           {content}
         </div>
       </div>
@@ -680,8 +710,16 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
 
   const canCreate = ['admin', 'superadmin', 'district', 'area'].includes(userData?.role);
 
+  const query = searchTerm.trim().toLowerCase();
+  const visibleNotifications = notifications.filter((n) => {
+    if (readFilter === 'unread' && n.hasRead) return false;
+    if (readFilter === 'read' && !n.hasRead) return false;
+    if (!query) return true;
+    return `${n.title || ''} ${n.description || ''} ${n.senderName || ''}`.toLowerCase().includes(query);
+  });
+
   const pageContent = (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-4 pb-10 sm:space-y-6">
       {/* Desktop-only header: below lg the MobileTopBar owns the title, the
           add action is the FAB, and the unread badge sits in the tab row so
           no vertical space is spent on a header. */}
@@ -706,25 +744,38 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       ) : (
         <>
           {(showReceivedTab && showSentTab || unreadCount > 0) && (
-            <div className="flex items-center gap-2 text-sm font-semibold text-gray-500">
+            <div className={`${showReceivedTab && showSentTab ? 'grid grid-cols-2 gap-3' : 'hidden lg:flex'} items-center`}>
               {showReceivedTab && showSentTab && (
                 <button
                   onClick={() => setActiveTab('received')}
-                  className={`rounded-full px-4 py-2 min-h-[44px] sm:min-h-0 transition ${activeTab === 'received' ? 'bg-[#002349] text-white' : 'bg-white shadow-sm'}`}
+                  aria-pressed={activeTab === 'received'}
+                  className={`flex min-h-[48px] items-center justify-center gap-2 rounded-[18px] text-[14px] font-bold transition-colors sm:min-h-[44px] sm:text-sm ${
+                    activeTab === 'received' ? 'bg-[#14346b] text-white shadow-[0_10px_24px_rgba(20,52,107,0.28)]' : 'jih-card text-[#1f3560]'
+                  }`}
                 >
+                  <Bell className="h-[18px] w-[18px] sm:h-4 sm:w-4" strokeWidth={1.9} />
                   Received
+                  {unreadCount > 0 && (
+                    <span className="min-w-[20px] rounded-full bg-[#e0334c] px-1.5 text-center text-[12px] font-bold leading-5 text-white">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </button>
               )}
               {showReceivedTab && showSentTab && (
                 <button
                   onClick={() => setActiveTab('sent')}
-                  className={`rounded-full px-4 py-2 min-h-[44px] sm:min-h-0 transition ${activeTab === 'sent' ? 'bg-[#957C3D] text-white' : 'bg-white shadow-sm'}`}
+                  aria-pressed={activeTab === 'sent'}
+                  className={`flex min-h-[48px] items-center justify-center gap-2 rounded-[18px] text-[14px] font-bold transition-colors sm:min-h-[44px] sm:text-sm ${
+                    activeTab === 'sent' ? 'bg-[#14346b] text-white shadow-[0_10px_24px_rgba(20,52,107,0.28)]' : 'jih-card text-[#1f3560]'
+                  }`}
                 >
+                  <Send className="h-[18px] w-[18px] sm:h-4 sm:w-4" strokeWidth={1.9} />
                   Sent
                 </button>
               )}
               {unreadCount > 0 && (
-                <div className="ml-auto inline-flex items-center gap-1 rounded-full bg-[#957C3D] px-3 py-1 text-xs font-semibold text-white">
+                <div className="col-span-2 ml-auto hidden justify-self-end lg:inline-flex items-center gap-1 rounded-full bg-[#957C3D] px-3 py-1 text-xs font-semibold text-white">
                   <Bell className="w-3.5 h-3.5" />
                   {unreadCount} unread
                 </div>
@@ -732,14 +783,30 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
             </div>
           )}
 
+          <JihFilterBar
+            search={searchTerm}
+            onSearchChange={setSearchTerm}
+            placeholder={activeTab === 'sent' ? 'Search sent notifications...' : 'Search notifications...'}
+            activeFilterCount={readFilter ? 1 : 0}
+            onClear={() => setReadFilter('')}
+          >
+            {activeTab === 'received' && (
+              <JihFilterSelect value={readFilter} onChange={(e) => setReadFilter(e.target.value)} label="Read status">
+                <option value="">All</option>
+                <option value="unread">Unread</option>
+                <option value="read">Read</option>
+              </JihFilterSelect>
+            )}
+          </JihFilterBar>
+
           <div className="space-y-3">
             {loading ? (
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 text-center shadow-sm">
+              <div className="jih-card p-6 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#002349] mx-auto"></div>
                 <p className="text-gray-600 mt-2">Loading notifications...</p>
               </div>
             ) : error ? (
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 text-center shadow-sm">
+              <div className="jih-card p-6 text-center">
                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-2" />
                 <p className="text-red-600 mb-4">{error}</p>
                 <button 
@@ -750,7 +817,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
                 </button>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 text-center shadow-sm">
+              <div className="jih-card p-6 text-center">
                 <div className="w-16 h-16 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
                   <Bell className="w-8 h-8 text-gray-400" />
                 </div>
@@ -761,99 +828,113 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
                   {getEmptyStateDescription()}
                 </p>
               </div>
+            ) : visibleNotifications.length === 0 ? (
+              <div className="jih-card p-6 text-center text-sm text-gray-600">
+                No notifications match your search.
+              </div>
             ) : (
-              notifications.map((notification) => (
-                <div
-                  key={notification._id}
-                  onClick={() => setSelectedNotification(notification)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedNotification(notification);
-                    }
-                  }}
-                  className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm transition hover:shadow-md cursor-pointer"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 items-start gap-3">
-                      <div className={`mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${notification.hasRead ? 'bg-gray-100 text-gray-500' : 'bg-[#002349] text-white'}`}>
-                        <Bell className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="break-words text-sm font-semibold text-[#002349]">{notification.title}</p>
-                          {!notification.hasRead && <span className="rounded-full bg-[#957C3D]/10 px-2 py-0.5 text-[10px] font-semibold text-[#957C3D]">New</span>}
+              visibleNotifications.map((notification) => {
+                const isSent = activeTab === 'sent';
+                const Icon = isSent ? Send : Bell;
+                return (
+                  <div
+                    key={notification._id}
+                    onClick={() => setSelectedNotification(notification)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedNotification(notification);
+                      }
+                    }}
+                    className="jih-card cursor-pointer p-3 transition hover:shadow-[0_10px_28px_rgba(15,35,65,0.12)]"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#e4edfb] text-[#1d4fa8]">
+                        <Icon className="h-4 w-4" strokeWidth={1.8} />
+                        {!isSent && !notification.hasRead && (
+                          <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-[#1d4fa8] ring-2 ring-white" aria-hidden="true" />
+                        )}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <p className="min-w-0 max-w-full text-[14px] font-extrabold leading-snug text-[#0f2a5c] [overflow-wrap:anywhere] sm:text-sm">{notification.title}</p>
+                          {!notification.hasRead && (
+                            <span className="rounded-full bg-[#fdf1dc] px-2 py-0.5 text-[12px] font-bold text-[#a06a12] sm:text-[10px]">New</span>
+                          )}
                         </div>
-                        <p className="break-words text-sm text-gray-600 line-clamp-2">{notification.description}</p>
+                        <p className="mt-0.5 break-words text-[12px] leading-snug text-[#5b6b85] line-clamp-2 sm:text-sm">{notification.description}</p>
+                      </div>
+                      <div className="flex flex-shrink-0 items-center gap-1 text-[12px] text-[#5b6b85] sm:text-xs">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {formatDate(notification.createdAt)}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 flex-shrink-0">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {formatDate(notification.createdAt)}
+                    <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+                      <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-[#eef2f8] px-2 py-1 text-[12px] font-semibold text-[#5b6b85]">
+                        {isSent ? <Users className="h-3.5 w-3.5 flex-shrink-0" /> : <ArrowLeft className="h-3.5 w-3.5 flex-shrink-0" />}
+                        <span className="break-words">
+                          {isSent ? `To: ${getRecipientsText(notification.recipients)}` : `From: ${notification.senderName}`}
+                        </span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {isSent && (
+                          <>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); openEditModal(notification); }}
+                              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#e4edfb] px-2.5 text-[12px] font-bold text-[#1d4fa8] hover:bg-[#d3e0f6] sm:text-xs"
+                            >
+                              <Pencil className="h-4 w-4" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteNotificationClick(notification); }}
+                              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#fbe6ee] px-2.5 text-[12px] font-bold text-[#c8203f] hover:bg-[#f7d3df] sm:text-xs"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </button>
+                          </>
+                        )}
+                        {!isSent && !notification.hasRead && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); markAsRead(notification._id); }}
+                            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border-2 border-[#14346b] px-2.5 text-[12px] font-bold text-[#14346b] hover:bg-[#f4f7fc] sm:text-xs"
+                          >
+                            <Mail className="h-4 w-4" />
+                            Mark as read
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
-                    {activeTab === 'sent' ? (
-                      <span className="min-w-0 break-words">To: {getRecipientsText(notification.recipients)}</span>
-                    ) : (
-                      <span className="min-w-0 break-words">From: {notification.senderName}</span>
-                    )}
-                    <div className="flex items-center gap-2">
-                      {activeTab === 'sent' && (
-                        <>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); openEditModal(notification); }}
-                            className="inline-flex items-center gap-1 rounded-md border border-[#002349]/30 px-2.5 py-2 min-h-[44px] text-xs font-semibold text-[#002349] hover:bg-[#002349]/5"
-                          >
-                            <Pencil className="h-3 w-3" />
-                            Edit
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDeleteNotificationClick(notification); }}
-                            className="rounded-md border border-red-200 px-2.5 py-2 min-h-[44px] text-xs font-semibold text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
-                        </>
-                      )}
-                      {activeTab === 'received' && !notification.hasRead && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); markAsRead(notification._id); }}
-                          className="rounded-md border border-[#002349] px-2.5 py-2 min-h-[44px] text-xs font-semibold text-[#002349] hover:bg-[#002349]/5"
-                        >
-                          Mark as read
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
           {!loading && !error && notifications.length > 0 && (
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-gray-500">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <p className="text-[12px] text-[#5b6b85] sm:text-xs">
                 Page {pagination.currentPage} of {pagination.totalPages} · {pagination.totalCount} total
               </p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => goToPage(page - 1)}
                   disabled={pagination.currentPage <= 1}
-                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 min-h-[44px] text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="inline-flex min-h-[44px] items-center gap-1 rounded-xl border border-[#e6ecf5] bg-white px-3 text-[12px] font-semibold text-[#5b6b85] hover:bg-[#f4f7fc] disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[40px] sm:text-xs"
                 >
-                  <ChevronLeft className="h-3.5 w-3.5" />
+                  <ChevronLeft className="h-4 w-4" />
                   Previous
                 </button>
                 <button
                   onClick={() => goToPage(page + 1)}
                   disabled={pagination.currentPage >= pagination.totalPages}
-                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 min-h-[44px] text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="inline-flex min-h-[44px] items-center gap-1 rounded-xl border border-[#e6ecf5] bg-white px-3 text-[12px] font-semibold text-[#5b6b85] hover:bg-[#f4f7fc] disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-[40px] sm:text-xs"
                 >
                   Next
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             </div>

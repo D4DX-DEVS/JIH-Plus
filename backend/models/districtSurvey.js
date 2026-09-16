@@ -299,4 +299,4 @@ const districtSurveySchema = new mongoose.Schema({
 // Note: Allow multiple submissions per district and month. If you need to enforce
 // uniqueness later, consider handling it at the route level with validation.
 
-module.exports = mongoose.model('DistrictSurvey', districtSurveySchema);
+module.exports = require('../config/tenantModel').tenantModel('DistrictSurvey', districtSurveySchema);

@@ -110,16 +110,29 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// JIH Routes
-app.use('/api/admin', adminRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/master', locationMasterRoutes);
-app.use('/api/area', areaRoutes);
-app.use('/api/district', districtRoutes);
-app.use('/api/unit', unitRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api', reportRoutes);
-app.use('/api/targets', targetRoutes);
+// JIH Routes — one router, mounted once per tenant (config/tenants.js). The
+// master portal keeps /api/*; each franchise gets the same router under its own
+// prefix (e.g. /api/womens/*) and its own database via the tenant context.
+// Franchises are mounted first so their longer prefixes win over /api.
+const { listTenants } = require('./config/tenants');
+const { tenantMiddleware } = require('./config/tenantContext');
+
+const jihRouter = express.Router();
+jihRouter.use('/admin', adminRoutes);
+jihRouter.use('/user', userRoutes);
+jihRouter.use('/master', locationMasterRoutes);
+jihRouter.use('/area', areaRoutes);
+jihRouter.use('/district', districtRoutes);
+jihRouter.use('/unit', unitRoutes);
+jihRouter.use('/notifications', notificationRoutes);
+jihRouter.use('/', reportRoutes);
+jihRouter.use('/targets', targetRoutes);
+
+listTenants()
+  .sort((a, b) => b.apiPrefix.length - a.apiPrefix.length)
+  .forEach((tenant) => {
+    app.use(tenant.apiPrefix, tenantMiddleware(tenant), jihRouter);
+  });
 
 // IHTHISABI Routes
 app.use('/api/auth', ihthisabiAuthRoutes);

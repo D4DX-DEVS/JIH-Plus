@@ -1,3 +1,4 @@
+import ResponsiveTable from "../tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useCallback } from 'react'
 import { api } from '../../utils/ihthisabi/api'
 import { useLocation as useHierarchyLocation } from '../../hooks/useLocation'
@@ -10,9 +11,9 @@ import {
   Upload,
   UserPlus,
   Users,
-  Search, 
-  Filter, 
-  Trash2, 
+  Search,
+  Filter,
+  Trash2,
   Download,
   FileSpreadsheet,
   CheckCircle,
@@ -22,6 +23,7 @@ import {
   Edit,
   Settings,
   ArrowRightLeft,
+  Plus,
   X
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -375,8 +377,26 @@ const UserManagement = () => {
     }
   }
 
+  const openMobileProfile = (row) => {
+    if (showUnitAdminsOnly) {
+      setSelectedUnitAdminId(row._id)
+      setShowProfileModal(true)
+    } else {
+      setSelectedUserId(row._id)
+      setShowUserProfileModal(true)
+    }
+  }
+
   return (
     <div className="space-y-2 sm:space-y-5">
+      {!showUnitAdminsOnly && (
+        <button
+          onClick={() => setShowAddMemberModal(true)}
+          title="Add Member" aria-label="Add Member" className="ih-fab"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+      )}
       {/* Header — title hidden on mobile, the app bar already names the page.
           Actions collapse to icons so they stay on one row. */}
       <div className="flex items-center justify-between gap-2">
@@ -415,11 +435,10 @@ const UserManagement = () => {
             <>
               <button
                 onClick={() => setShowAddMemberModal(true)}
-                className="btn-primary h-[44px] shrink-0 gap-1 px-3 text-[11px] sm:h-9 sm:px-4 sm:text-sm"
+                className="btn-primary hidden shrink-0 gap-1 px-3 text-[11px] sm:inline-flex sm:h-9 sm:px-4 sm:text-sm"
               >
                 <UserPlus className="h-4 w-4" />
-                <span className="sm:hidden">Add</span>
-                <span className="hidden sm:inline">Add Member</span>
+                <span>Add Member</span>
               </button>
               <button
                 onClick={() => { setUploadResult(null); setShowUploadModal(true) }}
@@ -551,7 +570,7 @@ const UserManagement = () => {
         {/* Seven columns cannot stay legible at phone widths, so mobile gets a
             card list with just identity, location, status and actions. */}
         <div className="hidden lg:block lg:overflow-x-auto">
-          <table className="ih-table-compact w-full min-w-full divide-y divide-gray-200 text-sm">
+          <ResponsiveTable className="ih-table-compact w-full min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -680,16 +699,17 @@ const UserManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={(e) => openTransferModal(e, user)}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
+                          className="ih-action ih-action-neutral mr-1"
                           title="Transfer user"
                         >
-                          <ArrowRightLeft className="w-4 h-4" />
+                          <ArrowRightLeft className="h-4 w-4" />
                         </button>
                         <button
                           onClick={(e) => handleDeleteUser(e, user._id, user.name)}
-                          className="text-red-600 hover:text-red-900 mr-3"
+                          title="Delete user"
+                          className="ih-action ih-action-delete"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </td>
                     </tr>
@@ -697,7 +717,7 @@ const UserManagement = () => {
                 )
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
 
         {/* Mobile list */}
@@ -715,16 +735,18 @@ const UserManagement = () => {
             (showUnitAdminsOnly ? unitAdmins : users).map((row) => (
               <div
                 key={row._id}
-                onClick={() => {
-                  if (showUnitAdminsOnly) {
-                    setSelectedUnitAdminId(row._id)
-                    setShowProfileModal(true)
-                  } else {
-                    setSelectedUserId(row._id)
-                    setShowUserProfileModal(true)
+                role="button"
+                tabIndex={0}
+                onClick={() => openMobileProfile(row)}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    openMobileProfile(row)
                   }
                 }}
-                className="ih-list-row cursor-pointer"
+                aria-label={`View ${showUnitAdminsOnly ? 'unit admin' : 'user'} ${row.name || row.ruknId || ''}`}
+                className="ih-list-row cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
               >
                 <div className="ih-avatar bg-primary/10 text-primary">
                   {(row.name || 'U').charAt(0).toUpperCase()}
@@ -755,16 +777,18 @@ const UserManagement = () => {
                       <button
                         onClick={(e) => openTransferModal(e, row)}
                         title="Transfer user"
-                        className="ih-icon-btn text-blue-600 hover:bg-blue-50"
+                        aria-label={`Transfer ${row.name || 'user'}`}
+                        className="ih-action ih-action-neutral"
                       >
-                        <ArrowRightLeft className="w-3.5 h-3.5" />
+                        <ArrowRightLeft className="h-4 w-4" />
                       </button>
                       <button
                         onClick={(e) => handleDeleteUser(e, row._id, row.name)}
                         title="Delete user"
-                        className="ih-icon-btn text-red-600 hover:bg-red-50"
+                        aria-label={`Delete ${row.name || 'user'}`}
+                        className="ih-action ih-action-delete"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   )}
@@ -861,7 +885,7 @@ const UserManagement = () => {
                         These rows were not imported — fix them and upload again:
                       </p>
                       <div className="max-h-40 overflow-y-auto rounded border border-amber-200 bg-amber-50">
-                        <table className="w-full text-xs">
+                        <ResponsiveTable className="w-full text-xs">
                           <tbody>
                             {uploadResult.skipped.map((s, i) => (
                               <tr key={`${s.row}-${i}`} className="border-b border-amber-100 last:border-0">
@@ -871,7 +895,7 @@ const UserManagement = () => {
                               </tr>
                             ))}
                           </tbody>
-                        </table>
+                        </ResponsiveTable>
                       </div>
                     </div>
                   )}
@@ -880,7 +904,7 @@ const UserManagement = () => {
                     <div className="mt-3">
                       <p className="text-xs font-medium text-red-800 mb-1">Rows that failed to save:</p>
                       <div className="max-h-40 overflow-y-auto rounded border border-red-200 bg-red-50">
-                        <table className="w-full text-xs">
+                        <ResponsiveTable className="w-full text-xs">
                           <tbody>
                             {uploadResult.errors.map((err, i) => (
                               <tr key={`${err.ruknId}-${i}`} className="border-b border-red-100 last:border-0">
@@ -890,7 +914,7 @@ const UserManagement = () => {
                               </tr>
                             ))}
                           </tbody>
-                        </table>
+                        </ResponsiveTable>
                       </div>
                     </div>
                   )}
@@ -1077,5 +1101,3 @@ const UserManagement = () => {
 }
 
 export default UserManagement
-
-

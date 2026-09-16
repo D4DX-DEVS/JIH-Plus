@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { useError } from '../../contexts/ErrorContext'
@@ -20,6 +21,25 @@ import {
   Smartphone
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+
+function FormDialog({ children, onClose }) {
+  const dialogRef = useRef(null)
+  useEffect(() => {
+    const dialog = dialogRef.current
+    const previousFocus = document.activeElement
+    dialog.showModal()
+    return () => {
+      dialog.close()
+      if (previousFocus?.isConnected) previousFocus.focus()
+    }
+  }, [])
+  return createPortal(
+    <dialog ref={dialogRef} aria-labelledby="alternative-dialog-title"
+      onCancel={(event) => { event.preventDefault(); onClose() }}
+      className="m-auto w-[calc(100%-24px)] max-w-2xl max-h-[90dvh] overflow-hidden rounded-2xl border border-gray-200 bg-white p-0 text-gray-900 shadow-xl backdrop:bg-black/40">
+      {children}
+    </dialog>, document.getElementById('root'))
+}
 
 const AlternativeSubmissionForm = () => {
   const { id } = useParams()
@@ -656,8 +676,8 @@ const AlternativeSubmissionForm = () => {
 
     return (
       <>
-        <div className="ih-screen bg-gray-50 py-8">
-          <div className="max-w-4xl mx-auto px-4">
+        <div className="ih-screen bg-gray-50 py-3 sm:py-8">
+          <div className="max-w-4xl mx-auto px-3 sm:px-4">
             <button
               onClick={() => {
                 // Navigate based on user role
@@ -673,7 +693,7 @@ const AlternativeSubmissionForm = () => {
               {authUser?.role === 'admin' ? 'Back to Submissions' : 'Back to Quarter Selection'}
             </button>
 
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6 mb-6">
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <h1 className="hidden lg:block text-3xl font-bold text-gray-900 mb-2">Alternative Submission Details</h1>
@@ -892,34 +912,31 @@ const AlternativeSubmissionForm = () => {
 
   return (
     <>
-      {/* Fixed Close Button - Top Right Corner */}
-      <button
-        onClick={() => navigate(getDashboardPath())}
-        className="fixed top-16 right-4 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-white shadow-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors lg:top-4"
-        title="Close"
-      >
-        <X className="w-5 h-5" />
-      </button>
-
-      <div className="h-screen bg-gray-50 overflow-hidden flex flex-col pt-2">
-        <div className="max-w-2xl mx-auto px-4 w-full flex-1 overflow-y-auto ih-mobile-bottom-safe lg:pb-0">
-          {/* Heading outside container */}
-          <div className="mb-4 mt-2">
-            <h1 className="hidden lg:block text-3xl font-bold text-gray-900 mb-2">
+      <FormDialog onClose={() => navigate(getDashboardPath())}>
+        <div className="flex max-h-[90dvh] w-full flex-col">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
+            <div className="min-w-0">
+            <h1 id="alternative-dialog-title" className="text-base font-semibold leading-snug text-gray-900">
               {editMode ? 'Alternate Submission Edit' : 'Alternate Submission'}
             </h1>
-            <p className="text-gray-600">
+            <p className="mt-1 text-sm text-gray-600">
               {editMode ? 'Editing · ' : ''}
               {selectedQuarter && selectedYear
                 ? `Quarter ${selectedQuarter}, ${selectedYear}`
                 : 'Select quarter to continue'}
             </p>
+            </div>
+            <button type="button" onClick={() => navigate(getDashboardPath())}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-gray-600 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-violet-600"
+              aria-label="Close alternative submission">
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
+          <div className="min-h-0 overflow-y-auto overscroll-contain bg-white p-4 sm:p-6">
 
             {hasExistingSubmission && (
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start">
+              <div className="mb-6 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start">
                 <AlertCircle className="w-5 h-5 text-yellow-600 mr-3 mt-0.5" />
                 <div className="text-sm text-yellow-800">
                   <p className="font-semibold">Warning</p>
@@ -928,18 +945,18 @@ const AlternativeSubmissionForm = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Type Selection - Radio Buttons */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div role="radiogroup" aria-labelledby="alternative-type-label" aria-required="true" aria-describedby={errors.type ? 'alternative-type-error' : undefined} className="alternative-type-row flex flex-wrap items-center gap-x-4 gap-y-0">
+              <span id="alternative-type-label" className="text-sm font-medium text-gray-700">
                 തരം <span className="text-red-500">*</span>
-              </label>
+              </span>
               <Controller
                 name="type"
                 control={control}
                 rules={{ required: 'Type is required' }}
                 render={({ field }) => (
-                  <div className="flex space-x-6">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
                     <label className="flex items-center min-h-[44px]">
                       <input
                         type="radio"
@@ -964,7 +981,7 @@ const AlternativeSubmissionForm = () => {
                 )}
               />
               {errors.type && (
-                <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
+                <p id="alternative-type-error" className="w-full mt-1 text-sm text-red-600">{errors.type.message}</p>
               )}
             </div>
 
@@ -1088,12 +1105,9 @@ const AlternativeSubmissionForm = () => {
           </form>
         </div>
       </div>
-    </div>
+    </FormDialog>
     </>
   )
 }
 
 export default AlternativeSubmissionForm
-
-
-

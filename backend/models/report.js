@@ -155,4 +155,4 @@ reportSchema.index({ templateRootId: 1, month: 1, year: 1 });
 reportSchema.index({ type: 1, quarter: 1, year: 1 });
 reportSchema.index({ templateRootId: 1, quarter: 1, year: 1 });
 
-module.exports = mongoose.model('Report', reportSchema);
+module.exports = require('../config/tenantModel').tenantModel('Report', reportSchema);

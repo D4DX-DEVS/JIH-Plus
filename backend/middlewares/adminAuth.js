@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const { verifyTenantJwt } = require('../config/tenantContext');
 
 const adminAuth = (req, res, next) => {
   try {
@@ -10,7 +10,7 @@ const adminAuth = (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = verifyTenantJwt(token, req);
     
     // Check if the decoded token contains admin info
     if (!decoded.isAdmin) {

@@ -1,3 +1,4 @@
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FileText, Trash2, Download, MapPin, Calendar, TrendingUp, ArrowLeft, ChevronRight, LogOut, Edit, Bell, X, Eye, Plus, Check, Clock } from 'lucide-react';
@@ -13,7 +14,6 @@ console.log('API_BASE_URL:', API_BASE_URL);
 import FormPage from './FormPage';
 import { FormProvider } from '../contexts/FormContext';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
-import jihLogo from '../assets/LogoColor.png';
 import SurveyBarChart from '../components/charts/SurveyBarChart';
 import SurveyPieChart from '../components/charts/SurveyPieChart';
 import StatisticsCard from '../components/charts/StatisticsCard';
@@ -760,7 +760,7 @@ const AdminDashboardPage = ({ onLogout }) => {
     : 'Statistics';
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex">
       {/* Sidebar */}
       <AdminSidebar
         activeTab={activeTab}
@@ -782,7 +782,7 @@ const AdminDashboardPage = ({ onLogout }) => {
         />
 
       {/* Main Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-6 relative z-0">
+        <main data-app-scroll className="app-scroll-region flex-1 px-3 sm:px-6 lg:px-8 py-3 sm:py-6 pb-24 lg:pb-6 relative z-0">
           {showDetailView ? (
             <FormDetailPage
               formId={selectedFormId}
@@ -859,7 +859,7 @@ const AdminDashboardPage = ({ onLogout }) => {
           ) : (
             <>
               <div className="hidden lg:block overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <ResponsiveTable className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -906,7 +906,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </ResponsiveTable>
               </div>
 
               <div className="lg:hidden divide-y divide-gray-100">
@@ -1019,7 +1019,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                   {/* Hierarchical table rendering */}
                   {!selectedDistrict && areaFilterValue === 'all' && unitFilterValue === 'all' ? (
                     <div className="hidden lg:block overflow-x-auto">
-                      <table className="w-full">
+                      <ResponsiveTable className="w-full">
                         <thead className="bg-[#002349] text-white">
                           <tr>
                             <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">District</th>
@@ -1107,7 +1107,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                             })
                           )}
                         </tbody>
-                      </table>
+                      </ResponsiveTable>
                     </div>
                   ) : null}
 
@@ -1197,7 +1197,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                         </div>
                       </div>
                       <div className="hidden lg:block overflow-x-auto">
-                      <table className="w-full">
+                      <ResponsiveTable className="w-full">
                         <thead className="bg-[#002349] text-white">
                           <tr>
                             <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Unit</th>
@@ -1257,7 +1257,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                             })
                           )}
                         </tbody>
-                      </table>
+                      </ResponsiveTable>
                       </div>
                       <div className="lg:hidden divide-y divide-gray-100">
                         {filteredUnits.length === 0 ? (
@@ -1328,7 +1328,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                         </div>
                       </div>
                       <div className="hidden lg:block overflow-x-auto">
-                      <table className="w-full">
+                      <ResponsiveTable className="w-full">
                         <thead className="bg-[#002349] text-white">
                           <tr>
                             <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Area</th>
@@ -1421,7 +1421,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                             })
                           )}
                         </tbody>
-                      </table>
+                      </ResponsiveTable>
                       </div>
                       <div className="lg:hidden divide-y divide-gray-100">
                         {filteredAreas.length === 0 ? (
@@ -1524,7 +1524,7 @@ const AdminDashboardPage = ({ onLogout }) => {
           <div className="space-y-4">
             {/* Sub-tab bar — always visible */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-              <div className="flex gap-1 overflow-x-auto">
+              <div className="mobile-tab-grid flex gap-1 overflow-x-auto">
                 <button
                   onClick={() => setActiveSubTab('summary')}
                   className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 ${
@@ -1700,7 +1700,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                         <h3 className="text-lg font-semibold text-[#002349]">District-wise Details</h3>
                       </div>
                       <div className="hidden lg:block overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                        <ResponsiveTable className="min-w-full divide-y divide-gray-200">
                           <thead className="bg-gray-50">
                             <tr>
                               <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -1735,7 +1735,7 @@ const AdminDashboardPage = ({ onLogout }) => {
                               </tr>
                             ))}
                           </tbody>
-                        </table>
+                        </ResponsiveTable>
                       </div>
                       <div className="lg:hidden divide-y divide-gray-100">
                         {stats.overall?.districtComparison?.map((district, index) => (

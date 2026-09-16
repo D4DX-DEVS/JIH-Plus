@@ -4,6 +4,7 @@ import {
   LogOut,
   Eye,
   Bell,
+  Inbox,
   Calendar,
   CalendarDays,
   Star,
@@ -18,7 +19,7 @@ import {
   LayoutDashboard,
   Target as TargetIcon
 } from 'lucide-react';
-import jihLogoWhite from '../../assets/LogoWhite.png';
+import BrandLogo from '../branding/BrandLogo';
 import PoweredByD4DX from './PoweredByD4DX';
 import MobileBottomNav from './MobileBottomNav';
 import { SIDEBAR_THEME, DYNAMIC_REPORT_META, REPORT_TYPE_STYLES } from './sidebarTheme';
@@ -143,8 +144,8 @@ const AdminSidebar = ({
       onClick: () => navigate('/view-reports') },
     { key: 'data', label: 'Data', icon: MapPin, active: isMasterDataRoute,
       onClick: () => navigate('/admin/master-data') },
-    { key: 'notifications', label: 'Alerts', icon: Bell, active: isNotificationsRoute,
-      onClick: () => { if (onNavigateToNotifications) onNavigateToNotifications(); else navigate('/notifications'); } },
+    { key: 'submissions', label: 'Submits', icon: Inbox, active: isDynamicSubmissionsRoute,
+      onClick: () => navigate('/admin/dynamic-submissions/monthly') },
     { key: 'more', label: 'More', icon: Menu, action: 'more' },
   ];
 
@@ -170,10 +171,13 @@ const AdminSidebar = ({
   };
 
   // "More" sheet lists only what the bottom bar doesn't already carry —
-  // dashboard, reports, notifications and master data are one tap away.
-  const barIds = new Set(['dashboard', 'view-reports', 'notifications', 'master-data']);
+  // dashboard, reports, submissions and master data are one tap away (the
+  // submissions page switches type in-page). Notifications stay here because
+  // only the dashboard's top bar carries the bell.
+  const barIds = new Set(['dashboard', 'view-reports', 'dynamic-submissions', 'master-data']);
   const moreItems = [];
   navItems.forEach((item) => {
+    if (barIds.has(item.id)) return;
     if (item.type === 'group') {
       item.children.forEach((child) => {
         const meta = DYNAMIC_REPORT_META[child.reportType];
@@ -185,7 +189,7 @@ const AdminSidebar = ({
           onClick: child.onClick,
         });
       });
-    } else if (!barIds.has(item.id)) {
+    } else {
       moreItems.push({
         key: item.id,
         label: item.label,
@@ -210,11 +214,7 @@ const AdminSidebar = ({
           {/* Sidebar Header */}
           <div className={`flex items-center h-16 justify-between px-4 border-b ${SIDEBAR_THEME.border} ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : ''}`}>
             <div className="flex items-center space-x-3 min-w-0">
-              <img
-                src={jihLogoWhite}
-                alt="JIH Logo"
-                className="h-9 w-9 flex-shrink-0 object-contain"
-              />
+              <BrandLogo variant="white" alt="JIH Logo" size="sm" />
               <div className={isDesktopCollapsed ? 'lg:hidden' : ''}>
                 <h2 className="text-base font-bold text-white whitespace-nowrap" style={{ fontFamily: 'Cinzel, serif' }}>Admin Dashboard</h2>
               </div>

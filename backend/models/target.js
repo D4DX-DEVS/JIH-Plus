@@ -50,4 +50,4 @@ const targetSchema = new mongoose.Schema({
 targetSchema.index({ districtId: 1, status: 1 });
 targetSchema.index({ createdAt: -1 });
 
-module.exports = mongoose.model('Target', targetSchema);
+module.exports = require('../config/tenantModel').tenantModel('Target', targetSchema);

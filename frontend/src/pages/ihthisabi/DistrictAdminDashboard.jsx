@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../../utils/ihthisabi/api'
@@ -461,17 +462,19 @@ const DistrictAdminDashboard = () => {
         </p>
       </div>
 
-      {/* Tabs — on phones the icon sits above a short label so all five pills fit
-          the screen whole; from sm: up they return to icon-beside-full-label. */}
-      <div className="ih-segment mb-3 print:hidden">
+      {/* Tabs — one scrolling row of pills; short labels on phones. */}
+      <div className="ih-pill-tabs mb-3 print:hidden" role="tablist" aria-label="Dashboard sections">
         {TABS.map((tab) => {
           const Icon = tab.icon
           const active = activeTab === tab.key
           return (
             <button
               key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
               onClick={() => setActiveTab(tab.key)}
-              className={`ih-segment-btn flex-col gap-0.5 px-2.5 py-1.5 sm:flex-row sm:gap-1 sm:px-3 ${active ? 'bg-[#7B4FF2] text-white shadow-sm' : ''}`}
+              className={`ih-pill-tab ${active ? 'ih-pill-tab-active' : ''}`}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
               <span className="sm:hidden">{tab.shortLabel || tab.label}</span>
@@ -490,9 +493,11 @@ const DistrictAdminDashboard = () => {
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-              <div
+              <button
+                type="button"
                 onClick={() => navigate('/ihthisabi/districtadmin/members')}
-                className="ih-stat-card min-w-0 cursor-pointer hover:shadow-md active:scale-[0.99] transition"
+                className="ih-stat-card min-w-0 cursor-pointer text-left transition hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7B4FF2] focus-visible:ring-offset-2"
+                aria-label={`View district members: ${stats.totalMembers} total`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -506,11 +511,13 @@ const DistrictAdminDashboard = () => {
                     <Users className="w-4 h-4 text-[#7B4FF2]" />
                   </div>
                 </div>
-              </div>
+              </button>
 
-              <div
+              <button
+                type="button"
                 onClick={() => navigate('/ihthisabi/districtadmin/submissions')}
-                className="ih-stat-card min-w-0 cursor-pointer hover:shadow-md active:scale-[0.99] transition"
+                className="ih-stat-card min-w-0 cursor-pointer text-left transition hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7B4FF2] focus-visible:ring-offset-2"
+                aria-label={`View district submissions: ${stats.currentQuarterSubmissions} this period`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -529,7 +536,7 @@ const DistrictAdminDashboard = () => {
                     <FileText className="w-4 h-4 text-[#7B4FF2]" />
                   </div>
                 </div>
-              </div>
+              </button>
 
               <div className="ih-stat-card min-w-0">
                 <div className="flex items-start justify-between gap-2">
@@ -680,7 +687,7 @@ const DistrictAdminDashboard = () => {
                 )}
               </div>
               {/* Desktop: table */}
-              <table className="hidden lg:table w-full table-fixed text-[11px] sm:text-sm">
+              <ResponsiveTable className="hidden lg:table w-full table-fixed text-[11px] sm:text-sm">
                 <thead>
                   <tr className="text-left text-[9px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
                     <th className="py-2 pr-1 sm:pr-4 w-[32%]">Area</th>
@@ -707,7 +714,7 @@ const DistrictAdminDashboard = () => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </ResponsiveTable>
             </div>
 
             <div className="ih-surface p-4 sm:p-5">
@@ -802,7 +809,7 @@ const DistrictAdminDashboard = () => {
             </div>
             {/* Desktop: table */}
             <div className="hidden lg:block lg:overflow-x-auto">
-              <table className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+              <ResponsiveTable className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="text-left px-3 sm:px-4 py-3"><SortButton field="name" label="Name" activeSort={membersSort} onSort={toggleMembersSort} /></th>
@@ -833,7 +840,7 @@ const DistrictAdminDashboard = () => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </ResponsiveTable>
             </div>
             <Pagination pagination={membersPagination} onPageChange={fetchMembers} loading={membersLoading} itemLabel="members" />
           </div>
@@ -841,7 +848,7 @@ const DistrictAdminDashboard = () => {
           {printMode === 'members' && (
             <div id="ida-printable" className="hidden print:block">
               <h2 className="text-lg font-bold mb-3">District Members — {district}</h2>
-              <table className="min-w-full text-sm">
+              <ResponsiveTable className="min-w-full text-sm">
                 <thead>
                   <tr>
                     <th className="text-left px-2 py-2 border-b border-gray-300">Name</th>
@@ -862,7 +869,7 @@ const DistrictAdminDashboard = () => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </ResponsiveTable>
             </div>
           )}
         </div>
@@ -960,7 +967,7 @@ const DistrictAdminDashboard = () => {
             </div>
             {/* Desktop: table */}
             <div className="hidden lg:block lg:overflow-x-auto">
-              <table className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+              <ResponsiveTable className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="text-left px-3 sm:px-4 py-3"><SortButton field="ruknName" label="Name" activeSort={submissionsSort} onSort={toggleSubmissionsSort} /></th>
@@ -997,7 +1004,7 @@ const DistrictAdminDashboard = () => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </ResponsiveTable>
             </div>
             <Pagination pagination={submissionsPagination} onPageChange={fetchSubmissions} loading={submissionsLoading} itemLabel="submissions" />
           </div>
@@ -1005,7 +1012,7 @@ const DistrictAdminDashboard = () => {
           {printMode === 'submissions' && (
             <div id="ida-printable" className="hidden print:block">
               <h2 className="text-lg font-bold mb-3">District Submissions — {district}</h2>
-              <table className="min-w-full text-sm">
+              <ResponsiveTable className="min-w-full text-sm">
                 <thead>
                   <tr>
                     <th className="text-left px-2 py-2 border-b border-gray-300">Name</th>
@@ -1028,7 +1035,7 @@ const DistrictAdminDashboard = () => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </ResponsiveTable>
             </div>
           )}
         </div>
@@ -1099,7 +1106,7 @@ const DistrictAdminDashboard = () => {
               </div>
               {/* Desktop: table */}
               <div className="hidden lg:block lg:overflow-x-auto">
-                <table className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
+                <ResponsiveTable className="ih-table-compact w-full table-fixed text-[11px] sm:min-w-full sm:table-auto sm:text-sm">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="text-left px-3 sm:px-4 py-3">Name</th>
@@ -1123,7 +1130,7 @@ const DistrictAdminDashboard = () => {
                         <td className="px-3 sm:px-4 py-3 text-right">
                           <button
                             onClick={() => setSelectedAltSubmission(s)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:border-[#7B4FF2]/40 hover:text-[#7B4FF2] hover:bg-[#7B4FF2]/5 transition-colors text-xs font-medium"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors text-xs font-medium"
                           >
                             <Eye className="w-3.5 h-3.5" /> View
                           </button>
@@ -1131,7 +1138,7 @@ const DistrictAdminDashboard = () => {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </ResponsiveTable>
               </div>
             </>
           )}

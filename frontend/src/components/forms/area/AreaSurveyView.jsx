@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../tables/ResponsiveTable.jsx";
 import React from 'react';
 import { ArrowLeft, Download, Edit } from 'lucide-react';
 import { downloadMonthlyDetailPDF } from '../../../utils/monthlyPdfGenerator';
@@ -188,7 +189,7 @@ const AreaSurveyView = ({ survey, onBack, onEdit }) => {
           <div>
             <h4 className="text-lg font-semibold text-[#002349] mb-4">വിംഗ് ഹാജർ</h4>
             <div className="overflow-x-auto rounded-2xl border border-gray-200">
-              <table className="w-full border-collapse ih-table-compact">
+              <ResponsiveTable className="w-full border-collapse ih-table-compact">
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700 sticky left-0 bg-white z-[1]">വിംഗ്</th>
@@ -213,7 +214,7 @@ const AreaSurveyView = ({ survey, onBack, onEdit }) => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </ResponsiveTable>
             </div>
           </div>
 
@@ -277,7 +278,7 @@ const AreaSurveyView = ({ survey, onBack, onEdit }) => {
           </h3>
           
           <div className="overflow-x-auto rounded-2xl border border-gray-200">
-            <table className="w-full border-collapse ih-table-compact">
+            <ResponsiveTable className="w-full border-collapse ih-table-compact">
               <thead>
                 <tr className="bg-gray-50">
                   <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700 sticky left-0 bg-white z-[1]">വിംഗ്</th>
@@ -307,7 +308,7 @@ const AreaSurveyView = ({ survey, onBack, onEdit }) => {
                   );
                 })}
               </tbody>
-            </table>
+            </ResponsiveTable>
           </div>
         </div>
       )}
@@ -415,7 +416,7 @@ const AreaSurveyView = ({ survey, onBack, onEdit }) => {
         
         
         <div className="overflow-x-auto rounded-2xl border border-gray-200">
-          <table className="w-full border-collapse ih-table-compact">
+          <ResponsiveTable className="w-full border-collapse ih-table-compact">
             <thead>
               <tr className="bg-gray-50">
                 <th className="border border-gray-200 px-4 py-3 text-left font-semibold text-gray-700 sticky left-0 bg-white z-[1]">വിംഗ്</th>
@@ -440,7 +441,7 @@ const AreaSurveyView = ({ survey, onBack, onEdit }) => {
                 );
               })}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       </div>
 

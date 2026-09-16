@@ -2,20 +2,33 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 
-const typeBadgeClass = (type) => {
-  if (type === 'monthly') return 'bg-blue-100 text-blue-800';
-  if (type === 'special') return 'bg-purple-100 text-purple-800';
-  if (type === 'yearly') return 'bg-amber-100 text-amber-800';
-  return 'bg-gray-100 text-gray-800';
+const TYPE_LABEL = {
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  yearly: 'Yearly',
+  special: 'Special',
 };
 
-const statusBadgeClass = (status) =>
-  status === 'submitted'
-    ? 'bg-green-100 text-green-800 border border-green-200'
-    : 'bg-yellow-100 text-yellow-700 border border-yellow-200';
+// Stacked documents with a green tick once the report has been submitted.
+const ReportArt = ({ submitted }) => (
+  <svg className="h-[44px] w-[48px] shrink-0" viewBox="0 0 84 76" fill="none" aria-hidden="true">
+    <rect x="22" y="4" width="44" height="56" rx="6" fill="#dfe8f7" transform="rotate(8 44 32)" />
+    <rect x="14" y="10" width="44" height="56" rx="6" fill="#ffffff" stroke="#c9d6ee" strokeWidth="1.5" />
+    <rect x="22" y="22" width="26" height="3" rx="1.5" fill="#9fb6dc" />
+    <rect x="22" y="31" width="20" height="3" rx="1.5" fill="#b8c9e6" />
+    <rect x="22" y="40" width="24" height="3" rx="1.5" fill="#b8c9e6" />
+    <rect x="22" y="49" width="16" height="3" rx="1.5" fill="#c9d6ee" />
+    {submitted && (
+      <>
+        <circle cx="64" cy="58" r="12" fill="#2fb36b" />
+        <path d="M58 58 l4 4 8 -8" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      </>
+    )}
+  </svg>
+);
 
 /**
- * Shared "Active Reports" section for district/area/unit dashboards.
+ * Shared "Assigned Reports" section for district/area/unit dashboards.
  * Lists active report forms scoped to the logged-in user's role and links
  * straight into UserReportsPage with the report preselected.
  */
@@ -27,60 +40,71 @@ const ActiveReportsCard = ({ reports = [], loading = false }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow border border-gray-100 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-bold text-[#002349] flex items-center gap-2">
-          <FileText className="w-4 h-4" /> ആക്ടീവ് റിപ്പോർട്ടുകൾ
+    <section className="jih-card p-3 sm:p-6">
+      <div className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
+        <h3 className="flex items-center gap-1.5 text-[14px] font-extrabold leading-tight text-[#0f2a5c] sm:text-base">
+          <FileText className="h-4 w-4 shrink-0 text-[#1f3560]" strokeWidth={1.8} />
+          അസൈൻഡ് റിപ്പോർട്ടുകൾ
         </h3>
         <button
           onClick={() => navigate('/user-reports')}
-          className="inline-flex min-h-[44px] items-center px-2 -mx-2 -my-3 text-xs font-semibold text-[#002349] hover:underline"
+          className="-mx-2 -my-3 inline-flex min-h-[44px] shrink-0 items-center gap-1 px-2 text-[12px] font-bold text-[#0f2a5c] hover:underline sm:text-xs"
         >
-          എല്ലാം കാണുക
+          എല്ലാം കാണുക <ArrowRight className="h-4 w-4" />
         </button>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#002349]" />
+          <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[#14346b]" />
         </div>
       ) : reports.length === 0 ? (
-        <div className="flex items-center justify-center py-8 text-gray-400 text-sm">
-          ആക്ടീവ് റിപ്പോർട്ടുകൾ ഒന്നും ഇല്ല
+        <div className="flex items-center justify-center py-8 text-sm text-gray-400">
+          അസൈൻഡ് റിപ്പോർട്ടുകൾ ഒന്നും ഇല്ല
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {reports.map((report) => (
-            <div
-              key={report._id}
-              className="flex items-center justify-between gap-3 border border-gray-100 rounded-xl px-4 py-3 hover:bg-gray-50 transition-colors"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{report.title}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${typeBadgeClass(report.type)}`}>
-                    {report.type}
-                  </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold inline-flex items-center gap-1 ${statusBadgeClass(report.status)}`}>
-                    {report.status === 'submitted' ? (
-                      <><CheckCircle2 className="w-2.5 h-2.5" /> Submitted</>
-                    ) : (
-                      <><Clock className="w-2.5 h-2.5" /> Pending</>
-                    )}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => handleFill(report._id)}
-                className="flex-shrink-0 inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2.5 rounded-lg bg-[#002349] text-white text-xs font-semibold hover:bg-[#1a3a5c] transition-colors"
+        <div className="space-y-3">
+          {reports.map((report) => {
+            const submitted = report.status === 'submitted';
+            return (
+              <article
+                key={report._id}
+                className="rounded-xl border border-[#e6ecf5] bg-[#f6f8fc] p-3 sm:flex sm:items-center sm:gap-4"
               >
-                പൂരിപ്പിക്കുക <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
+                <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words text-[14px] font-extrabold leading-snug text-[#0f2a5c] [overflow-wrap:anywhere] sm:text-base">{report.title}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className="rounded-full bg-[#e8e6f7] px-2 py-0.5 text-[12px] font-bold text-[#3b3a6b] sm:text-xs">
+                        {TYPE_LABEL[report.type] || report.type}
+                      </span>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-bold sm:text-xs ${
+                          submitted ? 'bg-[#e3f4ea] text-[#1e8a4c]' : 'bg-[#fdf1dc] text-[#a06a12]'
+                        }`}
+                      >
+                        {submitted ? (
+                          <><CheckCircle2 className="h-3 w-3" /> Submitted</>
+                        ) : (
+                          <><Clock className="h-3 w-3" /> Pending</>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  <ReportArt submitted={submitted} />
+                </div>
+                <button
+                  onClick={() => handleFill(report._id)}
+                  className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-xl bg-[#14346b] px-4 text-[13px] font-bold text-white transition-colors hover:bg-[#1d4487] sm:mt-0 sm:min-h-[44px] sm:w-auto sm:shrink-0 sm:text-sm"
+                >
+                  {submitted ? 'പരിശോധിക്കുക' : 'പൂരിപ്പിക്കുക'} <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              </article>
+            );
+          })}
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

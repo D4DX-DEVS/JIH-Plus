@@ -251,16 +251,16 @@ const SubmissionDetails = ({ userRole }) => {
   return (
     <div className="ih-screen bg-gray-50 py-4 sm:py-6 px-4">
       <div className="max-w-5xl mx-auto relative">
-        {/* Below the sticky mobile app bar (~56px) so it never overlaps the account button */}
+        {/* Align close with this report header rather than the app viewport. */}
         <button
           onClick={() => navigate(backPath)}
-          className="fixed top-16 lg:top-4 right-4 z-50 flex items-center justify-center w-11 h-11 lg:w-10 lg:h-10 rounded-full bg-white shadow-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+          className="absolute top-2 right-2 z-10 flex items-center justify-center w-11 h-11 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-violet-500"
           aria-label="Close"
         >
           <CloseIcon className="w-5 h-5" />
         </button>
         {/* Header Card */}
-        <div className="bg-white border border-gray-200 rounded-3xl shadow-lg p-4 sm:p-6 mb-6 space-y-4 sm:space-y-6">
+        <div className="bg-white border border-gray-200 rounded-2xl pl-4 pr-16 py-4 sm:pl-6 sm:pr-20 sm:py-6 mb-4 space-y-4 sm:space-y-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               {/* App bar already titles this screen on mobile */}
@@ -278,7 +278,7 @@ const SubmissionDetails = ({ userRole }) => {
               </button>
               <button
                 onClick={handleDelete}
-                className="min-h-[44px] lg:min-h-0 flex-1 sm:flex-none px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 hover:border-red-300"
+                className="min-h-[44px] lg:min-h-0 flex-1 sm:flex-none px-4 py-2 bg-red-50 text-red-700 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 hover:bg-red-100"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete

@@ -205,4 +205,4 @@ unitSurveySchema.index({ districtId: 1, areaId: 1, unitId: 1 });
 unitSurveySchema.statics.findAll = function (query = {}) {
   return this.find(query).sort({ submittedAt: -1 });
 };
-module.exports = mongoose.model('UnitSurvey', unitSurveySchema);
+module.exports = require('../config/tenantModel').tenantModel('UnitSurvey', unitSurveySchema);

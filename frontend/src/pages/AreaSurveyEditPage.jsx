@@ -113,7 +113,7 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       <AreaAdminSidebar
         activeTab="monthly"
         onNavigate={handleSidebarNavigate}
@@ -154,7 +154,7 @@ const AreaSurveyEditContent = ({ survey, onSave, isSaving, onBack, error, succes
                   />
                 ))}
               </div>
-              <div className="flex gap-3 overflow-x-auto mt-1.5 text-[10px] text-gray-600 font-medium lg:justify-between lg:gap-0 lg:overflow-visible">
+              <div className="mobile-tab-grid flex gap-3 overflow-x-auto mt-1.5 text-[10px] text-gray-600 font-medium lg:justify-between lg:gap-0 lg:overflow-visible">
                 <span className="shrink-0 whitespace-nowrap">ഘടകങ്ങൾ</span>
                 <span className="shrink-0 whitespace-nowrap">പ്രവർത്തനങ്ങൾ</span>
                 <span className="shrink-0 whitespace-nowrap">ഫോകസ്</span>

@@ -1,3 +1,4 @@
+import NumericInput from "../NumericInput";
 import React from 'react';
 import FileUploadField from './FileUploadField';
 import RowColumnField from './RowColumnField';
@@ -13,18 +14,32 @@ const FIELD_WIDTH_CLASS = {
   email: 'w-full sm:w-80',
 };
 
-export default function FieldRenderer({ field, value, onChange, disabled = false }) {
+export default function FieldRenderer({
+  field,
+  value,
+  onChange,
+  disabled = false,
+  controlId,
+  labelledBy,
+  ariaInvalid = false,
+  ariaDescribedBy,
+}) {
   const inputBase =
     'border border-gray-300 rounded-lg px-3 py-2 text-base sm:text-sm outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-500';
   const widthClass = (type) => FIELD_WIDTH_CLASS[type] || 'w-full';
 
   const handleChange = (val) => onChange(val);
+  const controlA11y = {
+    id: controlId,
+    'aria-invalid': ariaInvalid || undefined,
+    'aria-describedby': ariaDescribedBy,
+  };
 
   switch (field.type) {
     case 'title':
       return (
         <div>
-          <h3 className="text-base font-semibold text-gray-800 border-b pb-1 mb-1">
+          <h3 className="mb-1 border-b pb-1 text-base font-bold leading-snug text-gray-800 sm:text-lg">
             {field.label}
           </h3>
           {field.helpText && <p className="text-xs text-gray-500">{field.helpText}</p>}
@@ -42,6 +57,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
     case 'textarea':
       return (
         <textarea
+          {...controlA11y}
           rows={field.rows || 4}
           value={value || ''}
           onChange={e => handleChange(e.target.value)}
@@ -55,6 +71,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
     case 'dropdown':
       return (
         <select
+          {...controlA11y}
           value={value || ''}
           onChange={e => handleChange(e.target.value)}
           disabled={disabled}
@@ -69,7 +86,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
 
     case 'radio':
       return (
-        <div className="space-y-2">
+        <div role="radiogroup" aria-labelledby={labelledBy} aria-describedby={ariaDescribedBy} className="flex flex-wrap gap-x-4 gap-y-0">
           {(field.options || []).map((opt, i) => (
             <label key={i} className="flex min-h-[44px] items-center gap-2 cursor-pointer">
               <input
@@ -90,7 +107,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
     case 'checkbox': {
       const checked = Array.isArray(value) ? value : [];
       return (
-        <div className="space-y-2">
+        <div role="group" aria-labelledby={labelledBy} aria-describedby={ariaDescribedBy} className="space-y-2">
           {(field.options || []).map((opt, i) => (
             <label key={i} className="flex min-h-[44px] items-center gap-2 cursor-pointer">
               <input
@@ -115,7 +132,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
     case 'multiselect': {
       const selected = Array.isArray(value) ? value : [];
       return (
-        <div className="space-y-1">
+        <div role="group" aria-labelledby={labelledBy} aria-describedby={ariaDescribedBy} className="space-y-1">
           {(field.options || []).map((opt, i) => (
             <label key={i} className="flex min-h-[44px] items-center gap-2 cursor-pointer">
               <input
@@ -139,7 +156,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
 
     case 'yesno':
       return (
-        <div className="flex gap-3">
+        <div role="radiogroup" aria-labelledby={labelledBy} aria-describedby={ariaDescribedBy} className="flex flex-wrap gap-x-4 gap-y-0">
           {['Yes', 'No'].map(opt => (
             <label key={opt} className="flex min-h-[44px] items-center gap-2 cursor-pointer">
               <input
@@ -158,16 +175,18 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
       );
 
     case 'file':
-      return <FileUploadField field={field} value={value} onChange={handleChange} />;
+      return <FileUploadField field={field} value={value} onChange={handleChange} inputId={controlId} ariaInvalid={ariaInvalid} ariaDescribedBy={ariaDescribedBy} />;
 
     case 'row':
       return (
-        <RowColumnField
-          field={field}
-          value={value}
-          onChange={handleChange}
-          disabled={disabled}
-        />
+        <div role="group" aria-labelledby={labelledBy} aria-describedby={ariaDescribedBy}>
+          <RowColumnField
+            field={field}
+            value={value}
+            onChange={handleChange}
+            disabled={disabled}
+          />
+        </div>
       );
 
     case 'date':
@@ -176,6 +195,7 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
       const inputType = field.type === 'datetime' ? 'datetime-local' : field.type;
       return (
         <input
+          {...controlA11y}
           type={inputType}
           value={value || ''}
           onChange={e => handleChange(e.target.value)}
@@ -187,7 +207,8 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
 
     case 'number':
       return (
-        <input
+        <NumericInput
+          {...controlA11y}
           type="number"
           value={value ?? ''}
           onChange={e => handleChange(e.target.value)}
@@ -202,7 +223,9 @@ export default function FieldRenderer({ field, value, onChange, disabled = false
     default:
       return (
         <input
+          {...controlA11y}
           type={field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : 'text'}
+          inputMode={field.type === 'phone' ? 'tel' : field.type === 'email' ? 'email' : undefined}
           value={value || ''}
           onChange={e => handleChange(e.target.value)}
           placeholder={field.placeholder || ''}

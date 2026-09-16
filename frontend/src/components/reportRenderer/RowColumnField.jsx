@@ -1,3 +1,5 @@
+import NumericInput from "../NumericInput";
+import ResponsiveTable from "../tables/ResponsiveTable.jsx";
 import React from 'react';
 import {
   isCellInput, cellInputType, staticCellValue,
@@ -27,8 +29,8 @@ export default function RowColumnField({ field, value, onChange, disabled }) {
 
   // Shared mobile-card cell styles. Both sides wrap instead of overflowing:
   // Malayalam column titles and values have no break opportunities of their own.
-  const cellRow = 'flex items-start justify-between gap-3 px-3.5 py-2.5';
-  const cellLabel = 'min-w-0 flex-1 text-xs leading-snug text-gray-500 break-words [overflow-wrap:anywhere]';
+  const cellRow = 'flex items-center justify-between gap-2 px-3 py-2';
+  const cellLabel = 'min-w-0 flex-1 text-sm leading-snug text-gray-600 break-words [overflow-wrap:anywhere]';
   const cellValue = 'min-w-0 max-w-[45%] text-right text-sm leading-snug break-words [overflow-wrap:anywhere]';
 
   const thBase = 'border border-gray-300 bg-gray-50 px-2 py-1.5 text-xs font-medium text-gray-600';
@@ -37,21 +39,22 @@ export default function RowColumnField({ field, value, onChange, disabled }) {
   return (
     <>
     {/* Mobile view: each row becomes a stacked card with labelled inputs */}
-    <div className="sm:hidden space-y-2.5">
+    <div className="space-y-2 sm:hidden">
       {rows.map((row, ri) => (
         <div key={ri} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-          <div className="bg-gray-100 px-3.5 py-2 text-xs font-semibold leading-snug text-gray-700 break-words">{row}</div>
-          <div className="divide-y divide-gray-100">
+          <div className="break-words bg-gray-100 px-3 py-2 text-sm font-bold leading-snug text-gray-800">{row}</div>
+          <div className="grid grid-cols-2">
             {cols.map((col, ci) => (
-              <div key={ci} className={cellRow}>
+              <div key={ci} className={cellInputType(field, ci) === 'number' ? 'flex min-w-0 flex-col gap-1 border-b border-gray-100 px-2 py-2' : `${cellRow} col-span-2 border-b border-gray-100`}>
                 <span className={cellLabel}>{col}</span>
                 {isCellInput(field, ri, ci) ? (
-                  <input
+                  <NumericInput
                     type={cellInputType(field, ci) === 'number' ? 'number' : 'text'}
                     value={getCellValue(ri, ci)}
                     onChange={e => setCellValue(ri, ci, e.target.value)}
                     disabled={disabled}
-                    className="w-20 flex-shrink-0 px-2 py-1.5 text-base text-center border border-gray-200 rounded-lg outline-none focus:bg-blue-50 focus:border-blue-300 disabled:bg-gray-50"
+                    aria-label={`${row}: ${col}`}
+                    className={`${cellInputType(field, ci) === 'number' ? 'w-full' : 'w-1/2'} min-w-0 px-2 py-1.5 text-base text-center border border-gray-200 rounded-lg outline-none focus:bg-blue-50 focus:border-blue-300 disabled:bg-gray-50`}
                   />
                 ) : (
                   <span className={`${cellValue} text-gray-700`}>{staticCellValue(field, ri, ci)}</span>
@@ -59,7 +62,7 @@ export default function RowColumnField({ field, value, onChange, disabled }) {
               </div>
             ))}
             {withSumCol && (
-              <div className={`${cellRow} bg-gray-50`}>
+              <div className={`${cellRow} col-span-2 bg-gray-50`}>
                 <span className={`${cellLabel} font-semibold text-gray-600`}>{field.sumColumnLabel || 'Total'}</span>
                 <span className={`${cellValue} font-bold text-gray-800`}>{rTotals[ri] == null ? '' : rTotals[ri]}</span>
               </div>
@@ -90,7 +93,7 @@ export default function RowColumnField({ field, value, onChange, disabled }) {
 
     {/* Desktop view: full editable table */}
     <div className="hidden sm:block overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
+      <ResponsiveTable className="w-full border-collapse text-sm">
         <thead>
           <tr>
             {/* Top-left cell: optional table title */}
@@ -118,11 +121,12 @@ export default function RowColumnField({ field, value, onChange, disabled }) {
               {cols.map((_, ci) => (
                 isCellInput(field, ri, ci) ? (
                   <td key={ci} className="border border-gray-300 p-1">
-                    <input
+                    <NumericInput
                       type={cellInputType(field, ci) === 'number' ? 'number' : 'text'}
                       value={getCellValue(ri, ci)}
                       onChange={e => setCellValue(ri, ci, e.target.value)}
                       disabled={disabled}
+                      aria-label={`${row}: ${cols[ci]}`}
                       className="w-full px-1.5 py-1 text-sm outline-none focus:bg-blue-50 rounded disabled:bg-gray-50 text-center"
                     />
                   </td>
@@ -158,7 +162,7 @@ export default function RowColumnField({ field, value, onChange, disabled }) {
             </tr>
           )}
         </tbody>
-      </table>
+      </ResponsiveTable>
     </div>
     </>
   );

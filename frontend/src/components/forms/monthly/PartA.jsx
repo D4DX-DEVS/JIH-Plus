@@ -1,3 +1,4 @@
+import NumericInput from "../../NumericInput";
 import React, { useEffect, useState } from 'react';
 import { useForm } from '../../../contexts/FormContext';
 
@@ -56,7 +57,7 @@ const PartA = () => {
           <label className="block text-sm font-medium text-gray-900 mb-1">
               1. ജനസംഖ്യ (ആകെ)
             </label>
-                                     <input
+                                     <NumericInput
               type="number"
               value={formData.partA?.totalPopulation ?? ''}
               onChange={(e) => handleInputChange('totalPopulation', e.target.value)}
@@ -70,7 +71,7 @@ const PartA = () => {
           <label className="block text-sm font-medium text-gray-900 mb-1">
               2. മുസ്‌ലിം %
             </label>
-                                     <input
+                                     <NumericInput
               type="number"
               value={formData.partA?.muslimPercentage ?? ''}
               onChange={(e) => handleInputChange('muslimPercentage', e.target.value)}
@@ -87,7 +88,7 @@ const PartA = () => {
           <label className="block text-sm font-medium text-gray-900 mb-1">
               3. ഹിന്ദു %
             </label>
-                                     <input
+                                     <NumericInput
               type="number"
               value={formData.partA?.hinduPercentage ?? ''}
               onChange={(e) => handleInputChange('hinduPercentage', e.target.value)}
@@ -104,7 +105,7 @@ const PartA = () => {
           <label className="block text-sm font-medium text-gray-900 mb-1">
               4. ക്രിസ്ത്യൻ %
             </label>
-                                     <input
+                                     <NumericInput
               type="number"
               value={formData.partA?.christianPercentage ?? ''}
               onChange={(e) => handleInputChange('christianPercentage', e.target.value)}
@@ -121,7 +122,7 @@ const PartA = () => {
           <label className="block text-sm font-medium text-gray-900 mb-1">
               5. മറ്റുള്ളവർ %
             </label>
-                                     <input
+                                     <NumericInput
               type="number"
               value={formData.partA?.othersPercentage ?? ''}
               onChange={(e) => handleInputChange('othersPercentage', e.target.value)}
@@ -138,7 +139,7 @@ const PartA = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
               6. പ്രസ്ഥാനം %
             </label>
-                                     <input
+                                     <NumericInput
               type="number"
               value={formData.partA?.movementPercentage ?? ''}
               onChange={(e) => handleInputChange('movementPercentage', e.target.value)}

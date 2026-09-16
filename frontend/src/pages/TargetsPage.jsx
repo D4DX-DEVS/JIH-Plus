@@ -1,3 +1,4 @@
+import NumericInput from "../components/NumericInput";
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ArrowLeft, Check, AlertTriangle, TrendingUp, X, Trash2, RefreshCw, Users, Sliders, LayoutList, Building2, CheckCircle2, Send, MapPin, Target as TargetIcon } from 'lucide-react';
@@ -17,7 +18,7 @@ import {
   submitCount,
   deleteTarget
 } from '../services/targetService';
-import jihLogo from '../assets/LogoColor.png';
+import BrandLogo from '../components/branding/BrandLogo';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
 import { JihFab, JihAddButton } from '../components/JihToolbar';
 
@@ -232,7 +233,7 @@ function CreateTargetModal({ districts, onClose, onCreated }) {
               <>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Target Count *</label>
-                  <input
+                  <NumericInput
                     type="number"
                     min={1}
                     value={form.targetCount}
@@ -263,7 +264,7 @@ function CreateTargetModal({ districts, onClose, onCreated }) {
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-semibold text-gray-600">Target Count per District</label>
                   <div className="flex items-center gap-2">
-                    <input
+                    <NumericInput
                       type="number"
                       min={1}
                       value={form.targetCount}
@@ -291,7 +292,7 @@ function CreateTargetModal({ districts, onClose, onCreated }) {
                     {districts.map(d => (
                       <div key={d._id} className="grid grid-cols-[1fr_auto] items-center px-3 py-1.5 hover:bg-gray-50">
                         <span className="text-sm text-gray-800 truncate pr-2">{d.name}</span>
-                        <input
+                        <NumericInput
                           type="number"
                           min={0}
                           value={bulkCounts[d._id] ?? ''}
@@ -422,7 +423,7 @@ function AllocateAreasPanel({ target, districtAlloc, onDone }) {
               {mode === 'equal' ? (
                 <span className="text-sm font-semibold text-[#002349] w-20 text-right">{equalVal.toLocaleString()}</span>
               ) : (
-                <input
+                <NumericInput
                   type="number"
                   min={0}
                   value={custom[a._id] ?? 0}
@@ -532,7 +533,7 @@ function AllocateUnitsPanel({ target, areaAlloc, onDone }) {
               {mode === 'equal' ? (
                 <span className="text-sm font-semibold text-[#002349] w-20 text-right">{equalVal.toLocaleString()}</span>
               ) : (
-                <input
+                <NumericInput
                   type="number"
                   min={0}
                   value={custom[u._id] ?? 0}
@@ -595,7 +596,7 @@ function UnitSubmitPanel({ target, unitAlloc, onDone }) {
 
       <div>
         <label className="block text-xs font-semibold text-gray-600 mb-1">Your actual count</label>
-        <input
+        <NumericInput
           type="number"
           min={0}
           value={count}
@@ -921,7 +922,7 @@ const TargetsPage = ({ onLogout }) => {
         : <UnitAdminSidebar {...sidebarProps} unitName={userData.unitName || '—'} areaName={userData.areaName || userData.area || ''} districtName={userData.district || ''} />;
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+    <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
       {SidebarComponent}
 
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -939,7 +940,7 @@ const TargetsPage = ({ onLogout }) => {
 
         {/* Desktop header */}
         <div className="hidden lg:flex bg-white border-b px-6 py-3 items-center gap-3 flex-shrink-0 z-10 shadow-sm">
-          <img src={jihLogo} alt="JIH" className="h-8 w-auto" />
+          <BrandLogo alt="JIH" size="xs" className="h-8" />
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold text-[#002349] truncate">ടാർഗറ്റുകൾ</h1>
           </div>
@@ -951,7 +952,7 @@ const TargetsPage = ({ onLogout }) => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 lg:pb-6 max-w-4xl mx-auto w-full">
+        <div className="mobile-readable-content flex-1 overflow-y-auto px-3 pt-3 pb-24 sm:p-6 lg:pb-6 max-w-4xl mx-auto w-full">
           {error && <div className="mb-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl text-sm">{error}</div>}
 
           {selectedTargetId ? (

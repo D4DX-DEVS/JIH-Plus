@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const { verifyTenantJwt } = require('../config/tenantContext');
 const userAuth = require('./userAuth');
 const adminAuth = require('./adminAuth');
 
@@ -16,8 +16,8 @@ const unifiedAuth = (req, res, next) => {
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     try {
-      // Verify token with JWT_SECRET (both admin and user tokens use the same secret)
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // Verify against the portal (tenant) that owns this request
+      const decoded = verifyTenantJwt(token, req);
       
       // Check if it's an admin token or user token
       if (decoded.isAdmin) {

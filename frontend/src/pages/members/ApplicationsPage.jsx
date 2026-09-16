@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api, apiError } from '../../utils/members/api'
@@ -157,7 +158,7 @@ export default function ApplicationsPage() {
             {/* Desktop table */}
             <div className="hidden lg:block">
               <TableWrap>
-                <table className="w-full text-sm min-w-[720px]">
+                <ResponsiveTable className="w-full text-sm min-w-[720px]">
                   <thead className="bg-gray-50/80 border-b border-gray-100">
                     <tr>
                       <Th>Applicant</Th>
@@ -191,7 +192,7 @@ export default function ApplicationsPage() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </ResponsiveTable>
               </TableWrap>
             </div>
           </>

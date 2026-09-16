@@ -363,7 +363,9 @@ const AbroadMemberManagement = () => {
                       </button>
 
                       {aExpanded && Object.entries(area.units).map(([uKey, unit]) => {
-                        const uExpanded = expanded[`${cKey}-${aKey}-${uKey}`] !== false
+                        // Units start collapsed so the first paint is the country → area →
+                        // unit map, not every member. A search opens them to reveal matches.
+                        const uExpanded = expanded[`${cKey}-${aKey}-${uKey}`] ?? Boolean(searchText)
                         return (
                           <div key={uKey} className="border-t border-gray-100">
                             {/* Unit header */}
@@ -402,17 +404,17 @@ const AbroadMemberManagement = () => {
                                     <div className="flex items-center gap-2 flex-shrink-0">
                                       <button
                                         onClick={() => { setEditMember(m); setShowModal(true) }}
-                                        className="p-2.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 text-xs"
+                                        className="ih-action ih-action-edit"
                                         title="Edit"
                                       >
-                                        <Pencil className="w-3.5 h-3.5" />
+                                        <Pencil className="h-4 w-4" />
                                       </button>
                                       <button
                                         onClick={() => setDeleteModal({ isOpen: true, id: m._id, name: m.name })}
-                                        className="p-2.5 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 text-xs"
+                                        className="ih-action ih-action-delete"
                                         title="Delete"
                                       >
-                                        <Trash2 className="w-3.5 h-3.5" />
+                                        <Trash2 className="h-4 w-4" />
                                       </button>
                                     </div>
                                   </div>

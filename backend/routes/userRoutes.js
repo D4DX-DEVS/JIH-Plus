@@ -1,5 +1,6 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
+const { signTenantJwt } = require('../config/tenantContext');
+const { fetchDistrictData, fetchAreaData, fetchUnitData, hasExternalHierarchy } = require('../utils/hierarchySource');
 const userAuth = require('../middlewares/userAuth');
 const adminAuth = require('../middlewares/adminAuth');
 const Form = require('../models/form');
@@ -10,7 +11,6 @@ const UnitMaster = require('../models/unit');
 
 const router = express.Router();
 const OpenAI = require('openai');
-const axios = require('axios');
 
 // Initialize OpenAI client if API key exists
 let openaiClient = null;
@@ -52,100 +52,13 @@ const generateAccessCode = (type, districtName, areaName = null, unitName = null
   }
 };
 
-// Helper function to fetch district data from external API
-const fetchDistrictData = async () => {
-  try {
-    const apiEndpoint = process.env.DISTRICT_API_ENDPOINT;
-    
-    if (!apiEndpoint) {
-      throw new Error('District API endpoint not configured in environment variables');
-    }
-    
-    const response = await axios.get(apiEndpoint);
-    
-    if (!response.data || !response.data.success) {
-      throw new Error('Invalid response from districts API');
-    }
-    
-    return response.data.data || response.data;
-  } catch (error) {
-    console.error('Error fetching district data:', error);
-    throw error;
-  }
-};
-
-// Helper function to fetch area data from external API
-const fetchAreaData = async (districtId) => {
-  try {
-    const apiEndpoint = process.env.AREA_API_ENDPOINT;
-    
-    if (!apiEndpoint) {
-      throw new Error('Area API endpoint not configured in environment variables');
-    }
-    
-    // Replace {districtId} placeholder in API endpoint if it exists
-    const finalEndpoint = apiEndpoint.includes('{districtId}') 
-      ? apiEndpoint.replace('{districtId}', encodeURIComponent(districtId))
-      : `${apiEndpoint}/${encodeURIComponent(districtId)}`;
-    
-    const response = await axios.get(finalEndpoint);
-    
-    if (!response.data || !response.data.success) {
-      throw new Error('Invalid response from areas API');
-    }
-    
-    return response.data.data || response.data;
-  } catch (error) {
-    console.error('Error fetching area data:', error);
-    throw error;
-  }
-};
-
-// Helper function to fetch unit data from external API
-const fetchUnitData = async (areaId) => {
-  try {
-    const apiEndpoint = process.env.UNIT_API_ENDPOINT;
-    
-    if (!apiEndpoint) {
-      throw new Error('Unit API endpoint not configured in environment variables');
-    }
-    
-    // Replace {areaId} placeholder in API endpoint if it exists
-    const finalEndpoint = apiEndpoint.includes('{areaId}') 
-      ? apiEndpoint.replace('{areaId}', encodeURIComponent(areaId))
-      : `${apiEndpoint}/${encodeURIComponent(areaId)}`;
-    
-    const response = await axios.get(finalEndpoint);
-    
-    if (!response.data || !response.data.success) {
-      throw new Error('Invalid response from units API');
-    }
-    
-    return response.data.data || response.data;
-  } catch (error) {
-    console.error('Error fetching unit data:', error);
-    throw error;
-  }
-};
-
-
 // ====== HIERARCHY LIST ENDPOINTS ======
-// Get districts from external API (if configured) otherwise fallback to static
+// Get districts from the tenant's hierarchy source: the external API for the
+// master portal, the tenant's own location master for a franchise.
 router.get('/hierarchy/districts', async (req, res) => {
   try {
-    console.log('Hierarchy districts endpoint called');
-    if (process.env.DISTRICT_API_ENDPOINT) {
-      console.log('Using external API:', process.env.DISTRICT_API_ENDPOINT);
-      const data = await fetchDistrictData();
-      
-      return res.json({ success: true, data }
-
-      );
-    }
-    // console.log('Using static districts');
-    // const districtList = Object.keys(DISTRICTS).map(name => ({ id: name, name }));
-    // console.log('Static districts:', districtList);
-    // res.json({ success: true, data: districtList });
+    const data = await fetchDistrictData();
+    return res.json({ success: true, data });
   } catch (e) {
     console.error('Error in hierarchy districts:', e);
     res.status(500).json({ success: false, message: e.message || 'Failed to load districts' });
@@ -225,6 +138,13 @@ router.get('/hierarchy/units/:areaId', async (req, res) => {
 // ====== SYNC ENDPOINT - Fetch and store all districts, areas, and units ======
 router.post('/sync-hierarchy', adminAuth, async (req, res) => {
   try {
+    if (!hasExternalHierarchy()) {
+      return res.status(400).json({
+        success: false,
+        message: 'This portal has no external hierarchy service configured; manage districts, areas and units in Location Master instead.'
+      });
+    }
+
     console.log('Starting hierarchy sync...');
     
     // Fetch all districts
@@ -412,7 +332,7 @@ router.post('/login/unified', async (req, res) => {
       const district = await District.findOne({ uniqueCode: normalizedUsername, isActive: true })
         .populate('stateId', 'name');
       if (district && district.password === password) {
-        const token = jwt.sign(
+        const token = signTenantJwt(
           {
             id: district._id,
             _id: district._id,
@@ -425,7 +345,6 @@ router.post('/login/unified', async (req, res) => {
             uniqueCode: district.uniqueCode,
             isUser: true
           },
-          process.env.JWT_SECRET,
           { expiresIn: '24h' }
         );
         return res.json({
@@ -444,7 +363,7 @@ router.post('/login/unified', async (req, res) => {
       const area = await AreaMaster.findOne({ uniqueCode: normalizedUsername, isActive: true })
         .populate('districtId', 'name uniqueCode sequentialNumber');
       if (area && area.password === password) {
-        const token = jwt.sign(
+        const token = signTenantJwt(
           {
             id: area._id,
             _id: area._id,
@@ -460,7 +379,6 @@ router.post('/login/unified', async (req, res) => {
             uniqueCode: area.uniqueCode,
             isUser: true
           },
-          process.env.JWT_SECRET,
           { expiresIn: '24h' }
         );
         return res.json({
@@ -482,7 +400,7 @@ router.post('/login/unified', async (req, res) => {
         .populate('districtId', 'name uniqueCode sequentialNumber')
         .populate('areaId', 'name uniqueCode randomCode');
       if (unit && unit.password === password) {
-        const token = jwt.sign(
+        const token = signTenantJwt(
           {
             id: unit._id,
             _id: unit._id,
@@ -501,7 +419,6 @@ router.post('/login/unified', async (req, res) => {
             uniqueCode: unit.uniqueCode,
             isUser: true
           },
-          process.env.JWT_SECRET,
           { expiresIn: '24h' }
         );
         return res.json({
@@ -591,7 +508,7 @@ router.post('/login/unified', async (req, res) => {
     
     switch (user.type) {
       case 'district':
-        token = jwt.sign(
+        token = signTenantJwt(
           { 
             id: user._id,
             _id: user._id,
@@ -603,7 +520,6 @@ router.post('/login/unified', async (req, res) => {
             accessCode: user.accessCode,
             isUser: true 
           },
-          process.env.JWT_SECRET,
           { expiresIn: '24h' }
         );
         
@@ -615,7 +531,7 @@ router.post('/login/unified', async (req, res) => {
         break;
         
       case 'area':
-        token = jwt.sign(
+        token = signTenantJwt(
           {
             id: user._id,
             _id: user._id,
@@ -628,7 +544,6 @@ router.post('/login/unified', async (req, res) => {
             areaName: user.areaName,
             isUser: true
           },
-          process.env.JWT_SECRET,
           { expiresIn: '24h' }
         );
         
@@ -642,7 +557,7 @@ router.post('/login/unified', async (req, res) => {
         break;
         
       case 'unit':
-        token = jwt.sign(
+        token = signTenantJwt(
           {
             id: user._id,
             _id: user._id,
@@ -657,7 +572,6 @@ router.post('/login/unified', async (req, res) => {
             unitName: user.unitName,
             isUser: true
           },
-          process.env.JWT_SECRET,
           { expiresIn: '24h' }
         );
         

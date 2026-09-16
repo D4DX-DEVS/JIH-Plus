@@ -1,3 +1,4 @@
+import ResponsiveTable from "../tables/ResponsiveTable.jsx";
 import React from 'react';
 import {
   displayCellValue, showSumRow, showSumColumn, columnTotals, rowTotals, grandTotal,
@@ -69,7 +70,7 @@ export default function RowColumnReadonly({ field, value }) {
 
     {/* Desktop view: full table */}
     <div className="hidden sm:block overflow-x-auto mt-1">
-      <table className="w-full border-collapse text-sm">
+      <ResponsiveTable className="w-full border-collapse text-sm">
         <thead>
           <tr>
             <th className="border border-gray-300 bg-gray-100 px-3 py-2 text-left text-xs font-semibold text-gray-600 min-w-[7rem]">
@@ -121,7 +122,7 @@ export default function RowColumnReadonly({ field, value }) {
             </tr>
           )}
         </tbody>
-      </table>
+      </ResponsiveTable>
     </div>
     </>
   );

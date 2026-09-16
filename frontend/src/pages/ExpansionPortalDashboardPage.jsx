@@ -12,8 +12,9 @@ import {
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import SubmissionsAnalytics from '../components/dashboard/SubmissionsAnalytics';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
-import jihLogo from '../assets/LogoColor.png';
+import BrandLogo from '../components/branding/BrandLogo';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import DashboardMetricGrid from '../components/dashboard/DashboardMetricGrid';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -27,19 +28,6 @@ const COLORS = {
   red: '#EF4444',
   teal: '#14B8A6',
 };
-
-const StatCard = ({ icon: Icon, label, value, color, sub }) => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2.5 sm:p-5 flex flex-col sm:flex-row items-start gap-1.5 sm:gap-4">
-    <div className="p-1.5 sm:p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: `${color}1A` }}>
-      <Icon className="w-4 h-4 sm:w-6 sm:h-6" style={{ color }} />
-    </div>
-    <div className="min-w-0">
-      <p className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wide leading-tight">{label}</p>
-      <p className="text-lg sm:text-2xl font-bold text-gray-800 mt-0.5">{value ?? '—'}</p>
-      {sub && <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{sub}</p>}
-    </div>
-  </div>
-);
 
 const RADIAN = Math.PI / 180;
 const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, value, name }) => {
@@ -149,7 +137,7 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
   ] : [];
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex app-viewport bg-gray-50 overflow-hidden">
       {/* Sidebar */}
       <AdminSidebar
         activeTab="dashboard"
@@ -183,7 +171,7 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
             <h1 className="text-base font-semibold text-gray-800">ഡാഷ്ബോർഡ്</h1>
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <img src={jihLogo} alt="JIH" className="h-7 w-auto object-contain opacity-80" />
+            <BrandLogo alt="JIH" size="xs" className="opacity-80" />
           </div>
         </header>
 
@@ -210,12 +198,15 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                   <MapPin className="w-4 h-4" /> ലൊക്കേഷൻ ഓവർവ്യൂ
                 </h2>
-                <div className="grid grid-cols-4 gap-2 sm:gap-3">
-                  <StatCard icon={Building2} label="ജില്ലകൾ" value={data.locations.districts} color={COLORS.primary} />
-                  <StatCard icon={Map} label="ഏരിയകൾ" value={data.locations.areas} color={COLORS.blue} />
-                  <StatCard icon={Layers} label="യൂണിറ്റുകൾ" value={data.locations.units} color={COLORS.teal} />
-                  <StatCard icon={MapPin} label="മൊത്തം ലൊക്കേഷൻ" value={data.locations.total} color={COLORS.purple} />
-                </div>
+                <DashboardMetricGrid
+                  label="ലൊക്കേഷൻ ഓവർവ്യൂ"
+                  items={[
+                    { key: 'districts', label: 'ജില്ലകൾ', value: data.locations.districts, icon: Building2, tone: 'blue' },
+                    { key: 'areas', label: 'ഏരിയകൾ', value: data.locations.areas, icon: Map, tone: 'gold' },
+                    { key: 'units', label: 'യൂണിറ്റുകൾ', value: data.locations.units, icon: Layers, tone: 'green' },
+                    { key: 'locations', label: 'മൊത്തം ലൊക്കേഷൻ', value: data.locations.total, icon: MapPin, tone: 'violet' },
+                  ]}
+                />
               </section>
 
               {/* Section: Submission Analytics */}
@@ -228,12 +219,15 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                   <FileText className="w-4 h-4" /> ആക്ടീവ് റിപ്പോർട്ടുകൾ
                 </h2>
-                <div className="grid grid-cols-4 gap-2 sm:gap-3">
-                  <StatCard icon={FileText} label="ആകെ ആക്ടീവ്" value={data.reports.total} color={COLORS.primary} />
-                  <StatCard icon={Building2} label="ജില്ലക്ക്" value={data.reports.byLevel.district} color={COLORS.blue} />
-                  <StatCard icon={Map} label="ഏരിയക്ക്" value={data.reports.byLevel.area} color={COLORS.teal} />
-                  <StatCard icon={Layers} label="യൂണിറ്റിന്" value={data.reports.byLevel.unit} color={COLORS.amber} />
-                </div>
+                <DashboardMetricGrid
+                  label="ആക്ടീവ് റിപ്പോർട്ട് ഓവർവ്യൂ"
+                  items={[
+                    { key: 'active-total', label: 'ആകെ ആക്ടീവ്', value: data.reports.total, icon: FileText, tone: 'blue' },
+                    { key: 'district-reports', label: 'ജില്ലക്ക്', value: data.reports.byLevel.district, icon: Building2, tone: 'violet' },
+                    { key: 'area-reports', label: 'ഏരിയക്ക്', value: data.reports.byLevel.area, icon: Map, tone: 'green' },
+                    { key: 'unit-reports', label: 'യൂണിറ്റിന്', value: data.reports.byLevel.unit, icon: Layers, tone: 'gold' },
+                  ]}
+                />
               </section>
 
               {/* Section: Active Reports List */}
@@ -265,9 +259,9 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
                           key={report._id}
                           className="flex items-center justify-between gap-3 border border-gray-100 rounded-xl px-4 py-3 hover:bg-gray-50 transition-colors"
                         >
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{report.title}</p>
-                            <div className="flex items-center gap-2 mt-1">
+                          <div className="min-w-0 flex-1">
+                            <p className="break-words text-sm font-semibold leading-snug text-gray-900 [overflow-wrap:anywhere]">{report.title}</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-800">
                                 {report.type}
                               </span>
@@ -294,11 +288,14 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
                   <TrendingUp className="w-4 h-4" /> സബ്മിഷൻ സ്റ്റാറ്റസ്
                 </h2>
-                <div className="grid grid-cols-3 gap-3">
-                  <StatCard icon={TrendingUp} label="ആകെ" value={data.submissions.total} color={COLORS.primary} />
-                  <StatCard icon={CheckCircle2} label="സമർപ്പിച്ചത്" value={data.submissions.submitted} color={COLORS.green} />
-                  <StatCard icon={Clock} label="കാത്തിരിക്കുന്നത്" value={data.submissions.pending} color={COLORS.amber} />
-                </div>
+                <DashboardMetricGrid
+                  label="സബ്മിഷൻ സ്റ്റാറ്റസ്"
+                  items={[
+                    { key: 'submission-total', label: 'ആകെ', value: data.submissions.total, icon: TrendingUp, tone: 'blue' },
+                    { key: 'submitted', label: 'സമർപ്പിച്ചത്', value: data.submissions.submitted, icon: CheckCircle2, tone: 'green' },
+                    { key: 'pending', label: 'കാത്തിരിക്കുന്നത്', value: data.submissions.pending, icon: Clock, tone: 'gold' },
+                  ]}
+                />
               </section>
 
               {/* Charts Row 1 */}

@@ -3,8 +3,8 @@
  * one line instead of one per line. The author picks how many fields share a
  * line ("2 per line"), and every field on that line gets the same setting.
  *
- * Widths only apply from the `sm` breakpoint up; on phones every field stays
- * full width so long Malayalam labels never get squeezed into a narrow column.
+ * Phones show author-grouped numeric fields two per line. Other fields stay
+ * full width so long Malayalam labels retain room to wrap.
  */
 
 export const FIELD_WIDTHS = [
@@ -35,5 +35,10 @@ export function fieldWidth(field) {
 }
 
 export function fieldWidthClass(field) {
+  // Honour author-selected compact widths for short numeric values on phones.
+  // Long text, uploads and compound questions retain the full mobile width.
+  if (field?.type === 'number' && ['half', 'third', 'quarter'].includes(fieldWidth(field))) {
+    return WIDTH_CLASSES[fieldWidth(field)].replace('col-span-12', 'col-span-6');
+  }
   return WIDTH_CLASSES[fieldWidth(field)];
 }

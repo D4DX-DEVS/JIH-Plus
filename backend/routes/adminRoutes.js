@@ -1,5 +1,5 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
+const { signTenantJwt } = require('../config/tenantContext');
 const adminAuth = require('../middlewares/adminAuth');
 const Form = require('../models/form');
 // Include level-specific monthly models
@@ -32,22 +32,21 @@ router.post('/login', async (req, res) => {
     }
 
     // Check if email matches admin email from env
-    if (email !== process.env.ADMIN_EMAIL) {
+    if (email !== req.tenant.adminEmail) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Check if password matches admin password from env (plain text comparison)
-    if (password !== process.env.ADMIN_PASSWORD) {
+    if (password !== req.tenant.adminPassword) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Generate JWT token
-    const token = jwt.sign(
+    const token = signTenantJwt(
       { 
-        email: process.env.ADMIN_EMAIL, 
+        email: req.tenant.adminEmail, 
         isAdmin: true 
       },
-      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
@@ -55,7 +54,7 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       token,
       admin: {
-        email: process.env.ADMIN_EMAIL
+        email: req.tenant.adminEmail
       }
     });
 
@@ -72,7 +71,7 @@ router.get('/profile', adminAuth, async (req, res) => {
     res.json({
       message: 'Admin profile fetched successfully',
       admin: {
-        email: adminPayload.email || process.env.ADMIN_EMAIL || '',
+        email: adminPayload.email || req.tenant.adminEmail || '',
         role: 'admin'
       }
     });

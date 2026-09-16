@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, FileText, LogOut, User, BarChart3, Home, Info, Bell, ChevronRight, Star, TrendingUp, Users, Shield, Clock } from 'lucide-react';
-import jihLogo from '../assets/LogoColor.png';
+import BrandLogo from '../components/branding/BrandLogo';
 
 const HomePage = ({
   onLogout,
@@ -120,7 +120,7 @@ const HomePage = ({
               >
                 <span>← Back</span>
               </button>
-              <img src={jihLogo} alt="JIH Logo" className="h-8 sm:h-12 w-auto" />
+              <BrandLogo alt="JIH Logo" size="xs" className="h-8 sm:h-12" />
               <h1 className="text-lg sm:text-2xl font-bold text-[#002349] text-center sm:text-left">
                 JIH Plus
               </h1>

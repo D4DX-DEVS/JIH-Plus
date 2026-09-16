@@ -1,3 +1,5 @@
+import FormSection from '../FormSection';
+import NumericInput from "../../NumericInput";
 import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import { validateNumericInput, handleNumericKeyDown, handleNumericPaste } from '../../../utils/validation';
@@ -451,7 +453,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
+    <FormSection className="unit-report-section">
       {/* Header */}
       <div className="hidden lg:block mb-8">
         <h2 className="text-xl font-bold text-[#002349] mb-1.5">
@@ -678,7 +680,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">പുരുഷൻ</label>
-                  <input 
+                  <NumericInput
                     type="number" 
                     value={partDData.growthAcceleration.rukkun?.male || 0} 
                     onChange={(e) => handlePartDInputChange('growthAcceleration.rukkun.male', Math.max(0, parseInt(e.target.value) || 0))} 
@@ -689,7 +691,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">സ്ത്രീ</label>
-                  <input 
+                  <NumericInput
                     type="number" 
                     value={partDData.growthAcceleration.rukkun?.female || 0} 
                     onChange={(e) => handlePartDInputChange('growthAcceleration.rukkun.female', Math.max(0, parseInt(e.target.value) || 0))} 
@@ -707,7 +709,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">പുരുഷൻ</label>
-                  <input 
+                  <NumericInput
                     type="number" 
                     value={partDData.growthAcceleration.karkun?.male || 0} 
                     onChange={(e) => handlePartDInputChange('growthAcceleration.karkun.male', Math.max(0, parseInt(e.target.value) || 0))} 
@@ -718,7 +720,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">സ്ത്രീ</label>
-                  <input 
+                  <NumericInput
                     type="number" 
                     value={partDData.growthAcceleration.karkun?.female || 0} 
                     onChange={(e) => handlePartDInputChange('growthAcceleration.karkun.female', Math.max(0, parseInt(e.target.value) || 0))} 
@@ -824,7 +826,7 @@ const UnitPageB = ({ onNext, onPrevious, formData, setFormData }) => {
           <Check className="w-4 h-4" />
         </button>
       </div>
-    </div>
+    </FormSection>
   );
 };
 

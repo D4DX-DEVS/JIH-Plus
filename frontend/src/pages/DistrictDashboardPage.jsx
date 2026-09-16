@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Users, Building, BookOpen, TrendingUp, BarChart3, MapPin, ChevronRight, ChevronDown, FileText } from 'lucide-react';
+import { Users, Building, BookOpen, TrendingUp, BarChart3, MapPin, ChevronRight, ChevronDown, FileText, Bell, Info, Search } from 'lucide-react';
 import axios from 'axios';
 import { validateUserToken } from '../utils/auth';
 import { Navigate } from 'react-router-dom';
@@ -18,8 +18,18 @@ import StatisticsCard from '../components/charts/StatisticsCard';
 import DistrictMonthlyStatsTable from '../components/tables/DistrictMonthlyStatsTable';
 import AreaMonthlyStatsTable from '../components/tables/AreaMonthlyStatsTable';
 import ActiveReportsCard from '../components/dashboard/ActiveReportsCard';
+import DashboardMetricGrid from '../components/dashboard/DashboardMetricGrid';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+
+// Tinted pin per area row, cycled by position.
+const AREA_TONES = [
+  'bg-[#e4edfb] text-[#1d4fa8]',
+  'bg-[#e3f4ea] text-[#1e8a4c]',
+  'bg-[#fdf1dc] text-[#a06a12]',
+  'bg-[#fbe6ee] text-[#b8244f]',
+  'bg-[#ede6fb] text-[#6a3bd8]',
+];
 
 const DistrictDashboardPage = ({ onLogout }) => {
   const { districtId } = useParams();
@@ -61,6 +71,8 @@ const DistrictDashboardPage = ({ onLogout }) => {
   const [dashboardError, setDashboardError] = useState('');
   const [activeReportsList, setActiveReportsList] = useState([]);
   const [activeReportsLoading, setActiveReportsLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [areaSearch, setAreaSearch] = useState('');
 
   // Respect navigation requests coming from other pages
   useEffect(() => {
@@ -95,6 +107,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
     if (currentView === 'dashboard') {
       loadDashboardOverview();
       loadActiveReportsList();
+      loadUnreadCount();
     }
     if (currentView === 'locations') {
       loadAreas();
@@ -266,6 +279,20 @@ const DistrictDashboardPage = ({ onLogout }) => {
       console.error('District active reports list error:', err);
     } finally {
       setActiveReportsLoading(false);
+    }
+  };
+
+  // Badge on the top-bar bell; best-effort, never blocks the dashboard.
+  const loadUnreadCount = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/notifications/unread-count`, {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 5000
+      });
+      setUnreadCount(response.data?.count || 0);
+    } catch {
+      setUnreadCount(0);
     }
   };
 
@@ -575,51 +602,71 @@ const DistrictDashboardPage = ({ onLogout }) => {
     const districtName = userData?.district || userData?.districtName || '';
 
     return (
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] rounded-2xl p-6 text-white">
-          {/* MobileTopBar already names this screen on mobile; avoid a duplicate title below lg. */}
-          <h2 className="hidden lg:block text-xl font-bold">ജില്ലാ ഡാഷ്ബോർഡ്</h2>
-          {districtName && <p className="text-white/80 text-sm mt-1">{districtName}</p>}
+      <div className="space-y-2.5 sm:space-y-6">
+        {/* MobileTopBar already names this screen on mobile; avoid a duplicate title below lg. */}
+        <h2 className="hidden lg:block text-xl font-bold text-[#0f2a5c]">ജില്ലാ ഡാഷ്ബോർഡ്</h2>
+
+        {/* District card */}
+        <div className="flex items-center gap-3 rounded-[18px] bg-gradient-to-r from-[#0b2a5b] to-[#1b4384] p-2.5 text-white shadow-[0_10px_28px_rgba(11,42,91,0.28)] sm:p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15">
+            <MapPin className="h-4 w-4" strokeWidth={1.8} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[12px] font-semibold tracking-[0.12em] text-white/75">ജില്ല</span>
+            <span className="block break-words text-[15px] font-extrabold uppercase leading-tight [overflow-wrap:anywhere]">{districtName || '—'}</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setCurrentView('locations')}
+            className="inline-flex min-h-[36px] shrink-0 items-center gap-1 rounded-lg bg-white/15 px-2.5 text-[12px] font-bold text-white ring-1 ring-white/20 transition-colors hover:bg-white/25"
+          >
+            ഏരിയകൾ <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
 
-        <SubmissionsAnalytics scope="district" />
-
-        {/* Stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-[#002349]" />
-            </div>
-            <p className="text-2xl font-bold text-[#002349]">{d.areas ?? '—'}</p>
-            <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">ആകെ ഏരിയകൾ</p>
-          </div>
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-              <Building className="w-5 h-5 text-[#957C3D]" />
-            </div>
-            <p className="text-2xl font-bold text-[#957C3D]">{d.units ?? '—'}</p>
-            <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">ആകെ യൂണിറ്റുകൾ</p>
-          </div>
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-green-50 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-green-600" />
-            </div>
-            <p className="text-2xl font-bold text-green-600">{d.activeReports ?? '—'}</p>
-            <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">ആക്ടീവ് റിപ്പോർട്ടുകൾ</p>
-          </div>
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-2.5 sm:p-5 flex flex-col items-start gap-1.5 sm:gap-2 overflow-hidden">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
-            </div>
-            <p className="text-2xl font-bold text-emerald-600">{d.submitted ?? '—'}</p>
-            <p className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">സബ്മിറ്റ് ചെയ്തവ</p>
-          </div>
+        {/* Detailed analytics belongs to the Statistics view on phones. Keeping
+            it here for desktop preserves the existing wide-screen workflow. */}
+        <div className="hidden lg:block">
+          <SubmissionsAnalytics scope="district" />
         </div>
+
+        <DashboardMetricGrid
+          items={[
+            { key: 'areas', label: 'ആകെ ഏരിയകൾ', value: d.areas, icon: MapPin, tone: 'blue', onClick: () => setCurrentView('locations') },
+            { key: 'units', label: 'ആകെ യൂണിറ്റുകൾ', value: d.units, icon: Building, tone: 'gold', onClick: () => setCurrentView('locations') },
+            { key: 'reports', label: 'ആകെ റിപ്പോർട്ടുകൾ', value: d.activeReports, icon: BookOpen, tone: 'violet', onClick: handleNavigateToReports },
+            { key: 'submitted', label: 'സബ്മിറ്റ് ചെയ്തവ', value: d.submitted, icon: TrendingUp, tone: 'green', onClick: () => setCurrentView('stats') },
+          ]}
+        />
+
+        <ActiveReportsCard reports={activeReportsList} loading={activeReportsLoading} />
+
+        <button
+          type="button"
+          onClick={() => setCurrentView('stats')}
+          className="jih-card relative flex w-full items-center gap-2.5 overflow-hidden p-3 text-left transition hover:-translate-y-0.5 lg:hidden"
+        >
+          <svg className="pointer-events-none absolute bottom-0 right-2 h-8 w-10" viewBox="0 0 96 64" fill="none" aria-hidden="true">
+            <rect x="6" y="40" width="12" height="24" rx="3" fill="#e4ecf8" />
+            <rect x="26" y="30" width="12" height="34" rx="3" fill="#d7e2f4" />
+            <rect x="46" y="18" width="12" height="46" rx="3" fill="#c9d8f0" />
+            <rect x="66" y="6" width="12" height="58" rx="3" fill="#bccdec" />
+          </svg>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e4edfb] text-[#1d4fa8]">
+            <BarChart3 className="h-4 w-4" strokeWidth={1.8} />
+          </span>
+          <span className="relative min-w-0 flex-1">
+            <span className="block text-[14px] font-extrabold leading-tight text-[#0f2a5c]">വിശദമായ സ്ഥിതിവിവരങ്ങൾ</span>
+            <span className="mt-0.5 block text-[12px] leading-snug text-[#5b6b85]">ജില്ലയിലെ എല്ലാ പ്രവർത്തനങ്ങളുടെയും വിശദവിവരങ്ങൾ</span>
+          </span>
+          <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#eef2f8] text-[#1f3560]">
+            <ChevronRight className="h-3.5 w-3.5" />
+          </span>
+        </button>
 
         {/* Charts */}
         {(d.areas || d.units || d.activeReports) ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="hidden grid-cols-1 gap-6 lg:grid lg:grid-cols-2">
             {/* Location breakdown */}
             <div className="bg-white rounded-2xl shadow border border-gray-100 p-6">
               <h3 className="text-sm font-bold text-[#002349] mb-4">ലൊക്കേഷൻ ഓവർവ്യൂ</h3>
@@ -672,7 +719,6 @@ const DistrictDashboardPage = ({ onLogout }) => {
           </div>
         ) : null}
 
-        <ActiveReportsCard reports={activeReportsList} loading={activeReportsLoading} />
       </div>
     );
   };
@@ -745,7 +791,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
       <div className="space-y-6">
         {/* Sub-tabs within District Statistics */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-3">
-          <div className="flex space-x-3 flex-wrap gap-2">
+          <div className="mobile-tab-grid flex flex-wrap gap-2 sm:gap-3">
             <button
               onClick={() => setActiveStatsSubTab('summary')}
               className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'summary' ? 'bg-[#002349] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
@@ -1024,75 +1070,83 @@ const DistrictDashboardPage = ({ onLogout }) => {
   // Shared list of areas (expandable to their units) with per-area / per-unit
   // "submissions" shortcuts. Used by both the stats "unit table" tab and the
   // dedicated Areas & Units page.
-  const renderAreasUnitsList = () => {
-    if (!areas || areas.length === 0) {
-      return <p className="text-sm text-gray-500 py-6 text-center">No areas found under this district.</p>;
+  const renderAreasUnitsList = (list = areas) => {
+    if (!list || list.length === 0) {
+      return <p className="py-6 text-center text-sm text-gray-500">ഈ ജില്ലയിൽ ഏരിയകൾ ലഭ്യമല്ല.</p>;
     }
     return (
       <div className="space-y-3">
-        {areas.map((a) => {
+        {list.map((a, index) => {
           const areaId = a.id || a._id || a.code;
           const areaName = a.title || a.name || areaId;
           const isExpanded = expandedAreaId === areaId;
           return (
-            <div key={areaId} className="rounded-2xl border border-gray-200 bg-white overflow-hidden hover:shadow-md transition-all duration-300">
-              <div className={`flex items-center justify-between gap-3 px-4 py-3 ${isExpanded ? 'bg-gradient-to-r from-[#002349]/5 to-[#957C3D]/5' : ''}`}>
+            <div key={areaId} className="jih-card overflow-hidden">
+              <div className={`p-3 sm:flex sm:items-center sm:gap-3 ${isExpanded ? 'bg-[#f6f8fc]' : ''}`}>
                 <button
                   onClick={() => handleAreaClick(a)}
-                  className="flex items-center gap-3 min-w-0 text-left"
+                  aria-expanded={isExpanded}
+                  className="flex min-h-[44px] w-full min-w-0 items-center gap-2.5 text-left sm:flex-1"
                 >
-                  <span className="flex-shrink-0 w-9 h-9 rounded-xl bg-[#957C3D]/10 flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-[#957C3D]" />
+                  <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full sm:h-12 sm:w-12 ${AREA_TONES[index % AREA_TONES.length]}`}>
+                    <MapPin className="h-4 w-4" strokeWidth={1.8} />
                   </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-bold text-[#002349] truncate">{areaName}</span>
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
-                      {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                      {isExpanded ? 'Hide units' : 'View units'}
+                  <span className="min-w-0 flex-1">
+                    <span className="block break-words text-[14px] font-extrabold uppercase leading-tight text-[#0f2a5c] [overflow-wrap:anywhere] sm:text-base">{areaName}</span>
+                    <span className="mt-0.5 block text-[12px] leading-snug text-[#5b6b85] sm:text-sm">
+                      {isExpanded ? 'യൂണിറ്റുകൾ മറയ്ക്കുക' : 'യൂണിറ്റുകൾ കാണുക'}
                     </span>
                   </span>
+                  {isExpanded
+                    ? <ChevronDown className="h-5 w-5 flex-shrink-0 text-[#1f3560]" />
+                    : <ChevronRight className="h-5 w-5 flex-shrink-0 text-[#1f3560]" />}
                 </button>
                 <button
                   onClick={() => navigate('/district/dynamic-submissions/monthly', { state: { areaFilter: a.name || a.title } })}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#002349] text-white text-xs font-semibold hover:bg-[#1a3a5c] transition-colors"
+                  className="mt-2.5 flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-xl bg-[#14346b] px-4 text-[13px] font-bold text-white transition-colors hover:bg-[#1d4487] sm:mt-0 sm:min-h-[44px] sm:w-auto sm:flex-shrink-0 sm:text-sm"
                 >
-                  <FileText className="w-3.5 h-3.5" />
+                  <FileText className="h-3.5 w-3.5" />
                   <span>സബ്മിഷനുകൾ</span>
                 </button>
               </div>
 
               {isExpanded && (
-                <div className="px-4 pb-4 pt-1">
-                  <div className="rounded-xl border border-gray-200 divide-y">
-                    <div className="px-4 py-2 bg-gray-50 flex items-center gap-2">
-                      <h4 className="text-sm font-semibold text-gray-900">Units</h4>
-                      <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                <div className="border-t border-[#e6ecf5] bg-[#f6f8fc] p-3 sm:p-4">
+                  <div className="mb-2 flex items-center gap-2 px-1">
+                      <h4 className="text-[13px] font-semibold text-gray-900">യൂണിറ്റുകൾ</h4>
+                      <span className="rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
                         {expandedAreaUnits.length}
                       </span>
+                  </div>
+                  {loadingExpandedArea ? (
+                    <div className="space-y-2" aria-label="Loading units">
+                      <div className="h-16 animate-pulse rounded-xl border border-gray-200 bg-white" />
+                      <div className="h-16 animate-pulse rounded-xl border border-gray-200 bg-white" />
                     </div>
-                    {expandedAreaUnits.length === 0 ? (
-                      <p className="px-4 py-3 text-sm text-gray-500">No units under this area.</p>
-                    ) : (
-                      expandedAreaUnits.map((u) => {
+                  ) : expandedAreaUnits.length === 0 ? (
+                    <p className="rounded-xl border border-gray-200 bg-white px-3 py-4 text-sm text-gray-600">ഈ ഏരിയയിൽ യൂണിറ്റുകൾ ലഭ്യമല്ല.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {expandedAreaUnits.map((u) => {
                         const unitId = u.id || u._id || u.code;
                         return (
-                          <div key={unitId} className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-gray-50">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Building className="w-4 h-4 text-[#002349] flex-shrink-0" />
-                              <span className="text-sm font-medium text-gray-800 truncate">{u.name || u.title || unitId}</span>
+                          <div key={unitId} className="rounded-xl border border-gray-200 bg-white p-3 sm:flex sm:items-center sm:justify-between sm:gap-3">
+                            <div className="flex min-w-0 items-start gap-2.5">
+                              <Building className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#002349]" />
+                              <span className="min-w-0 break-words text-[13px] font-semibold leading-snug text-gray-800 [overflow-wrap:anywhere]">{u.name || u.title || unitId}</span>
                             </div>
                             <button
                               onClick={() => navigate('/district/dynamic-submissions/monthly', { state: { unitFilter: u.name || u.title } })}
-                              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-lg bg-[#002349]/10 text-[#002349] text-xs font-semibold hover:bg-[#002349]/20 transition-colors"
+                              className="mt-2 flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-[#002349]/10 px-3 py-2 text-[13px] font-semibold text-[#002349] transition-colors hover:bg-[#002349]/20 sm:mt-0 sm:w-auto sm:flex-shrink-0"
                             >
-                              <FileText className="w-3.5 h-3.5" />
+                              <FileText className="h-4 w-4" />
                               <span>സബ്മിഷനുകൾ</span>
                             </button>
                           </div>
                         );
-                      })
-                    )}
-                  </div>
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1103,24 +1157,87 @@ const DistrictDashboardPage = ({ onLogout }) => {
   };
 
   // Dedicated "Areas & Units" page (sidebar → locations).
-  const renderLocationsView = () => (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-[#002349] to-[#1a3a5c] rounded-2xl p-6 text-white">
-        <h2 className="hidden lg:block text-xl font-bold">ഏരിയകളും യൂണിറ്റുകളും</h2>
-        <p className="text-white/80 text-sm mt-1">
-          {userData?.district || userData?.districtName || ''} · {areas.length} areas
-        </p>
+  const renderLocationsView = () => {
+    const query = areaSearch.trim().toLowerCase();
+    const visibleAreas = query
+      ? areas.filter((a) => `${a.title || ''} ${a.name || ''} ${a.code || ''}`.toLowerCase().includes(query))
+      : areas;
+
+    return (
+      <div className="space-y-2.5 sm:space-y-6">
+        <h2 className="hidden lg:block text-xl font-bold text-[#0f2a5c]">ഏരിയകളും യൂണിറ്റുകളും</h2>
+
+        <div className="flex items-center gap-3 rounded-[18px] bg-gradient-to-r from-[#0b2a5b] to-[#1b4384] p-2.5 text-white shadow-[0_10px_28px_rgba(11,42,91,0.28)] sm:p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15">
+            <MapPin className="h-4 w-4" strokeWidth={1.8} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block break-words text-[15px] font-extrabold uppercase leading-tight [overflow-wrap:anywhere]">
+              {userData?.district || userData?.districtName || '—'}
+            </span>
+            <span className="block text-[12px] text-white/80">{areas.length} പ്രദേശങ്ങൾ</span>
+          </span>
+        </div>
+
+        <div className="flex items-start gap-2.5 rounded-[18px] bg-[#e4edfb] p-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/70 text-[#1d4fa8]">
+            <Info className="h-3.5 w-3.5" strokeWidth={2} />
+          </span>
+          <p className="min-w-0 text-[12px] font-medium leading-relaxed text-[#1f3560]">
+            ഏരിയ തിരഞ്ഞെടുക്കുമ്പോൾ അതിലെ യൂണിറ്റുകൾ കാണാം. ഏരിയയുടെയോ യൂണിറ്റിന്റെയോ റിപ്പോർട്ടുകൾ കാണാൻ “സബ്മിഷനുകൾ” തിരഞ്ഞെടുക്കുക.
+          </p>
+        </div>
+
+        <label className="jih-card flex min-h-[44px] items-center gap-2 px-3.5">
+          <Search className="h-4 w-4 shrink-0 text-[#5b6b85]" />
+          <input
+            type="search"
+            value={areaSearch}
+            onChange={(e) => setAreaSearch(e.target.value)}
+            placeholder="ഏരിയ തിരയുക..."
+            aria-label="ഏരിയ തിരയുക"
+            className="min-w-0 flex-1 bg-transparent text-base text-[#0f2a5c] placeholder:text-[#8593ab] focus:outline-none"
+          />
+        </label>
+
+        {renderAreasUnitsList(visibleAreas)}
       </div>
-      <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-gray-200">
-        <p className="text-xs text-[#957C3D] font-medium mb-4 break-words leading-relaxed">
-          💡 ഒരു ഏരിയയിൽ ക്ലിക്ക് ചെയ്ത് അതിലെ യൂണിറ്റുകൾ കാണുക. "സബ്മിഷനുകൾ" ബട്ടൺ ആ ഏരിയ / യൂണിറ്റിന്റെ സബ്മിഷനുകൾ കാണിക്കും.
-        </p>
-        {renderAreasUnitsList()}
-      </div>
-    </div>
-  );
+    );
+  };
 
   const currentViewContent = renderCurrentView();
+
+  // Top-bar identity badge: two initials from the user's name, else the district.
+  const initialsSource = (userData?.name || userData?.email || userData?.district || userData?.districtName || 'JIH').trim();
+  const initialsWords = initialsSource.split(/[\s@._-]+/).filter(Boolean);
+  const initials = (initialsWords.length > 1 ? initialsWords[0][0] + initialsWords[1][0] : initialsSource.slice(0, 2)).toUpperCase();
+
+  const topBarActions = (
+    <>
+      <button
+        type="button"
+        onClick={handleNavigateToNotifications}
+        aria-label={unreadCount > 0 ? `നോട്ടിഫിക്കേഷൻ, ${unreadCount} പുതിയത്` : 'നോട്ടിഫിക്കേഷൻ'}
+        className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1f3560] shadow-[0_6px_18px_rgba(15,35,65,0.12)] transition-colors hover:bg-[#f4f7fc]"
+      >
+        <Bell className="h-4 w-4" strokeWidth={1.9} />
+        {unreadCount > 0 && (
+          <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-[#e0334c] px-1 text-center text-[11px] font-bold leading-[18px] text-white ring-2 ring-white">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </button>
+      <span
+        role="img"
+        aria-label={initialsSource}
+        title={initialsSource}
+        className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#14346b] text-[12px] font-extrabold text-white shadow-[0_6px_18px_rgba(20,52,107,0.28)]"
+      >
+        {initials}
+        <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full bg-[#2fb36b] ring-2 ring-white" aria-hidden="true" />
+      </span>
+    </>
+  );
 
   const handleSidebarNavigate = (viewId) => {
     if (viewId === 'reports') {
@@ -1182,7 +1299,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
 
   return (
     <>
-      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex overflow-hidden">
+      <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex">
         <DistrictAdminSidebar
           activeView={normalizeSidebarView(currentView)}
           onNavigate={handleSidebarNavigate}
@@ -1207,8 +1324,16 @@ const DistrictDashboardPage = ({ onLogout }) => {
                 stats: 'സ്ഥിതിവിവരങ്ങൾ',
               }[currentView] || 'ജില്ലാ ഡാഷ്ബോർഡ്'
             }
+            subtitle={
+              {
+                dashboard: 'സേവനത്തിലൂടെ സമൂഹത്തിന് ഒപ്പം',
+                locations: 'പ്രദേശങ്ങൾ കാണുക',
+                stats: 'വിവരങ്ങളുടെ സംഗ്രഹവും വിശകലനവും',
+              }[currentView] || null
+            }
+            actions={currentView === 'dashboard' ? topBarActions : null}
           />
-          <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 lg:px-8 pt-4 pb-24 lg:pb-4">
+          <div data-app-scroll className="app-scroll-region mobile-readable-content flex-1 px-3 pt-3 pb-24 sm:px-6 sm:pt-4 lg:px-8 lg:pb-4">
             {currentViewContent}
           </div>
         </div>
@@ -1229,4 +1354,3 @@ const DistrictDashboardPage = ({ onLogout }) => {
 };
 
 export default DistrictDashboardPage;
-

@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Plus, Trash2 } from 'lucide-react'
@@ -119,7 +120,7 @@ export default function RolesPage() {
             </div>
             {/* Desktop: table */}
             <TableWrap>
-            <table className="hidden lg:table w-full text-sm min-w-[680px]">
+            <ResponsiveTable className="hidden lg:table w-full text-sm min-w-[680px]">
               <thead className="bg-gray-50/80 border-b border-gray-100">
                 <tr>
                   <Th>Rank</Th>
@@ -155,7 +156,7 @@ export default function RolesPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </ResponsiveTable>
             </TableWrap>
           </>
         )}

@@ -56,5 +56,5 @@ reportSubmissionSchema.index({ submittedAt: -1 });
 reportSubmissionSchema.index({ month: 1, year: 1 });
 reportSubmissionSchema.index({ year: 1 });
 
-module.exports = mongoose.model('ReportSubmission', reportSubmissionSchema);
+module.exports = require('../config/tenantModel').tenantModel('ReportSubmission', reportSubmissionSchema);
 

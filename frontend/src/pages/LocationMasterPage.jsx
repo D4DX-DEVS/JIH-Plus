@@ -1,3 +1,4 @@
+import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pencil, Trash2, RefreshCw, Copy, Check, MapPin, Building2, Home, Layers, X, Eye, EyeOff, Download, ChevronLeft, ChevronRight, Scissors, GitMerge, ArrowRightLeft, Search, ChevronDown } from 'lucide-react';
@@ -292,7 +293,7 @@ function StatesTab() {
         <>
         {/* Desktop: full table */}
         <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -321,7 +322,7 @@ function StatesTab() {
                 <tr><td colSpan={3} className="text-center py-8 text-gray-400">No states yet</td></tr>
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
 
         {/* Mobile: card list with full-size tap targets */}
@@ -595,7 +596,7 @@ function DistrictsTab() {
         <>
         {/* Desktop: full table */}
         <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -641,7 +642,7 @@ function DistrictsTab() {
                 <tr><td colSpan={6} className="text-center py-8 text-gray-400">No districts yet</td></tr>
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
 
         {/* Mobile: name + actions only; tap name for state/username/password */}
@@ -655,7 +656,7 @@ function DistrictsTab() {
                 <span className="font-medium text-gray-800 truncate">{d.name}</span>
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
               </button>
-              <div className="flex items-center gap-2 flex-wrap px-4 pb-2.5">
+              <div className="grid grid-flow-col auto-cols-fr gap-1 px-2 pb-2">
                 <button title="Reset password" onClick={() => handleResetPassword(d._id)}
                   className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-amber-600 hover:bg-amber-50 rounded">
                   <RefreshCw className="w-4 h-4" /></button>
@@ -1083,7 +1084,7 @@ function AreasTab() {
         <>
         {/* Desktop: full table */}
         <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -1132,7 +1133,7 @@ function AreasTab() {
                 <tr><td colSpan={6} className="text-center py-8 text-gray-400">No areas yet</td></tr>
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
 
         {/* Mobile: name + actions only; tap name for district/username/password */}
@@ -1146,7 +1147,7 @@ function AreasTab() {
                 <span className="font-medium text-gray-800 truncate">{a.name}</span>
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
               </button>
-              <div className="flex items-center gap-2 flex-wrap px-4 pb-2.5">
+              <div className="grid grid-flow-col auto-cols-fr gap-1 px-2 pb-2">
                 <button title="Reset password" onClick={() => handleResetPassword(a._id)}
                   className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-amber-600 hover:bg-amber-50 rounded">
                   <RefreshCw className="w-4 h-4" /></button>
@@ -1630,7 +1631,7 @@ function UnitsTab() {
         <>
         {/* Desktop: full table */}
         <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-600">
                 <th className="text-left px-4 py-2 font-medium">#</th>
@@ -1681,7 +1682,7 @@ function UnitsTab() {
                 <tr><td colSpan={7} className="text-center py-8 text-gray-400">No units yet</td></tr>
               )}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
 
         {/* Mobile: name + actions only; tap name for area/district/username/password */}
@@ -1695,7 +1696,7 @@ function UnitsTab() {
                 <span className="font-medium text-gray-800 truncate">{u.name}</span>
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
               </button>
-              <div className="flex items-center gap-2 flex-wrap px-4 pb-2.5">
+              <div className="grid grid-flow-col auto-cols-fr gap-1 px-2 pb-2">
                 <button title="Reset password" onClick={() => handleResetPassword(u._id)}
                   className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-amber-600 hover:bg-amber-50 rounded">
                   <RefreshCw className="w-4 h-4" /></button>
@@ -1927,7 +1928,7 @@ export default function LocationMasterPage({ onLogout }) {
   })();
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex app-viewport bg-gray-50 overflow-hidden">
       <AdminSidebar
         activeTab="master-data"
         onTabChange={(tab) => {

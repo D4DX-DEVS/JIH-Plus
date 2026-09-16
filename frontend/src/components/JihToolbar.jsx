@@ -15,6 +15,7 @@ export function JihFilterBar({
   search,
   onSearchChange,
   placeholder = 'Search…',
+  searchLabel = 'Search',
   activeFilterCount = 0,
   onClear,
   actions = null,
@@ -27,7 +28,8 @@ export function JihFilterBar({
 
   return (
     <div className={`ih-surface jih-toolbar p-2.5 sm:p-3 ${className}`}>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+      <div className="flex items-center gap-2 lg:min-w-[16rem] lg:flex-1">
         <div className="relative min-w-0 flex-1">
           <Search className="ih-filter-icon" />
           <input
@@ -35,6 +37,7 @@ export function JihFilterBar({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={placeholder}
+            aria-label={searchLabel}
             className={`ih-field h-[44px] text-base sm:h-9 sm:text-sm ${search ? 'pr-10' : 'pr-3'}`}
           />
           {search && (
@@ -55,7 +58,7 @@ export function JihFilterBar({
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
             aria-label="Toggle filters"
-            className={`inline-flex h-[44px] shrink-0 items-center gap-1 rounded-full px-3 text-[11px] font-medium transition-colors sm:hidden ${
+            className={`inline-flex h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1 rounded-full px-2.5 text-[11px] font-medium transition-colors sm:hidden ${
               activeFilterCount > 0 ? 'bg-[#002349]/10 text-[#002349]' : 'text-gray-500'
             }`}
             style={activeFilterCount > 0 ? undefined : { backgroundColor: 'rgba(16,24,40,0.04)' }}
@@ -70,7 +73,7 @@ export function JihFilterBar({
       </div>
 
       {hasFilters && (
-        <div className={`${open ? 'grid' : 'hidden'} mt-2 grid-cols-2 gap-2 sm:!grid ${gridClass}`}>
+        <div className={`${open ? 'grid' : 'hidden'} grid-cols-2 gap-2 sm:!grid ${gridClass} lg:!flex lg:flex-wrap lg:items-center lg:*:w-56`}>
           {children}
           {onClear && activeFilterCount > 0 && (
             <button
@@ -84,17 +87,18 @@ export function JihFilterBar({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
 
 /** One filter control: leading icon + filled pill select + trailing chevron. */
-export function JihFilterSelect({ icon, className = '', children, ...props }) {
+export function JihFilterSelect({ icon, className = '', label = 'Filter', children, 'aria-label': ariaLabel, ...props }) {
   const Icon = icon || Filter;
   return (
     <div className={`relative ${className}`}>
       <Icon className="ih-filter-icon" />
-      <select className="ih-filter-select truncate" {...props}>
+      <select className="ih-filter-select truncate" aria-label={ariaLabel || label} {...props}>
         {children}
       </select>
       <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />

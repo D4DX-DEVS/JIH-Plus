@@ -1,3 +1,4 @@
+import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -537,59 +538,45 @@ const UnitAdminDashboard = () => {
 
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="border-b border-transparent bg-gradient-to-r from-[#1A2434] to-[#101828] rounded-t-3xl shadow-sm">
-            <nav className="ih-mobile-tabs -mb-px px-3 sm:px-6 text-white/80">
+          {/* Section tabs — one scrolling row of pills on a plain surface. */}
+          <div className="border-b border-gray-100 px-3 py-2.5 sm:px-6">
+            <nav className="ih-pill-tabs" role="tablist" aria-label="Dashboard sections">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
-                  activeTab === 'overview'
-                    ? 'border-white text-white'
-                    : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
-                }`}
+                type="button" role="tab" aria-selected={activeTab === 'overview'}
+                className={`ih-pill-tab ${activeTab === 'overview' ? 'ih-pill-tab-active' : ''}`}
               >
                 <span className="hidden sm:inline">Overview</span>
                 <span className="sm:hidden">Overview</span>
               </button>
               <button
                 onClick={() => setActiveTab('my-submissions')}
-                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
-                  activeTab === 'my-submissions'
-                    ? 'border-white text-white'
-                    : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
-                }`}
+                type="button" role="tab" aria-selected={activeTab === 'my-submissions'}
+                className={`ih-pill-tab ${activeTab === 'my-submissions' ? 'ih-pill-tab-active' : ''}`}
               >
                 <span className="hidden sm:inline">My Submissions ({mySubmissionsPagination.total})</span>
                 <span className="sm:hidden">My Forms</span>
               </button>
               <button
                 onClick={() => setActiveTab('members')}
-                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
-                  activeTab === 'members'
-                    ? 'border-white text-white'
-                    : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
-                }`}
+                type="button" role="tab" aria-selected={activeTab === 'members'}
+                className={`ih-pill-tab ${activeTab === 'members' ? 'ih-pill-tab-active' : ''}`}
               >
                 <span className="hidden sm:inline">Members ({membersPagination.total})</span>
                 <span className="sm:hidden">Members</span>
               </button>
               <button
                 onClick={() => setActiveTab('submissions')}
-                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
-                  activeTab === 'submissions'
-                    ? 'border-white text-white'
-                    : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
-                }`}
+                type="button" role="tab" aria-selected={activeTab === 'submissions'}
+                className={`ih-pill-tab ${activeTab === 'submissions' ? 'ih-pill-tab-active' : ''}`}
               >
                 <span className="hidden sm:inline">Unit Submissions ({submissionsPagination.total})</span>
                 <span className="sm:hidden">Unit Forms</span>
               </button>
               <button
                 onClick={() => setActiveTab('admin-replies')}
-                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
-                  activeTab === 'admin-replies'
-                    ? 'border-white text-white'
-                    : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
-                }`}
+                type="button" role="tab" aria-selected={activeTab === 'admin-replies'}
+                className={`ih-pill-tab ${activeTab === 'admin-replies' ? 'ih-pill-tab-active' : ''}`}
               >
                 <span className="hidden sm:inline">
                   Submission Replies ({submissions.filter(s => s.adminReply?.message).length})
@@ -598,11 +585,8 @@ const UnitAdminDashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab('unit-replies')}
-                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
-                  activeTab === 'unit-replies'
-                    ? 'border-white text-white'
-                    : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
-                }`}
+                type="button" role="tab" aria-selected={activeTab === 'unit-replies'}
+                className={`ih-pill-tab ${activeTab === 'unit-replies' ? 'ih-pill-tab-active' : ''}`}
               >
                 <span className="hidden sm:inline">
                   Unit Replies ({unitRepliesPagination.total})
@@ -611,11 +595,8 @@ const UnitAdminDashboard = () => {
               </button>
               <button
                 onClick={() => setActiveTab('alternative-submissions')}
-                className={`shrink-0 min-h-[44px] py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition ${
-                  activeTab === 'alternative-submissions'
-                    ? 'border-white text-white'
-                    : 'border-transparent text-white/60 hover:text-white hover:border-white/40'
-                }`}
+                type="button" role="tab" aria-selected={activeTab === 'alternative-submissions'}
+                className={`ih-pill-tab ${activeTab === 'alternative-submissions' ? 'ih-pill-tab-active' : ''}`}
               >
                 <span className="hidden sm:inline">
                   Alternate Submissions ({alternativeSubmissionsPagination.total})
@@ -680,6 +661,14 @@ const UnitAdminDashboard = () => {
             {/* My Submissions Tab */}
             {activeTab === 'my-submissions' && (
               <div>
+                <button
+                  onClick={handleNewSubmission}
+                  title="New Submission"
+                  aria-label="New Submission"
+                  className="ih-fab"
+                >
+                  <Plus className="h-5 w-5" />
+                </button>
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h3 className="text-lg font-medium text-gray-900">
                     My Submissions
@@ -723,7 +712,7 @@ const UnitAdminDashboard = () => {
                     )}
                     <button
                       onClick={handleNewSubmission}
-                      className="px-4 py-2.5 lg:py-2 text-sm font-semibold text-white bg-[#161F2F] hover:bg-[#1a2538] rounded-lg transition-colors duration-200 flex items-center w-full justify-center sm:w-auto"
+                      className="px-4 py-2.5 lg:py-2 text-sm font-semibold text-white bg-[#161F2F] hover:bg-[#1a2538] rounded-lg transition-colors duration-200 hidden items-center w-full justify-center sm:flex sm:w-auto"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       New Submission
@@ -760,14 +749,14 @@ const UnitAdminDashboard = () => {
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => navigate(`/ihthisabi/unitadmin/submission-details/${submission._id}`)}
-                              className="p-2 text-gray-400 hover:text-blue-600 transition-colors duration-200"
+                              className="ih-action ih-action-view"
                               title="View Details"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => navigate(`/ihthisabi/unitadmin/submit-form?edit=${submission._id}`)}
-                              className="p-2 text-gray-400 hover:text-green-600 transition-colors duration-200"
+                              className="ih-action ih-action-edit"
                               title="Edit Submission"
                             >
                               <Edit className="w-4 h-4" />
@@ -847,7 +836,7 @@ const UnitAdminDashboard = () => {
                                 }
                               }}
                               title={isSelected ? 'Hide details' : 'View details'}
-                              className={`ih-icon-btn ${isSelected ? 'bg-blue-100 text-blue-600' : 'hover:bg-blue-50 hover:text-blue-600'}`}
+                              className={`ih-action ${isSelected ? 'bg-violet-100 text-violet-700' : 'ih-action-view'}`}
                             >
                               <Eye className="w-4 h-4" />
                             </button>
@@ -873,7 +862,7 @@ const UnitAdminDashboard = () => {
                   </div>
 
                   <div className="hidden md:block overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <ResponsiveTable className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
@@ -948,7 +937,7 @@ const UnitAdminDashboard = () => {
                       </React.Fragment>
                     ))}
                       </tbody>
-                    </table>
+                    </ResponsiveTable>
                   </div>
                   <Pagination pagination={membersPagination} onPageChange={fetchMembers} loading={membersLoading} itemLabel="members" />
               </div>
@@ -1033,7 +1022,7 @@ const UnitAdminDashboard = () => {
                             <button
                               onClick={() => handleSubmissionClick(submission)}
                               title="View details"
-                              className="ih-icon-btn hover:bg-blue-50 hover:text-blue-600"
+                              className="ih-action ih-action-view"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
@@ -1043,7 +1032,7 @@ const UnitAdminDashboard = () => {
                     </div>
 
                     <div className="hidden md:block overflow-x-auto border border-gray-200 rounded-xl">
-                      <table className="min-w-full divide-y divide-gray-200">
+                      <ResponsiveTable className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Rukn Name</th>
@@ -1079,7 +1068,7 @@ const UnitAdminDashboard = () => {
                             )
                           })}
                         </tbody>
-                      </table>
+                      </ResponsiveTable>
                     </div>
                     <Pagination pagination={submissionsPagination} onPageChange={fetchSubmissions} loading={submissionsLoading} itemLabel="submissions" />
                   </>

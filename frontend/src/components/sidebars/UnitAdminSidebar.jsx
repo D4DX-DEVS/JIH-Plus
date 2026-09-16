@@ -17,7 +17,7 @@ import {
   LayoutDashboard,
   Target as TargetIcon
 } from 'lucide-react';
-import jihLogoWhite from '../../assets/LogoWhite.png';
+import BrandLogo from '../branding/BrandLogo';
 import PoweredByD4DX from './PoweredByD4DX';
 import MobileBottomNav from './MobileBottomNav';
 import { SIDEBAR_THEME, DYNAMIC_REPORT_META, REPORT_TYPE_STYLES } from './sidebarTheme';
@@ -156,7 +156,7 @@ const UnitAdminSidebar = ({
           {/* Sidebar Header */}
           <div className={`flex items-center h-16 justify-between px-4 border-b ${SIDEBAR_THEME.border} ${isDesktopCollapsed ? 'lg:justify-center lg:px-2' : ''}`}>
             <div className="flex items-center space-x-3 min-w-0">
-              <img src={jihLogoWhite} alt="JIH Logo" className="h-9 w-9 flex-shrink-0 object-contain" />
+              <BrandLogo variant="white" alt="JIH Logo" size="sm" />
               <div className={isDesktopCollapsed ? 'lg:hidden' : ''}>
                 <h2
                   className="text-base font-bold text-white whitespace-nowrap"

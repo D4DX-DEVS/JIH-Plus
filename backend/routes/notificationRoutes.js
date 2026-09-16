@@ -4,80 +4,10 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const Notification = require('../models/notification');
 const unifiedAuth = require('../middlewares/unifiedAuth');
-const axios = require('axios');
-// Helper function to fetch district data from external API
-const fetchDistrictData = async () => {
-    try {
-      // Use environment variable with fallback to hardcoded endpoint
-      const apiEndpoint = process.env.DISTRICT_API_ENDPOINT || 'https://cenloginbackend.d4dx.co/api/districts';
-      
-      
-      const response = await axios.get(apiEndpoint);
-      
-      
-      if (!response.data || !response.data.success) {
-        throw new Error('Invalid response from districts API');
-      }
-      
-      return response.data.data || response.data;
-    } catch (error) {
-      console.error('Error fetching district data:', error);
-      throw error;
-    }
-  };
-  
-  // Helper function to fetch area data from external API
-  const fetchAreaData = async (districtId) => {
-    try {
-      // Use environment variable with fallback to hardcoded endpoint
-      const baseEndpoint = process.env.AREA_API_ENDPOINT || 'https://cenloginbackend.d4dx.co/api/areas/district/{districtId}';
-      
-      // Replace {districtId} placeholder in API endpoint if it exists
-      const finalEndpoint = baseEndpoint.includes('{districtId}') 
-        ? baseEndpoint.replace('{districtId}', encodeURIComponent(districtId))
-        : `${baseEndpoint}/${encodeURIComponent(districtId)}`;
-      
-     
-      
-      const response = await axios.get(finalEndpoint);
-      
-      
-      if (!response.data || !response.data.success) {
-        throw new Error('Invalid response from areas API');
-      }
-      
-      return response.data.data || response.data;
-    } catch (error) {
-      console.error('Error fetching area data:', error);
-      throw error;
-    }
-  };
-  
-  // Helper function to fetch unit data from external API
-  const fetchUnitData = async (areaId) => {
-    try {
-      // Use environment variable with fallback to hardcoded endpoint
-      const baseEndpoint = process.env.UNIT_API_ENDPOINT || 'https://cenloginbackend.d4dx.co/api/units/area/{areaId}';
-      
-      // Replace {areaId} placeholder in API endpoint if it exists
-      const finalEndpoint = baseEndpoint.includes('{areaId}') 
-        ? baseEndpoint.replace('{areaId}', encodeURIComponent(areaId))
-        : `${baseEndpoint}/${encodeURIComponent(areaId)}`;
-      
-      
-      
-      const response = await axios.get(finalEndpoint);
-      
-      if (!response.data || !response.data.success) {
-        throw new Error('Invalid response from units API');
-      }
-      
-      return response.data.data || response.data;
-    } catch (error) {
-      console.error('Error fetching unit data:', error);
-      throw error;
-    }
-  };
+// District/area/unit lists come from the tenant's hierarchy source: the
+// external API for the master portal, the tenant's own location master for a
+// franchise (utils/hierarchySource.js).
+const { fetchDistrictData, fetchAreaData, fetchUnitData } = require('../utils/hierarchySource');
 
 // Area/unit JWTs carry `areaName`/`unitName` (see /api/user/login/unified) —
 // never the bare `area`/`unit` keys this file originally assumed. Resolve both
