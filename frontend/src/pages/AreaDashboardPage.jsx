@@ -431,9 +431,6 @@ const AreaDashboardPage = ({ onLogout }) => {
     return text.replace(regex, '<mark class="bg-yellow-200 px-1 rounded">$1</mark>');
   };
 
-  // Normalize strings for tolerant comparisons (IDs/names)
-  const normalize = (value) => (value || '').toString().toLowerCase().replace(/\s+/g, '').trim();
-
   const confirmDelete = async () => {
     try {
       const token = localStorage.getItem('userToken');
@@ -1389,47 +1386,21 @@ const AreaDashboardPage = ({ onLogout }) => {
             ) : (
               <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredUnits.map((unit) => {
-                  const unitId = unit.id || unit._id || unit.code;
-                  const unitNameNorm = normalize(unit.name || unit.title || unit.code);
-                  // Use allUnitSurveys which includes actual unit-level submissions
-                  const unitSurveys = allUnitSurveys.filter(s => {
-                    const sid = s.__unitId || s.unitId || s.component;
-                    const snameNorm = normalize(s.component);
-                    return sid === unitId || snameNorm === unitNameNorm;
-                  });
-                  const hasSurveyThisMonth = unitSurveys.some(s => {
-                    const d = new Date(s.submittedAt);
-                    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-                  });
-                  const lastSurvey = unitSurveys.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
-
                   return (
                     <div
                       key={unit.id || unit._id || unit.code}
                       className="group flex flex-col justify-between rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm hover:shadow-lg hover:border-[#002349]/40 transition-all duration-300"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#002349]/10 flex items-center justify-center">
-                            <Building className="w-5 h-5 text-[#002349]" />
-                          </div>
-                          <div className="min-w-0">
-                            <h3
-                              className="text-sm font-bold text-[#002349] truncate"
-                              dangerouslySetInnerHTML={{
-                                __html: highlightSearchTerm(unit.name || unit.title || 'Unnamed Unit', unitSearchTerm)
-                              }}
-                            />
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              {lastSurvey ? `Last activity: ${new Date(lastSurvey.submittedAt).toLocaleDateString()}` : 'No activity yet'}
-                            </p>
-                          </div>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#002349]/10 flex items-center justify-center">
+                          <Building className="w-5 h-5 text-[#002349]" />
                         </div>
-                        {!hasSurveyThisMonth && (
-                          <span className="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700">
-                            Pending
-                          </span>
-                        )}
+                        <h3
+                          className="text-sm font-bold text-[#002349] truncate"
+                          dangerouslySetInnerHTML={{
+                            __html: highlightSearchTerm(unit.name || unit.title || 'Unnamed Unit', unitSearchTerm)
+                          }}
+                        />
                       </div>
 
                       <button
