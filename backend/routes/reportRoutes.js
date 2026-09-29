@@ -957,9 +957,9 @@ router.get('/admin/report-submissions', adminAuth, async (req, res) => {
     let roster;
     if (req.query.includeRoster) {
       const [districts, areas, units] = await Promise.all([
-        District.find().select('name').lean(),
-        AreaMaster.find().populate('districtId', 'name').select('name districtId').lean(),
-        UnitMaster.find().populate('districtId', 'name').populate('areaId', 'name').select('name districtId areaId').lean(),
+        District.find({ isActive: true }).select('name').lean(),
+        AreaMaster.find({ isActive: true }).populate('districtId', 'name').select('name districtId').lean(),
+        UnitMaster.find({ isActive: true }).populate('districtId', 'name').populate('areaId', 'name').select('name districtId areaId').lean(),
       ]);
       roster = {
         districts: districts.map(d => ({ name: d.name })),
@@ -1023,14 +1023,14 @@ router.get('/user/report-submissions', userAuth, async (req, res) => {
     if (role === 'unit') {
       scopeIds = [unitId || selfId].filter(Boolean);
     } else if (role === 'area') {
-      const units = await UnitMaster.find({ areaId: areaId || selfId }).select('_id name').lean();
+      const units = await UnitMaster.find({ areaId: areaId || selfId, isActive: true }).select('_id name').lean();
       scopeIds = [areaId || selfId, ...units.map(u => u._id)].filter(Boolean);
       roster.units = units.map(u => ({ name: u.name }));
     } else if (role === 'district') {
       const dId = districtId || selfId;
       const [areas, units] = await Promise.all([
-        AreaMaster.find({ districtId: dId }).select('_id name').lean(),
-        UnitMaster.find({ districtId: dId }).populate('areaId', 'name').select('_id name areaId').lean(),
+        AreaMaster.find({ districtId: dId, isActive: true }).select('_id name').lean(),
+        UnitMaster.find({ districtId: dId, isActive: true }).populate('areaId', 'name').select('_id name areaId').lean(),
       ]);
       scopeIds = [dId, ...areas.map(a => a._id), ...units.map(u => u._id)].filter(Boolean);
       roster.areas = areas.map(a => ({ name: a.name }));
