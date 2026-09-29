@@ -14,6 +14,7 @@
  *   node scripts/migrateLocationFromJson.js --yes            # no prompt
  *   node scripts/migrateLocationFromJson.js --state="Kerala" # override state name
  *   node scripts/migrateLocationFromJson.js --file=bangaluru.json --state="Other State"
+ *   JIH_TENANT=womens node scripts/migrateLocationFromJson.js --file=womens-location.json
  */
 
 const path = require('path');
@@ -26,6 +27,7 @@ const State = require('../models/state');
 const District = require('../models/district');
 const AreaMaster = require('../models/area');
 const UnitMaster = require('../models/unit');
+const { getTenant } = require('../config/tenantContext');
 const {
   generateDistrictCode,
   generateAreaCode,
@@ -80,15 +82,21 @@ const main = async () => {
   const { dryRun, force, stateName, file } = parseArgs();
   const locationRows = require(path.resolve(__dirname, '..', file));
 
-  if (!process.env.MONGODB_URI) {
-    throw new Error('MONGODB_URI is missing in environment variables.');
+  // JIH_TENANT=<key> points the models at a franchise database (config/tenants.js).
+  const tenant = getTenant();
+  if (!tenant.mongoUri) {
+    throw new Error(`${tenant.envPrefix ? `${tenant.envPrefix}_` : ''}MONGODB_URI is missing in environment variables.`);
   }
 
-  await mongoose.connect(process.env.MONGODB_URI, {
-    serverSelectionTimeoutMS: 30000,
-    socketTimeoutMS: 45000
-  });
-  console.log('✓ Connected to JIH MongoDB');
+  if (tenant.isDefault) {
+    await mongoose.connect(tenant.mongoUri, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000
+    });
+  } else {
+    await tenant.connection.asPromise();
+  }
+  console.log(`✓ Connected to ${tenant.label} MongoDB`);
 
   const tree = buildHierarchy(locationRows);
 
