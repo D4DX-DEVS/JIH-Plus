@@ -45,7 +45,6 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { downloadUnitReplyPDF } from '../../utils/unitReplyPdfGenerator'
-import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
 import { renderTemplate, getDefaultBlocks } from '../../utils/ihthisabi/replyTemplateEngine'
 import ReplyTemplateBuilder from '../../components/ihthisabi/ReplyTemplateBuilder'
 import ArchiveManagement from '../../components/ihthisabi/ArchiveManagement'
@@ -1043,7 +1042,7 @@ const AdminDashboard = () => {
                   >
                     <option value={1}>Q1 (Jan-Mar)</option>
                     <option value={2}>Q2 (Apr-Jun)</option>
-                    <option value={3} disabled={Q3_DISABLED}>Q3 (Jul-Sep) {Q3_DISABLED && '(Disabled)'}</option>
+                    <option value={3}>Q3 (Jul-Sep)</option>
                     <option value={4}>Q4 (Oct-Dec)</option>
                   </select>
                 </div>

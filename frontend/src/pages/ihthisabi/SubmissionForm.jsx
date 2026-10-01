@@ -24,7 +24,6 @@ import {
   FileText
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { Q3_DISABLED, isQ3Disabled } from '../../utils/ihthisabi/quarterHelper'
 
 const SubmissionForm = ({ userRole }) => {
   const { user: authUser, loading: authLoading, updateProfile } = useAuth()
@@ -941,24 +940,12 @@ const SubmissionForm = ({ userRole }) => {
 
   // Handle quarter selection
   const handleQuarterSelect = (quarter, year) => {
-    // Block Q3 selection if disabled
-    if (Q3_DISABLED && quarter === 3) {
-      toast.error('Q3 submissions are currently disabled.')
-      return
-    }
     setSelectedQuarter(quarter)
     setSelectedYear(year)
     setShowQuarterlySelection(false)
   }
 
   const onSubmit = async (data) => {
-    // Block Q3 submission if disabled
-    if (Q3_DISABLED && selectedQuarter === 3) {
-      toast.error('Q3 submissions are currently disabled.')
-      setLoading(false)
-      return
-    }
-    
     setLoading(true)
     try {
       console.log('Submitting form data:', data)
@@ -1070,7 +1057,6 @@ const SubmissionForm = ({ userRole }) => {
   // Submit dynamic form
   const onDynamicSubmit = async (e) => {
     e.preventDefault()
-    if (Q3_DISABLED && selectedQuarter === 3) { toast.error('Q3 submissions are currently disabled.'); return }
 
     // Validate required fields — collect all failures so every missing
     // field gets an inline error under it, instead of stopping at the first.

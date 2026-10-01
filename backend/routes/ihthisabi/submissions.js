@@ -11,19 +11,17 @@ const { buildOwnerMatch } = require('../../utils/submissionOwnerMatch');
 const { 
   getAvailableSubmissionQuarter, 
   validateSubmissionQuarter,
-  filterHiddenQuarters,
-  getHiddenQuarterFilter,
   getArchivedQuarterFilter
 } = require('../../utils/quarterHelper');
 
 const router = express.Router();
 
-// Attach the combined quarter filter (static Q3 hide + archived quarters) to every request
+// Attach the archived-quarter filter to every request
 router.use(async (req, res, next) => {
   try {
     req.quarterFilter = await getArchivedQuarterFilter();
   } catch (err) {
-    req.quarterFilter = getHiddenQuarterFilter();
+    req.quarterFilter = {};
   }
   next();
 });
@@ -301,7 +299,7 @@ router.get('/my-submissions', protect, authorize('rukn'), validateQuery(schemas.
   try {
     const { page = 1, limit = 10, year, month, quarter } = req.query;
 
-    // Build query - EXCLUDE Q3 submissions. Match by ruknId so a submission
+    // Build query. Match by ruknId so a submission
     // made under another role (e.g. Unit Admin) shows up here too.
     const query = {
       ...buildOwnerMatch(req.user.ruknId, req.user._id),
@@ -568,18 +566,17 @@ router.get('/stats/my-stats', protect, authorize('rukn'), async (req, res) => {
   try {
     const currentYear = new Date().getFullYear();
     
-    // Get current year submissions - EXCLUDE Q3
+    // Get current year submissions
     const currentYearSubmissions = await Submission.find({
       userId: req.user._id,
       'submissionPeriod.year': currentYear,
       ...req.quarterFilter // Filter out archived quarters
     }).sort({ 'submissionPeriod.quarter': 1 });
 
-    // Calculate statistics - excluding Q3 (only 3 quarters: Q1, Q2, Q4)
+    // Calculate statistics
     const totalSubmissions = currentYearSubmissions.length;
     const completedQuarters = currentYearSubmissions.map(s => s.submissionPeriod.quarter);
-    // Only show available quarters (1, 2, 4) - exclude Q3
-    const availableQuarters = [1, 2, 4];
+    const availableQuarters = [1, 2, 3, 4];
     const pendingQuarters = availableQuarters.filter(quarter => !completedQuarters.includes(quarter));
 
     // Get average scores for various metrics (only from non-dynamic submissions)

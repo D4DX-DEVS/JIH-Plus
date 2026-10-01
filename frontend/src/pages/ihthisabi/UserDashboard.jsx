@@ -18,7 +18,6 @@ import {
   Edit
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
 
 const UserDashboard = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth()
@@ -174,8 +173,6 @@ const UserDashboard = () => {
           if (month >= 10 && month <= 12) return 4
           return 1
         })()
-        // Exclude Q3 if disabled
-        if (Q3_DISABLED && submissionQuarter === 3) return
         if (!completedQuarters.includes(submissionQuarter)) {
           completedQuarters.push(submissionQuarter)
         }
@@ -293,7 +290,7 @@ const UserDashboard = () => {
             { label: 'Total Submissions', short: 'Total', value: submissions.length, icon: <FileText className="h-4 w-4" />, tone: 'bg-blue-100 text-blue-600' },
             { label: 'Approved', short: 'Approved', value: submissions.filter(s => s.status === 'approved').length, icon: <CheckCircle2 className="h-4 w-4" />, tone: 'bg-green-100 text-green-600' },
             { label: 'In Review', short: 'In Review', value: submissions.filter(s => s.status === 'reviewed' || s.status === 'submitted').length, icon: <Clock3 className="h-4 w-4" />, tone: 'bg-amber-100 text-amber-600' },
-            { label: 'Annual Progress', short: 'Progress', value: `${Math.round((getQuarterCompletionStatus().length / (Q3_DISABLED ? 3 : 4)) * 100)}%`, icon: <TrendingUp className="h-4 w-4" />, tone: 'bg-purple-100 text-purple-600' },
+            { label: 'Annual Progress', short: 'Progress', value: `${Math.round((getQuarterCompletionStatus().length / 4) * 100)}%`, icon: <TrendingUp className="h-4 w-4" />, tone: 'bg-purple-100 text-purple-600' },
           ].map(({ label, short, value, icon, tone }) => (
             <div key={label} className="ih-stat-card">
               <div className="flex items-start justify-between gap-2">
@@ -419,9 +416,9 @@ const UserDashboard = () => {
                           <span>• April – June</span>
                           <span className="font-medium text-blue-600">(3 months)</span>
                         </div>
-                        <div className={`flex items-center justify-between py-1 ${Q3_DISABLED ? 'opacity-50 line-through' : ''}`}>
+                        <div className="flex items-center justify-between py-1">
                           <span>• July – September</span>
-                          <span className="font-medium text-blue-600">(3 months) {Q3_DISABLED && '(Disabled)'}</span>
+                          <span className="font-medium text-blue-600">(3 months)</span>
                         </div>
                         <div className="flex items-center justify-between py-1">
                           <span>• October – December</span>
@@ -430,7 +427,7 @@ const UserDashboard = () => {
                       </div>
                       <div className="mt-3 border-t border-blue-200 pt-3">
                         <p className="text-sm font-semibold text-blue-700">
-                          Total: {Q3_DISABLED ? '3' : '4'} submissions per year ({Q3_DISABLED ? '9' : '12'} months)
+                          Total: 4 submissions per year (12 months)
                         </p>
                       </div>
                     </div>

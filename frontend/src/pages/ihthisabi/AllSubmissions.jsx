@@ -20,7 +20,6 @@ import {
   Send,
   Smartphone,
   Star,
-  AlertCircle,
   Globe,
   UserX,
   BarChart3,
@@ -28,7 +27,6 @@ import {
   ChevronDown
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
 import AbroadSubmissions from './AbroadSubmissions'
 import Pagination from '../../components/ihthisabi/Pagination'
 
@@ -1003,7 +1001,7 @@ const AllSubmissions = () => {
                   <option value="">Quarter *</option>
                   <option value="1">Q1 (Jan–Mar)</option>
                   <option value="2">Q2 (Apr–Jun)</option>
-                  {!Q3_DISABLED && <option value="3">Q3 (Jul–Sep)</option>}
+                  <option value="3">Q3 (Jul–Sep)</option>
                   <option value="4">Q4 (Oct–Dec)</option>
                 </select>
               </div>
@@ -1588,14 +1586,6 @@ const AllSubmissions = () => {
                 <CloseIcon className="w-4" />
               </button>
             </div>
-
-            {/* Q3 Disabled Warning */}
-            {Q3_DISABLED && details?.submissionPeriod?.quarter === 3 && (
-              <div className="px-5 py-3 bg-red-50 border-b border-red-200 flex items-center gap-2 text-red-800 text-sm">
-                <AlertCircle className="w-4 h-4" />
-                <span>Q3 submissions are currently disabled and hidden from public view.</span>
-              </div>
-            )}
 
             {/* Body - Scrollable */}
             <div className="flex-1 overflow-y-auto p-5">
