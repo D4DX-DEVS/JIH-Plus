@@ -9,7 +9,6 @@ import {
   Lock,
   FileText
 } from 'lucide-react'
-import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
 
 const QuarterlySelection = ({ submissions = [], alternativeSubmissions = [], onQuarterSelect, title, subtitle }) => {
   const navigate = useNavigate()
@@ -187,11 +186,6 @@ const QuarterlySelection = ({ submissions = [], alternativeSubmissions = [], onQ
   const getQuarterStatus = (quarter, year) => {
     const currentQuarter = getCurrentQuarter()
     
-    // Check if Q3 is disabled - show as "Not Available"
-    if (Q3_DISABLED && quarter === 3) {
-      return { status: 'locked', icon: Lock, color: 'gray', text: 'Not Available' }
-    }
-    
     // Check if it's the current quarter (in progress) - label as "Upcoming"
     if (year === currentYear && quarter === currentQuarter) {
       return { status: 'current', icon: Clock, color: 'yellow', text: 'Upcoming' }
@@ -294,7 +288,7 @@ const QuarterlySelection = ({ submissions = [], alternativeSubmissions = [], onQ
     const quarters = []
     const available = getAvailableSubmissionQuarter()
     
-    // Include all quarters (Q3 will show as "Not Available" if disabled)
+    // Include all quarters
     const quartersToGenerate = [1, 2, 3, 4]
     
     // Add current year quarters

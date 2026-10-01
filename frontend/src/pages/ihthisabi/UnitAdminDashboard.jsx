@@ -19,10 +19,8 @@ import {
   Trash2,
   MessageSquare,
   X as CloseIcon,
-  Star,
-  AlertCircle
+  Star
 } from 'lucide-react'
-import { Q3_DISABLED } from '../../utils/ihthisabi/quarterHelper'
 import Pagination from '../../components/ihthisabi/Pagination'
 
 const UnitAdminDashboard = () => {
@@ -698,7 +696,7 @@ const UnitAdminDashboard = () => {
                       <option value="all">All Quarters</option>
                       <option value="1">Q1 (Jan–Mar)</option>
                       <option value="2">Q2 (Apr–Jun)</option>
-                      {!Q3_DISABLED && <option value="3">Q3 (Jul–Sep)</option>}
+                      <option value="3">Q3 (Jul–Sep)</option>
                       <option value="4">Q4 (Oct–Dec)</option>
                     </select>
                     {(mySubmissionsQuarterFilter !== 'all' || mySubmissionsYearFilter !== 'all') && (
@@ -976,7 +974,7 @@ const UnitAdminDashboard = () => {
                       <option value="all">All Quarters</option>
                       <option value="1">Q1 (Jan–Mar)</option>
                       <option value="2">Q2 (Apr–Jun)</option>
-                      {!Q3_DISABLED && <option value="3">Q3 (Jul–Sep)</option>}
+                      <option value="3">Q3 (Jul–Sep)</option>
                       <option value="4">Q4 (Oct–Dec)</option>
                     </select>
                     {(submissionsQuarterFilter !== 'all' || submissionsYearFilter !== 'all') && (
@@ -1427,14 +1425,6 @@ const UnitAdminDashboard = () => {
                 <CloseIcon className="w-4 h-4" />
               </button>
             </div>
-
-            {/* Q3 Disabled Warning */}
-            {Q3_DISABLED && submissionDetails?.submission?.submissionPeriod?.quarter === 3 && (
-              <div className="px-5 py-3 bg-red-50 border-b border-red-200 flex items-center gap-2 text-red-800 text-sm">
-                <AlertCircle className="w-4 h-4" />
-                <span>Q3 submissions are currently disabled and hidden from public view.</span>
-              </div>
-            )}
 
             {/* Body */}
             <div className="flex-1 overflow-y-auto p-5">

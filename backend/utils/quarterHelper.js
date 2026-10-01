@@ -13,25 +13,7 @@
  * - Apr-Jun (Q2) → Submit Q1 of current year
  * - Jul-Sep (Q3) → Submit Q2 of current year
  * - Oct-Dec (Q4) → Submit Q3 of current year
- * 
- * SPECIAL RULE: Q3 (July-September) is currently hidden due to data integrity issues.
- * All Q3 submissions are filtered out from queries and blocked from creation.
  */
-
-/**
- * Hidden quarters configuration
- * Q3 is hidden due to data mismatch issues in production
- */
-const HIDDEN_QUARTERS = [3];
-
-/**
- * Check if a quarter is hidden (should not be visible or submittable)
- * @param {number} quarter - Quarter number (1-4)
- * @returns {boolean} True if the quarter is hidden
- */
-const isQuarterHidden = (quarter) => {
-  return HIDDEN_QUARTERS.includes(quarter);
-};
 
 /**
  * Get quarter from month (standard calculation)
@@ -156,35 +138,7 @@ const isQuarterAvailable = (quarter, year, date = new Date()) => {
 };
 
 /**
- * Filter submissions to exclude hidden quarters (Q3)
- * This is the primary function to use when querying submissions
- * 
- * @param {Array} submissions - Array of submission documents
- * @returns {Array} Filtered submissions without Q3 data
- */
-const filterHiddenQuarters = (submissions) => {
-  if (!Array.isArray(submissions)) return submissions;
-  
-  return submissions.filter(submission => {
-    const quarter = submission.submissionPeriod?.quarter;
-    return quarter && !isQuarterHidden(quarter);
-  });
-};
-
-/**
- * Get MongoDB query filter to exclude hidden quarters
- * Use this in database queries to filter at the database level
- * 
- * @returns {Object} MongoDB query filter
- */
-const getHiddenQuarterFilter = () => {
-  return {
-    'submissionPeriod.quarter': { $nin: HIDDEN_QUARTERS }
-  };
-};
-
-/**
- * Validate if a submission quarter is valid (not future, not current, not hidden)
+ * Validate if a submission quarter is valid (not future, not current)
  * 
  * @param {number} quarter - Quarter to validate (1-4)
  * @param {number} year - Year to validate
@@ -194,14 +148,6 @@ const getHiddenQuarterFilter = () => {
 const validateSubmissionQuarter = (quarter, year, date = new Date()) => {
   const currentYear = date.getFullYear();
   const available = getAvailableSubmissionQuarter(date);
-  
-  // CRITICAL: Block Q3 submissions
-  if (isQuarterHidden(quarter)) {
-    return {
-      valid: false,
-      reason: 'Q3 submissions are currently not available due to data processing. Please contact admin if you need assistance.'
-    };
-  }
   
   // Check if it's a future year
   if (year > currentYear) {
@@ -251,28 +197,21 @@ const validateSubmissionQuarter = (quarter, year, date = new Date()) => {
 };
 
 /**
- * Build a MongoDB query filter that excludes both static hidden quarters (Q3)
- * and dynamically archived quarter/year combinations.
+ * Build a MongoDB query filter that excludes archived quarter/year combinations.
  *
  * @param {Array<{quarter: number, year: number}>} archivedList - List fetched from ArchivedQuarter collection
  * @returns {Object} MongoDB filter object
  */
 const buildCombinedQuarterFilter = (archivedList = []) => {
-  if (archivedList.length === 0) {
-    // No archived quarters — fall back to the simple static filter
-    return { 'submissionPeriod.quarter': { $nin: HIDDEN_QUARTERS } };
-  }
+  if (archivedList.length === 0) return {};
 
-  // Use $nor to exclude static hidden quarters AND each archived quarter/year pair
-  const norConditions = [
-    { 'submissionPeriod.quarter': { $in: HIDDEN_QUARTERS } },
-    ...archivedList.map(({ quarter, year }) => ({
+  // Use $nor to exclude each archived quarter/year pair
+  return {
+    $nor: archivedList.map(({ quarter, year }) => ({
       'submissionPeriod.quarter': quarter,
       'submissionPeriod.year': year
     }))
-  ];
-
-  return { $nor: norConditions };
+  };
 };
 
 /**
@@ -287,9 +226,9 @@ const getArchivedQuarterFilter = async () => {
     const archivedList = await ArchivedQuarter.find({}).select('quarter year -_id').lean();
     return buildCombinedQuarterFilter(archivedList);
   } catch (err) {
-    // Fallback to static filter if DB is unavailable
+    // Fall back to no filter if DB is unavailable
     console.error('[quarterHelper] Could not load archived quarters:', err.message);
-    return getHiddenQuarterFilter();
+    return {};
   }
 };
 
@@ -301,13 +240,8 @@ module.exports = {
   isCurrentQuarter,
   isQuarterAvailable,
   validateSubmissionQuarter,
-  // Q3 Filtering functions
-  isQuarterHidden,
-  filterHiddenQuarters,
-  getHiddenQuarterFilter,
   buildCombinedQuarterFilter,
   getArchivedQuarterFilter,
-  HIDDEN_QUARTERS,
   getPeriodDisplay
 };
 

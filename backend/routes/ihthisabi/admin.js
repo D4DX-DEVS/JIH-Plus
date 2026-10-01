@@ -290,7 +290,7 @@ router.get('/submissions', async (req, res) => {
       // `limit` documents instead of the whole collection.
       [submissions, total] = await Promise.all([
         Submission.aggregate([
-          { $match: match }, // Q3 submissions are visible in admin list view
+          { $match: match },
           { $sort: { createdAt: -1 } },
           { $skip: (pageNum - 1) * limitNum },
           { $limit: limitNum },
@@ -545,7 +545,7 @@ router.post('/submissions/:id/reply', async (req, res) => {
   }
 });
 
-const { getQuarterFromMonth, getOpenQuarter, filterHiddenQuarters, getHiddenQuarterFilter, isQuarterHidden, getAvailableSubmissionQuarter } = require('../../utils/quarterHelper');
+const { getQuarterFromMonth, getOpenQuarter, getAvailableSubmissionQuarter } = require('../../utils/quarterHelper');
 
 // Helper function to get current quarter (for display/statistics)
 // Note: For new submissions, use getOpenQuarter() instead
@@ -565,15 +565,11 @@ router.get('/dashboard/stats', async (req, res) => {
     // e.g. when we're in Q2 2026 (Apr-Jun), people submit Q1 2026 data, so Q1 2026 is "current"
     const { quarter: currentQuarter, year: currentYear } = getAvailableSubmissionQuarter(now);
 
-    // Helper: get previous available quarter, skipping hidden quarters
+    // Helper: get previous quarter
     const getPreviousAvailableQuarter = (q, y) => {
       let prevQ = q - 1;
       let prevY = y;
       if (prevQ === 0) { prevQ = 4; prevY = y - 1; }
-      if (isQuarterHidden(prevQ)) {
-        prevQ = prevQ - 1;
-        if (prevQ === 0) { prevQ = 4; prevY = prevY - 1; }
-      }
       return { quarter: prevQ, year: prevY };
     };
 
@@ -713,10 +709,6 @@ const getDashboardPeriods = (now = new Date()) => {
   let prevQuarter = currentQuarter - 1;
   let prevYear = currentYear;
   if (prevQuarter === 0) { prevQuarter = 4; prevYear -= 1; }
-  if (isQuarterHidden(prevQuarter)) {
-    prevQuarter -= 1;
-    if (prevQuarter === 0) { prevQuarter = 4; prevYear -= 1; }
-  }
   return { currentQuarter, currentYear, prevQuarter, prevYear };
 };
 
@@ -1040,14 +1032,8 @@ router.get('/consolidation', async (req, res) => {
     addRange('form.communityRelations', communityRelationsMin, communityRelationsMax);
     addRange('form.scoreCount', scoreCountMin, scoreCountMax);
 
-    // Apply hidden quarter filter only when no specific quarter is selected.
-    // If a quarter is already in `match`, spreading getHiddenQuarterFilter() would
-    // silently overwrite it with { $nin: [3] }, returning all non-Q3 quarters
-    // instead of just the one the admin selected.
-    const quarterOverrideFilter = quarter ? {} : getHiddenQuarterFilter();
-
     const pipeline = [
-      { $match: { ...match, ...quarterOverrideFilter } },
+      { $match: match },
       {
         $facet: {
           total: [{ $count: 'count' }],
@@ -1546,22 +1532,19 @@ router.get('/debug/raw-counts', async (req, res) => {
     const currentYear = new Date().getFullYear();
     
     // Get raw counts
-    const totalSubmissions = await Submission.countDocuments(getHiddenQuarterFilter());
+    const totalSubmissions = await Submission.countDocuments();
     const currentYearSubmissions = await Submission.countDocuments({ 
-      'submissionPeriod.year': currentYear,
-      ...getHiddenQuarterFilter()
+      'submissionPeriod.year': currentYear
     });
     const submissionsWithYear = await Submission.countDocuments({ 
-      'submissionPeriod.year': { $exists: true },
-      ...getHiddenQuarterFilter()
+      'submissionPeriod.year': { $exists: true }
     });
     const submissionsWithoutYear = await Submission.countDocuments({ 
-      'submissionPeriod.year': { $exists: false },
-      ...getHiddenQuarterFilter()
+      'submissionPeriod.year': { $exists: false }
     });
     
     // Get all submissions to check for duplicates
-    const allSubmissions = await Submission.find(getHiddenQuarterFilter());
+    const allSubmissions = await Submission.find();
     
     // Check for duplicates by ruknName and period
     const submissionMap = new Map();
@@ -1689,20 +1672,17 @@ router.get('/debug/counts', async (req, res) => {
     const adminUsers = await User.find({ role: 'admin' });
 
     // Get all submissions
-    const allSubmissions = await Submission.find(getHiddenQuarterFilter());
+    const allSubmissions = await Submission.find();
     const currentYearSubmissions = await Submission.find({ 
-      'submissionPeriod.year': currentYear,
-      ...getHiddenQuarterFilter()
+      'submissionPeriod.year': currentYear
     });
     const currentMonthSubmissions = await Submission.find({ 
       'submissionPeriod.year': currentYear,
-      'submissionPeriod.month': currentMonth,
-      ...getHiddenQuarterFilter()
+      'submissionPeriod.month': currentMonth
     });
     const currentQuarterSubmissions = await Submission.find({ 
       'submissionPeriod.year': currentYear,
-      'submissionPeriod.quarter': currentQuarter,
-      ...getHiddenQuarterFilter() 
+      'submissionPeriod.quarter': currentQuarter
     });
 
     res.json({
@@ -2734,8 +2714,7 @@ router.get('/unit-reply-data', async (req, res) => {
       Submission.find({
         unit: unit,
         'submissionPeriod.year': yearNum,
-        'submissionPeriod.quarter': quarterNum,
-        ...getHiddenQuarterFilter()
+        'submissionPeriod.quarter': quarterNum
       })
         .populate('userId', 'name ruknId')
         .populate('submittedBy', 'name ruknId')
@@ -2744,8 +2723,7 @@ router.get('/unit-reply-data', async (req, res) => {
         userId: { $in: currentUnitMemberIds },
         unit: { $ne: unit },
         'submissionPeriod.year': yearNum,
-        'submissionPeriod.quarter': quarterNum,
-        ...getHiddenQuarterFilter()
+        'submissionPeriod.quarter': quarterNum
       })
         .populate('userId', 'name ruknId')
         .populate('submittedBy', 'name ruknId')
@@ -3081,14 +3059,6 @@ router.post('/unit-reply', async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Unit, year, quarter, and formatted message are required'
-      });
-    }
-
-    // Check if Q3 is disabled
-    if (isQuarterHidden(parseInt(quarter))) {
-      return res.status(400).json({
-        success: false,
-        message: 'Q3 submissions are currently disabled, replies cannot be sent for Q3.'
       });
     }
 

@@ -7,22 +7,20 @@ const AlternativeSubmit = require('../../models/ihthisabi/alternativeSubmit');
 const UnitAdminReply = require('../../models/ihthisabi/UnitAdminReply');
 const { protect } = require('../../middlewares/ihthisabi/auth');
 const {
-  getHiddenQuarterFilter,
   getArchivedQuarterFilter,
   getAvailableSubmissionQuarter,
-  isQuarterHidden,
   getPeriodDisplay
 } = require('../../utils/quarterHelper');
 const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
 
 const router = express.Router();
 
-// Attach the combined quarter filter (static Q3 hide + archived quarters) to every request
+// Attach the archived-quarter filter to every request
 router.use(async (req, res, next) => {
   try {
     req.quarterFilter = await getArchivedQuarterFilter();
   } catch (err) {
-    req.quarterFilter = getHiddenQuarterFilter();
+    req.quarterFilter = {};
   }
   next();
 });
@@ -70,20 +68,13 @@ const getDistrictAdminScope = (districtAdmin, { area } = {}) => {
   return { memberQuery, submissionQuery };
 };
 
-// Walk back one submission quarter, skipping hidden quarters (mirrors admin.js)
+// Walk back one submission quarter
 const getPreviousAvailableQuarter = (quarter, year) => {
   let prevQuarter = quarter - 1;
   let prevYear = year;
   if (prevQuarter < 1) {
     prevQuarter = 4;
     prevYear -= 1;
-  }
-  while (isQuarterHidden(prevQuarter)) {
-    prevQuarter -= 1;
-    if (prevQuarter < 1) {
-      prevQuarter = 4;
-      prevYear -= 1;
-    }
   }
   return { quarter: prevQuarter, year: prevYear };
 };

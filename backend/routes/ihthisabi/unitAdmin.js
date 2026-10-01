@@ -11,8 +11,6 @@ const { migrateStaticToDynamic } = require('../../utils/staticToDynamicMigration
 const { 
   getAvailableSubmissionQuarter,
   validateSubmissionQuarter,
-  isQuarterHidden,
-  getHiddenQuarterFilter,
   getArchivedQuarterFilter
 } = require('../../utils/quarterHelper');
 const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
@@ -21,12 +19,12 @@ const { buildOwnerMatch } = require('../../utils/submissionOwnerMatch');
 
 const router = express.Router();
 
-// Attach the combined quarter filter (static Q3 hide + archived quarters) to every request
+// Attach the archived-quarter filter to every request
 router.use(async (req, res, next) => {
   try {
     req.quarterFilter = await getArchivedQuarterFilter();
   } catch (err) {
-    req.quarterFilter = getHiddenQuarterFilter();
+    req.quarterFilter = {};
   }
   next();
 });
@@ -99,20 +97,13 @@ const getUnitAdminScope = async (unitAdmin) => {
   };
 };
 
-// Walk back one submission quarter, skipping hidden quarters (mirrors districtAdmin.js / admin.js)
+// Walk back one submission quarter
 const getPreviousAvailableQuarter = (quarter, year) => {
   let prevQuarter = quarter - 1;
   let prevYear = year;
   if (prevQuarter < 1) {
     prevQuarter = 4;
     prevYear -= 1;
-  }
-  while (isQuarterHidden(prevQuarter)) {
-    prevQuarter -= 1;
-    if (prevQuarter < 1) {
-      prevQuarter = 4;
-      prevYear -= 1;
-    }
   }
   return { quarter: prevQuarter, year: prevYear };
 };
@@ -1509,14 +1500,6 @@ router.post('/submit-form', protect, async (req, res) => {
     // DEBUG: Log final submission period before creating
     console.log('[UnitAdmin Submit] Final submissionPeriod to be saved:', JSON.stringify(finalSubmissionPeriod));
 
-    // Check if Q3 is disabled
-    if (isQuarterHidden(submissionQuarter)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Q3 submissions are currently disabled.'
-      });
-    }
-
     const ownerMatch = buildOwnerMatch(unitAdmin.ruknId, req.user.userId);
 
     // CRITICAL: Check if unit admin has already submitted alternative submission for this quarter
@@ -1876,7 +1859,7 @@ router.get('/my-stats', protect, async (req, res) => {
     // Calculate statistics
     const totalSubmissions = currentYearSubmissions.length;
     const completedQuarters = currentYearSubmissions.map(s => s.submissionPeriod.quarter);
-    const availableQuarters = isQuarterHidden(3) ? [1, 2, 4] : [1, 2, 3, 4];
+    const availableQuarters = [1, 2, 3, 4];
     const pendingQuarters = availableQuarters.filter(quarter => !completedQuarters.includes(quarter));
 
     // Get average scores for various metrics
