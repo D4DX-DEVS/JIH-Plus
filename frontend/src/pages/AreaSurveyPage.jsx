@@ -108,10 +108,10 @@ const AreaSurveyContent = ({ editingSurvey, isAdmin }) => {
       const userData = JSON.parse(localStorage.getItem('userData') || '{}');
       const areaId = userData.areaId || userData.area;
       navigate(`/area-dashboard/${areaId}`, { state: { initialTab: 'units' } });
-    } else if (tabId === 'stats') {
+    } else if (tabId === 'consolidation') {
       const userData = JSON.parse(localStorage.getItem('userData') || '{}');
       const areaId = userData.areaId || userData.area;
-      navigate(`/area-dashboard/${areaId}`, { state: { initialTab: 'stats' } });
+      navigate(`/area-dashboard/${areaId}`, { state: { initialTab: 'consolidation' } });
     }
   };
 

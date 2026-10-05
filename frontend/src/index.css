@@ -901,6 +901,20 @@ input[type="number"] {
     @apply py-[10px] sm:py-[7px];
   }
 
+  /* JihFilterSelect paints its own wrapping label over the select on phones.
+     Options keep a real colour so the native list never inherits the
+     transparent text. */
+  @media (max-width: 639px) {
+    .jih-filter-select,
+    .jih-filter-select:disabled {
+      color: transparent;
+    }
+  }
+
+  .jih-filter-select option {
+    color: #374151;
+  }
+
   .jih-fab {
     @apply fixed right-4 z-20 inline-flex h-[52px] w-[52px] items-center justify-center rounded-full text-white transition-colors lg:hidden;
     bottom: calc(4.5rem + env(safe-area-inset-bottom) + 0.75rem);

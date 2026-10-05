@@ -10,16 +10,13 @@ import AreaSurveyEditPage from './AreaSurveyEditPage';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import SubmissionsAnalytics from '../components/dashboard/SubmissionsAnalytics';
-import StatisticsCard from '../components/charts/StatisticsCard';
 import SurveyBarChart from '../components/charts/SurveyBarChart';
 import SurveyPieChart from '../components/charts/SurveyPieChart';
-import AreaStatsChart from '../components/charts/AreaStatsChart';
-import AreaMonthlyStatsTable from '../components/tables/AreaMonthlyStatsTable';
-import UnitMonthlyStatsTable from '../components/tables/UnitMonthlyStatsTable';
 import ActiveReportsCard from '../components/dashboard/ActiveReportsCard';
 import DashboardMetricGrid from '../components/dashboard/DashboardMetricGrid';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import ConsolidationTab from '../components/admin/ConsolidationTab';
 
 const AreaDashboardPage = ({ onLogout }) => {
   const { areaId } = useParams();
@@ -33,17 +30,12 @@ const AreaDashboardPage = ({ onLogout }) => {
   
   // Surveys and data
   const [monthlySurveys, setMonthlySurveys] = useState([]);
-  const [allUnitSurveys, setAllUnitSurveys] = useState([]);
-  const [aiSummary, setAiSummary] = useState('');
-  const [enhancedStats, setEnhancedStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   // UI state
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'monthly', 'units', 'stats'
-  const [activeStatsSubTab, setActiveStatsSubTab] = useState('summary'); // 'summary' | 'areaTable' | 'unitTable'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'monthly', 'units', 'consolidation'
   const [expandedAreaId, setExpandedAreaId] = useState(null);
-  const [expandedUnitId, setExpandedUnitId] = useState(null);
   const [editingSurvey, setEditingSurvey] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -66,7 +58,6 @@ const AreaDashboardPage = ({ onLogout }) => {
   const [unitSearchTerm, setUnitSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalSurveys, setTotalSurveys] = useState(0);
 
   // Dashboard overview state
   const [dashboardData, setDashboardData] = useState(null);
@@ -81,10 +72,6 @@ const AreaDashboardPage = ({ onLogout }) => {
     let consumed = false;
     if (state.initialTab) {
       setActiveTab(state.initialTab);
-      consumed = true;
-    }
-    if (state.initialStatsSubTab) {
-      setActiveStatsSubTab(state.initialStatsSubTab);
       consumed = true;
     }
     if (consumed) {
@@ -109,25 +96,8 @@ const AreaDashboardPage = ({ onLogout }) => {
       loadUnits();
       // Also load monthly surveys for unit filtering
       loadMonthlySurveys();
-      // Load unit surveys to show correct per-unit counts. Delay a tick until units set.
-      setTimeout(() => loadAllUnitSurveys(), 0);
-    } else if (activeTab === 'stats') {
-      loadUnits();
-      loadMonthlySurveys();
     }
   }, [areaId, currentPage, monthFilter, activeTab]);
-
-  // Load unit surveys and AI summary when units are loaded and stats tab is active
-  useEffect(() => {
-    if (activeTab === 'stats' && units.length > 0) {
-      loadAllUnitSurveys();
-      loadAISummary();
-    }
-    if (activeTab === 'units' && units.length > 0) {
-      // Ensure allUnitSurveys is fresh when entering Units tab
-      loadAllUnitSurveys();
-    }
-  }, [units, activeTab]);
 
   // Handle back navigation to login page
   const handleBackNavigation = () => {
@@ -234,47 +204,6 @@ const AreaDashboardPage = ({ onLogout }) => {
     }
   };
 
-  const loadAllUnitSurveys = async () => {
-    try {
-      const token = localStorage.getItem('userToken');
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const perUnitSurveys = await Promise.all(units.map(async (unit) => {
-        try {
-          const unitId = unit.id || unit._id || unit.code;
-          const response = await axios.get(
-            `${import.meta.env.VITE_API_URL}/api/unit/unit-surveys/unit/${encodeURIComponent(unitId)}?page=1&limit=100`,
-            { headers, timeout: 5000 }
-          );
-          return (response.data?.surveys || []).map(s => ({ ...s, __unitId: unitId }));
-        } catch (error) {
-          // Silent fail for individual unit errors
-          return [];
-        }
-      }));
-
-      setAllUnitSurveys(perUnitSurveys.flat());
-    } catch (error) {
-      setAllUnitSurveys([]);
-    }
-  };
-
-  const loadAISummary = async () => {
-    try {
-      const token = localStorage.getItem('userToken');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/area/statistics/ai-summary?areaId=${areaId}`,
-        { headers: { Authorization: `Bearer ${token}` }, timeout: 5000 }
-      );
-      
-      if (response.data.success) {
-        setAiSummary(response.data.summary);
-        setEnhancedStats(response.data.stats);
-      }
-    } catch (error) {
-      setAiSummary('AI summary is currently unavailable. Please check your area statistics below for detailed information.');
-    }
-  };
 
   const loadMonthlySurveys = async () => {
     try {
@@ -300,16 +229,13 @@ const AreaDashboardPage = ({ onLogout }) => {
         const surveys = response.data.data || [];
         setMonthlySurveys(surveys);
         setTotalPages(1);
-        setTotalSurveys(surveys.length);
       } else {
         setMonthlySurveys([]);
         setTotalPages(1);
-        setTotalSurveys(0);
       }
     } catch (error) {
       setMonthlySurveys([]);
       setTotalPages(1);
-      setTotalSurveys(0);
       if (error.response?.status === 401) {
         setError('Session expired. Please login again.');
       } else if (error.response?.status >= 500) {
@@ -451,67 +377,6 @@ const AreaDashboardPage = ({ onLogout }) => {
     }
   };
 
-  // Calculate statistics
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-
-  // Area surveys this month
-  const areaSurveysThisMonth = monthlySurveys.filter(s => {
-    const surveyDate = new Date(s.submittedAt);
-    return surveyDate.getMonth() === currentMonth && 
-           surveyDate.getFullYear() === currentYear;
-  }).length;
-
-  // Unit surveys this month
-  const unitSurveysThisMonth = allUnitSurveys.filter(s => {
-    const surveyDate = new Date(s.submittedAt);
-    return surveyDate.getMonth() === currentMonth && 
-           surveyDate.getFullYear() === currentYear;
-  }).length;
-
-  // Total surveys this month (area + unit)
-  const totalSurveysThisMonth = areaSurveysThisMonth + unitSurveysThisMonth;
-
-  // Active units (units that have submitted surveys)
-  const activeUnits = new Set(allUnitSurveys.map(s => s.unitId || s.component)).size;
-
-  // Total workers from unit surveys
-  const totalWorkers = allUnitSurveys.reduce((sum, survey) => {
-    return sum + (survey.workers?.rukkun || 0) + 
-           (survey.workers?.karkun || 0) + 
-           (survey.workers?.activeAssociate || 0);
-  }, 0);
-
-  // Total new members from unit surveys
-  const totalNewMembers = allUnitSurveys.reduce((sum, survey) => {
-    return sum + (survey.partB?.newJIHMembers?.male || 0) + 
-           (survey.partB?.newJIHMembers?.female || 0);
-  }, 0);
-
-  const areaStats = {
-    totalUnits: units.length,
-    totalAreaSurveys: totalSurveys,
-    totalUnitSurveys: allUnitSurveys.length,
-    totalSurveysThisMonth: totalSurveysThisMonth,
-    areaSurveysThisMonth: areaSurveysThisMonth,
-    unitSurveysThisMonth: unitSurveysThisMonth,
-    activeUnits: activeUnits,
-    totalWorkers: totalWorkers,
-    totalNewMembers: totalNewMembers
-  };
-
-  const unitsBarData = units.map(u => {
-    const unitId = u.id || u._id || u.code;
-    const unitSurveys = allUnitSurveys.filter(s => 
-      (s.unitId || s.component) === unitId
-    ).length;
-    return {
-    name: u.name || u.title || u.code || 'Unit',
-      surveys: unitSurveys
-    };
-  });
-
   const filteredSurveys = monthlySurveys.filter(survey => 
     survey.district?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     survey.area?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -602,7 +467,7 @@ const AreaDashboardPage = ({ onLogout }) => {
                   items={[
                     { key: 'units', label: 'ആകെ യൂണിറ്റുകൾ', value: d.units, icon: Building, tone: 'gold', onClick: () => setActiveTab('units') },
                     { key: 'reports', label: 'ആക്ടീവ് റിപ്പോർട്ടുകൾ', value: d.activeReports, icon: BookOpen, tone: 'violet', onClick: () => navigate('/user-reports') },
-                    { key: 'submitted', label: 'സബ്മിറ്റ് ചെയ്തവ', value: d.submitted, icon: TrendingUp, tone: 'green', onClick: () => setActiveTab('stats') },
+                    { key: 'submitted', label: 'സബ്മിറ്റ് ചെയ്തവ', value: d.submitted, icon: TrendingUp, tone: 'green', onClick: () => setActiveTab('consolidation') },
                   ]}
                 />
 
@@ -610,10 +475,10 @@ const AreaDashboardPage = ({ onLogout }) => {
 
                 <button
                   type="button"
-                  onClick={() => setActiveTab('stats')}
+                  onClick={() => setActiveTab('consolidation')}
                   className="flex min-h-[48px] w-full items-center justify-between rounded-xl border border-[#002349]/10 bg-white px-4 py-3 text-left text-sm font-semibold text-[#002349] shadow-sm transition-colors hover:bg-[#002349]/5 lg:hidden"
                 >
-                  <span className="flex items-center gap-2"><BarChart3 className="h-5 w-5" /> വിശദമായ സ്ഥിതിവിവരങ്ങൾ</span>
+                  <span className="flex items-center gap-2"><BarChart3 className="h-5 w-5" /> കൺസോളിഡേഷൻ</span>
                   <ChevronRight className="h-5 w-5" />
                 </button>
 
@@ -1419,274 +1284,11 @@ const AreaDashboardPage = ({ onLogout }) => {
           </div>
         )}
 
-        {/* Statistics Tab */}
-        {activeTab === 'stats' && (
-          <div className="space-y-6">
-            {/* Sub-tabs: Statistics | Area Table | Unit Table */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-3">
-              <div className="ih-mobile-tabs">
-                <button
-                  onClick={() => setActiveStatsSubTab('summary')}
-                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
-                    activeStatsSubTab === 'summary'
-                      ? 'bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-100 hover:shadow-sm'
-                  }`}
-                >
-                  Statistics
-                </button>
-                <button
-                  onClick={() => setActiveStatsSubTab('areaTable')}
-                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
-                    activeStatsSubTab === 'areaTable'
-                      ? 'bg-gradient-to-r from-[#957C3D] to-[#8A6F35] text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-100 hover:shadow-sm'
-                  }`}
-                >
-                  Area Table
-                </button>
-                <button
-                  onClick={() => setActiveStatsSubTab('unitTable')}
-                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
-                    activeStatsSubTab === 'unitTable'
-                      ? 'bg-gradient-to-r from-[#002349] to-[#1a3a5c] text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-100 hover:shadow-sm'
-                  }`}
-                >
-                  Unit Table
-                </button>
-              </div>
-            </div>
-
-            {activeStatsSubTab === 'summary' && aiSummary && (
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#002349] to-[#1a3a5c] rounded-2xl flex items-center justify-center shadow-lg">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-[#002349] mb-2">AI-Powered Area Summary</h3>
-                    <p className="text-gray-700 leading-relaxed font-medium">{aiSummary}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeStatsSubTab === 'summary' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatisticsCard 
-                title="Total Units" 
-                value={areaStats.totalUnits} 
-                subtitle="Units in this area" 
-              />
-              <StatisticsCard 
-                title="Total Reports" 
-                value={areaStats.totalAreaSurveys + areaStats.totalUnitSurveys} 
-                subtitle={`${areaStats.totalAreaSurveys} area + ${areaStats.totalUnitSurveys} unit reports`}
-              />
-              <StatisticsCard 
-                title="This Month" 
-                value={areaStats.totalSurveysThisMonth} 
-                subtitle={`${areaStats.areaSurveysThisMonth} area + ${areaStats.unitSurveysThisMonth} unit reports`}
-              />
-              <StatisticsCard 
-                title="Active Units" 
-                value={areaStats.activeUnits} 
-                subtitle={`${areaStats.activeUnits}/${areaStats.totalUnits} units with submissions`}
-              />
-            </div>
-            )}
-
-            {activeStatsSubTab === 'summary' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <StatisticsCard 
-                title="Total Workers" 
-                value={areaStats.totalWorkers.toLocaleString()} 
-                subtitle="From unit reports" 
-              />
-              <StatisticsCard 
-                title="New Members" 
-                value={areaStats.totalNewMembers.toLocaleString()} 
-                subtitle="This year from unit reports" 
-              />
-              <StatisticsCard 
-                title="Completion Rate" 
-                value={`${areaStats.totalUnits > 0 ? Math.round((areaStats.activeUnits / areaStats.totalUnits) * 100) : 0}%`}
-                subtitle="Units with submissions" 
-              />
-            </div>
-            )}
-
-            {activeStatsSubTab === 'summary' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <AreaStatsChart
-                  data={unitsBarData}
-                title="Unit Report Activity"
-                  dataKey1="surveys"
-                label1="Report Submitted"
-                color1="#3B82F6"
-              />
-              
-              <AreaStatsChart
-                data={[
-                  { name: 'Area reports', value: areaStats.totalAreaSurveys },
-                  { name: 'Unit reports', value: areaStats.totalUnitSurveys }
-                ]}
-                title="Report Distribution"
-                type="pie"
-                dataKey1="value"
-              />
-            </div>
-            )}
-
-            {activeStatsSubTab === 'summary' && (
-            <div className="grid grid-cols-1 gap-6">
-              <AreaStatsChart
-                data={[
-                  { name: 'Area Reports This Month', value: areaStats.areaSurveysThisMonth },
-                  { name: 'Unit Reports This Month', value: areaStats.unitSurveysThisMonth }
-                ]}
-                title="Current Month Activity"
-                dataKey1="value"
-                  label1="Reports"
-                color1="#10B981"
-                />
-              </div>
-            )}
-            
-            {activeStatsSubTab === 'summary' && (
-              <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Detailed Area Summary</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Area Name:</span>
-                    <span className="text-sm font-medium text-gray-900">{area?.name || areaId}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total Units:</span>
-                    <span className="text-sm font-medium text-gray-900">{areaStats.totalUnits}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total Reports:</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {areaStats.totalAreaSurveys + areaStats.totalUnitSurveys} 
-                      <span className="text-gray-500 text-xs ml-1">
-                        ({areaStats.totalAreaSurveys} area + {areaStats.totalUnitSurveys} unit)
-                      </span>
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">This Month:</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {areaStats.totalSurveysThisMonth} reports
-                      <span className="text-gray-500 text-xs ml-1">
-                        ({areaStats.areaSurveysThisMonth} area + {areaStats.unitSurveysThisMonth} unit)
-                      </span>
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Active Units:</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {areaStats.activeUnits} / {areaStats.totalUnits} 
-                      ({areaStats.totalUnits > 0 ? Math.round((areaStats.activeUnits / areaStats.totalUnits) * 100) : 0}%)
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total Workers:</span>
-                    <span className="text-sm font-medium text-gray-900">{areaStats.totalWorkers.toLocaleString()}</span>
-                </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">New Members:</span>
-                    <span className="text-sm font-medium text-gray-900">{areaStats.totalNewMembers.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Last Updated:</span>
-                    <span className="text-sm font-medium text-gray-900">{new Date().toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            )}
-
-            {activeStatsSubTab === 'areaTable' && (
-              <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
-                <h3 className="text-lg font-bold text-[#002349] mb-4">Area Table</h3>
-                <AreaMonthlyStatsTable 
-                  surveys={monthlySurveys} 
-                  onRowClick={(survey) => {
-                    setSelectedFormId(survey._id);
-                    setEditingSurvey(survey);
-                    setShowDetailView(true);
-                  }}
-                />
-              </div>
-            )}
-
-            {activeStatsSubTab === 'unitTable' && (
-              <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
-                <h3 className="text-lg font-bold text-[#002349] mb-4">Units</h3>
-                <div className="overflow-x-auto">
-                  <ResponsiveTable className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Unit</th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {units.map((u) => {
-                        const unitId = u.id || u._id || u.code;
-                        return (
-                          <tr key={unitId} className="hover:bg-gradient-to-br hover:from-[#002349]/5 hover:to-[#957C3D]/5 transition-all duration-300 hover:shadow-sm">
-                            <td className="text-sm font-bold text-[#002349] p-0">
-                              <button
-                                className="block w-full text-left px-6 py-4 hover:underline transition-all duration-300 truncate max-w-[9rem]"
-                                title={u.name || u.title || unitId}
-                                onClick={() => setExpandedUnitId(expandedUnitId === unitId ? null : unitId)}
-                              >
-                                {u.name || u.title || unitId}
-                              </button>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">View unit monthly data</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </ResponsiveTable>
-                </div>
-
-                {/* Expanded unit tables */}
-                <div className="mt-4 space-y-6">
-                  {units.map((u) => {
-                    const unitId = u.id || u._id || u.code;
-                    if (expandedUnitId !== unitId) return null;
-                    const unitSurveys = allUnitSurveys.filter(s => (s.__unitId || s.unitId || s.component) === unitId);
-                    return (
-                      <div key={`unit-${unitId}`} className="border border-gray-200 rounded-2xl p-4 bg-gray-50 hover:shadow-md transition-all duration-300">
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-md font-bold text-[#002349]">{u.name || u.title || unitId} - Monthly Table</h4>
-                          <button className="p-2 text-sm text-gray-600 hover:text-[#002349] font-medium transition-all duration-300" onClick={() => setExpandedUnitId(null)}>Close</button>
-                        </div>
-                        <UnitMonthlyStatsTable 
-                          surveys={unitSurveys}
-                          onRowClick={(survey) => {
-                            // Open full unit survey details
-                            handleViewUnitSurvey(survey);
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+        {/* Consolidation Tab */}
+        {activeTab === 'consolidation' && (
+          <div className="space-y-4">
+            <h2 className="hidden lg:block text-xl font-bold text-[#0f2a5c]">കൺസോളിഡേഷൻ</h2>
+            <ConsolidationTab scope="area" />
           </div>
         )}
 
@@ -1716,7 +1318,8 @@ const AreaDashboardPage = ({ onLogout }) => {
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <MobileTopBar
-            title="ഏരിയ ഡാഷ്ബോർഡ്"
+            title={activeTab === 'consolidation' ? 'കൺസോളിഡേഷൻ' : 'ഏരിയ ഡാഷ്ബോർഡ്'}
+            subtitle={activeTab === 'consolidation' ? 'റിപ്പോർട്ട് ഉത്തരങ്ങളുടെ ആകെത്തുക' : undefined}
           />
           <div data-app-scroll className="app-scroll-region mobile-readable-content flex-1 px-3 pt-3 pb-24 sm:px-6 sm:pt-4 lg:px-8 lg:pb-4">
             {mainContent}

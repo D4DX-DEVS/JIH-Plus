@@ -8,7 +8,7 @@ import {
   Calendar,
   CalendarDays,
   Star,
-  BarChart3,
+  Layers,
   BarChart2,
   MapPin,
   Menu,
@@ -57,8 +57,8 @@ const AdminSidebar = ({
     },
     {
       id: 'stats',
-      label: 'സ്ഥിതിവിവരക്കണക്കുകൾ',
-      icon: BarChart3
+      label: 'കൺസോളിഡേഷൻ',
+      icon: Layers
     },
     {
       id: 'view-reports',

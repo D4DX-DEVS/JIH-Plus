@@ -5,7 +5,6 @@ import {
   CalendarDays,
   Star,
   ClipboardList,
-  BarChart3,
   BarChart2,
   FileText,
   Bell,
@@ -17,6 +16,7 @@ import {
   ChevronRight,
   LayoutDashboard,
   MapPin,
+  Layers,
   Target as TargetIcon
 } from 'lucide-react';
 import BrandLogo from '../branding/BrandLogo';
@@ -26,7 +26,7 @@ import { SIDEBAR_THEME, DYNAMIC_REPORT_META, REPORT_TYPE_STYLES } from './sideba
 
 // One-line hints under each row of the mobile "More" sheet, keyed by nav id.
 const MORE_DESCRIPTIONS = {
-  stats: 'വിവരങ്ങളുടെ സംഗ്രഹവും വിശകലനവും',
+  consolidation: 'റിപ്പോർട്ട് ഉത്തരങ്ങളുടെ ആകെത്തുക',
   targets: 'ലക്ഷ്യങ്ങളും പുരോഗതിയും',
   notifications: 'അറിയിപ്പുകളും അപ്ഡേറ്റുകളും',
   'monthly-report-type': 'ഡൈനാമിക് മാസാന്ത്യ റിപ്പോർട്ടുകൾ',
@@ -91,7 +91,7 @@ const DistrictAdminSidebar = ({
   const navItems = [
     { id: 'dashboard', label: 'ഡാഷ്ബോർഡ്', icon: LayoutDashboard },
     { id: 'locations', label: 'ഏരിയകളും യൂണിറ്റുകളും', icon: MapPin },
-    { id: 'stats', label: 'സ്ഥിതിവിവരക്കണക്കുകൾ', icon: BarChart3 },
+    { id: 'consolidation', label: 'കൺസോളിഡേഷൻ', icon: Layers },
     {
       id: 'submissions',
       type: 'group',
@@ -148,7 +148,7 @@ const DistrictAdminSidebar = ({
         description: MORE_DESCRIPTIONS[item.id],
         icon: item.icon,
         active:
-          item.id === 'stats' ? activeView === 'stats' :
+          item.id === 'consolidation' ? activeView === 'consolidation' :
           item.id === 'targets' ? location.pathname.startsWith('/targets') :
           false,
         onClick: item.onClick || (() => goView(item.id)),

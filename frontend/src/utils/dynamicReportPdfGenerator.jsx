@@ -257,24 +257,24 @@ const LegacyPart = ({ part, partIndex, submission }) => (
   </View>
 );
 
-const ReportSubmissionDocument = ({ report, submission, userContext }) => {
+// The pages of one submission, without the <Document> wrapper, so a single
+// export and a many-submissions bundle share the same layout.
+const ReportSubmissionPages = ({ report, submission, userContext }) => {
   const isNewFormat = report?.pages && report.pages.length > 0;
   const sections = isNewFormat ? (report.pages || []) : (report.parts || []);
 
   if (sections.length === 0) {
     return (
-      <Document>
-        <Page size="A4" style={styles.page}>
-          <Header report={report} userContext={userContext} />
-          <MetaRow report={report} submission={submission} />
-          <Text style={styles.fieldValue}>No form structure available for this report.</Text>
-        </Page>
-      </Document>
+      <Page size="A4" style={styles.page}>
+        <Header report={report} userContext={userContext} />
+        <MetaRow report={report} submission={submission} />
+        <Text style={styles.fieldValue}>No form structure available for this report.</Text>
+      </Page>
     );
   }
 
   return (
-    <Document>
+    <>
       {sections.map((section, idx) => (
         // Each report page/section is rendered on its own physical PDF page so
         // pages are never combined even when one has leftover space.
@@ -288,31 +288,62 @@ const ReportSubmissionDocument = ({ report, submission, userContext }) => {
           )}
         </Page>
       ))}
-    </Document>
+    </>
   );
 };
 
-export const downloadDynamicReportPdf = async (report, submission, userData = {}) => {
-  if (!report || !submission) return;
+const ReportSubmissionDocument = ({ report, submission, userContext }) => (
+  <Document>
+    <ReportSubmissionPages report={report} submission={submission} userContext={userContext} />
+  </Document>
+);
 
-  const userContext = {
-    district: userData?.district || userData?.districtName,
-    area: userData?.area || userData?.areaName,
-    unit: userData?.unit || userData?.unitName,
-  };
+const toUserContext = (userData) => ({
+  district: userData?.district || userData?.districtName,
+  area: userData?.area || userData?.areaName,
+  unit: userData?.unit || userData?.unitName,
+});
 
-  const blob = await pdf(
-    <ReportSubmissionDocument report={report} submission={submission} userContext={userContext} />
-  ).toBlob();
+const saveBlob = (blob, fileName) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const safeTitle = (report.title || 'report').trim().replace(/[\\/:*?"<>|\s]+/g, '_');
   a.href = url;
-  a.download = `${safeTitle}-${submission._id?.slice(-6) || 'submission'}.pdf`;
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+};
+
+const safeFileName = (name) => (name || 'report').trim().replace(/[\\/:*?"<>|\s]+/g, '_');
+
+export const downloadDynamicReportPdf = async (report, submission, userData = {}) => {
+  if (!report || !submission) return;
+
+  const blob = await pdf(
+    <ReportSubmissionDocument report={report} submission={submission} userContext={toUserContext(userData)} />
+  ).toBlob();
+  saveBlob(blob, `${safeFileName(report.title)}-${submission._id?.slice(-6) || 'submission'}.pdf`);
+};
+
+// Many submissions of one report merged into a single PDF, each submission
+// starting on a fresh page. `items` is [{ report, submission, userData }].
+export const downloadDynamicReportsBundlePdf = async (items, fileName) => {
+  if (!items?.length) return;
+
+  const blob = await pdf(
+    <Document>
+      {items.map(({ report, submission, userData }) => (
+        <ReportSubmissionPages
+          key={submission._id}
+          report={report}
+          submission={submission}
+          userContext={toUserContext(userData)}
+        />
+      ))}
+    </Document>
+  ).toBlob();
+  saveBlob(blob, `${safeFileName(fileName)}.pdf`);
 };
 
 export default downloadDynamicReportPdf;
