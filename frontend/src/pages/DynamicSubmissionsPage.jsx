@@ -9,7 +9,7 @@ import DistrictAdminSidebar from '../components/sidebars/DistrictAdminSidebar';
 import AreaAdminSidebar from '../components/sidebars/AreaAdminSidebar';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
 import SubmissionPreviewModal from '../components/reportRenderer/SubmissionPreviewModal';
-import { downloadDynamicReportPdf } from '../utils/dynamicReportPdfGenerator';
+import { downloadDynamicReportPdf, downloadDynamicReportsBundlePdf } from '../utils/dynamicReportPdfGenerator';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
 
 const TYPE_LABELS = {
@@ -90,6 +90,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
   const [userData, setUserData] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [isBundleDownloading, setIsBundleDownloading] = useState(false);
   const [previewSub, setPreviewSub] = useState(null);
 
   // Filters
@@ -201,6 +202,12 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
     });
     return [...set].sort();
   }, [submissions, districtFilter, areaFilter]);
+
+  // The report dropdown follows the Level filter, so picking "ഏരിയ" lists only area reports.
+  const visibleReports = useMemo(
+    () => (reportForFilter ? reportList.filter(r => r.reportFor === reportForFilter) : reportList),
+    [reportList, reportForFilter]
+  );
 
   // Reset area/unit when district changes
   useEffect(() => {
@@ -314,6 +321,38 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
       setError('Failed to generate PDF.');
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  // With one report selected, everything the filters leave on screen that can
+  // be exported is offered as a single combined PDF, ordered district > area > unit.
+  const bundleSubmissions = useMemo(() => {
+    if (!reportIdFilter) return [];
+    const byName = (a, b, key) => (a.userId?.[key] || '').localeCompare(b.userId?.[key] || '');
+    return filteredSubmissions
+      .filter(s => s.status === 'submitted' && typeof s.reportId === 'object')
+      .sort((a, b) => byName(a, b, 'districtName') || byName(a, b, 'areaName') || byName(a, b, 'unitName'));
+  }, [filteredSubmissions, reportIdFilter]);
+
+  const bundleRegion = unitFilter || areaFilter || districtFilter || 'All regions';
+
+  const handleBundleExport = async () => {
+    if (!bundleSubmissions.length) return;
+    setIsBundleDownloading(true);
+    try {
+      await downloadDynamicReportsBundlePdf(
+        bundleSubmissions.map(sub => ({
+          report: sub.reportId,
+          submission: sub,
+          userData: { district: sub.userId?.districtName, area: sub.userId?.areaName, unit: sub.userId?.unitName },
+        })),
+        `${bundleSubmissions[0].reportId.title}-${bundleRegion}`
+      );
+    } catch (err) {
+      console.error('Error generating combined PDF:', err);
+      setError('Failed to generate combined PDF.');
+    } finally {
+      setIsBundleDownloading(false);
     }
   };
 
@@ -481,7 +520,18 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
               </JihFilterSelect>
             )}
             {config.showUserTypeFilter && (
-              <JihFilterSelect value={reportForFilter} onChange={e => { setReportForFilter(e.target.value); setCurrentPage(1); }}>
+              <JihFilterSelect
+                value={reportForFilter}
+                onChange={e => {
+                  const level = e.target.value;
+                  setReportForFilter(level);
+                  // A report picked for another level would vanish from the dropdown
+                  // yet keep filtering the list, so drop it.
+                  const picked = reportList.find(r => r._id === reportIdFilter);
+                  if (level && picked && picked.reportFor !== level) setReportIdFilter('');
+                  setCurrentPage(1);
+                }}
+              >
                 <option value="">എല്ലാ ലെവലുകളും</option>
                 <option value="district">ജില്ല</option>
                 <option value="area">ഏരിയ</option>
@@ -490,7 +540,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
             )}
             <JihFilterSelect icon={FileText} value={reportIdFilter} onChange={e => { setReportIdFilter(e.target.value); setCurrentPage(1); }}>
               <option value="">എല്ലാ റിപ്പോർട്ടുകളും</option>
-              {reportList.map(r => (
+              {visibleReports.map(r => (
                 <option key={r._id} value={r._id}>{r.title}</option>
               ))}
             </JihFilterSelect>
@@ -506,6 +556,31 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
               <option value="status">Status</option>
             </JihFilterSelect>
           </JihFilterBar>
+
+          {/* One report selected: download every matching submission as one PDF. */}
+          {!isLoading && bundleSubmissions.length > 0 && (
+            <div className="jih-card mb-4 lg:mb-5 flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[#002349] [overflow-wrap:anywhere]">
+                  {bundleRegion} · {bundleSubmissions.length} submitted {bundleSubmissions.length === 1 ? 'report' : 'reports'}
+                </p>
+                <p className="mt-0.5 text-xs text-gray-500">One PDF, each report starting on its own page</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleBundleExport}
+                disabled={isBundleDownloading}
+                className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-xl bg-[#14346b] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#1d4487] disabled:opacity-60 sm:min-h-0 sm:py-2"
+              >
+                {isBundleDownloading ? (
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                {isBundleDownloading ? 'Preparing PDF…' : 'Download all as one PDF'}
+              </button>
+            </div>
+          )}
 
           {/* Content */}
           {isLoading ? (

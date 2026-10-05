@@ -5,7 +5,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell
 } from 'recharts';
-import { ClipboardList, Clock, CheckCircle2, TrendingUp, Filter, Eye, EyeOff } from 'lucide-react';
+import { ClipboardList, Clock, CheckCircle2, TrendingUp, Filter, Eye, EyeOff, MapPin, FileText } from 'lucide-react';
+import { JihFilterSelect } from '../JihToolbar';
 
 // Reusable submissions analytics section for the area / district / admin
 // dashboard landings. Fetches every report submission the viewer is allowed
@@ -15,6 +16,9 @@ import { ClipboardList, Clock, CheckCircle2, TrendingUp, Filter, Eye, EyeOff } f
 //   - area   : units under the area (no extra filter)
 //   - district: units + areas under the district (filter by area)
 //   - admin  : units + areas + districts (filter by area and district)
+//
+// variant: 'full' (default, desktop analytics) | 'status' (phones: only the
+//   "സമർപ്പണ നില" submitted/pending card, laid out for a narrow screen)
 
 const LEVEL_LABELS = { unit: 'യൂണിറ്റ്', area: 'ഏരിയ', district: 'ജില്ല' };
 const TYPE_LABELS = { monthly: 'പ്രതിമാസ', quarterly: 'ത്രൈമാസ', yearly: 'വാർഷിക', special: 'സ്പെഷ്യൽ' };
@@ -106,7 +110,154 @@ const EntityRow = ({ label, breakdown, showNames, namePrompt, reports = [], repo
   </div>
 );
 
-const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) => {
+const NAME_LIMIT = 12;
+const CHIP_TONE = {
+  submitted: 'bg-[#e3f4ea] text-[#1e8a4c] border-[#cdebd8]',
+  pending: 'bg-[#fdf1dc] text-[#a06a12] border-[#f5e1bd]',
+};
+
+// Names as chips, capped so a 50-unit pending list doesn't push the page down.
+const NameChips = ({ names, tone }) => {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? names : names.slice(0, NAME_LIMIT);
+  return (
+    <>
+      <ul className="flex flex-wrap gap-1.5">
+        {shown.map(n => (
+          <li key={n} className={`rounded-lg border px-2 py-1 text-[12px] font-medium leading-snug [overflow-wrap:anywhere] ${CHIP_TONE[tone]}`}>{n}</li>
+        ))}
+      </ul>
+      {names.length > NAME_LIMIT && (
+        <button
+          type="button"
+          onClick={() => setExpanded(v => !v)}
+          aria-expanded={expanded}
+          className="mt-2 min-h-[44px] w-full rounded-xl bg-[#eef2f8] px-3 text-[12px] font-bold text-[#14346b]"
+        >
+          {expanded ? 'കുറച്ച് കാണിക്കുക' : `എല്ലാം കാണിക്കുക (${names.length})`}
+        </button>
+      )}
+    </>
+  );
+};
+
+// Phone layout of the submitted-vs-pending roster: one card, a tab per level
+// (units / areas), the report picker, a progress bar, then the names of the
+// pending or submitted ones. `levels` is [{ key, label, breakdown, namePrompt,
+// reports, reportValue, onReportChange }]; `filters` are the card's own selects.
+const StatusPanel = ({ levels, filters }) => {
+  const [levelKey, setLevelKey] = useState(levels[0].key);
+  const [statusKey, setStatusKey] = useState(null);
+  const level = levels.find(l => l.key === levelKey) || levels[0];
+  const { submitted, pending } = level.breakdown;
+  const total = submitted.length + pending.length;
+  const percent = total ? Math.round((submitted.length / total) * 100) : 0;
+  // Pending is what needs chasing, so open on it unless nothing is pending.
+  const activeStatus = statusKey || (pending.length ? 'pending' : 'submitted');
+  const names = activeStatus === 'submitted' ? submitted : pending;
+
+  return (
+    <section className="jih-card p-3.5" aria-label="സമർപ്പണ നില">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e4edfb] text-[#1d4fa8]">
+          <ClipboardList className="h-4 w-4" strokeWidth={1.8} />
+        </span>
+        <h3 className="text-[14px] font-extrabold text-[#0f2a5c]">സമർപ്പണ നില</h3>
+      </div>
+
+      {filters && <div className="mt-3 grid gap-2">{filters}</div>}
+
+      {levels.length > 1 && (
+        <div role="tablist" aria-label="ലെവൽ" className="mt-3 grid auto-cols-fr grid-flow-col gap-1 rounded-xl bg-[#eef2f8] p-1">
+          {levels.map(l => {
+            const count = l.breakdown.submitted.length + l.breakdown.pending.length;
+            const active = l.key === level.key;
+            return (
+              <button
+                key={l.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setLevelKey(l.key)}
+                className={`flex min-h-[44px] flex-col items-center justify-center rounded-lg px-2 leading-tight transition-colors ${
+                  active ? 'bg-white text-[#0f2a5c] shadow-sm' : 'text-[#5b6b85]'
+                }`}
+              >
+                <span className="text-[13px] font-bold">{l.label}</span>
+                <span className="text-[12px]">{l.breakdown.submitted.length} / {count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {level.reports.length > 0 && (
+        <JihFilterSelect
+          icon={FileText}
+          className="mt-3"
+          label="റിപ്പോർട്ട്"
+          value={level.reportValue || ''}
+          onChange={e => level.onReportChange(e.target.value)}
+          title={level.reports.find(r => String(r._id) === String(level.reportValue))?.title || ''}
+        >
+          <option value="">എല്ലാ റിപ്പോർട്ടുകളും</option>
+          {level.reports.map(r => <option key={r._id} value={r._id}>{r.title}</option>)}
+        </JihFilterSelect>
+      )}
+
+      <div className="mt-3.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-[12px] text-[#5b6b85]">സമർപ്പിച്ചവ</p>
+          <p className="text-[12px] font-semibold text-[#5b6b85]">
+            <span className="text-[18px] font-extrabold text-[#0f2a5c]">{submitted.length}</span> / {total} · {percent}%
+          </p>
+        </div>
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={percent}
+          className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#fdf1dc]"
+        >
+          <div className="h-full rounded-full bg-[#1e8a4c] transition-[width]" style={{ width: `${percent}%` }} />
+        </div>
+      </div>
+
+      <div role="tablist" aria-label="സ്റ്റാറ്റസ്" className="mt-3.5 grid grid-cols-2 gap-2">
+        {[
+          { key: 'submitted', label: 'സമർപ്പിച്ചവ', count: submitted.length, on: 'bg-[#e3f4ea] text-[#1e8a4c] ring-[#1e8a4c]' },
+          { key: 'pending', label: 'പെൻഡിംഗ്', count: pending.length, on: 'bg-[#fdf1dc] text-[#a06a12] ring-[#a06a12]' },
+        ].map(t => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={activeStatus === t.key}
+            onClick={() => setStatusKey(t.key)}
+            className={`flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl px-2 text-[13px] font-bold transition-colors ${
+              activeStatus === t.key ? `${t.on} ring-1` : 'bg-[#f4f6fa] text-[#5b6b85]'
+            }`}
+          >
+            {t.label}
+            <span className="text-[12px] font-extrabold">{t.count}</span>
+          </button>
+        ))}
+      </div>
+
+      <div role="tabpanel" className="mt-3">
+        {level.namePrompt ? (
+          <p className="rounded-xl bg-[#f4f6fa] px-3 py-2.5 text-[12px] leading-snug text-[#5b6b85]">{level.namePrompt}</p>
+        ) : names.length === 0 ? (
+          <p className="py-2 text-center text-[12px] text-[#5b6b85]">—</p>
+        ) : (
+          <NameChips key={`${level.key}-${activeStatus}`} names={names} tone={activeStatus} />
+        )}
+      </div>
+    </section>
+  );
+};
+
+const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, areas = null }) => {
   const cfg = SCOPE_ENDPOINT[scope] || SCOPE_ENDPOINT.area;
   const [submissions, setSubmissions] = useState([]);
   const [roster, setRoster] = useState(null);
@@ -335,6 +486,17 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
     ? 'ഏരിയ പേരുകൾ കാണാൻ മുകളിലെ ഫിൽട്ടറിൽ ജില്ല തിരഞ്ഞെടുക്കുക'
     : null;
 
+  const statusLevels = [
+    { key: 'unit', label: 'യൂണിറ്റുകൾ', breakdown: unitBreakdown, namePrompt: unitNamePrompt },
+    { key: 'area', label: 'ഏരിയകൾ', breakdown: areaBreakdown, namePrompt: areaNamePrompt },
+    { key: 'district', label: 'ജില്ലകൾ', breakdown: districtBreakdown, namePrompt: null },
+  ].filter(l => l.breakdown).map(l => ({
+    ...l,
+    reports: reportsByLevel[l.key],
+    reportValue: reportByLevel[l.key],
+    onReportChange: v => setLevelReport(l.key, v),
+  }));
+
   const unitSubmissionsLabel = scope === 'area' ? 'യൂണിറ്റ് സബ്മിഷനുകൾ' : 'ആകെ സബ്മിഷനുകൾ';
   const primaryTotal = scope === 'area' ? (stats.byLevel.unit || 0) : stats.total;
 
@@ -358,6 +520,29 @@ const SubmissionsAnalytics = ({ scope = 'area', units = null, areas = null }) =>
           Retry
         </button>
       </div>
+    );
+  }
+
+  if (variant === 'status') {
+    if (statusLevels.length === 0) return null;
+    return (
+      <StatusPanel
+        levels={statusLevels}
+        filters={(scope === 'district' || scope === 'admin') && (
+          <>
+            {scope === 'admin' && (
+              <JihFilterSelect icon={MapPin} label="ജില്ല" value={districtFilter} onChange={e => { setDistrictFilter(e.target.value); setAreaFilter(''); }}>
+                <option value="">എല്ലാ ജില്ലകളും</option>
+                {allDistricts.map(d => <option key={d} value={d}>{d}</option>)}
+              </JihFilterSelect>
+            )}
+            <JihFilterSelect icon={MapPin} label="ഏരിയ" value={areaFilter} onChange={e => setAreaFilter(e.target.value)}>
+              <option value="">എല്ലാ ഏരിയകളും</option>
+              {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
+            </JihFilterSelect>
+          </>
+        )}
+      />
     );
   }
 

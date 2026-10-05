@@ -21,6 +21,7 @@ import ActiveReportsCard from '../components/dashboard/ActiveReportsCard';
 import DashboardMetricGrid from '../components/dashboard/DashboardMetricGrid';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import useMediaQuery from '../hooks/useMediaQuery';
 
 // Tinted pin per area row, cycled by position.
 const AREA_TONES = [
@@ -45,6 +46,8 @@ const DistrictDashboardPage = ({ onLogout }) => {
   const [userData, setUserData] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  // Mounted per breakpoint (not hidden with CSS) so the analytics fetch runs once.
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
   
   // Stats state
   const [stats, setStats] = useState(null);
@@ -624,11 +627,9 @@ const DistrictDashboardPage = ({ onLogout }) => {
           </button>
         </div>
 
-        {/* Detailed analytics belongs to the Statistics view on phones. Keeping
-            it here for desktop preserves the existing wide-screen workflow. */}
-        <div className="hidden lg:block">
-          <SubmissionsAnalytics scope="district" />
-        </div>
+        {/* Full analytics stays on desktop; phones get just the submitted/pending
+            roster below and keep the rest in the Statistics view. */}
+        {isDesktop && <SubmissionsAnalytics scope="district" />}
 
         <DashboardMetricGrid
           items={[
@@ -640,6 +641,8 @@ const DistrictDashboardPage = ({ onLogout }) => {
         />
 
         <ActiveReportsCard reports={activeReportsList} loading={activeReportsLoading} />
+
+        {!isDesktop && <SubmissionsAnalytics scope="district" variant="status" />}
 
         <button
           type="button"
