@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Users, Building, BookOpen, TrendingUp, BarChart3, MapPin, ChevronRight, ChevronDown, FileText, Bell, Info, Search } from 'lucide-react';
+import { Building, BookOpen, TrendingUp, BarChart3, MapPin, ChevronRight, ChevronDown, FileText, Bell, Info, Search } from 'lucide-react';
 import axios from 'axios';
 import { validateUserToken } from '../utils/auth';
 import { Navigate } from 'react-router-dom';
@@ -13,14 +13,12 @@ import FormPage from './FormPage';
 import MonthlySurveyDashboard from './MonthlySurveyDashboard';
 import MonthlySurveyPage from './MonthlySurveyPage';
 import { FormProvider } from '../contexts/FormContext';
-import SurveyBarChart from '../components/charts/SurveyBarChart';
-import StatisticsCard from '../components/charts/StatisticsCard';
-import DistrictMonthlyStatsTable from '../components/tables/DistrictMonthlyStatsTable';
 import AreaMonthlyStatsTable from '../components/tables/AreaMonthlyStatsTable';
 import ActiveReportsCard from '../components/dashboard/ActiveReportsCard';
 import DashboardMetricGrid from '../components/dashboard/DashboardMetricGrid';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import ConsolidationTab from '../components/admin/ConsolidationTab';
 import useMediaQuery from '../hooks/useMediaQuery';
 
 // Tinted pin per area row, cycled by position.
@@ -50,17 +48,8 @@ const DistrictDashboardPage = ({ onLogout }) => {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   
   // Stats state
-  const [stats, setStats] = useState(null);
-  const [areaCount, setAreaCount] = useState(0);
-  const [unitCount, setUnitCount] = useState(0);
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [statsError, setStatsError] = useState('');
-  const [summary, setSummary] = useState('');
-  const [activeStatsSubTab, setActiveStatsSubTab] = useState('summary'); // 'summary' | 'districtTable' | 'areaTable' | 'unitTable'
-  const [districtMonthlySurveys, setDistrictMonthlySurveys] = useState([]);
   const [areas, setAreas] = useState([]);
   const [expandedAreaId, setExpandedAreaId] = useState(null);
-  const [expandedAreaSurveys, setExpandedAreaSurveys] = useState([]);
   const [expandedAreaUnits, setExpandedAreaUnits] = useState([]);
   const [expandedAreaAllUnitSurveys, setExpandedAreaAllUnitSurveys] = useState([]);
   const [viewingUnitSurvey, setViewingUnitSurvey] = useState(null);
@@ -99,14 +88,8 @@ const DistrictDashboardPage = ({ onLogout }) => {
     initializeUser();
   }, []);
 
-  // Load stats when stats view is active
+  // Load the data each view needs when it becomes active
   useEffect(() => {
-    if (currentView === 'stats') {
-      loadDistrictStats();
-      loadHierarchyCounts();
-      loadDistrictMonthlySurveys();
-      loadAreas();
-    }
     if (currentView === 'dashboard') {
       loadDashboardOverview();
       loadActiveReportsList();
@@ -182,7 +165,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
   // Navigation handlers
   const handleNavigateToYearly = () => setCurrentView('yearly-dashboard');
   const handleNavigateToMonthly = () => setCurrentView('monthly-dashboard');
-  const handleNavigateToStats = () => setCurrentView('stats');
+  const handleNavigateToStats = () => setCurrentView('consolidation');
   const handleNavigateToReports = () => navigate('/user-reports');
   const handleNavigateToNotifications = () => {
     // Navigate to notifications page route
@@ -299,58 +282,12 @@ const DistrictDashboardPage = ({ onLogout }) => {
     }
   };
 
-  const loadDistrictStats = async () => {
-    try {
-      setStatsLoading(true);
-      const token = localStorage.getItem('userToken');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/user/stats`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      setStats(response.data.stats);
-      setSummary(response.data.summary || '');
-    } catch (error) {
-      console.error('Error loading district stats:', error);
-      setStatsError('Failed to load statistics');
-    } finally {
-      setStatsLoading(false);
-    }
-  };
-
-  const loadHierarchyCounts = async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem('userData') || '{}');
-      const token = localStorage.getItem('userToken');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const distId = user?.districtId || user?.district?._id || stats?.yearly?.districtId;
-      if (!distId || !isValidObjectId(distId)) {
-        console.warn('District ID missing or invalid. Skipping area count fetch. Got:', distId);
-        return;
-      }
-      const areasResp = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/hierarchy/areas/${encodeURIComponent(distId)}`, { headers });
-      const areas = areasResp.data?.data || [];
-      setAreaCount(areas.length);
-      let unitsTotal = 0;
-      for (const a of areas) {
-        try {
-          const unitsResp = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/hierarchy/units/${encodeURIComponent(a.id || a._id || a.code)}`, { headers });
-          unitsTotal += (unitsResp.data?.data || []).length;
-        } catch {}
-      }
-      setUnitCount(unitsTotal);
-    } catch (e) {
-      console.error('Hierarchy count error', e);
-    }
-  };
-
   const loadAreas = async () => {
     try {
       const user = JSON.parse(localStorage.getItem('userData') || '{}');
       const token = localStorage.getItem('userToken');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const distId = user?.districtId || user?.district?._id || stats?.yearly?.districtId;
+      const distId = user?.districtId || user?.district?._id;
       if (!distId || !isValidObjectId(distId)) {
         console.warn('District ID missing or invalid. Skipping areas fetch. Got:', distId);
         setAreas([]);
@@ -363,28 +300,11 @@ const DistrictDashboardPage = ({ onLogout }) => {
     }
   };
 
-  const loadDistrictMonthlySurveys = async () => {
-    try {
-      const token = localStorage.getItem('userToken');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const params = new URLSearchParams({ page: 1, limit: 100, level: 'district' });
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/monthly-surveys/all?${params}`, { headers });
-      const surveys = response.data?.surveys || response.data?.data || [];
-      setDistrictMonthlySurveys(surveys.filter(s => s.submissionLevel === 'district'));
-    } catch (e) {
-      console.error('Error loading district monthly surveys', e);
-    }
-  };
-
   const loadExpandedAreaData = async (areaId) => {
     try {
       setLoadingExpandedArea(true);
       const token = localStorage.getItem('userToken');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const areaObj = areas.find(x => (x.id||x._id||x.code) === areaId) || {};
-      const user = JSON.parse(localStorage.getItem('userData') || '{}');
-      const districtUpper = (user?.districtName || user?.district || stats?.yearly?.district || '').toString().toUpperCase();
-      const districtIdVal = user?.districtId || user?.district?._id || '';
       // Units first (local DB, reliable) so any failure in the legacy
       // area-survey lookups below can never block the units list.
       let units = [];
@@ -396,41 +316,6 @@ const DistrictDashboardPage = ({ onLogout }) => {
       }
       setExpandedAreaUnits(units);
 
-      // Legacy area monthly surveys (best-effort; only feeds the stats tab).
-      let areaSurveys = [];
-      try {
-        const candidates = [areaId, areaObj.code, areaObj.title, areaObj.name].filter(Boolean);
-        let lastAreaUpperTried = '';
-        for (const candidate of candidates) {
-          const params = new URLSearchParams({ page: 1, limit: 100 });
-          params.append('areaId', candidate);
-          const areaUpper = (areaObj.title || areaObj.name || areaObj.code || candidate).toString().toUpperCase();
-          lastAreaUpperTried = areaUpper;
-          params.append('area', areaUpper);
-          if (districtUpper) params.append('district', districtUpper);
-          if (districtIdVal) params.append('districtId', districtIdVal);
-          const areaUrl = `${import.meta.env.VITE_API_URL}/api/area/surveys?${params.toString()}`;
-          const areaResp = await axios.get(areaUrl, { headers });
-          areaSurveys = areaResp.data?.data || areaResp.data?.surveys || [];
-          if (Array.isArray(areaSurveys) && areaSurveys.length > 0) break;
-        }
-        if (!Array.isArray(areaSurveys) || areaSurveys.length === 0) {
-          const msParams = new URLSearchParams({ page: 1, limit: 200, level: 'area' });
-          if (districtUpper) msParams.append('district', districtUpper);
-          const msUrl = `${import.meta.env.VITE_API_URL}/api/user/monthly-surveys/all?${msParams.toString()}`;
-          const msResp = await axios.get(msUrl, { headers });
-          const all = msResp.data?.surveys || msResp.data?.data || [];
-          areaSurveys = all.filter(s => (
-            (s.submissionLevel === 'area' || s.level === 'area') &&
-            (s.area?.toString().toUpperCase() === lastAreaUpperTried) &&
-            (!districtUpper || s.district?.toString().toUpperCase() === districtUpper)
-          ));
-        }
-      } catch (err) {
-        console.error('Error loading area surveys', err);
-        areaSurveys = [];
-      }
-      setExpandedAreaSurveys(areaSurveys);
       let all = [];
       for (const u of units) {
         const uid = u.id || u._id || u.code;
@@ -446,7 +331,6 @@ const DistrictDashboardPage = ({ onLogout }) => {
       setExpandedAreaAllUnitSurveys(all);
     } catch (e) {
       console.error('Error loading expanded area data', e);
-      setExpandedAreaSurveys([]);
       setExpandedAreaUnits([]);
       setExpandedAreaAllUnitSurveys([]);
     } finally {
@@ -459,14 +343,12 @@ const DistrictDashboardPage = ({ onLogout }) => {
     if (!areaId) {
       console.warn('Area identifier missing for expanded view.', area);
       setExpandedAreaId(null);
-      setExpandedAreaSurveys([]);
       setExpandedAreaUnits([]);
       setExpandedAreaAllUnitSurveys([]);
       return;
     }
     if (expandedAreaId === areaId) {
       setExpandedAreaId(null);
-      setExpandedAreaSurveys([]);
       setExpandedAreaUnits([]);
       setExpandedAreaAllUnitSurveys([]);
       return;
@@ -549,8 +431,13 @@ const DistrictDashboardPage = ({ onLogout }) => {
           </FormProvider>
         );
       
-      case 'stats':
-        return renderStatsView();
+      case 'consolidation':
+        return (
+          <div className="space-y-4">
+            <h2 className="hidden lg:block text-xl font-bold text-[#0f2a5c]">കൺസോളിഡേഷൻ</h2>
+            <ConsolidationTab scope="district" />
+          </div>
+        );
       
       default:
         return (
@@ -628,7 +515,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
         </div>
 
         {/* Full analytics stays on desktop; phones get just the submitted/pending
-            roster below and keep the rest in the Statistics view. */}
+            roster below and reach the per-report breakdown via Consolidation. */}
         {isDesktop && <SubmissionsAnalytics scope="district" />}
 
         <DashboardMetricGrid
@@ -636,7 +523,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
             { key: 'areas', label: 'ആകെ ഏരിയകൾ', value: d.areas, icon: MapPin, tone: 'blue', onClick: () => setCurrentView('locations') },
             { key: 'units', label: 'ആകെ യൂണിറ്റുകൾ', value: d.units, icon: Building, tone: 'gold', onClick: () => setCurrentView('locations') },
             { key: 'reports', label: 'ആകെ റിപ്പോർട്ടുകൾ', value: d.activeReports, icon: BookOpen, tone: 'violet', onClick: handleNavigateToReports },
-            { key: 'submitted', label: 'സബ്മിറ്റ് ചെയ്തവ', value: d.submitted, icon: TrendingUp, tone: 'green', onClick: () => setCurrentView('stats') },
+            { key: 'submitted', label: 'സബ്മിറ്റ് ചെയ്തവ', value: d.submitted, icon: TrendingUp, tone: 'green', onClick: () => setCurrentView('consolidation') },
           ]}
         />
 
@@ -646,7 +533,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
 
         <button
           type="button"
-          onClick={() => setCurrentView('stats')}
+          onClick={() => setCurrentView('consolidation')}
           className="jih-card relative flex w-full items-center gap-2.5 overflow-hidden p-3 text-left transition hover:-translate-y-0.5 lg:hidden"
         >
           <svg className="pointer-events-none absolute bottom-0 right-2 h-8 w-10" viewBox="0 0 96 64" fill="none" aria-hidden="true">
@@ -659,8 +546,8 @@ const DistrictDashboardPage = ({ onLogout }) => {
             <BarChart3 className="h-4 w-4" strokeWidth={1.8} />
           </span>
           <span className="relative min-w-0 flex-1">
-            <span className="block text-[14px] font-extrabold leading-tight text-[#0f2a5c]">വിശദമായ സ്ഥിതിവിവരങ്ങൾ</span>
-            <span className="mt-0.5 block text-[12px] leading-snug text-[#5b6b85]">ജില്ലയിലെ എല്ലാ പ്രവർത്തനങ്ങളുടെയും വിശദവിവരങ്ങൾ</span>
+            <span className="block text-[14px] font-extrabold leading-tight text-[#0f2a5c]">കൺസോളിഡേഷൻ</span>
+            <span className="mt-0.5 block text-[12px] leading-snug text-[#5b6b85]">റിപ്പോർട്ട് ഉത്തരങ്ങൾ ഏരിയ, യൂണിറ്റ് തിരിച്ച്</span>
           </span>
           <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#eef2f8] text-[#1f3560]">
             <ChevronRight className="h-3.5 w-3.5" />
@@ -726,353 +613,8 @@ const DistrictDashboardPage = ({ onLogout }) => {
     );
   };
 
-  // Render stats view
-  const renderStatsView = () => {
-    if (statsLoading) {
-      return (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#002349]"></div>
-          <span className="ml-2 text-gray-600 font-medium">Loading statistics...</span>
-        </div>
-      );
-    }
-
-    if (statsError) {
-      return (
-        <div className="text-center py-12">
-          <p className="text-red-600 font-semibold">{statsError}</p>
-          <button onClick={loadDistrictStats} className="mt-4 px-4 py-2 bg-[#002349] text-white rounded-lg text-sm">Retry</button>
-        </div>
-      );
-    }
-
-    if (!stats) {
-      return (
-        <div className="text-center py-12">
-          <p className="text-gray-600 font-medium">No statistics available</p>
-        </div>
-      );
-    }
-
-    // Prepare data for charts
-    const monthlySurveysData = [
-      {
-        name: 'Current Year',
-        district: stats.monthly?.districtCount || 0,
-        area: stats.monthly?.areaCount || 0,
-        unit: stats.monthly?.unitCount || 0
-      },
-      {
-        name: 'Last Year',
-        district: stats.lastYear?.districtSurveys || 0,
-        area: stats.lastYear?.areaSurveys || 0,
-        unit: stats.lastYear?.unitSurveys || 0
-      }
-    ];
-
-    const monthlyTrendData = stats.monthly?.surveys?.map(survey => ({
-      name: survey.month,
-      surveys: 1
-    })) || [];
-
-    const monthlyByLevelData = [
-      {
-        name: 'District',
-        surveys: stats.monthly?.districtCount || 0
-      },
-      {
-        name: 'Area',
-        surveys: stats.monthly?.areaCount || 0
-      },
-      {
-        name: 'Unit',
-        surveys: stats.monthly?.unitCount || 0
-      }
-    ];
-
-    return (
-      <div className="space-y-6">
-        {/* Sub-tabs within District Statistics */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-3">
-          <div className="mobile-tab-grid flex flex-wrap gap-2 sm:gap-3">
-            <button
-              onClick={() => setActiveStatsSubTab('summary')}
-              className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'summary' ? 'bg-[#002349] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
-            >
-              Statistics
-            </button>
-            <button
-              onClick={() => setActiveStatsSubTab('districtTable')}
-              className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'districtTable' ? 'bg-[#957C3D] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
-            >
-              District Table
-            </button>
-            <button
-              onClick={() => setActiveStatsSubTab('areaTable')}
-              className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'areaTable' ? 'bg-[#002349] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
-            >
-              Area Table
-            </button>
-            <button
-              onClick={() => setActiveStatsSubTab('unitTable')}
-              className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-500 ${activeStatsSubTab === 'unitTable' ? 'bg-[#957C3D] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'}`}
-            >
-              Unit Table
-            </button>
-          </div>
-        </div>
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 hover:shadow-md transition-all duration-300">
-          <p className="text-sm text-gray-700">
-            This page shows your district's progress in simple numbers and charts. You can see totals from your last yearly report and how this year's months are going.
-          </p>
-        </div>
-        {/* AI Summary */}
-        {activeStatsSubTab === 'summary' && summary && (
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-500">
-            <div className="text-sm text-gray-800 leading-relaxed break-words">{summary}</div>
-          </div>
-        )}
-
-        {/* Statistics Cards */}
-        {activeStatsSubTab === 'summary' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatisticsCard
-            title="Monthly Reports This Year"
-            value={(stats.monthly?.count || 0).toLocaleString()}
-            subtitle="All levels combined"
-            icon={TrendingUp}
-            color="yellow"
-          />
-          <StatisticsCard
-            title="District Monthly Reports"
-            value={(stats.monthly?.districtCount || 0).toLocaleString()}
-            subtitle="District level submissions"
-            icon={Building}
-            color="blue"
-          />
-          <StatisticsCard
-            title="Area Monthly Reports"
-            value={(stats.monthly?.areaCount || 0).toLocaleString()}
-            subtitle="Area level submissions"
-            icon={MapPin}
-            color="green"
-          />
-          <StatisticsCard
-            title="Unit Monthly Reports"
-            value={(stats.monthly?.unitCount || 0).toLocaleString()}
-            subtitle="Unit level submissions"
-            icon={Users}
-            color="purple"
-          />
-          <StatisticsCard
-            title="Total Areas"
-            value={areaCount}
-            subtitle="Under this district"
-            icon={MapPin}
-            color="orange"
-          />
-          <StatisticsCard
-            title="Total Units"
-            value={unitCount}
-            subtitle="Under this district"
-            icon={Building}
-            color="teal"
-          />
-          <StatisticsCard
-            title="Current Month Surveys"
-            value={(stats.currentMonth?.totalSurveys || 0).toLocaleString()}
-            subtitle={`${stats.currentMonth?.month || 'N/A'} ${stats.currentMonth?.year || ''}`}
-            icon={BarChart3}
-            color="indigo"
-          />
-          <StatisticsCard
-            title="Last Year Total"
-            value={(stats.lastYear?.totalSurveys || 0).toLocaleString()}
-            subtitle={`Year ${stats.lastYear?.year || 'N/A'}`}
-            icon={BookOpen}
-            color="pink"
-          />
-        </div>
-        )}
-
-        {/* Charts */}
-        {activeStatsSubTab === 'summary' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SurveyBarChart
-            data={monthlySurveysData}
-            title="Current Year vs Last Year"
-            dataKey1="district"
-            dataKey2="area"
-            dataKey3="unit"
-            label1="District"
-            label2="Area"
-            label3="Unit"
-          />
-          
-          <SurveyBarChart
-            data={monthlyByLevelData}
-            title="Surveys by Level"
-            dataKey1="surveys"
-            label1="Surveys"
-          />
-        </div>
-        )}
-        <p className="text-xs text-gray-500">Tip: The charts show survey submission activity by level and year-over-year comparison.</p>
-
-        {/* Monthly Trend */}
-        {activeStatsSubTab === 'summary' && monthlyTrendData.length > 0 && (
-          <SurveyBarChart
-            data={monthlyTrendData}
-            title="Month-by-Month Survey Submissions"
-            dataKey1="surveys"
-            label1="Surveys"
-          />
-        )}
-
-        {/* Monthly Surveys by Level */}
-        {activeStatsSubTab === 'summary' && monthlyByLevelData.some(level => level.surveys > 0) && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SurveyBarChart
-              data={monthlyByLevelData}
-              title="Monthly Reports by Level"
-              dataKey1="surveys"
-              label1="Surveys"
-            />
-            
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Report Breakdown</h3>
-              <div className="space-y-4">
-                {monthlyByLevelData.map((level, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-medium text-gray-900">{level.name} Level</div>
-                      <div className="text-sm text-gray-600">{level.surveys} Reports submitted</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-semibold text-blue-600">{level.surveys.toLocaleString()}</div>
-                      <div className="text-xs text-gray-500">surveys</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* District Information */}
-        {activeStatsSubTab === 'summary' && (
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-500">
-            <h3 className="text-lg font-bold text-[#002349] mb-6">District Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                <p className="text-xs text-gray-500 mb-1 font-medium">District</p>
-                <p className="text-lg font-semibold text-[#002349]">{stats.yearly?.district || 'N/A'}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                <p className="text-xs text-gray-500 mb-1 font-medium">Monthly Surveys This Year</p>
-                <p className="text-lg font-semibold text-gray-700">{(stats.monthly?.count || 0).toLocaleString()}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                <p className="text-xs text-gray-500 mb-1 font-medium">Yearly Survey Date</p>
-                <p className="text-lg font-semibold text-gray-700">{stats.yearly?.submittedAt ? new Date(stats.yearly.submittedAt).toLocaleDateString() : 'N/A'}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                <p className="text-xs text-gray-500 mb-1 font-medium">Current Month</p>
-                <p className="text-lg font-semibold text-gray-700">{stats.currentMonth?.month || 'N/A'} ({stats.currentMonth?.totalSurveys || 0} surveys)</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeStatsSubTab === 'districtTable' && (
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-500">
-            <div className="flex items-center gap-2 mb-6">
-              <h3 className="text-lg font-bold text-[#002349]">District Table</h3>
-              <span className="text-[10px] uppercase tracking-wide px-3 py-1 rounded-full bg-[#002349] text-white font-semibold">District</span>
-            </div>
-            <DistrictMonthlyStatsTable 
-              surveys={districtMonthlySurveys}
-            />
-          </div>
-        )}
-
-        {activeStatsSubTab === 'areaTable' && (
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-500">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-[#957C3D]">Areas</h3>
-                <span className="text-[10px] uppercase tracking-wide px-3 py-1 rounded-full bg-[#957C3D] text-white font-semibold">Area</span>
-              </div>
-              <span className="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700 font-medium">{areas.length} total</span>
-            </div>
-            <div className="divide-y rounded-2xl border border-gray-200">
-              {areas.map((a) => {
-                const areaId = a.id || a._id || a.code;
-                const isExpanded = expandedAreaId === areaId;
-                return (
-                  <div key={areaId} className="bg-white">
-                    <button
-                      onClick={() => handleAreaClick(a)}
-                      className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gradient-to-br hover:from-white hover:to-gray-50 transition-all duration-300 ${isExpanded ? 'bg-gray-50' : ''}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        {isExpanded ? <ChevronDown className="w-4 h-4 text-[#957C3D]" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
-                        <span className="text-sm font-semibold text-[#002349]">{a.title || a.name || areaId}</span>
-                      </div>
-                      <span className="w-full text-xs leading-tight text-gray-500 font-medium break-words [overflow-wrap:anywhere]">View monthly data</span>
-                    </button>
-
-                    {isExpanded && (
-                      <div className="px-4 pb-4">
-                        <div className="border rounded-lg overflow-hidden">
-                          <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b">
-                            <div>
-                              <div className="text-xs text-gray-500 uppercase tracking-wide">Area</div>
-                              <h4 className="text-sm font-semibold text-gray-900">{a.title || a.name || areaId}</h4>
-                            </div>
-                            <button className="text-xs text-gray-600 hover:text-gray-900 px-3 py-2.5" onClick={() => setExpandedAreaId(null)}>Close</button>
-                          </div>
-
-                          {loadingExpandedArea ? (
-                            <div className="p-4 animate-pulse space-y-3">
-                              <div className="h-4 bg-gray-200 rounded" />
-                              <div className="h-4 bg-gray-200 rounded" />
-                              <div className="h-4 bg-gray-200 rounded" />
-                            </div>
-                          ) : (
-                            <div className="overflow-x-auto">
-                              <AreaMonthlyStatsTable surveys={expandedAreaSurveys} />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {activeStatsSubTab === 'unitTable' && (
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-500">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-[#002349]">Areas & Units</h3>
-                <span className="text-[10px] uppercase tracking-wide px-3 py-1 rounded-full bg-slate-600 text-white font-semibold">Unit</span>
-              </div>
-              <span className="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700 font-medium">{areas.length} areas</span>
-            </div>
-            {renderAreasUnitsList()}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   // Shared list of areas (expandable to their units) with per-area / per-unit
-  // "submissions" shortcuts. Used by both the stats "unit table" tab and the
-  // dedicated Areas & Units page.
+  // "submissions" shortcuts, for the Areas & Units page.
   const renderAreasUnitsList = (list = areas) => {
     if (!list || list.length === 0) {
       return <p className="py-6 text-center text-sm text-gray-500">ഈ ജില്ലയിൽ ഏരിയകൾ ലഭ്യമല്ല.</p>;
@@ -1324,14 +866,14 @@ const DistrictDashboardPage = ({ onLogout }) => {
                 'monthly-dashboard': 'പ്രതിമാസ റിപ്പോർട്ട്',
                 'monthly-form': 'പ്രതിമാസ റിപ്പോർട്ട്',
                 locations: 'ലൊക്കേഷനുകൾ',
-                stats: 'സ്ഥിതിവിവരങ്ങൾ',
+                consolidation: 'കൺസോളിഡേഷൻ',
               }[currentView] || 'ജില്ലാ ഡാഷ്ബോർഡ്'
             }
             subtitle={
               {
                 dashboard: 'സേവനത്തിലൂടെ സമൂഹത്തിന് ഒപ്പം',
                 locations: 'പ്രദേശങ്ങൾ കാണുക',
-                stats: 'വിവരങ്ങളുടെ സംഗ്രഹവും വിശകലനവും',
+                consolidation: 'റിപ്പോർട്ട് ഉത്തരങ്ങളുടെ ആകെത്തുക',
               }[currentView] || null
             }
             actions={currentView === 'dashboard' ? topBarActions : null}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Search, SlidersHorizontal, ChevronDown, Filter, Plus, X } from 'lucide-react';
 
 /**
@@ -92,15 +92,45 @@ export function JihFilterBar({
   );
 }
 
-/** One filter control: leading icon + filled pill select + trailing chevron. */
-export function JihFilterSelect({ icon, className = '', label = 'Filter', children, 'aria-label': ariaLabel, ...props }) {
+/**
+ * One filter control: leading icon + filled pill select + trailing chevron.
+ *
+ * Below sm a native select can only ellipsize, which cut long Malayalam labels
+ * ("എല്ലാ ജില്ല…"). There the select keeps its 16px iOS-zoom-guard font but
+ * paints its text transparent, and a smaller copy of the chosen option is
+ * stacked over it in the same grid cell, wrapping instead of truncating. The
+ * select still receives every tap, so the native picker is unchanged.
+ */
+export function JihFilterSelect({ icon, className = '', label = 'Filter', children, 'aria-label': ariaLabel, onChange, ...props }) {
   const Icon = icon || Filter;
+  const selectRef = useRef(null);
+  const [shownLabel, setShownLabel] = useState('');
+  const syncLabel = () => setShownLabel(selectRef.current?.selectedOptions[0]?.text ?? '');
+
+  // Options often arrive async, so re-read after every render; an unchanged
+  // string makes setState a no-op.
+  useLayoutEffect(syncLabel);
+
   return (
-    <div className={`relative ${className}`}>
-      <Icon className="ih-filter-icon" />
-      <select className="ih-filter-select truncate" aria-label={ariaLabel || label} {...props}>
+    <div className={`relative grid ${className}`}>
+      <select
+        ref={selectRef}
+        className="ih-filter-select jih-filter-select truncate [grid-area:1/1] h-full"
+        aria-label={ariaLabel || label}
+        onChange={(e) => { syncLabel(); onChange?.(e); }}
+        {...props}
+      >
         {children}
       </select>
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none flex items-center py-1.5 pl-8 pr-7 text-[12px] leading-[1.3] [grid-area:1/1] [overflow-wrap:anywhere] sm:hidden ${
+          props.disabled ? 'text-gray-400 opacity-60' : 'text-gray-700'
+        }`}
+      >
+        {shownLabel}
+      </span>
+      <Icon className="ih-filter-icon" />
       <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
     </div>
   );

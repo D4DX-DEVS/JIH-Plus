@@ -1,8 +1,9 @@
 import ResponsiveTable from "../tables/ResponsiveTable.jsx";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { RefreshCw, BarChart3, Hash, Table2, Type, ListChecks, Users, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { RefreshCw, BarChart3, Hash, Table2, Type, ListChecks, Users, ChevronDown, SlidersHorizontal, Eye, ListOrdered } from 'lucide-react';
+import ConsolidationDrillDown from './ConsolidationDrillDown.jsx';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -26,6 +27,9 @@ const YEARS = Array.from({ length: 6 }, (_, i) => currentYear - i);
 
 const pct = (n, total) => (total > 0 ? Math.round((n / total) * 100) : 0);
 
+// Label for the number-field breakdown button, by submitting level
+const LEVEL_WISE = { district: 'ജില്ല തിരിച്ച്', area: 'ഏരിയ തിരിച്ച്', unit: 'യൂണിറ്റ് തിരിച്ച്' };
+
 const KIND_BADGE = {
   choice: { label: 'Single choice', cls: 'bg-blue-50 text-blue-700', Icon: BarChart3 },
   multi: { label: 'Multiple choice', cls: 'bg-purple-50 text-purple-700', Icon: ListChecks },
@@ -34,13 +38,42 @@ const KIND_BADGE = {
   text: { label: 'Text', cls: 'bg-gray-100 text-gray-600', Icon: Type },
 };
 
-export default function ConsolidationTab() {
-  const token = localStorage.getItem('adminToken');
+// Who is consolidating. District / area scopes are enforced by the API, which
+// takes the district or area from the login token — this only shapes the UI.
+const SCOPES = {
+  admin: {
+    tokenKey: 'adminToken',
+    reportsUrl: '/api/admin/reports/for-consolidation',
+    dataUrl: '/api/admin/reports/consolidation',
+    levels: ['district', 'area', 'unit'],
+  },
+  district: {
+    tokenKey: 'userToken',
+    reportsUrl: '/api/user/consolidation/reports',
+    dataUrl: '/api/user/consolidation',
+    levels: ['area', 'unit'],
+    wholeLabel: 'Whole district / ജില്ല മുഴുവൻ',
+  },
+  area: {
+    tokenKey: 'userToken',
+    reportsUrl: '/api/user/consolidation/reports',
+    dataUrl: '/api/user/consolidation',
+    levels: ['unit'],
+    wholeLabel: 'Whole area / ഏരിയ മുഴുവൻ',
+  },
+};
+
+const LEVEL_OPTION_LABELS = { district: 'District / ജില്ല', area: 'Area / ഏരിയ', unit: 'Unit / യൂണിറ്റ്' };
+
+export default function ConsolidationTab({ scope = 'admin' }) {
+  const cfg = SCOPES[scope] || SCOPES.admin;
+  const isAdmin = scope === 'admin';
+  const token = localStorage.getItem(cfg.tokenKey);
   const headers = { Authorization: `Bearer ${token}` };
 
   // Step 1: which form
   const [type, setType] = useState('monthly');
-  const [reportFor, setReportFor] = useState('district');
+  const [reportFor, setReportFor] = useState(cfg.levels[0]);
   const [year, setYear] = useState('');   // '' = All Years
   const [month, setMonth] = useState(''); // '' = All Months
   const [reportId, setReportId] = useState('');
@@ -54,6 +87,8 @@ export default function ConsolidationTab() {
   const [districts, setDistricts] = useState([]);
   const [areas, setAreas] = useState([]);
   const [units, setUnits] = useState([]);
+  // District / area admins: their own areas and units, loaded once
+  const [ownLocations, setOwnLocations] = useState({ areas: [], units: [] });
 
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -61,9 +96,18 @@ export default function ConsolidationTab() {
   const [error, setError] = useState('');
   // Mobile only: filters collapse into a single toggle row once a result is showing.
   const [filtersOpen, setFiltersOpen] = useState(true);
+  // Drill-down sheet: { field, option } for "who chose this", { field } for number breakdowns
+  const [drill, setDrill] = useState(null);
+  const closeDrill = useCallback(() => setDrill(null), []);
 
-  // Load districts on mount
+  // Load districts on mount (admin) / the caller's own areas and units (district, area)
   useEffect(() => {
+    if (!isAdmin) {
+      axios.get(`${API_BASE_URL}/api/user/consolidation/locations`, { headers })
+        .then(r => setOwnLocations({ areas: r.data.areas || [], units: r.data.units || [] }))
+        .catch(e => { console.error('Load locations error', e); toast.error('Failed to load locations'); });
+      return;
+    }
     axios.get(`${API_BASE_URL}/api/master/districts`, { headers })
       .then(r => setDistricts(r.data.data || []))
       .catch(e => { console.error('Load districts error', e); toast.error('Failed to load districts'); });
@@ -72,7 +116,7 @@ export default function ConsolidationTab() {
 
   // Load areas when district changes
   useEffect(() => {
-    if (districtId) {
+    if (isAdmin && districtId) {
       axios.get(`${API_BASE_URL}/api/master/areas?districtId=${districtId}`, { headers })
         .then(r => setAreas(r.data.data || []))
         .catch(e => { console.error('Load areas error', e); toast.error('Failed to load areas'); });
@@ -86,7 +130,7 @@ export default function ConsolidationTab() {
 
   // Load units when area changes (unit reports only)
   useEffect(() => {
-    if (reportFor === 'unit' && districtId && areaId) {
+    if (isAdmin && reportFor === 'unit' && districtId && areaId) {
       axios.get(`${API_BASE_URL}/api/master/units?districtId=${districtId}&areaId=${areaId}`, { headers })
         .then(r => setUnits(r.data.data || []))
         .catch(e => { console.error('Load units error', e); toast.error('Failed to load units'); });
@@ -105,7 +149,7 @@ export default function ConsolidationTab() {
     const params = new URLSearchParams({ type, reportFor });
     if (year) params.append('year', year);
     if (type === 'monthly' && month) params.append('month', month);
-    axios.get(`${API_BASE_URL}/api/admin/reports/for-consolidation?${params}`, { headers })
+    axios.get(`${API_BASE_URL}${cfg.reportsUrl}?${params}`, { headers })
       .then(r => setReports(r.data.data || []))
       .catch(e => { console.error('Load reports error', e); toast.error('Failed to load reports'); })
       .finally(() => setReportsLoading(false));
@@ -137,8 +181,8 @@ export default function ConsolidationTab() {
     if (districtId) params.append('districtId', districtId);
     if (areaId) params.append('areaId', areaId);
     if (unitId) params.append('unitId', unitId);
-    axios.get(`${API_BASE_URL}/api/admin/reports/consolidation?${params}`, { headers })
-      .then(r => { if (!cancelled) { setResult(r.data); setFiltersOpen(false); } })
+    axios.get(`${API_BASE_URL}${cfg.dataUrl}?${params}`, { headers })
+      .then(r => { if (!cancelled) { setResult(r.data); setFiltersOpen(false); setDrill(null); } })
       .catch(e => {
         if (!cancelled) {
           setResult(null);
@@ -152,10 +196,17 @@ export default function ConsolidationTab() {
 
   const submittedCount = result?.stats?.submittedCount || 0;
 
+  // Location pickers: admin walks the master data, others pick from their own
+  const areaOptions = isAdmin ? areas : ownLocations.areas;
+  const unitOptions = isAdmin
+    ? units
+    : ownLocations.units.filter(u => scope === 'area' || (areaId && String(u.areaId) === areaId));
+
   const scopeLabel = () => {
+    const aName = areaOptions.find(a => a._id === areaId)?.name;
+    const uName = unitOptions.find(u => u._id === unitId)?.name;
+    if (!isAdmin) return [aName, uName].filter(Boolean).join(' › ') || cfg.wholeLabel;
     const dName = districts.find(d => d._id === districtId)?.name;
-    const aName = areas.find(a => a._id === areaId)?.name;
-    const uName = units.find(u => u._id === unitId)?.name;
     if (!dName) return 'All Districts / എല്ലാ ജില്ലകളും';
     return [dName, aName, uName].filter(Boolean).join(' › ');
   };
@@ -172,10 +223,11 @@ export default function ConsolidationTab() {
   // ── Renderers per breakdown kind ──────────────────────────────────────────
 
   const renderChoiceRows = (field) => {
-    const rows = field.options.map(opt => ({ label: opt, count: field.counts[opt] || 0 }));
+    const rows = field.options.map(opt => ({ key: opt, label: opt, count: field.counts[opt] || 0 }));
     if (field.notAnswered > 0) {
-      rows.push({ label: 'Not answered / ഉത്തരം നൽകിയിട്ടില്ല', count: field.notAnswered, muted: true });
+      rows.push({ key: '__not_answered__', label: 'Not answered / ഉത്തരം നൽകിയിട്ടില്ല', count: field.notAnswered, muted: true });
     }
+    const canDrill = Boolean(result?.submitters && field.who);
     return (
       <div className="space-y-2">
         {rows.map((row, i) => {
@@ -186,9 +238,23 @@ export default function ConsolidationTab() {
                 <span className={`text-sm truncate ${row.muted ? 'text-gray-400 italic' : 'text-gray-700'}`}>
                   {row.label}
                 </span>
-                <span className={`text-sm font-semibold shrink-0 ${row.muted ? 'text-gray-400' : 'text-[#002349]'}`}>
-                  {row.count}
-                  <span className="text-xs font-normal text-gray-400 ml-1">({p}%)</span>
+                <span className="flex items-center gap-1 shrink-0">
+                  <span className={`text-sm font-semibold ${row.muted ? 'text-gray-400' : 'text-[#002349]'}`}>
+                    {row.count}
+                    <span className="text-xs font-normal text-gray-400 ml-1">({p}%)</span>
+                  </span>
+                  {canDrill && (
+                    <button
+                      type="button"
+                      onClick={() => setDrill({ field, option: row.key })}
+                      disabled={row.count === 0}
+                      aria-label={`See who selected ${row.label}`}
+                      title="See who selected this / ആരൊക്കെ തിരഞ്ഞെടുത്തു"
+                      className="-my-2 -mr-2 inline-flex h-[40px] w-[40px] sm:h-8 sm:w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-blue-50 hover:text-[#002349] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#002349]/40 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-400 transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  )}
                 </span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
@@ -219,9 +285,21 @@ export default function ConsolidationTab() {
           </div>
         ))}
       </div>
-      {field.notAnswered > 0 && (
-        <p className="text-xs text-gray-400 mt-2">{field.notAnswered} did not answer</p>
-      )}
+      <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+        <p className="text-xs text-gray-400">
+          {field.notAnswered > 0 ? `${field.notAnswered} did not answer` : ''}
+        </p>
+        {result?.submitters && field.entries && (
+          <button
+            type="button"
+            onClick={() => setDrill({ field })}
+            className="inline-flex min-h-[44px] sm:min-h-[34px] items-center gap-1.5 rounded-full border border-[#002349]/15 bg-[#e4edfb] px-3.5 text-xs font-semibold text-[#1d4fa8] hover:bg-[#d6e4fa] transition-colors"
+          >
+            <ListOrdered className="w-4 h-4" />
+            {LEVEL_WISE[result.report.reportFor] || 'വിശദമായി'} / Detailed view
+          </button>
+        )}
+      </div>
     </div>
   );
 
@@ -343,14 +421,14 @@ export default function ConsolidationTab() {
             </select>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Report For / ആർക്കുള്ളത്</label>
-            <select value={reportFor} onChange={e => setReportFor(e.target.value)} className={selectCls}>
-              <option value="district">District / ജില്ല</option>
-              <option value="area">Area / ഏരിയ</option>
-              <option value="unit">Unit / യൂണിറ്റ്</option>
-            </select>
-          </div>
+          {cfg.levels.length > 1 && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Report For / ആർക്കുള്ളത്</label>
+              <select value={reportFor} onChange={e => setReportFor(e.target.value)} className={selectCls}>
+                {cfg.levels.map(l => <option key={l} value={l}>{LEVEL_OPTION_LABELS[l]}</option>)}
+              </select>
+            </div>
+          )}
 
           {type !== 'special' && (
             <div>
@@ -403,28 +481,30 @@ export default function ConsolidationTab() {
         <div className={`${filtersOpen ? '' : 'hidden lg:block'} bg-white rounded-xl shadow-md border border-gray-200 p-4`}>
           <h3 className="text-base font-semibold text-[#002349] mb-3">സ്ഥലം / Location</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">District / ജില്ല</label>
-              <select value={districtId} onChange={e => setDistrictId(e.target.value)} className={selectCls}>
-                <option value="">All Districts / എല്ലാ ജില്ലകളും</option>
-                {districts.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
-              </select>
-            </div>
-            {reportFor !== 'district' && (
+            {isAdmin && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">District / ജില്ല</label>
+                <select value={districtId} onChange={e => setDistrictId(e.target.value)} className={selectCls}>
+                  <option value="">All Districts / എല്ലാ ജില്ലകളും</option>
+                  {districts.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
+                </select>
+              </div>
+            )}
+            {reportFor !== 'district' && scope !== 'area' && (
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Area / ഏരിയ</label>
-                <select value={areaId} onChange={e => setAreaId(e.target.value)} disabled={!districtId} className={selectCls}>
+                <select value={areaId} onChange={e => setAreaId(e.target.value)} disabled={isAdmin && !districtId} className={selectCls}>
                   <option value="">All Areas / എല്ലാ ഏരിയയും</option>
-                  {areas.map(a => <option key={a._id} value={a._id}>{a.name}</option>)}
+                  {areaOptions.map(a => <option key={a._id} value={a._id}>{a.name}</option>)}
                 </select>
               </div>
             )}
             {reportFor === 'unit' && (
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Unit / യൂണിറ്റ്</label>
-                <select value={unitId} onChange={e => setUnitId(e.target.value)} disabled={!areaId} className={selectCls}>
+                <select value={unitId} onChange={e => setUnitId(e.target.value)} disabled={scope !== 'area' && !areaId} className={selectCls}>
                   <option value="">All Units / എല്ലാ യൂണിറ്റും</option>
-                  {units.map(u => <option key={u._id} value={u._id}>{u.name}</option>)}
+                  {unitOptions.map(u => <option key={u._id} value={u._id}>{u.name}</option>)}
                 </select>
               </div>
             )}
@@ -496,6 +576,13 @@ export default function ConsolidationTab() {
           )}
         </>
       )}
+
+      <ConsolidationDrillDown
+        view={drill}
+        submitters={result?.submitters || []}
+        reportFor={result?.report?.reportFor}
+        onClose={closeDrill}
+      />
     </div>
   );
 }

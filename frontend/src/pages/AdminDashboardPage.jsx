@@ -1,7 +1,7 @@
 import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FileText, Trash2, Download, MapPin, Calendar, TrendingUp, ArrowLeft, ChevronRight, LogOut, Edit, Bell, X, Eye, Plus, Check, Clock } from 'lucide-react';
+import { FileText, Trash2, Download, MapPin, ArrowLeft, ChevronRight, LogOut, Edit, Bell, X, Eye, Plus, Check, Clock } from 'lucide-react';
 import { JihFilterBar, JihFilterSelect, JihToolbarAction } from '../components/JihToolbar';
 import axios from 'axios';
 import FormDetailPage from './FormDetailPage';
@@ -14,10 +14,6 @@ console.log('API_BASE_URL:', API_BASE_URL);
 import FormPage from './FormPage';
 import { FormProvider } from '../contexts/FormContext';
 import ConfirmationModal from '../components/modals/ConfirmationModal';
-import SurveyBarChart from '../components/charts/SurveyBarChart';
-import SurveyPieChart from '../components/charts/SurveyPieChart';
-import StatisticsCard from '../components/charts/StatisticsCard';
-import DistrictMonthlyStatsTable from '../components/tables/DistrictMonthlyStatsTable';
 import { downloadAllFormsPDF } from '../utils/newPdfGenerator.jsx';
 import AdminSidebar from '../components/sidebars/AdminSidebar';
 import ConsolidationTab from '../components/admin/ConsolidationTab';
@@ -65,14 +61,6 @@ const AdminDashboardPage = ({ onLogout }) => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalForms, setTotalForms] = useState(0);
   const [totalSurveys, setTotalSurveys] = useState(0);
-
-  // Statistics tab state
-  const [stats, setStats] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-  const [statsError, setStatsError] = useState('');
-  const [summary, setSummary] = useState('');
-  const [activeSubTab, setActiveSubTab] = useState('summary'); // 'summary' | 'table' | 'consolidation'
-  const [districtMonthlySurveys, setDistrictMonthlySurveys] = useState([]);
 
   // ===== Helpers for monthly detail rendering =====
   const formatLabel = (key) => {
@@ -160,9 +148,6 @@ const AdminDashboardPage = ({ onLogout }) => {
       loadAllForms();
     } else if (activeTab === 'monthly') {
       loadAllMonthlySurveys();
-    } else if (activeTab === 'stats') {
-      loadMainStats();
-      loadDistrictMonthlySurveys();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [districtFilter, userFilter, monthFilter, activeTab]);
@@ -214,43 +199,6 @@ const AdminDashboardPage = ({ onLogout }) => {
       setError('Failed to load forms');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // ===== Statistics tab functions =====
-  const loadMainStats = async () => {
-    try {
-      setStatsLoading(true);
-      const token = localStorage.getItem('adminToken');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/stats`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      console.log('Main stats response:', response.data);
-      setStats(response.data.stats);
-      setSummary(response.data.summary || '');
-    } catch (error) {
-      console.error('Error loading main stats:', error);
-      setStatsError('Failed to load statistics');
-    } finally {
-      setStatsLoading(false);
-    }
-  };
-
-  const loadDistrictMonthlySurveys = async () => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/monthly-surveys/all-levels`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      setDistrictMonthlySurveys(response.data.surveys || []);
-    } catch (error) {
-      console.error('Error loading district monthly surveys:', error);
     }
   };
 
@@ -757,7 +705,7 @@ const AdminDashboardPage = ({ onLogout }) => {
     ? 'Yearly Report'
     : activeTab === 'monthly'
     ? 'Monthly Report'
-    : 'Statistics';
+    : 'കൺസോളിഡേഷൻ';
 
   return (
     <div className="app-viewport bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex">
@@ -1519,264 +1467,12 @@ const AdminDashboardPage = ({ onLogout }) => {
           </>
         )}
 
-        {/* Statistics Tab */}
+        {/* Consolidation (the only view on this tab) */}
         {activeTab === 'stats' && (
           <div className="space-y-4">
-            {/* Sub-tab bar — always visible */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
-              <div className="mobile-tab-grid flex gap-1 overflow-x-auto">
-                <button
-                  onClick={() => setActiveSubTab('summary')}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    activeSubTab === 'summary'
-                      ? 'bg-[#002349] text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Statistics
-                </button>
-                <button
-                  onClick={() => setActiveSubTab('table')}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    activeSubTab === 'table'
-                      ? 'bg-[#002349] text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Table
-                </button>
-                <button
-                  onClick={() => setActiveSubTab('consolidation')}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    activeSubTab === 'consolidation'
-                      ? 'bg-[#002349] text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Consolidation / കൺസോളിഡേഷൻ
-                </button>
-              </div>
-            </div>
-
-            {/* Consolidation sub-tab — independent of stats data */}
-            {activeSubTab === 'consolidation' && <ConsolidationTab />}
-
-            {/* Summary / Table sub-tabs — need stats data */}
-            {activeSubTab !== 'consolidation' && (
-              statsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#002349]"></div>
-                <span className="ml-2 text-gray-600 font-medium">Loading statistics...</span>
-              </div>
-            ) : statsError ? (
-              <div className="text-center py-12">
-                <p className="text-red-600 font-semibold">{statsError}</p>
-              </div>
-            ) : !stats ? (
-              <div className="text-center py-12">
-                <p className="text-gray-600 font-medium">No statistics available</p>
-              </div>
-            ) : (
-              <>
-                <div className="bg-gradient-to-r from-[#002349]/10 to-[#957C3D]/10 border-2 border-gray-200 rounded-2xl p-4 text-gray-800 hover:shadow-md transition-all duration-300">
-                  <p className="text-sm font-medium">
-                    This page shows overall progress across all districts. Cards show totals, and charts help compare districts and months in a simple way.
-                  </p>
-                </div>
-
-                {/* AI Summary */}
-                {activeSubTab === 'summary' && summary && (
-                  <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
-                    <div className="text-sm text-gray-800 font-medium">{summary}</div>
-                  </div>
-                )}
-
-                {/* Statistics View */}
-                {activeSubTab === 'summary' && (
-                  <>
-                    {/* Overview Statistics Cards */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
-                      <StatisticsCard
-                        title="Total Districts"
-                        value={stats.overall?.totalDistricts || 0}
-                        subtitle="Active districts"
-                        icon={MapPin}
-                        color="blue"
-                      />
-                      <StatisticsCard
-                        title="Yearly Surveys"
-                        value={stats.overall?.totalYearlySurveys || 0}
-                        subtitle="Submitted"
-                        icon={Calendar}
-                        color="red"
-                      />
-                      <StatisticsCard
-                        title="Monthly Reports"
-                        value={stats.overall?.totalMonthlySurveys || 0}
-                        subtitle="This year"
-                        icon={TrendingUp}
-                        color="green"
-                      />
-                    </div>
-
-                    {/* Population Overview */}
-                    <div className="bg-white p-4 rounded-xl shadow-md border border-gray-200">
-                      <h3 className="text-lg font-semibold text-[#002349] mb-3">Population Overview</h3>
-                      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                        <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-                          <div className="text-2xl font-bold text-[#002349]">
-                            {stats.overall?.totalPopulation?.toLocaleString() || 0}
-                          </div>
-                          <div className="text-sm text-gray-600 font-medium">Total Population</div>
-                        </div>
-                        <div className="text-center p-3 bg-gradient-to-br from-[#957C3D]/20 to-[#8A6F35]/20 rounded-lg">
-                          <div className="text-2xl font-bold text-[#957C3D]">
-                            {Math.round((stats.overall?.totalPopulation || 0) / (stats.overall?.totalDistricts || 1))}
-                          </div>
-                          <div className="text-sm text-gray-600 font-medium">Avg per District</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Charts Section */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <div className="bg-white p-4 rounded-xl shadow-md border border-gray-200">
-                        <SurveyBarChart
-                          data={stats.overall?.districtComparison?.map(district => ({
-                            name: district.district,
-                            monthlyCount: district.monthlyCount
-                          })) || []}
-                          title="Monthly Submissions by District"
-                          dataKey1="monthlyCount"
-                          label1="Monthly Submissions"
-                        />
-                      </div>
-                      
-                      <div className="bg-white p-4 rounded-xl shadow-md border border-gray-200">
-                        <SurveyPieChart
-                          data={[
-                            { name: 'Yearly Reports', value: stats.overall?.totalYearlySurveys || 0 },
-                            { name: 'Monthly Reports', value: stats.overall?.totalMonthlySurveys || 0 }
-                          ]}
-                          title="Yearly vs Monthly Reports"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Additional Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <div className="bg-white p-4 rounded-xl shadow-md border border-gray-200">
-                        <SurveyBarChart
-                          data={Object.entries(stats.overall?.monthlySubmissionsByMonth || {}).map(([month, count]) => ({
-                            name: month,
-                            submissions: count
-                          }))}
-                          title="Submissions per Month (All Districts)"
-                          dataKey1="submissions"
-                          label1="Submissions"
-                          color1="#10B981"
-                        />
-                      </div>
-                      
-                      <div className="bg-white p-4 rounded-xl shadow-md border border-gray-200">
-                        <SurveyBarChart
-                          data={stats.overall?.districtComparison?.map(district => ({
-                            name: district.district,
-                            yearly: district.yearlySubmitted ? 1 : 0,
-                            monthly: district.monthlyCount
-                          })) || []}
-                          title="Submission Status by District"
-                          dataKey1="yearly"
-                          dataKey2="monthly"
-                          label1="Yearly Submitted"
-                          label2="Monthly Count"
-                        />
-                      </div>
-                    </div>
-
-                    {/* District Details Table */}
-                    <div className="bg-white rounded-xl shadow-md border border-gray-200">
-                      <div className="px-4 py-3 border-b border-gray-200">
-                        <h3 className="text-lg font-semibold text-[#002349]">District-wise Details</h3>
-                      </div>
-                      <div className="hidden lg:block overflow-x-auto">
-                        <ResponsiveTable className="min-w-full divide-y divide-gray-200">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                District
-                              </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Yearly Survey
-                              </th>
-                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Monthly Count
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {stats.overall?.districtComparison?.map((district, index) => (
-                              <tr key={index} className="hover:bg-gray-50 transition-colors duration-200">
-                                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-[#002349]">
-                                  {district.district}
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                    district.yearlySubmitted
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-red-100 text-red-800'
-                                  }`}>
-                                    {district.yearlySubmitted ? 'Submitted' : 'Pending'}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 font-medium">
-                                    {district.monthlyCount}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </ResponsiveTable>
-                      </div>
-                      <div className="lg:hidden divide-y divide-gray-100">
-                        {stats.overall?.districtComparison?.map((district, index) => (
-                          <div key={index} className="flex items-center justify-between gap-3 px-4 py-3">
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-[#002349] truncate">{district.district}</p>
-                              <p className="text-xs text-gray-500">Monthly: {district.monthlyCount}</p>
-                            </div>
-                            <span className={`shrink-0 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              district.yearlySubmitted
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {district.yearlySubmitted ? 'Submitted' : 'Pending'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Table View */}
-                {activeSubTab === 'table' && (
-                  <div className="space-y-4">
-                    <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 relative z-0">
-                      <div className="flex items-center gap-2 mb-4">
-                        <h3 className="text-lg font-bold text-[#002349]">District Table</h3>
-                        <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-[#002349] text-white border border-[#002349] shadow-sm font-semibold">District</span>
-                      </div>
-                      <div className="relative z-0">
-                        <DistrictMonthlyStatsTable 
-                          surveys={districtMonthlySurveys}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            )
-          )}
+            {/* MobileTopBar names this screen below lg */}
+            <h2 className="hidden lg:block text-xl font-bold text-[#0f2a5c]">കൺസോളിഡേഷൻ</h2>
+            <ConsolidationTab />
           </div>
         )}
             </>

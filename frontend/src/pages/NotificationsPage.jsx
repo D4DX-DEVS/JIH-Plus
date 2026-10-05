@@ -238,7 +238,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
       const viewMap = {
         yearly: 'yearly-dashboard',
         monthly: 'monthly-dashboard',
-        stats: 'stats',
+        consolidation: 'consolidation',
         notifications: 'notifications'
       };
       const activeView = viewMap[tabId] || 'home';
@@ -309,7 +309,7 @@ const NotificationsPage = ({ onBack, userData: propUserData, onNavigateTab, onLo
   const areaTabStateMap = {
     monthly: { initialTab: 'monthly' },
     units: { initialTab: 'units' },
-    stats: { initialTab: 'stats' }
+    consolidation: { initialTab: 'consolidation' }
   };
 
   const goToAreaDashboard = (tabId) => {

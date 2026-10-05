@@ -98,7 +98,7 @@ const UserReportsPage = ({ onBack, userData }) => {
   const areaTabStateMap = {
     monthly: { initialTab: 'monthly' },
     units: { initialTab: 'units' },
-    stats: { initialTab: 'stats' }
+    consolidation: { initialTab: 'consolidation' }
   };
 
   const goToAreaDashboard = (tabId) => {

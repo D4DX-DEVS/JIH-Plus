@@ -4,7 +4,6 @@ import {
   Calendar,
   CalendarDays,
   Star,
-  BarChart3,
   BarChart2,
   ClipboardList,
   Bell,
@@ -16,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
+  Layers,
   Target as TargetIcon
 } from 'lucide-react';
 import BrandLogo from '../branding/BrandLogo';
@@ -79,7 +79,7 @@ const AreaAdminSidebar = ({
   const navItems = [
     { id: 'dashboard', label: 'ഡാഷ്ബോർഡ്', icon: LayoutDashboard },
     { id: 'units', label: 'യൂണിറ്റുകൾ', icon: ClipboardList },
-    { id: 'stats', label: 'സ്ഥിതിവിവരക്കണക്കുകൾ', icon: BarChart3 },
+    { id: 'consolidation', label: 'കൺസോളിഡേഷൻ', icon: Layers },
     {
       id: 'submissions',
       type: 'group',
@@ -134,7 +134,7 @@ const AreaAdminSidebar = ({
         label: item.label,
         icon: item.icon,
         active:
-          item.id === 'stats' ? activeTab === 'stats' :
+          item.id === 'consolidation' ? activeTab === 'consolidation' :
           item.id === 'targets' ? location.pathname.startsWith('/targets') :
           false,
         onClick: item.onClick || (() => goTab(item.id)),

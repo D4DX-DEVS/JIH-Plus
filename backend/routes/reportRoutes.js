@@ -1,4 +1,5 @@
 const express = require('express');
+const { isValidObjectId } = require('mongoose');
 const router = express.Router();
 const Report = require('../models/report');
 const ReportSubmission = require('../models/reportSubmission');
@@ -266,29 +267,32 @@ router.get('/admin/reports', async (req, res) => {
   }
 });
 
+// Reports matching the consolidation filters, limited to `levels` (reportFor)
+function findConsolidationReports({ type, reportFor, month, year }, levels) {
+  const query = { reportFor: { $in: levels } };
+  if (type && VALID_TYPES.includes(type)) query.type = type;
+  if (reportFor && levels.includes(reportFor)) query.reportFor = reportFor;
+  if (month) query.month = Number(month);
+  if (year) query.year = Number(year);
+  return Report.find(query)
+    .select('_id title titleBase type reportFor month quarter year scheduledFor isPublished')
+    .sort({ year: -1, month: -1, createdAt: -1 })
+    .lean();
+}
+
 // @desc    List reports for the consolidation filter (no pagination, trimmed fields)
 // @route   GET /api/admin/reports/for-consolidation
 // @access  Private (Admin only)
 router.get('/admin/reports/for-consolidation', adminAuth, async (req, res) => {
   try {
-    const { type, reportFor, month, year } = req.query;
-    const query = {};
-    if (type && VALID_TYPES.includes(type)) query.type = type;
-    if (reportFor && VALID_REPORT_FOR.includes(reportFor)) query.reportFor = reportFor;
-    if (month) query.month = Number(month);
-    if (year) query.year = Number(year);
-
-    const reports = await Report.find(query)
-      .select('_id title titleBase type reportFor month quarter year scheduledFor isPublished')
-      .sort({ year: -1, month: -1, createdAt: -1 })
-      .lean();
-
+    const reports = await findConsolidationReports(req.query, VALID_REPORT_FOR);
     res.json({ success: true, data: reports });
   } catch (error) {
     console.error('Error fetching reports for consolidation:', error);
     res.status(500).json({ success: false, message: 'Error fetching reports', error: error.message });
   }
 });
+
 
 // ─── Consolidation (answer aggregation) helpers ──────────────────────────────
 
@@ -331,7 +335,9 @@ function rowCellSums(field, values) {
   }));
 }
 
-// Build the consolidated breakdown for one form field across all submissions
+// Build the consolidated breakdown for one form field across all submissions.
+// `who` / `entries` / `notAnsweredWho` hold indexes into the response's
+// `submitters` array, so the drill-down can say which location gave what.
 function consolidateField(field, submissions) {
   const key = `field_${field.id}`;
   const values = submissions.map(s => (s.formData ? s.formData[key] : undefined));
@@ -346,47 +352,60 @@ function consolidateField(field, submissions) {
   if (CHOICE_TYPES.includes(field.type)) {
     const options = field.type === 'yesno' ? ['Yes', 'No'] : (field.options || []);
     const counts = {};
-    options.forEach(o => { counts[o] = 0; });
-    let notAnswered = 0;
-    values.forEach(v => {
-      if (isEmptyAnswer(v)) { notAnswered++; return; }
+    const who = {};
+    options.forEach(o => { counts[o] = 0; who[o] = []; });
+    const notAnsweredWho = [];
+    values.forEach((v, i) => {
+      if (isEmptyAnswer(v)) { notAnsweredWho.push(i); return; }
       const k = String(v);
       counts[k] = (counts[k] || 0) + 1;
+      (who[k] = who[k] || []).push(i);
     });
-    return { ...base, kind: 'choice', options: Object.keys(counts), counts, notAnswered };
+    return {
+      ...base, kind: 'choice', options: Object.keys(counts), counts,
+      notAnswered: notAnsweredWho.length, who, notAnsweredWho
+    };
   }
 
   if (MULTI_TYPES.includes(field.type)) {
     const counts = {};
-    (field.options || []).forEach(o => { counts[o] = 0; });
-    let notAnswered = 0;
-    values.forEach(v => {
-      if (isEmptyAnswer(v)) { notAnswered++; return; }
+    const who = {};
+    (field.options || []).forEach(o => { counts[o] = 0; who[o] = []; });
+    const notAnsweredWho = [];
+    values.forEach((v, i) => {
+      if (isEmptyAnswer(v)) { notAnsweredWho.push(i); return; }
       const arr = Array.isArray(v) ? v : [v];
       arr.forEach(o => {
         const k = String(o);
         counts[k] = (counts[k] || 0) + 1;
+        (who[k] = who[k] || []).push(i);
       });
     });
-    return { ...base, kind: 'multi', options: Object.keys(counts), counts, notAnswered };
+    return {
+      ...base, kind: 'multi', options: Object.keys(counts), counts,
+      notAnswered: notAnsweredWho.length, who, notAnsweredWho
+    };
   }
 
   if (field.type === 'number') {
     let sum = 0, count = 0, min = null, max = null;
-    values.forEach(v => {
-      if (isEmptyAnswer(v)) return;
-      const n = parseFloat(v);
-      if (!Number.isFinite(n)) return;
+    const entries = [];
+    const notAnsweredWho = [];
+    values.forEach((v, i) => {
+      const n = isEmptyAnswer(v) ? NaN : parseFloat(v);
+      if (!Number.isFinite(n)) { notAnsweredWho.push(i); return; }
       sum += n;
       count++;
       min = min === null ? n : Math.min(min, n);
       max = max === null ? n : Math.max(max, n);
+      entries.push([i, n]);
     });
     return {
       ...base, kind: 'number',
       sum, count, min, max,
       avg: count > 0 ? sum / count : 0,
-      notAnswered: total - count
+      notAnswered: total - count,
+      entries, notAnsweredWho
     };
   }
 
@@ -403,6 +422,95 @@ function consolidateField(field, submissions) {
   // text, textarea, date, file, etc. — not aggregatable, just report coverage
   const answered = values.filter(v => !isEmptyAnswer(v)).length;
   return { ...base, kind: 'text', answered, notAnswered: total - answered };
+}
+
+// Build the consolidation payload for one report across a given set of
+// location docs (districts, areas or units — the location docs ARE the
+// submitters). Callers decide which locations are in scope; nothing outside
+// `locations` is read or returned.
+async function buildConsolidation(report, locations) {
+  const { reportFor } = report;
+  const locationById = new Map(locations.map(l => [l._id.toString(), l]));
+
+  // Only submitted reports carry answers
+  const scoped = locations.length === 0 ? [] : await ReportSubmission.find({
+    reportId: report._id,
+    status: 'submitted',
+    userId: { $in: locations.map(l => l._id) }
+  })
+    .select('userId formData')
+    .lean();
+
+  // Parent names for the drill-down (district for areas/units, area for units)
+  const districtNames = new Map();
+  const areaNames = new Map();
+  if (reportFor !== 'district') {
+    const districtIds = [...new Set(locations.map(l => String(l.districtId)))];
+    (await District.find({ _id: { $in: districtIds } }).select('_id name').lean())
+      .forEach(d => districtNames.set(d._id.toString(), d.name));
+  }
+  if (reportFor === 'unit') {
+    const areaIds = [...new Set(locations.map(l => String(l.areaId)))];
+    (await AreaMaster.find({ _id: { $in: areaIds } }).select('_id name').lean())
+      .forEach(a => areaNames.set(a._id.toString(), a.name));
+  }
+  const describe = (s) => {
+    const loc = locationById.get(s.userId.toString());
+    return {
+      id: loc._id,
+      name: loc.name,
+      district: loc.districtId ? (districtNames.get(String(loc.districtId)) || '') : '',
+      area: loc.areaId ? (areaNames.get(String(loc.areaId)) || '') : ''
+    };
+  };
+  // Stable district › area › name order so drill-down lists group naturally
+  const byName = (a, b) => (a || '').localeCompare(b || '');
+  const rows = scoped
+    .map(s => ({ s, who: describe(s) }))
+    .sort((x, y) => byName(x.who.district, y.who.district)
+      || byName(x.who.area, y.who.area)
+      || byName(x.who.name, y.who.name));
+  const submissions = rows.map(r => r.s);
+  const submitters = rows.map(r => r.who);
+
+  const legacy = !(report.pages && report.pages.length > 0);
+
+  let pages = [];
+  if (!legacy) {
+    pages = report.pages
+      .map(pg => ({
+        id: pg.id,
+        title: pg.title,
+        fields: (pg.fields || [])
+          .filter(f => f.enabled !== false && !LAYOUT_TYPES.includes(f.type))
+          .map(f => consolidateField(f, submissions))
+      }))
+      .filter(pg => pg.fields.length > 0);
+  }
+
+  const totalLocations = locations.length;
+  const submittedCount = submissions.length;
+
+  return {
+    report: {
+      _id: report._id,
+      title: report.title,
+      type: report.type,
+      reportFor: report.reportFor,
+      month: report.month,
+      year: report.year
+    },
+    stats: {
+      totalLocations,
+      submittedCount,
+      submissionRate: totalLocations > 0
+        ? Math.round((submittedCount / totalLocations) * 100)
+        : 0
+    },
+    legacy,
+    submitters,
+    pages
+  };
 }
 
 // @desc    Consolidated answer breakdown for a specific report
@@ -423,78 +531,132 @@ router.get('/admin/reports/consolidation', adminAuth, async (req, res) => {
 
     const { reportFor } = report;
 
-    // Resolve the submitter universe (location docs ARE the submitters),
-    // scoped by the optional district/area/unit filters
+    // Submitter universe, scoped by the optional district/area/unit filters
     let locations = [];
     if (reportFor === 'district') {
       const filter = { isActive: true };
       if (districtId) filter._id = districtId;
-      locations = await District.find(filter).select('_id').lean();
+      locations = await District.find(filter).select('_id name').lean();
     } else if (reportFor === 'area') {
       const filter = { isActive: true };
       if (districtId) filter.districtId = districtId;
       if (areaId) filter._id = areaId;
-      locations = await AreaMaster.find(filter).select('_id').lean();
+      locations = await AreaMaster.find(filter).select('_id name districtId').lean();
     } else if (reportFor === 'unit') {
       const filter = { isActive: true };
       if (districtId) filter.districtId = districtId;
       if (areaId) filter.areaId = areaId;
       if (unitId) filter._id = unitId;
-      locations = await UnitMaster.find(filter).select('_id').lean();
-    }
-    const locationIds = new Set(locations.map(l => l._id.toString()));
-
-    // Only submitted reports carry answers; scope them to the location filter
-    const allSubmitted = await ReportSubmission.find({ reportId, status: 'submitted' })
-      .select('userId formData')
-      .lean();
-    const submissions = allSubmitted.filter(
-      s => s.userId && locationIds.has(s.userId.toString())
-    );
-
-    const legacy = !(report.pages && report.pages.length > 0);
-
-    let pages = [];
-    if (!legacy) {
-      pages = report.pages
-        .map(pg => ({
-          id: pg.id,
-          title: pg.title,
-          fields: (pg.fields || [])
-            .filter(f => f.enabled !== false && !LAYOUT_TYPES.includes(f.type))
-            .map(f => consolidateField(f, submissions))
-        }))
-        .filter(pg => pg.fields.length > 0);
+      locations = await UnitMaster.find(filter).select('_id name districtId areaId').lean();
     }
 
-    const totalLocations = locations.length;
-    const submittedCount = submissions.length;
-
-    res.json({
-      success: true,
-      report: {
-        _id: report._id,
-        title: report.title,
-        type: report.type,
-        reportFor: report.reportFor,
-        month: report.month,
-        year: report.year
-      },
-      stats: {
-        totalLocations,
-        submittedCount,
-        submissionRate: totalLocations > 0
-          ? Math.round((submittedCount / totalLocations) * 100)
-          : 0
-      },
-      legacy,
-      pages
-    });
+    res.json({ success: true, ...(await buildConsolidation(report, locations)) });
   } catch (error) {
     console.error('Error fetching consolidation:', error);
     res.status(500).json({ success: false, message: 'Error fetching consolidation data', error: error.message });
   }
 });
+
+// ─── District / area admin consolidation ────────────────────────────────────
+
+// Which locations a district or area admin may consolidate. The scope comes
+// only from the signed token — never from the query string — and is spread
+// LAST into every location filter so a query parameter cannot widen it.
+function consolidationScope(user) {
+  const role = user.role || user.type;
+  if (role === 'district') {
+    const districtId = user.districtMasterId || user.districtId;
+    return isValidObjectId(districtId)
+      ? { role, levels: ['area', 'unit'], base: { districtId } }
+      : null;
+  }
+  if (role === 'area') {
+    const areaId = user.areaMasterId || user.areaId;
+    return isValidObjectId(areaId)
+      ? { role, levels: ['unit'], base: { areaId } }
+      : null;
+  }
+  return null;
+}
+
+const NO_CONSOLIDATION_ACCESS = { success: false, message: 'Consolidation is available to district and area admins only' };
+
+// @desc    Areas / units under the caller, for the consolidation location filter
+// @route   GET /api/user/consolidation/locations
+// @access  Private (District / area admin)
+router.get('/user/consolidation/locations', userAuth, async (req, res) => {
+  try {
+    const scope = consolidationScope(req.user);
+    if (!scope) return res.status(403).json(NO_CONSOLIDATION_ACCESS);
+
+    const [areas, units] = await Promise.all([
+      scope.role === 'district'
+        ? AreaMaster.find({ isActive: true, ...scope.base }).select('_id name').sort({ name: 1 }).lean()
+        : [],
+      UnitMaster.find({ isActive: true, ...scope.base }).select('_id name areaId').sort({ name: 1 }).lean()
+    ]);
+    res.json({ success: true, levels: scope.levels, areas, units });
+  } catch (error) {
+    console.error('Error fetching consolidation locations:', error);
+    res.status(500).json({ success: false, message: 'Error fetching locations', error: error.message });
+  }
+});
+
+// @desc    Reports a district / area admin can consolidate (levels below them)
+// @route   GET /api/user/consolidation/reports
+// @access  Private (District / area admin)
+router.get('/user/consolidation/reports', userAuth, async (req, res) => {
+  try {
+    const scope = consolidationScope(req.user);
+    if (!scope) return res.status(403).json(NO_CONSOLIDATION_ACCESS);
+
+    const reports = await findConsolidationReports(req.query, scope.levels);
+    res.json({ success: true, data: reports });
+  } catch (error) {
+    console.error('Error fetching consolidation reports:', error);
+    res.status(500).json({ success: false, message: 'Error fetching reports', error: error.message });
+  }
+});
+
+// @desc    Consolidated answer breakdown, limited to the caller's own areas/units
+// @route   GET /api/user/consolidation
+// @access  Private (District / area admin)
+router.get('/user/consolidation', userAuth, async (req, res) => {
+  try {
+    const scope = consolidationScope(req.user);
+    if (!scope) return res.status(403).json(NO_CONSOLIDATION_ACCESS);
+
+    const { reportId, areaId, unitId } = req.query;
+    if (!isValidObjectId(reportId)
+      || (areaId && !isValidObjectId(areaId))
+      || (unitId && !isValidObjectId(unitId))) {
+      return res.status(400).json({ success: false, message: 'A valid reportId is required' });
+    }
+
+    const report = await Report.findById(reportId).lean();
+    if (!report || !scope.levels.includes(report.reportFor)) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    let locations;
+    if (report.reportFor === 'area') {
+      const filter = { isActive: true };
+      if (areaId) filter._id = areaId;
+      locations = await AreaMaster.find({ ...filter, ...scope.base }).select('_id name districtId').lean();
+    } else {
+      const filter = { isActive: true };
+      if (areaId) filter.areaId = areaId;
+      if (unitId) filter._id = unitId;
+      locations = await UnitMaster.find({ ...filter, ...scope.base }).select('_id name districtId areaId').lean();
+    }
+
+    res.json({ success: true, ...(await buildConsolidation(report, locations)) });
+  } catch (error) {
+    console.error('Error fetching scoped consolidation:', error);
+    res.status(500).json({ success: false, message: 'Error fetching consolidation data', error: error.message });
+  }
+});
+
 
 // @desc    Get single report by ID
 // @route   GET /api/admin/reports/:id
