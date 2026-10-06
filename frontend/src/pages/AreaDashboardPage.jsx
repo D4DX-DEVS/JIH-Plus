@@ -17,11 +17,13 @@ import DashboardMetricGrid from '../components/dashboard/DashboardMetricGrid';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
 import ConsolidationTab from '../components/admin/ConsolidationTab';
+import useMediaQuery from '../hooks/useMediaQuery';
 
 const AreaDashboardPage = ({ onLogout }) => {
   const { areaId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
   
   // Area and user data
   const [userData, setUserData] = useState(null);
@@ -447,9 +449,9 @@ const AreaDashboardPage = ({ onLogout }) => {
               {areaName && <p className="text-sm leading-snug text-white/90 lg:mt-1">{areaName}</p>}
             </div>
 
-            <div className="hidden lg:block">
-              <SubmissionsAnalytics scope="area" />
-            </div>
+            {/* Full analytics stays on desktop; phones get just the submitted/pending
+                roster below the active reports. */}
+            {isDesktop && <SubmissionsAnalytics scope="area" />}
 
             {dashboardLoading ? (
               <div className="flex items-center justify-center py-16">
@@ -472,6 +474,8 @@ const AreaDashboardPage = ({ onLogout }) => {
                 />
 
                 <ActiveReportsCard reports={activeReportsList} loading={activeReportsLoading} />
+
+                {!isDesktop && <SubmissionsAnalytics scope="area" variant="status" />}
 
                 <button
                   type="button"
