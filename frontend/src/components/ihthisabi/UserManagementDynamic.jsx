@@ -234,7 +234,11 @@ const AssignAdminModal = ({ isOpen, onClose, onAssigned }) => {
     if (!unitName) { toast.error('Please select a unit first'); return }
     setFetching(true)
     try {
-      const res = await api.get(`/ihthisabi/admin/units/${encodeURIComponent(unitName)}/members`)
+      const district = getLabel(districts.find(d => getId(d) === selDistrictId))
+      const area = getLabel(areas.find(a => getId(a) === selAreaId))
+      const res = await api.get(`/ihthisabi/admin/units/${encodeURIComponent(unitName)}/members`, {
+        params: { district, area }
+      })
       setMembers(res.data.data.members || [])
       if (res.data.data.members?.length === 0) toast('No active members found in this unit', { icon: 'ℹ️' })
     } catch {
@@ -380,10 +384,11 @@ const UserManagementDynamic = () => {
   const { districts, areas, units, loading: locLoading, onDistrictChange, onAreaChange } = useHierarchyLocation()
 
   // ── filter helpers ──────────────────────────────────────────────────────────
+  // Send the full selected path — area/unit names repeat across districts
   const appendLocFilter = useCallback((params) => {
-    if (unitFilter)    { params.append('unit',     unitFilter);    return }
-    if (areaFilter)    { params.append('area',     areaFilter);    return }
-    if (districtFilter){ params.append('district', districtFilter) }
+    if (districtFilter) params.append('district', districtFilter)
+    if (areaFilter)     params.append('area',     areaFilter)
+    if (unitFilter)     params.append('unit',     unitFilter)
   }, [unitFilter, areaFilter, districtFilter])
 
   // ── fetch members ───────────────────────────────────────────────────────────

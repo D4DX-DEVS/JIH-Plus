@@ -220,9 +220,18 @@ router.get('/units/:areaId', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Area ID is required' });
     }
 
+    // Area names repeat across districts (e.g. Thamarassery), so scope by district when given
+    const { district } = req.query;
+    const userMatch = { role: 'rukn', area: areaId, unit: { $nin: [null, ''] } };
+    const masterFilter = { type: 'unit', area: areaId, isActive: true };
+    if (district) {
+      userMatch.district = district;
+      masterFilter.district = district;
+    }
+
     const [userNames, masterRows] = await Promise.all([
-      User.distinct('unit', { role: 'rukn', area: areaId, unit: { $nin: [null, ''] } }),
-      LocationMaster.find({ type: 'unit', area: areaId, isActive: true }).select('name').lean()
+      User.distinct('unit', userMatch),
+      LocationMaster.find(masterFilter).select('name').lean()
     ]);
 
     const nameSet = new Set(userNames);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import locationService from '../services/locationService'
 
 /**
@@ -14,6 +14,8 @@ export const useLocation = () => {
     units: false
   })
   const [error, setError] = useState(null)
+  // Last selected district — area names repeat across districts, so units are scoped by it
+  const districtRef = useRef('')
 
   // Load districts
   const loadDistricts = async () => {
@@ -51,7 +53,7 @@ export const useLocation = () => {
   }
 
   // Load units for an area
-  const loadUnits = async (areaId) => {
+  const loadUnits = async (areaId, districtId = districtRef.current) => {
     if (!areaId) {
       setUnits([])
       return
@@ -60,7 +62,7 @@ export const useLocation = () => {
     setLoading(prev => ({ ...prev, units: true }))
     setError(null)
     try {
-      const unitsData = await locationService.getUnits(areaId)
+      const unitsData = await locationService.getUnits(areaId, districtId)
       setUnits(unitsData)
     } catch (err) {
       setError(err.message)
@@ -82,6 +84,7 @@ export const useLocation = () => {
 
   // Clear areas and units when district changes
   const onDistrictChange = (districtId) => {
+    districtRef.current = districtId || ''
     setAreas([])
     setUnits([])
     if (districtId) {

@@ -88,20 +88,11 @@ const UserManagement = () => {
   const getLocationOptionId = (option) => option?.id || option?._id || option?.code || option?.name || option?.title || ''
   const getLocationOptionLabel = (option) => option?.name || option?.title || option?.label || option?.id || option?.code || ''
 
+  // Send the full selected path — area/unit names repeat across districts
   const appendLocationFilter = useCallback((params) => {
-    if (unitFilter) {
-      params.append('unit', unitFilter)
-      return
-    }
-
-    if (areaFilter) {
-      params.append('area', areaFilter)
-      return
-    }
-
-    if (districtFilter) {
-      params.append('district', districtFilter)
-    }
+    if (districtFilter) params.append('district', districtFilter)
+    if (areaFilter) params.append('area', areaFilter)
+    if (unitFilter) params.append('unit', unitFilter)
   }, [districtFilter, areaFilter, unitFilter])
 
   // Fetch users

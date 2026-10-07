@@ -41,14 +41,17 @@ class LocationService {
   /**
    * Fetch units for a specific area
    * @param {string} areaId - The area ID
+   * @param {string} [districtId] - Parent district; area names repeat across districts
    * @returns {Promise<Array>} Array of unit objects with id and name
    */
-  async getUnits(areaId) {
+  async getUnits(areaId, districtId) {
     try {
       if (!areaId) {
         return []
       }
-      const response = await api.get(`/location/units/${areaId}`)
+      const response = await api.get(`/location/units/${encodeURIComponent(areaId)}`, {
+        params: districtId ? { district: districtId } : undefined
+      })
       return response.data.data || []
     } catch (error) {
       console.error('Error fetching units:', error)
