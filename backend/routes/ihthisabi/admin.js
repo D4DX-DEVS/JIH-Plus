@@ -1869,16 +1869,12 @@ router.get('/users', async (req, res) => {
     const { page = 1, limit = 10, unit, district, area, search } = req.query;
     const query = { role: 'rukn' };
 
-    // Add filters
-    if (unit) {
-      query.unit = { $regex: unit, $options: 'i' };
-    }
-    if (district) {
-      query.district = { $regex: district, $options: 'i' };
-    }
-    if (area) {
-      query.area = { $regex: area, $options: 'i' };
-    }
+    // Location filters are exact, scope-wise matches on the full district/area/unit
+    // path (same keys Master Data groups by), so same-named areas/units in other
+    // districts never leak in.
+    if (district) query.district = district;
+    if (area) query.area = area;
+    if (unit) query.unit = unit;
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -2244,16 +2240,10 @@ router.get('/unitadmins', async (req, res) => {
     const { page = 1, limit = 10, unit, search, district, area } = req.query;
     const query = {};
 
-    // Add filters
-    if (unit) {
-      query.unit = { $regex: unit, $options: 'i' };
-    }
-    if (district) {
-      query.district = { $regex: district, $options: 'i' };
-    }
-    if (area) {
-      query.area = { $regex: area, $options: 'i' };
-    }
+    // Exact, scope-wise location filters (see GET /users)
+    if (district) query.district = district;
+    if (area) query.area = area;
+    if (unit) query.unit = unit;
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -4074,7 +4064,12 @@ router.put('/users/:id/transfer', requireSuperAdmin, async (req, res) => {
 router.get('/units/:unitName/members', async (req, res) => {
   try {
     const unitName = decodeURIComponent(req.params.unitName);
-    const members = await User.find({ unit: { $regex: new RegExp(`^${unitName}$`, 'i') }, role: 'rukn', isActive: true })
+    const { district, area } = req.query;
+    // Unit names repeat across districts/areas — scope to the parent path when given
+    const query = { unit: unitName, role: 'rukn', isActive: true };
+    if (district) query.district = district;
+    if (area) query.area = area;
+    const members = await User.find(query)
       .select('ruknId name contactNo emailId district area unit isActive')
       .sort({ name: 1 })
       .lean();
@@ -4141,7 +4136,15 @@ router.post('/unitadmins/assign-from-member', requireSuperAdmin, async (req, res
 
     // Optionally deactivate existing unit admin for this unit
     if (deactivatePrevious) {
-      await UnitAdmin.updateMany({ unit: member.unit }, { isActive: false });
+      // Only this exact unit — same-named units in other districts/areas keep their admins
+      await UnitAdmin.updateMany(
+        {
+          unit: member.unit,
+          district: member.district || { $in: [null, ''] },
+          area: member.area || { $in: [null, ''] }
+        },
+        { isActive: false }
+      );
     }
 
     // Use the member's ruknId as their password
