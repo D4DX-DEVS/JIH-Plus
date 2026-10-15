@@ -41,6 +41,7 @@ async function resolveSubmissionUsers(submissions) {
   const userMap = {};
   districtDocs.forEach(d => {
     userMap[d._id.toString()] = {
+      id: d._id.toString(),
       districtName: d.name,
       areaName: '',
       unitName: '',
@@ -50,6 +51,7 @@ async function resolveSubmissionUsers(submissions) {
   });
   areaDocs.forEach(a => {
     userMap[a._id.toString()] = {
+      id: a._id.toString(),
       districtName: a.districtId?.name || '',
       areaName: a.name,
       unitName: '',
@@ -59,6 +61,7 @@ async function resolveSubmissionUsers(submissions) {
   });
   unitDocs.forEach(u => {
     userMap[u._id.toString()] = {
+      id: u._id.toString(),
       districtName: u.districtId?.name || '',
       areaName: u.areaId?.name || '',
       unitName: u.name,
@@ -1124,9 +1127,9 @@ router.get('/admin/report-submissions', adminAuth, async (req, res) => {
         UnitMaster.find({ isActive: true }).populate('districtId', 'name').populate('areaId', 'name').select('name districtId areaId').lean(),
       ]);
       roster = {
-        districts: districts.map(d => ({ name: d.name })),
-        areas: areas.map(a => ({ name: a.name, districtName: a.districtId?.name })),
-        units: units.map(u => ({ name: u.name, districtName: u.districtId?.name, areaName: u.areaId?.name })),
+        districts: districts.map(d => ({ id: String(d._id), name: d.name })),
+        areas: areas.map(a => ({ id: String(a._id), name: a.name, districtName: a.districtId?.name })),
+        units: units.map(u => ({ id: String(u._id), name: u.name, districtName: u.districtId?.name, areaName: u.areaId?.name })),
       };
     }
 
@@ -1187,7 +1190,7 @@ router.get('/user/report-submissions', userAuth, async (req, res) => {
     } else if (role === 'area') {
       const units = await UnitMaster.find({ areaId: areaId || selfId, isActive: true }).select('_id name').lean();
       scopeIds = [areaId || selfId, ...units.map(u => u._id)].filter(Boolean);
-      roster.units = units.map(u => ({ name: u.name }));
+      roster.units = units.map(u => ({ id: String(u._id), name: u.name }));
     } else if (role === 'district') {
       const dId = districtId || selfId;
       const [areas, units] = await Promise.all([
@@ -1195,8 +1198,8 @@ router.get('/user/report-submissions', userAuth, async (req, res) => {
         UnitMaster.find({ districtId: dId, isActive: true }).populate('areaId', 'name').select('_id name areaId').lean(),
       ]);
       scopeIds = [dId, ...areas.map(a => a._id), ...units.map(u => u._id)].filter(Boolean);
-      roster.areas = areas.map(a => ({ name: a.name }));
-      roster.units = units.map(u => ({ name: u.name, areaName: u.areaId?.name }));
+      roster.areas = areas.map(a => ({ id: String(a._id), name: a.name }));
+      roster.units = units.map(u => ({ id: String(u._id), name: u.name, areaName: u.areaId?.name }));
     }
 
     if (scopeIds.length === 0) {
