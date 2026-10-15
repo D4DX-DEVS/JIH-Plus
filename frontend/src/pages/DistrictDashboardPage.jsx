@@ -516,7 +516,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
 
         {/* Full analytics stays on desktop; phones get just the submitted/pending
             roster below and reach the per-report breakdown via Consolidation. */}
-        {isDesktop && <SubmissionsAnalytics scope="district" />}
+        {isDesktop && <SubmissionsAnalytics scope="district" submissionsPath="/district/dynamic-submissions" />}
 
         <DashboardMetricGrid
           items={[
@@ -529,7 +529,7 @@ const DistrictDashboardPage = ({ onLogout }) => {
 
         <ActiveReportsCard reports={activeReportsList} loading={activeReportsLoading} />
 
-        {!isDesktop && <SubmissionsAnalytics scope="district" variant="status" />}
+        {!isDesktop && <SubmissionsAnalytics scope="district" variant="status" submissionsPath="/district/dynamic-submissions" />}
 
         <button
           type="button"

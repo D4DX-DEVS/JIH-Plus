@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import {
   ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell
 } from 'recharts';
-import { ClipboardList, Clock, CheckCircle2, TrendingUp, Filter, Eye, EyeOff, MapPin, FileText } from 'lucide-react';
+import { ClipboardList, Clock, CheckCircle2, TrendingUp, Filter, Eye, EyeOff, MapPin, FileText, ArrowRight } from 'lucide-react';
 import { JihFilterSelect } from '../JihToolbar';
+import { fetchAllSubmissions } from '../../utils/fetchAllSubmissions';
 
 // Reusable submissions analytics section for the area / district / admin
 // dashboard landings. Fetches every report submission the viewer is allowed
@@ -19,6 +20,10 @@ import { JihFilterSelect } from '../JihToolbar';
 //
 // variant: 'full' (default, desktop analytics) | 'status' (phones: only the
 //   "സമർപ്പണ നില" submitted/pending card, laid out for a narrow screen)
+//
+// submissionsPath: base path of the role's submissions page (e.g.
+//   '/admin/dynamic-submissions'). When set, a level's "submitted" count opens
+//   that page filtered to the level, report and district/area shown here.
 
 const LEVEL_LABELS = { unit: 'യൂണിറ്റ്', area: 'ഏരിയ', district: 'ജില്ല' };
 const TYPE_LABELS = { monthly: 'പ്രതിമാസ', quarterly: 'ത്രൈമാസ', yearly: 'വാർഷിക', special: 'സ്പെഷ്യൽ' };
@@ -50,13 +55,29 @@ const normalizeName = (s) => String(s || '').trim().toLowerCase();
 
 // One entity type's submitted-vs-pending status for a single report. Names are
 // chips, optionally hidden until the parent "show names" toggle is on.
-const EntityRow = ({ label, breakdown, showNames, namePrompt, reports = [], reportValue, onReportChange }) => (
+const EntityRow = ({ label, breakdown, showNames, namePrompt, reports = [], reportValue, onReportChange, onOpen }) => (
   <div>
     <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-      <span className="text-sm font-semibold text-[#002349]">{label}</span>
-      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-        {breakdown.submitted.length} സമർപ്പിച്ചു
-      </span>
+      {onOpen ? (
+        <button type="button" onClick={onOpen} className="text-sm font-semibold text-[#002349] hover:underline">{label}</button>
+      ) : (
+        <span className="text-sm font-semibold text-[#002349]">{label}</span>
+      )}
+      {onOpen ? (
+        <button
+          type="button"
+          onClick={onOpen}
+          title="സമർപ്പിച്ച സബ്മിഷനുകൾ കാണുക"
+          className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors"
+        >
+          {breakdown.submitted.length} സമർപ്പിച്ചു
+          <ArrowRight className="w-3 h-3" />
+        </button>
+      ) : (
+        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+          {breakdown.submitted.length} സമർപ്പിച്ചു
+        </span>
+      )}
       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
         {breakdown.pending.length} പെൻഡിംഗ്
       </span>
@@ -223,6 +244,17 @@ const StatusPanel = ({ levels, filters }) => {
         </div>
       </div>
 
+      {level.onOpen && (
+        <button
+          type="button"
+          onClick={level.onOpen}
+          className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-xl bg-[#14346b] px-3 text-[13px] font-bold text-white transition-colors hover:bg-[#1d4487]"
+        >
+          സമർപ്പിച്ച സബ്മിഷനുകൾ കാണുക
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      )}
+
       <div role="tablist" aria-label="സ്റ്റാറ്റസ്" className="mt-3.5 grid grid-cols-2 gap-2">
         {[
           { key: 'submitted', label: 'സമർപ്പിച്ചവ', count: submitted.length, on: 'bg-[#e3f4ea] text-[#1e8a4c] ring-[#1e8a4c]' },
@@ -257,8 +289,9 @@ const StatusPanel = ({ levels, filters }) => {
   );
 };
 
-const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, areas = null }) => {
+const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, areas = null, submissionsPath = null }) => {
   const cfg = SCOPE_ENDPOINT[scope] || SCOPE_ENDPOINT.area;
+  const navigate = useNavigate();
   const [submissions, setSubmissions] = useState([]);
   const [roster, setRoster] = useState(null);
   const [reports, setReports] = useState([]);
@@ -279,15 +312,13 @@ const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, 
         setIsLoading(true);
         setError('');
         const token = localStorage.getItem(cfg.tokenKey);
-        const rosterParam = scope === 'admin' ? '&includeRoster=1' : '';
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}${cfg.url}?limit=2000&includeReports=1${rosterParam}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (active && res.data?.success) {
-          setSubmissions(res.data.data || []);
-          if (res.data.roster) setRoster(res.data.roster);
-          const reportList = res.data.reports || [];
+        const result = await fetchAllSubmissions(cfg.url, token, {
+          firstPageParams: { includeReports: 1, ...(scope === 'admin' && { includeRoster: 1 }) }
+        });
+        if (active) {
+          setSubmissions(result.data);
+          if (result.roster) setRoster(result.roster);
+          const reportList = result.reports || [];
           setReports(reportList);
           // Backend sorts newest first, so the first match per level is the
           // most recently added report — the initial selection.
@@ -299,7 +330,7 @@ const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, 
           setReportByLevel(initial);
         }
       } catch (err) {
-        if (active) setError(err.response?.data?.message || 'Failed to load analytics.');
+        if (active) setError(err.response?.data?.message || err.message || 'Failed to load analytics.');
       } finally {
         if (active) setIsLoading(false);
       }
@@ -392,6 +423,25 @@ const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, 
   }, [reports]);
 
   const setLevelReport = (level, value) => setReportByLevel(prev => ({ ...prev, [level]: value }));
+
+  // Opens the role's submissions page on the submitted records of one level,
+  // for the report picked in that level's dropdown and the district/area
+  // filtered here. A district-level report has no area, so the area filter is
+  // left off for it.
+  const openSubmissions = (level) => {
+    const selected = reportByLevel[level];
+    const report = reports.find(r => String(r._id) === String(selected)) || reportsByLevel[level][0];
+    navigate(`${submissionsPath}/${report?.type || 'monthly'}`, {
+      state: {
+        reportForFilter: level,
+        reportIdFilter: selected || '',
+        statusFilter: 'submitted',
+        districtFilter,
+        areaFilter: level === 'district' ? '' : areaFilter,
+      },
+    });
+  };
+  const opener = (level) => (submissionsPath ? () => openSubmissions(level) : undefined);
 
   // A submission counts towards a level's breakdown only when it belongs to the
   // report picked in that level's dropdown ('' = every report).
@@ -504,6 +554,7 @@ const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, 
     reports: reportsByLevel[l.key],
     reportValue: reportByLevel[l.key],
     onReportChange: v => setLevelReport(l.key, v),
+    onOpen: opener(l.key),
   }));
 
   const unitSubmissionsLabel = scope === 'area' ? 'യൂണിറ്റ് സബ്മിഷനുകൾ' : 'ആകെ സബ്മിഷനുകൾ';
@@ -640,6 +691,7 @@ const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, 
                   reports={reportsByLevel.unit}
                   reportValue={reportByLevel.unit}
                   onReportChange={v => setLevelReport('unit', v)}
+                  onOpen={opener('unit')}
                 />
               </div>
             )}
@@ -653,6 +705,7 @@ const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, 
                   reports={reportsByLevel.area}
                   reportValue={reportByLevel.area}
                   onReportChange={v => setLevelReport('area', v)}
+                  onOpen={opener('area')}
                 />
               </div>
             )}
@@ -665,6 +718,7 @@ const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, 
                   reports={reportsByLevel.district}
                   reportValue={reportByLevel.district}
                   onReportChange={v => setLevelReport('district', v)}
+                  onOpen={opener('district')}
                 />
               </div>
             )}

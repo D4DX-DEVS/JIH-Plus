@@ -1,5 +1,5 @@
 import ResponsiveTable from "../components/tables/ResponsiveTable.jsx";
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Calendar, CalendarDays, Star, ClipboardList, BarChart2, RefreshCw, Download, ArrowDownUp, MapPin, FileText } from 'lucide-react';
 import { JihFilterBar, JihFilterSelect } from '../components/JihToolbar';
@@ -11,6 +11,7 @@ import ConfirmationModal from '../components/modals/ConfirmationModal';
 import SubmissionPreviewModal from '../components/reportRenderer/SubmissionPreviewModal';
 import { downloadDynamicReportPdf, downloadDynamicReportsBundlePdf } from '../utils/dynamicReportPdfGenerator';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
+import { fetchAllSubmissions } from '../utils/fetchAllSubmissions';
 
 const TYPE_LABELS = {
   monthly: 'പ്രതിമാസം',
@@ -95,12 +96,12 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [districtFilter, setDistrictFilter] = useState('');
+  const [districtFilter, setDistrictFilter] = useState(location.state?.districtFilter || '');
   const [areaFilter, setAreaFilter] = useState(location.state?.areaFilter || '');
   const [unitFilter, setUnitFilter] = useState(location.state?.unitFilter || '');
-  const [reportForFilter, setReportForFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [reportIdFilter, setReportIdFilter] = useState('');
+  const [reportForFilter, setReportForFilter] = useState(location.state?.reportForFilter || '');
+  const [statusFilter, setStatusFilter] = useState(location.state?.statusFilter || '');
+  const [reportIdFilter, setReportIdFilter] = useState(location.state?.reportIdFilter || '');
   const [monthFilter, setMonthFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -122,18 +123,25 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
     }
   }, [scope]);
 
+  // Filters handed over by a dashboard link (router state) apply to the type
+  // that link opened, not to later switches of the type tabs.
+  const incomingFilters = useRef(location.state || {});
+  const incomingType = useRef(null);
+
   // Fetch submissions and report list whenever type changes
   useEffect(() => {
     fetchSubmissions();
     fetchReportList();
+    if (incomingType.current === null) incomingType.current = validType;
+    const incoming = validType === incomingType.current ? incomingFilters.current : {};
     // Reset filters on type change (keep any incoming pre-filter only on first mount)
     setSearchTerm('');
-    setDistrictFilter('');
-    setAreaFilter('');
-    setUnitFilter('');
-    setReportForFilter('');
-    setStatusFilter('');
-    setReportIdFilter('');
+    setDistrictFilter(incoming.districtFilter || '');
+    setAreaFilter(incoming.areaFilter || '');
+    setUnitFilter(incoming.unitFilter || '');
+    setReportForFilter(incoming.reportForFilter || '');
+    setStatusFilter(incoming.statusFilter || '');
+    setReportIdFilter(incoming.reportIdFilter || '');
     setMonthFilter('');
     setYearFilter('');
     setSortBy('newest');
@@ -146,14 +154,16 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
       setIsLoading(true);
       setError('');
       const token = localStorage.getItem(config.tokenKey);
-      const params = new URLSearchParams({ reportType: validType, limit: 1000 });
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}${config.submissionsEndpoint}?${params}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const { data, reportDefinitions } = await fetchAllSubmissions(
+        config.submissionsEndpoint,
+        token,
+        { params: { reportType: validType } }
       );
-      if (res.data.success) {
-        setSubmissions(res.data.data || []);
-      }
+      // Rows are slim; swap the full report in so View and Export keep working.
+      setSubmissions(data.map(s => {
+        const report = reportDefinitions[s.reportId?._id];
+        return report ? { ...s, reportId: report } : s;
+      }));
     } catch (err) {
       setError(err.response?.data?.message || 'Submissions load failed.');
     } finally {
@@ -209,12 +219,15 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
     [reportList, reportForFilter]
   );
 
-  // Reset area/unit when district changes
+  // Reset area/unit when district changes (not on mount, which would drop the
+  // area/unit filter a dashboard link opened this page with)
+  const lastDistrict = useRef(districtFilter);
   useEffect(() => {
+    if (lastDistrict.current === districtFilter) return;
+    lastDistrict.current = districtFilter;
     setAreaFilter('');
     setUnitFilter('');
     setCurrentPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [districtFilter]);
 
   // Apply all filters + sorting
