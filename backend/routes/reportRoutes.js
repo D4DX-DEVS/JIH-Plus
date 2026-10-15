@@ -76,6 +76,22 @@ async function resolveSubmissionUsers(submissions) {
   }));
 }
 
+const FULL_REPORT_FIELDS = 'type reportFor title description pages parts version month year';
+// Enough to filter and label a row. The full definition is ~20 KB, so embedding
+// it in every row made a 1000-row page 26 MB.
+const SLIM_REPORT_FIELDS = 'type reportFor title month year';
+
+// Full definitions of the reports a page of slim rows points at, each sent once
+// (keyed by report id) so the client can still preview and export a submission.
+async function loadReportDefinitions(submissions) {
+  const ids = [...new Set(
+    submissions.map(s => String(s.reportId?._id || '')).filter(Boolean)
+  )];
+  if (ids.length === 0) return {};
+  const reports = await Report.find({ _id: { $in: ids } }).select(FULL_REPORT_FIELDS).lean();
+  return Object.fromEntries(reports.map(r => [String(r._id), r]));
+}
+
 // Derive stats from a report (supports both pages[] and legacy parts[])
 function computeReportStats(report) {
   if (report.pages && report.pages.length > 0) {
@@ -1076,7 +1092,7 @@ router.get('/admin/reports/:id/submissions', adminAuth, async (req, res) => {
 // @access  Private (Admin only)
 router.get('/admin/report-submissions', adminAuth, async (req, res) => {
   try {
-    const { reportId, reportType, reportFor, status, month, year, page = 1, limit = 20 } = req.query;
+    const { reportId, reportType, reportFor, status, month, year, page = 1, limit = 20, slim } = req.query;
 
     const reportFilter = {};
     if (reportType) reportFilter.type = reportType;
@@ -1109,13 +1125,14 @@ router.get('/admin/report-submissions', adminAuth, async (req, res) => {
 
     const totalCount = await ReportSubmission.countDocuments(submissionQuery);
     const rawSubmissions = await ReportSubmission.find(submissionQuery)
-      .populate('reportId', 'type reportFor title description pages parts version month year')
-      .sort({ submittedAt: -1, createdAt: -1 })
+      .populate('reportId', slim ? SLIM_REPORT_FIELDS : FULL_REPORT_FIELDS)
+      .sort({ submittedAt: -1, createdAt: -1, _id: -1 })
       .skip(skip)
       .limit(limitNum)
       .lean();
 
     const submissions = await resolveSubmissionUsers(rawSubmissions);
+    const reportDefinitions = slim ? await loadReportDefinitions(rawSubmissions) : undefined;
 
     // Optional full roster (all districts/areas/units with parent names) so the
     // admin dashboard can list which locations have vs. have not submitted.
@@ -1153,6 +1170,7 @@ router.get('/admin/report-submissions', adminAuth, async (req, res) => {
       hasNextPage: pageNum < Math.ceil(totalCount / limitNum),
       hasPrevPage: pageNum > 1,
       data: submissions,
+      ...(reportDefinitions && { reportDefinitions }),
       ...(roster && { roster }),
       ...(reports && { reports })
     });
@@ -1206,7 +1224,9 @@ router.get('/user/report-submissions', userAuth, async (req, res) => {
       return res.json({ success: true, count: 0, data: [], roster });
     }
 
-    const { reportType, reportFor, status, limit = 1000 } = req.query;
+    const { reportType, reportFor, status, limit = 1000, page = 1, slim } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = parseInt(limit, 10);
 
     // Restrict to reports of the requested type (and optionally reportFor).
     let matchingReportIds = null;
@@ -1222,13 +1242,16 @@ router.get('/user/report-submissions', userAuth, async (req, res) => {
     if (matchingReportIds) submissionQuery.reportId = { $in: matchingReportIds };
     if (status) submissionQuery.status = status;
 
+    const totalCount = await ReportSubmission.countDocuments(submissionQuery);
     const rawSubmissions = await ReportSubmission.find(submissionQuery)
-      .populate('reportId', 'type reportFor title description pages parts version month year')
-      .sort({ submittedAt: -1, createdAt: -1 })
-      .limit(parseInt(limit, 10))
+      .populate('reportId', slim ? SLIM_REPORT_FIELDS : FULL_REPORT_FIELDS)
+      .sort({ submittedAt: -1, createdAt: -1, _id: -1 })
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum)
       .lean();
 
     const submissions = await resolveSubmissionUsers(rawSubmissions);
+    const reportDefinitions = slim ? await loadReportDefinitions(rawSubmissions) : undefined;
 
     // Active reports for every level this user can see, newest first, so the
     // dashboard can filter the submitted/pending breakdown by report.
@@ -1244,7 +1267,17 @@ router.get('/user/report-submissions', userAuth, async (req, res) => {
         .lean();
     }
 
-    res.json({ success: true, count: submissions.length, data: submissions, roster, ...(reports && { reports }) });
+    res.json({
+      success: true,
+      count: submissions.length,
+      totalCount,
+      currentPage: pageNum,
+      hasNextPage: pageNum * limitNum < totalCount,
+      data: submissions,
+      ...(reportDefinitions && { reportDefinitions }),
+      roster,
+      ...(reports && { reports })
+    });
   } catch (error) {
     console.error('Error fetching scoped submissions:', error);
     res.status(500).json({ success: false, message: 'Error fetching submissions', error: error.message });

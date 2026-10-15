@@ -211,7 +211,7 @@ export default function ExpansionPortalDashboardPage({ onLogout }) {
 
               {/* Section: Submission Analytics */}
               <section>
-                <SubmissionsAnalytics scope="admin" />
+                <SubmissionsAnalytics scope="admin" submissionsPath="/admin/dynamic-submissions" />
               </section>
 
               {/* Section: Reports Overview */}

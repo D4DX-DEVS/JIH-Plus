@@ -451,7 +451,7 @@ const AreaDashboardPage = ({ onLogout }) => {
 
             {/* Full analytics stays on desktop; phones get just the submitted/pending
                 roster below the active reports. */}
-            {isDesktop && <SubmissionsAnalytics scope="area" />}
+            {isDesktop && <SubmissionsAnalytics scope="area" submissionsPath="/area/dynamic-submissions" />}
 
             {dashboardLoading ? (
               <div className="flex items-center justify-center py-16">
@@ -475,7 +475,7 @@ const AreaDashboardPage = ({ onLogout }) => {
 
                 <ActiveReportsCard reports={activeReportsList} loading={activeReportsLoading} />
 
-                {!isDesktop && <SubmissionsAnalytics scope="area" variant="status" />}
+                {!isDesktop && <SubmissionsAnalytics scope="area" variant="status" submissionsPath="/area/dynamic-submissions" />}
 
                 <button
                   type="button"
