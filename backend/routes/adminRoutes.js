@@ -602,22 +602,49 @@ router.put('/unit-surveys/:id', adminAuth, async (req, res) => {
 router.get('/dashboard/overview', adminAuth, async (req, res) => {
   try {
     const [
-      districtCount,
-      areaCount,
-      unitCount,
-      activeReports,
-      totalSubmissions,
-      submittedCount,
-      pendingCount
+      districtIds,
+      areaIds,
+      unitIds,
+      activeReports
     ] = await Promise.all([
-      District.countDocuments({ isActive: true }),
-      AreaMaster.countDocuments({ isActive: true }),
-      UnitMaster.countDocuments({ isActive: true }),
-      Report.find({ isActive: true }).select('reportFor type').lean(),
-      ReportSubmission.countDocuments({}),
-      ReportSubmission.countDocuments({ status: 'submitted' }),
-      ReportSubmission.countDocuments({ status: 'pending' })
+      District.find({ isActive: true }).distinct('_id'),
+      AreaMaster.find({ isActive: true }).distinct('_id'),
+      UnitMaster.find({ isActive: true }).distinct('_id'),
+      Report.find({ isActive: true }).select('reportFor type').lean()
     ]);
+    const districtCount = districtIds.length;
+    const areaCount = areaIds.length;
+    const unitCount = unitIds.length;
+
+    // Submission status is measured against the locations, not against stored
+    // records: every active location is expected to answer every active report
+    // of its level, and a saved draft is still pending. Submissions are matched
+    // by location id and counted once per (report, location), so deactivated
+    // locations, deleted/inactive reports and duplicate rows cannot skew it.
+    const activeIdsByLevel = {
+      district: new Set(districtIds.map(String)),
+      area: new Set(areaIds.map(String)),
+      unit: new Set(unitIds.map(String))
+    };
+    const levelByReportId = new Map(activeReports.map(r => [String(r._id), r.reportFor]));
+    const totalSubmissions = activeReports.reduce(
+      (sum, r) => sum + (activeIdsByLevel[r.reportFor]?.size || 0), 0
+    );
+    const submittedDocs = activeReports.length
+      ? await ReportSubmission.find({
+          reportId: { $in: activeReports.map(r => r._id) },
+          status: 'submitted'
+        }).select('reportId userId').lean()
+      : [];
+    const submittedPairs = new Set();
+    submittedDocs.forEach(s => {
+      const level = levelByReportId.get(String(s.reportId));
+      if (level && activeIdsByLevel[level]?.has(String(s.userId))) {
+        submittedPairs.add(`${s.reportId}:${s.userId}`);
+      }
+    });
+    const submittedCount = submittedPairs.size;
+    const pendingCount = totalSubmissions - submittedCount;
 
     const activeReportCount = activeReports.length;
     const districtReports = activeReports.filter(r => r.reportFor === 'district').length;

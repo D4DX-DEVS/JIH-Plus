@@ -401,24 +401,32 @@ const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, 
     return String(s.reportId?._id || s.reportId || '') === String(selected);
   };
 
-  // Names of units that submitted the report selected for the unit level.
+  // Each set holds the location id (exact) and its normalized name (fallback for
+  // rosters that carry no ids). Unit and area names repeat across areas and
+  // districts, so a roster item with an id is matched by id only.
+  const markSubmitted = (set, user, name) => {
+    set.add(normalizeName(name));
+    if (user.id) set.add(user.id);
+  };
+
+  // Units that submitted the report selected for the unit level.
   const submittedUnitNames = useMemo(() => {
     const set = new Set();
     filtered.forEach(s => {
       if (s.status === 'submitted' && s.userId?.unitName && matchesLevelReport(s, 'unit')) {
-        set.add(normalizeName(s.userId.unitName));
+        markSubmitted(set, s.userId, s.userId.unitName);
       }
     });
     return set;
   }, [filtered, reportByLevel]);
 
-  // Names of areas / districts whose own report was submitted.
+  // Areas / districts whose own report was submitted.
   const submittedAreaNames = useMemo(() => {
     const set = new Set();
     filtered.forEach(s => {
       const lvl = s.userId?.type || s.reportId?.reportFor;
       if (lvl === 'area' && s.status === 'submitted' && s.userId?.areaName && matchesLevelReport(s, 'area')) {
-        set.add(normalizeName(s.userId.areaName));
+        markSubmitted(set, s.userId, s.userId.areaName);
       }
     });
     return set;
@@ -429,7 +437,7 @@ const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, 
     filtered.forEach(s => {
       const lvl = s.userId?.type || s.reportId?.reportFor;
       if (lvl === 'district' && s.status === 'submitted' && s.userId?.districtName && matchesLevelReport(s, 'district')) {
-        set.add(normalizeName(s.userId.districtName));
+        markSubmitted(set, s.userId, s.userId.districtName);
       }
     });
     return set;
@@ -453,7 +461,8 @@ const SubmissionsAnalytics = ({ scope = 'area', variant = 'full', units = null, 
         if (kind === 'area') { if (name !== areaFilter) return; }
         else if (kind === 'unit' && item.areaName != null && item.areaName !== areaFilter) return;
       }
-      (submittedSet.has(normalizeName(name)) ? submitted : pending).push(name);
+      const isSubmitted = item.id ? submittedSet.has(item.id) : submittedSet.has(normalizeName(name));
+      (isSubmitted ? submitted : pending).push(name);
     });
     if (submitted.length === 0 && pending.length === 0) return null;
     return { submitted: submitted.sort(), pending: pending.sort() };
