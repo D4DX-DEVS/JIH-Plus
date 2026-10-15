@@ -88,7 +88,11 @@ const getUnitAdminScope = async (unitAdmin) => {
   const unitName = unitAdmin.unit;
   const abroadUserIds = await User.find({ unit: unitName, isAbroad: true }).distinct('_id');
   return {
-    memberQuery: buildUnitScopedUserQuery(unitName),
+    // Abroad members can still carry the Kerala unit's name in `unit`. They are
+    // kept out of the roster just as their submissions are kept out below;
+    // listing them here but not their submissions showed members who had
+    // submitted as pending.
+    memberQuery: { ...buildUnitScopedUserQuery(unitName), isAbroad: { $ne: true } },
     submissionQuery: {
       ...buildUnitScopedSubmissionQuery(unitName),
       ...(abroadUserIds.length > 0 ? { userId: { $nin: abroadUserIds } } : {})
