@@ -63,6 +63,12 @@ const alternativeSubmitSchema = new mongoose.Schema({
         trim: true,
         maxlength: [1000, 'Reason cannot exceed 1000 characters']
     },
+    // Created by the quarterly auto-submission for Aged / Patient members
+    // (utils/memberCategory.js), not by the member.
+    autoSubmitted: {
+        type: Boolean,
+        default: false
+    },
     adminReply: {
         message: {
             type: String,

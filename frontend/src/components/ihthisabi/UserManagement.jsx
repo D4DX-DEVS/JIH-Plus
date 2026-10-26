@@ -6,6 +6,7 @@ import UnitAdminProfileModal from './UnitAdminProfileModal'
 import UserProfileModal from './UserProfileModal'
 import ConfirmationModal from './ConfirmationModal'
 import MemberFormModal, { LocationSelects } from './MemberFormModal'
+import { MemberCategoryBadge } from './MemberCategoryControl'
 import Pagination from './Pagination'
 import {
   Upload,
@@ -669,7 +670,10 @@ const UserManagement = () => {
                         {user.ruknId}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.name}
+                        <span className="inline-flex items-center gap-2">
+                          {user.name}
+                          <MemberCategoryBadge category={user.memberCategory} />
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {user.gender}
@@ -744,7 +748,10 @@ const UserManagement = () => {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="ih-list-title">{row.name}</div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <div className="ih-list-title min-w-0 max-w-full">{row.name}</div>
+                    <MemberCategoryBadge category={row.memberCategory} />
+                  </div>
                   <div className="ih-list-meta">
                     {row.ruknId}
                     {!showUnitAdminsOnly && row.gender ? ` · ${row.gender}` : ''}

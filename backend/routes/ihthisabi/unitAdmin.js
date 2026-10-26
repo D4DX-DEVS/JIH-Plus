@@ -15,6 +15,7 @@ const {
 } = require('../../utils/quarterHelper');
 const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
 const { buildOwnerMatch } = require('../../utils/submissionOwnerMatch');
+const { applyMemberCategory, isValidCategoryInput } = require('../../utils/memberCategory');
 
 
 const router = express.Router();
@@ -415,6 +416,7 @@ router.get('/members', protect, async (req, res) => {
               $project: {
                 ruknId: 1, name: 1, gender: 1, unit: 1, district: 1, area: 1,
                 contactNo: 1, emailId: 1, country: 1, lastLogin: 1, createdAt: 1, role: 1,
+                memberCategory: 1, memberCategoryFrom: 1,
                 submissionCount: { $ifNull: [{ $arrayElemAt: ['$submissionCountArr.count', 0] }, 0] }
               }
             }
@@ -762,7 +764,7 @@ router.get('/members/:id', protect, async (req, res) => {
     const member = await User.findOne({
       _id: req.params.id,
       ...memberQuery
-    }).select('ruknId name gender unit district area contactNo emailId country lastLogin createdAt');
+    }).select('ruknId name gender unit district area contactNo emailId country lastLogin createdAt memberCategory memberCategoryFrom');
 
     if (!member) {
       return res.status(404).json({
@@ -811,6 +813,53 @@ router.get('/members/:id', protect, async (req, res) => {
       success: false,
       message: 'Server error'
     });
+  }
+});
+
+// @desc    Set a member's category (Aged / Patient / regular). From the next report
+//          quarter onwards their alternative submission is created automatically.
+// @route   PUT /api/unitadmin/members/:id/category
+// @access  Private (Unit Admin — members of their own unit only)
+router.put('/members/:id/category', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'unitAdmin') {
+      return res.status(403).json({ success: false, message: 'Access denied. Unit admin access required.' });
+    }
+
+    const { memberCategory } = req.body;
+    if (!isValidCategoryInput(memberCategory)) {
+      return res.status(400).json({ success: false, message: 'Category must be Aged, Patient or empty' });
+    }
+
+    const unitAdmin = await UnitAdmin.findById(req.user.userId);
+    if (!unitAdmin) {
+      return res.status(404).json({ success: false, message: 'Unit admin not found' });
+    }
+
+    const { memberQuery } = await getUnitAdminScope(unitAdmin);
+    const member = await User.findOne({ _id: req.params.id, ...memberQuery });
+    if (!member) {
+      return res.status(404).json({ success: false, message: 'Member not found or not under your unit' });
+    }
+
+    const updatedBy = ['Unit Admin', unitAdmin.name, unitAdmin.ruknId && `(${unitAdmin.ruknId})`].filter(Boolean).join(' ');
+    applyMemberCategory(member, memberCategory, updatedBy);
+    await member.save();
+
+    res.json({
+      success: true,
+      message: 'Member category updated',
+      data: {
+        member: {
+          _id: member._id,
+          memberCategory: member.memberCategory || null,
+          memberCategoryFrom: member.memberCategoryFrom
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Update member category error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 

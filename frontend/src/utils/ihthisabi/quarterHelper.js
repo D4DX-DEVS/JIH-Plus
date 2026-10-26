@@ -26,3 +26,15 @@ export const getQuarterName = (quarter) => {
 export const getAvailableQuarters = () => {
   return [1, 2, 3, 4];
 };
+
+/**
+ * First report quarter an Aged / Patient category set now applies to: the
+ * quarter after the one open for submission (members report the previous
+ * completed quarter). Mirrors backend utils/memberCategory.js.
+ * @returns {{ year: number, quarter: number }}
+ */
+export const getNextReportQuarter = (date = new Date()) => {
+  const current = Math.ceil((date.getMonth() + 1) / 3)
+  // Open for submission = previous quarter; the next report quarter is the current one
+  return { year: date.getFullYear(), quarter: current }
+};

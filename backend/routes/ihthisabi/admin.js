@@ -20,6 +20,7 @@ const { parseExcelFile, parseMembersExcelFile, parseUnitAdminExcelFile, buildMem
 const { sendWhatsAppMessage, formatReplyMessage, formatStructuredReplyMessage } = require('../../utils/whatsapp');
 const { enqueueBroadcast, getBroadcastJob } = require('../../utils/whatsappBroadcastQueue');
 const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
+const { applyMemberCategory, isValidCategoryInput } = require('../../utils/memberCategory');
 const fs = require('fs');
 const path = require('path');
 
@@ -3641,12 +3642,12 @@ router.delete('/abroad-unitadmins/:id', async (req, res) => {
 
 // ==================== UPDATE USER (isAbroad + abroadCountry) ====================
 
-// @desc    Update user fields (isAbroad, abroadCountry, isActive)
+// @desc    Update user fields (isAbroad, abroadCountry, isActive, memberCategory)
 // @route   PUT /api/ihthisabi/admin/users/:id
 // @access  Private (Admin only)
 router.put('/users/:id', async (req, res) => {
   try {
-    const { isAbroad, abroadCountry, abroadArea, abroadUnit, isActive } = req.body;
+    const { isAbroad, abroadCountry, abroadArea, abroadUnit, isActive, memberCategory } = req.body;
 
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -3654,6 +3655,9 @@ router.put('/users/:id', async (req, res) => {
     }
     if (user.role === 'admin') {
       return res.status(403).json({ success: false, message: 'Cannot modify admin user' });
+    }
+    if (memberCategory !== undefined && !isValidCategoryInput(memberCategory)) {
+      return res.status(400).json({ success: false, message: 'Category must be Aged, Patient or empty' });
     }
 
     if (typeof isAbroad === 'boolean') user.isAbroad = isAbroad;
@@ -3667,6 +3671,7 @@ router.put('/users/:id', async (req, res) => {
       if (abroadUnit !== undefined) user.abroadUnit = abroadUnit || null;
     }
     if (typeof isActive === 'boolean') user.isActive = isActive;
+    if (memberCategory !== undefined) applyMemberCategory(user, memberCategory, 'Admin');
 
     await user.save();
 
@@ -3899,11 +3904,14 @@ router.post('/users', requireSuperAdmin, async (req, res) => {
 // @access  Private (Super Admin only)
 router.put('/users/:id/profile', requireSuperAdmin, async (req, res) => {
   try {
-    const { ruknId, name, gender, district, area, unit, contactNo, emailId, country, isAbroad, abroadCountry, abroadArea, abroadUnit, isActive } = req.body;
+    const { ruknId, name, gender, district, area, unit, contactNo, emailId, country, isAbroad, abroadCountry, abroadArea, abroadUnit, isActive, memberCategory } = req.body;
 
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     if (user.role === 'admin') return res.status(403).json({ success: false, message: 'Cannot modify admin user' });
+    if (memberCategory !== undefined && !isValidCategoryInput(memberCategory)) {
+      return res.status(400).json({ success: false, message: 'Category must be Aged, Patient or empty' });
+    }
 
     // Check ruknId uniqueness if changed
     if (ruknId && ruknId.trim() !== user.ruknId) {
@@ -3931,6 +3939,7 @@ router.put('/users/:id/profile', requireSuperAdmin, async (req, res) => {
       if (abroadUnit !== undefined) user.abroadUnit = abroadUnit || null;
     }
     if (typeof isActive === 'boolean') user.isActive = isActive;
+    if (memberCategory !== undefined) applyMemberCategory(user, memberCategory, 'Admin');
 
     await user.save();
     const updated = await User.findById(user._id)

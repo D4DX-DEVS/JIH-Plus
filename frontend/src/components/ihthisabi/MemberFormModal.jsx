@@ -4,6 +4,7 @@ import { useLocation as useHierarchyLocation } from '../../hooks/useLocation'
 import { getId, getLabel } from '../../utils/ihthisabi/locationOptions'
 import { X } from 'lucide-react'
 import toast from 'react-hot-toast'
+import MemberCategoryControl from './MemberCategoryControl'
 
 // ─── LocationSelects sub-component ────────────────────────────────────────────
 export const LocationSelects = ({ value, onChange, required = false }) => {
@@ -88,7 +89,7 @@ export const LocationSelects = ({ value, onChange, required = false }) => {
 }
 
 // ─── MemberFormModal ──────────────────────────────────────────────────────────
-const emptyUser = { ruknId: '', name: '', gender: 'Male', district: '', area: '', unit: '', contactNo: '', emailId: '', country: '', isAbroad: false, abroadCountry: '', isActive: true }
+const emptyUser = { ruknId: '', name: '', gender: 'Male', district: '', area: '', unit: '', contactNo: '', emailId: '', country: '', isAbroad: false, abroadCountry: '', isActive: true, memberCategory: null }
 
 const MemberFormModal = ({ isOpen, onClose, editUser, onSaved }) => {
   const [form, setForm]       = useState(emptyUser)
@@ -111,7 +112,8 @@ const MemberFormModal = ({ isOpen, onClose, editUser, onSaved }) => {
         country:      editUser.country      || '',
         isAbroad:     editUser.isAbroad     || false,
         abroadCountry: editUser.abroadCountry?._id || editUser.abroadCountry || '',
-        isActive:     editUser.isActive !== false
+        isActive:     editUser.isActive !== false,
+        memberCategory: editUser.memberCategory || null
       })
     } else {
       setForm(emptyUser)
@@ -146,6 +148,8 @@ const MemberFormModal = ({ isOpen, onClose, editUser, onSaved }) => {
     setSaving(true)
     try {
       const payload = { ...form, ruknId: form.ruknId.trim(), abroadCountry: form.isAbroad ? (form.abroadCountry || null) : null }
+      // Category is set from the edit screen only
+      if (!editUser) delete payload.memberCategory
       if (editUser) {
         await api.put(`/ihthisabi/admin/users/${editUser._id}/profile`, payload)
         toast.success('Member updated successfully')
@@ -225,6 +229,18 @@ const MemberFormModal = ({ isOpen, onClose, editUser, onSaved }) => {
               Active Account
             </label>
           </div>
+
+          {editUser && (
+            <div className="border-t pt-4">
+              <p className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">Report Category</p>
+              <MemberCategoryControl
+                value={form.memberCategory}
+                savedValue={editUser.memberCategory}
+                savedFrom={editUser.memberCategoryFrom}
+                onChange={(category) => set('memberCategory', category)}
+              />
+            </div>
+          )}
 
           {form.isAbroad && (
             <div>
