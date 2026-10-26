@@ -5,6 +5,7 @@ import { useLocation as useHierarchyLocation } from '../../hooks/useLocation'
 import ConfirmationModal from './ConfirmationModal'
 import Pagination from './Pagination'
 import MemberFormModal, { LocationSelects } from './MemberFormModal'
+import { MemberCategoryBadge } from './MemberCategoryControl'
 import { getId, getLabel } from '../../utils/ihthisabi/locationOptions'
 import {
   Users,
@@ -655,7 +656,12 @@ const UserManagementDynamic = () => {
                 ) : users.map(u => (
                   <tr key={u._id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-mono font-medium text-gray-900">{u.ruknId}</td>
-                    <td className="px-4 py-3 text-gray-900">{u.name}</td>
+                    <td className="px-4 py-3 text-gray-900">
+                      <span className="inline-flex items-center gap-2">
+                        {u.name}
+                        <MemberCategoryBadge category={u.memberCategory} />
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-gray-500">{u.gender}</td>
                     <td className="px-4 py-3 text-gray-700">{u.unit}</td>
                     <td className="px-4 py-3 text-gray-500">{u.district || '—'}</td>
@@ -723,7 +729,10 @@ const UserManagementDynamic = () => {
             (view === 'members' ? users : unitAdmins).map((row) => (
               <div key={row._id} className="ih-list-row">
                 <div className="min-w-0 flex-1">
-                  <div className="ih-list-title">{row.name}</div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <div className="ih-list-title min-w-0 max-w-full">{row.name}</div>
+                    <MemberCategoryBadge category={row.memberCategory} />
+                  </div>
                   <div className="ih-list-meta">
                     {row.ruknId}
                     {view === 'members' && row.gender ? ` · ${row.gender}` : ''}

@@ -12,7 +12,6 @@ const ReplyTemplate = require('../../models/ihthisabi/ReplyTemplate');
 const AbroadCountry = require('../../models/ihthisabi/AbroadCountry');
 const AbroadArea = require('../../models/ihthisabi/AbroadArea');
 const AbroadUnit = require('../../models/ihthisabi/AbroadUnit');
-const LocationMaster = require('../../models/ihthisabi/LocationMaster');
 const Mekhala = require('../../models/ihthisabi/Mekhala');
 const MekhalaNazim = require('../../models/ihthisabi/MekhalaNazim');
 const { protect, authorize } = require('../../middlewares/ihthisabi/auth');
@@ -21,6 +20,7 @@ const { parseExcelFile, parseMembersExcelFile, parseUnitAdminExcelFile, buildMem
 const { sendWhatsAppMessage, formatReplyMessage, formatStructuredReplyMessage } = require('../../utils/whatsapp');
 const { enqueueBroadcast, getBroadcastJob } = require('../../utils/whatsappBroadcastQueue');
 const { parsePagination, buildPaginationMeta } = require('../../utils/pagination');
+const { applyMemberCategory, isValidCategoryInput } = require('../../utils/memberCategory');
 const fs = require('fs');
 const path = require('path');
 
@@ -554,6 +554,66 @@ const getCurrentQuarter = () => {
   return getQuarterFromMonth(currentMonth);
 };
 
+// Active rukn members: the denominator of every completion figure on the admin
+// dashboard (same filter as the Total Users card).
+const ACTIVE_RUKN_MATCH = { role: 'rukn', $or: [{ isActive: true }, { isActive: { $exists: false } }] };
+
+const cleanLabel = (value) => String(value || '').trim().replace(/\s+/g, ' ');
+// Different casings of the same place ("ERNAKULAM" / "Ernakulam") are one place.
+const locationKey = (value) => cleanLabel(value).toUpperCase();
+
+// Floored to one decimal so a group only reads 100% when every member submitted.
+const completionPercent = (submitted, total) =>
+  total > 0 ? Math.floor((submitted / total) * 1000) / 10 : 0;
+
+// Active members with the location they belong to. Abroad members belong to
+// their abroad country/area/unit — many still carry a stale Kerala `unit`
+// string, and their submissions often carry their home district.
+const loadActiveMembers = async () => {
+  const users = await User.find(ACTIVE_RUKN_MATCH)
+    .select('ruknId gender isAbroad district area unit abroadCountry abroadArea abroadUnit')
+    .populate('abroadCountry abroadArea abroadUnit', 'title')
+    .lean();
+  return users.map(u => {
+    const abroad = u.isAbroad && u.abroadCountry && u.abroadArea && u.abroadUnit;
+    return {
+      id: String(u._id),
+      ruknId: u.ruknId || null,
+      gender: u.gender,
+      district: cleanLabel(abroad ? u.abroadCountry.title : u.district),
+      area: cleanLabel(abroad ? u.abroadArea.title : u.area),
+      unit: cleanLabel(abroad ? u.abroadUnit.title : u.unit)
+    };
+  });
+};
+
+// Resolves one quarter's regular + alternative submissions to the members who
+// made them. A member who submits while logged in as Unit/District Admin gets
+// that admin account's id as `userId`, so match on ruknId first (same rule as
+// utils/submissionOwnerMatch) and fall back to userId.
+const resolvePeriodSubmissions = async (year, quarter, members) => {
+  const period = { 'submissionPeriod.year': year, 'submissionPeriod.quarter': quarter };
+  const [subs, alts] = await Promise.all([
+    Submission.find(period).select('userId ruknId').lean(),
+    AlternativeSubmit.find(period).select('userId ruknId').lean()
+  ]);
+  const byRuknId = new Map();
+  const byId = new Map();
+  members.forEach(m => {
+    if (m.ruknId) byRuknId.set(m.ruknId, m);
+    byId.set(m.id, m);
+  });
+  const submittedIds = new Set();
+  const gender = { Male: 0, Female: 0, Other: 0 }; // per submission; sums to totalSubmissions
+  [...subs, ...alts].forEach(s => {
+    const member = (s.ruknId && byRuknId.get(s.ruknId)) || byId.get(String(s.userId));
+    if (member) submittedIds.add(member.id);
+    if (member && (member.gender === 'Male' || member.gender === 'Female')) gender[member.gender] += 1;
+    else gender.Other += 1; // inactive/removed member, or no gender on record
+  });
+  return { totalSubmissions: subs.length + alts.length, submittedIds, gender };
+};
+
 // @desc    Get dashboard statistics
 // @route   GET /api/admin/dashboard/stats
 // @access  Private (Admin only)
@@ -575,105 +635,35 @@ router.get('/dashboard/stats', async (req, res) => {
 
     const { quarter: prevQuarter, year: prevYear } = getPreviousAvailableQuarter(currentQuarter, currentYear);
 
-    // Current quarter submissions count
-    // Total = normal/abroad submissions (Submission collection) + alternative submissions (AlternativeSubmit collection)
-    const currentQuarterNormalSubmissions = await Submission.countDocuments({
-      'submissionPeriod.year': currentYear,
-      'submissionPeriod.quarter': currentQuarter
-    });
-    const currentQuarterAlternativeSubmissions = await AlternativeSubmit.countDocuments({
-      'submissionPeriod.year': currentYear,
-      'submissionPeriod.quarter': currentQuarter
-    });
-    const currentQuarterSubmissions = currentQuarterNormalSubmissions + currentQuarterAlternativeSubmissions;
-
-    // Previous quarter submissions count (same combined logic)
-    const previousQuarterNormalSubmissions = await Submission.countDocuments({
-      'submissionPeriod.year': prevYear,
-      'submissionPeriod.quarter': prevQuarter
-    });
-    const previousQuarterAlternativeSubmissions = await AlternativeSubmit.countDocuments({
-      'submissionPeriod.year': prevYear,
-      'submissionPeriod.quarter': prevQuarter
-    });
-    const previousQuarterSubmissions = previousQuarterNormalSubmissions + previousQuarterAlternativeSubmissions;
+    // Every submission (regular/abroad + alternative) resolved to the active member
+    // who made it, so the gender split and completion % reconcile with the totals.
+    const members = await loadActiveMembers();
+    const [current, previous] = await Promise.all([
+      resolvePeriodSubmissions(currentYear, currentQuarter, members),
+      resolvePeriodSubmissions(prevYear, prevQuarter, members)
+    ]);
+    const currentQuarterSubmissions = current.totalSubmissions;
+    const previousQuarterSubmissions = previous.totalSubmissions;
 
     // Quarter-over-quarter % change
     const quarterChangePercent = previousQuarterSubmissions > 0
       ? Math.round(((currentQuarterSubmissions - previousQuarterSubmissions) / previousQuarterSubmissions) * 100)
       : currentQuarterSubmissions > 0 ? 100 : 0;
 
-    // Gender breakdown of current quarter submissions (via join to users)
-    const currentQuarterGenderAgg = await Submission.aggregate([
-      {
-        $match: {
-          'submissionPeriod.year': currentYear,
-          'submissionPeriod.quarter': currentQuarter
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'userDoc'
-        }
-      },
-      { $unwind: { path: '$userDoc', preserveNullAndEmptyArrays: true } },
-      {
-        $group: {
-          _id: { $ifNull: ['$userDoc.gender', 'Unknown'] },
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-    // Same gender breakdown for alternative submissions, so Male + Female reconciles with the combined total above
-    const currentQuarterAltGenderAgg = await AlternativeSubmit.aggregate([
-      {
-        $match: {
-          'submissionPeriod.year': currentYear,
-          'submissionPeriod.quarter': currentQuarter
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'userDoc'
-        }
-      },
-      { $unwind: { path: '$userDoc', preserveNullAndEmptyArrays: true } },
-      {
-        $group: {
-          _id: { $ifNull: ['$userDoc.gender', 'Unknown'] },
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-    const currentQuarterMale = (currentQuarterGenderAgg.find(g => g._id === 'Male')?.count || 0)
-      + (currentQuarterAltGenderAgg.find(g => g._id === 'Male')?.count || 0);
-    const currentQuarterFemale = (currentQuarterGenderAgg.find(g => g._id === 'Female')?.count || 0)
-      + (currentQuarterAltGenderAgg.find(g => g._id === 'Female')?.count || 0);
+    // Male + Female + Other === currentQuarterSubmissions
+    const currentQuarterMale = current.gender.Male;
+    const currentQuarterFemale = current.gender.Female;
+    const currentQuarterOther = current.gender.Other;
 
     // Total rukn users (active) with gender breakdown
-    const totalUsersGenderAgg = await User.aggregate([
-      {
-        $match: {
-          role: 'rukn',
-          $or: [{ isActive: true }, { isActive: { $exists: false } }]
-        }
-      },
-      {
-        $group: {
-          _id: { $ifNull: ['$gender', 'Unknown'] },
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-    const maleUsers = totalUsersGenderAgg.find(g => g._id === 'Male')?.count || 0;
-    const femaleUsers = totalUsersGenderAgg.find(g => g._id === 'Female')?.count || 0;
-    const totalRuknUsers = totalUsersGenderAgg.reduce((sum, g) => sum + g.count, 0);
+    const totalRuknUsers = members.length;
+    const maleUsers = members.filter(m => m.gender === 'Male').length;
+    const femaleUsers = members.filter(m => m.gender === 'Female').length;
+
+    // Completion = active members who submitted / active members. The previous
+    // quarter is measured against today's members, so both use one denominator.
+    const currentQuarterSubmittedMembers = current.submittedIds.size;
+    const previousQuarterSubmittedMembers = previous.submittedIds.size;
 
     res.json({
       success: true,
@@ -684,7 +674,13 @@ router.get('/dashboard/stats', async (req, res) => {
         currentQuarterSubmissions,
         currentQuarterMale,
         currentQuarterFemale,
+        currentQuarterOther,
+        currentQuarterSubmittedMembers,
+        currentQuarterPendingMembers: totalRuknUsers - currentQuarterSubmittedMembers,
+        currentQuarterCompletionPercent: completionPercent(currentQuarterSubmittedMembers, totalRuknUsers),
         previousQuarterSubmissions,
+        previousQuarterSubmittedMembers,
+        previousQuarterCompletionPercent: completionPercent(previousQuarterSubmittedMembers, totalRuknUsers),
         prevQuarter,
         prevYear,
         currentQuarter,
@@ -712,74 +708,49 @@ const getDashboardPeriods = (now = new Date()) => {
   return { currentQuarter, currentYear, prevQuarter, prevYear };
 };
 
-// @desc    District-wise submission stats: current vs previous period, combining
-//          normal/abroad (Submission) + alternative (AlternativeSubmit) submissions
+// Groups members by a location key, counting members and those who submitted.
+const groupMembers = (members, submittedIds, keyFn, labelFn) => {
+  const groups = new Map();
+  members.forEach(m => {
+    const key = keyFn(m);
+    let group = groups.get(key);
+    if (!group) {
+      group = { ...labelFn(m), totalMembers: 0, submitted: 0 };
+      groups.set(key, group);
+    }
+    group.totalMembers += 1;
+    if (submittedIds.has(m.id)) group.submitted += 1;
+  });
+  return Array.from(groups.values()).map(g => ({
+    ...g,
+    pending: g.totalMembers - g.submitted,
+    completionPercent: completionPercent(g.submitted, g.totalMembers)
+  }));
+};
+
+// @desc    District-wise completion for the current period: active members vs
+//          members who submitted (regular/abroad + alternative). Members are
+//          placed by their own location, so submitted never exceeds total.
 // @route   GET /api/admin/dashboard/district-stats
 // @access  Private (Admin only)
 router.get('/dashboard/district-stats', async (req, res) => {
   try {
-    const { currentQuarter, currentYear, prevQuarter, prevYear } = getDashboardPeriods();
+    const { currentQuarter, currentYear } = getDashboardPeriods();
+    const members = await loadActiveMembers();
+    const { submittedIds } = await resolvePeriodSubmissions(currentYear, currentQuarter, members);
 
-    const aggByDistrict = (Model, year, quarter) => Model.aggregate([
-      { $match: { 'submissionPeriod.year': year, 'submissionPeriod.quarter': quarter } },
-      { $group: { _id: '$district', count: { $sum: 1 } } }
-    ]);
-
-    const [curSub, curAlt, prevSub, prevAlt] = await Promise.all([
-      aggByDistrict(Submission, currentYear, currentQuarter),
-      aggByDistrict(AlternativeSubmit, currentYear, currentQuarter),
-      aggByDistrict(Submission, prevYear, prevQuarter),
-      aggByDistrict(AlternativeSubmit, prevYear, prevQuarter)
-    ]);
-
-    // Some historical rows have a raw Mongo ObjectId string stored in `district`
-    // (a data-entry bug elsewhere, not something to display as a district).
-    const isLikelyObjectId = (value) => /^[0-9a-f]{24}$/i.test(String(value || '').trim());
-    // Different casings of the same district ("ERNAKULAM" / "Ernakulam") are the
-    // same place — group on a normalized key so they don't show as separate bars.
-    const normalizeDistrictKey = (value) => String(value || '').trim().toUpperCase();
-    const titleCase = (value) => String(value || '').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
-
-    const mergeByDistrict = (...lists) => {
-      const map = new Map(); // normalized key -> { count, label }
-      lists.forEach(list => {
-        list.forEach(({ _id, count }) => {
-          const raw = String(_id || '').trim();
-          if (!raw || isLikelyObjectId(raw)) return;
-          const key = normalizeDistrictKey(raw);
-          const existing = map.get(key);
-          if (existing) {
-            existing.count += count;
-          } else {
-            map.set(key, { count, label: titleCase(raw) });
-          }
-        });
-      });
-      return map;
-    };
-
-    const currentMap = mergeByDistrict(curSub, curAlt);
-    const prevMap = mergeByDistrict(prevSub, prevAlt);
-
-    const allKeys = Array.from(new Set([...currentMap.keys(), ...prevMap.keys()]));
-
-    const districts = allKeys
-      .map(key => {
-        const current = currentMap.get(key)?.count || 0;
-        const previous = prevMap.get(key)?.count || 0;
-        const label = currentMap.get(key)?.label || prevMap.get(key)?.label || key;
-        const changePercent = previous > 0
-          ? Math.round(((current - previous) / previous) * 100)
-          : (current > 0 ? 100 : 0);
-        return { district: label, current, previous, changePercent };
-      })
-      // Most active districts first — makes a sensible default when the UI only
-      // shows the top district's chart out of the box.
-      .sort((a, b) => b.current - a.current || a.district.localeCompare(b.district));
+    const districts = groupMembers(
+      members.filter(m => m.district),
+      submittedIds,
+      m => locationKey(m.district),
+      m => ({ district: m.district })
+    )
+      // Largest districts first — the UI shows only the top district by default.
+      .sort((a, b) => b.totalMembers - a.totalMembers || a.district.localeCompare(b.district));
 
     res.json({
       success: true,
-      data: { districts, currentQuarter, currentYear, prevQuarter, prevYear }
+      data: { districts, currentQuarter, currentYear }
     });
   } catch (error) {
     console.error('District stats error:', error);
@@ -787,10 +758,11 @@ router.get('/dashboard/district-stats', async (req, res) => {
   }
 });
 
-// @desc    Submitted vs pending units for the current period, optionally scoped
-//          to a district and/or area. "All units" = union of units derived from
-//          active rukn Users and admin-added LocationMaster rows (same source
-//          used for the location dropdowns elsewhere in the app).
+// @desc    Unit completion for the current period, optionally scoped to a
+//          district and/or area. Units are the locations of active members
+//          (abroad members under their abroad country/area/unit). A unit is
+//          completed when every member submitted, partial when some did, and
+//          not submitted when none did.
 // @route   GET /api/admin/dashboard/units-status?district=&area=
 // @access  Private (Admin only)
 router.get('/dashboard/units-status', async (req, res) => {
@@ -798,74 +770,54 @@ router.get('/dashboard/units-status', async (req, res) => {
     const { district, area } = req.query;
     const { currentQuarter, currentYear } = getDashboardPeriods();
 
-    const userMatch = { role: 'rukn', isAbroad: { $ne: true }, unit: { $nin: [null, ''] } };
-    if (district) userMatch.district = district;
-    if (area) userMatch.area = area;
+    const members = (await loadActiveMembers()).filter(m => m.district && m.area && m.unit);
+    const { submittedIds } = await resolvePeriodSubmissions(currentYear, currentQuarter, members);
 
-    const userUnits = await User.aggregate([
-      { $match: userMatch },
-      { $group: { _id: { district: '$district', area: '$area', unit: '$unit' } } }
-    ]);
+    const byLabel = (a, b) => a.localeCompare(b);
+    const districtOptions = Array.from(new Map(members.map(m => [locationKey(m.district), m.district])).values()).sort(byLabel);
 
-    const masterMatch = { type: 'unit', isActive: true };
-    if (district) masterMatch.district = district;
-    if (area) masterMatch.area = area;
-    const masterUnits = await LocationMaster.find(masterMatch).select('name district area').lean();
+    const inDistrict = district ? members.filter(m => locationKey(m.district) === locationKey(district)) : members;
+    const areaOptions = district
+      ? Array.from(new Map(inDistrict.map(m => [locationKey(m.area), m.area])).values()).sort(byLabel)
+      : [];
+    const scoped = area ? inDistrict.filter(m => locationKey(m.area) === locationKey(area)) : inDistrict;
 
-    const unitMap = new Map();
-    userUnits.forEach(({ _id }) => {
-      if (!_id.district || !_id.area || !_id.unit) return;
-      const key = `${_id.district}|${_id.area}|${_id.unit}`;
-      unitMap.set(key, { district: _id.district, area: _id.area, unit: _id.unit });
-    });
-    masterUnits.forEach(row => {
-      if (!row.district || !row.area || !row.name) return;
-      const key = `${row.district}|${row.area}|${row.name}`;
-      if (!unitMap.has(key)) unitMap.set(key, { district: row.district, area: row.area, unit: row.name });
-    });
+    const units = groupMembers(
+      scoped,
+      submittedIds,
+      m => [m.district, m.area, m.unit].map(locationKey).join('|'),
+      m => ({ district: m.district, area: m.area, unit: m.unit })
+    );
 
-    const allUnits = Array.from(unitMap.values());
+    const byUnit = (a, b) => a.unit.localeCompare(b.unit);
+    const completedUnits = units.filter(u => u.pending === 0).sort(byUnit);
+    // Least complete first, so the units needing follow-up are on top.
+    const partialUnits = units.filter(u => u.submitted > 0 && u.pending > 0)
+      .sort((a, b) => a.completionPercent - b.completionPercent || byUnit(a, b));
+    const notSubmittedUnits = units.filter(u => u.submitted === 0)
+      .sort((a, b) => b.totalMembers - a.totalMembers || byUnit(a, b));
 
-    const periodMatch = { 'submissionPeriod.year': currentYear, 'submissionPeriod.quarter': currentQuarter };
-    if (district) periodMatch.district = district;
-    if (area) periodMatch.area = area;
-
-    const groupByUnit = (Model) => Model.aggregate([
-      { $match: periodMatch },
-      { $group: { _id: { district: '$district', area: '$area', unit: '$unit' } } }
-    ]);
-
-    const [subUnits, altUnits] = await Promise.all([
-      groupByUnit(Submission),
-      groupByUnit(AlternativeSubmit)
-    ]);
-
-    const submittedSet = new Set();
-    [...subUnits, ...altUnits].forEach(({ _id }) => {
-      submittedSet.add(`${_id.district}|${_id.area}|${_id.unit}`);
-    });
-
-    const submittedUnits = [];
-    const pendingUnits = [];
-    allUnits.forEach(u => {
-      const key = `${u.district}|${u.area}|${u.unit}`;
-      (submittedSet.has(key) ? submittedUnits : pendingUnits).push(u);
-    });
-
-    const byName = (a, b) => a.unit.localeCompare(b.unit);
-    submittedUnits.sort(byName);
-    pendingUnits.sort(byName);
+    const totalMembers = scoped.length;
+    const submittedMembers = units.reduce((sum, u) => sum + u.submitted, 0);
 
     res.json({
       success: true,
       data: {
         currentQuarter,
         currentYear,
-        totalUnits: allUnits.length,
-        submittedCount: submittedUnits.length,
-        pendingCount: pendingUnits.length,
-        submittedUnits,
-        pendingUnits
+        totalUnits: units.length,
+        completedCount: completedUnits.length,
+        partialCount: partialUnits.length,
+        notSubmittedCount: notSubmittedUnits.length,
+        totalMembers,
+        submittedMembers,
+        pendingMembers: totalMembers - submittedMembers,
+        completionPercent: completionPercent(submittedMembers, totalMembers),
+        completedUnits,
+        partialUnits,
+        notSubmittedUnits,
+        districtOptions,
+        areaOptions
       }
     });
   } catch (error) {
@@ -3690,12 +3642,12 @@ router.delete('/abroad-unitadmins/:id', async (req, res) => {
 
 // ==================== UPDATE USER (isAbroad + abroadCountry) ====================
 
-// @desc    Update user fields (isAbroad, abroadCountry, isActive)
+// @desc    Update user fields (isAbroad, abroadCountry, isActive, memberCategory)
 // @route   PUT /api/ihthisabi/admin/users/:id
 // @access  Private (Admin only)
 router.put('/users/:id', async (req, res) => {
   try {
-    const { isAbroad, abroadCountry, abroadArea, abroadUnit, isActive } = req.body;
+    const { isAbroad, abroadCountry, abroadArea, abroadUnit, isActive, memberCategory } = req.body;
 
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -3703,6 +3655,9 @@ router.put('/users/:id', async (req, res) => {
     }
     if (user.role === 'admin') {
       return res.status(403).json({ success: false, message: 'Cannot modify admin user' });
+    }
+    if (memberCategory !== undefined && !isValidCategoryInput(memberCategory)) {
+      return res.status(400).json({ success: false, message: 'Category must be Aged, Patient or empty' });
     }
 
     if (typeof isAbroad === 'boolean') user.isAbroad = isAbroad;
@@ -3716,6 +3671,7 @@ router.put('/users/:id', async (req, res) => {
       if (abroadUnit !== undefined) user.abroadUnit = abroadUnit || null;
     }
     if (typeof isActive === 'boolean') user.isActive = isActive;
+    if (memberCategory !== undefined) applyMemberCategory(user, memberCategory, 'Admin');
 
     await user.save();
 
@@ -3948,11 +3904,14 @@ router.post('/users', requireSuperAdmin, async (req, res) => {
 // @access  Private (Super Admin only)
 router.put('/users/:id/profile', requireSuperAdmin, async (req, res) => {
   try {
-    const { ruknId, name, gender, district, area, unit, contactNo, emailId, country, isAbroad, abroadCountry, abroadArea, abroadUnit, isActive } = req.body;
+    const { ruknId, name, gender, district, area, unit, contactNo, emailId, country, isAbroad, abroadCountry, abroadArea, abroadUnit, isActive, memberCategory } = req.body;
 
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     if (user.role === 'admin') return res.status(403).json({ success: false, message: 'Cannot modify admin user' });
+    if (memberCategory !== undefined && !isValidCategoryInput(memberCategory)) {
+      return res.status(400).json({ success: false, message: 'Category must be Aged, Patient or empty' });
+    }
 
     // Check ruknId uniqueness if changed
     if (ruknId && ruknId.trim() !== user.ruknId) {
@@ -3980,6 +3939,7 @@ router.put('/users/:id/profile', requireSuperAdmin, async (req, res) => {
       if (abroadUnit !== undefined) user.abroadUnit = abroadUnit || null;
     }
     if (typeof isActive === 'boolean') user.isActive = isActive;
+    if (memberCategory !== undefined) applyMemberCategory(user, memberCategory, 'Admin');
 
     await user.save();
     const updated = await User.findById(user._id)

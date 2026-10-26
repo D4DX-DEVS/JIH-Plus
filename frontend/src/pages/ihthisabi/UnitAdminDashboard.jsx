@@ -22,6 +22,8 @@ import {
   Star
 } from 'lucide-react'
 import Pagination from '../../components/ihthisabi/Pagination'
+import MemberCategoryControl, { MemberCategoryBadge } from '../../components/ihthisabi/MemberCategoryControl'
+import toast from 'react-hot-toast'
 
 const UnitAdminDashboard = () => {
   const { user } = useAuth()
@@ -53,6 +55,9 @@ const UnitAdminDashboard = () => {
   const [selectedMember, setSelectedMember] = useState(null)
   const [memberDetails, setMemberDetails] = useState(null)
   const [memberDetailsLoading, setMemberDetailsLoading] = useState(false)
+  // Report category (Aged / Patient) of the open member
+  const [categoryDraft, setCategoryDraft] = useState(null)
+  const [categorySaving, setCategorySaving] = useState(false)
   const [selectedSubmission, setSelectedSubmission] = useState(null)
   const [showSubmissionModal, setShowSubmissionModal] = useState(false)
   const [submissionDetails, setSubmissionDetails] = useState(null)
@@ -217,6 +222,7 @@ const UnitAdminDashboard = () => {
     console.log('Member from list:', member)
     setSelectedMember(member)
     setMemberDetails(member)
+    setCategoryDraft(member.memberCategory || null)
     
     // Optionally try to fetch additional details if needed
     // But use the list data immediately so user sees info right away
@@ -240,6 +246,46 @@ const UnitAdminDashboard = () => {
       setMemberDetailsLoading(false)
     }
   }
+
+  const handleSaveMemberCategory = async () => {
+    if (!selectedMember) return
+    setCategorySaving(true)
+    try {
+      const response = await api.put(`/unitadmin/members/${selectedMember._id}/category`, { memberCategory: categoryDraft })
+      const updated = response.data.data.member
+      const patch = { memberCategory: updated.memberCategory, memberCategoryFrom: updated.memberCategoryFrom }
+      setMembers((prev) => prev.map((m) => (m._id === updated._id ? { ...m, ...patch } : m)))
+      setSelectedMember((prev) => (prev ? { ...prev, ...patch } : prev))
+      setMemberDetails((prev) => (prev ? { ...prev, ...patch } : prev))
+      toast.success('Report category updated')
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update report category')
+    } finally {
+      setCategorySaving(false)
+    }
+  }
+
+  // Aged / Patient toggle shown inside a member's detail panel (phone + desktop)
+  const renderCategoryEditor = () => (
+    <div className="mt-3 border-t border-blue-100 pt-3">
+      <p className="mb-2 text-xs font-semibold text-gray-900">Report category</p>
+      <MemberCategoryControl
+        value={categoryDraft}
+        savedValue={memberDetails?.memberCategory}
+        savedFrom={memberDetails?.memberCategoryFrom}
+        onChange={setCategoryDraft}
+        disabled={categorySaving}
+      />
+      <button
+        type="button"
+        onClick={handleSaveMemberCategory}
+        disabled={categorySaving || (categoryDraft || null) === (memberDetails?.memberCategory || null)}
+        className="mt-2 inline-flex min-h-[44px] w-full items-center justify-center rounded-full bg-[#161F2F] px-4 text-xs font-semibold text-white hover:bg-[#1a2538] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-700 sm:w-auto"
+      >
+        {categorySaving ? 'Saving…' : 'Save category'}
+      </button>
+    </div>
+  )
 
   const handleSubmissionClick = async (submission) => {
     try {
@@ -816,7 +862,10 @@ const UnitAdminDashboard = () => {
                               {(member.name || 'U').charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="ih-list-title">{member.name}</div>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <div className="ih-list-title min-w-0 max-w-full">{member.name}</div>
+                                <MemberCategoryBadge category={member.memberCategory} />
+                              </div>
                               <div className="ih-list-meta">
                                 {member.ruknId || 'N/A'} · {member.role || member.position || 'Member'}
                               </div>
@@ -845,12 +894,15 @@ const UnitAdminDashboard = () => {
                               {memberDetailsLoading ? (
                                 <p className="text-[11px] text-gray-500">Loading details…</p>
                               ) : memberDetails ? (
-                                <div className="grid gap-1">
-                                  <p><span className="font-semibold text-gray-900">Email:</span> {memberDetails?.emailId || memberDetails?.email || memberDetails?.emailAddress || '-'}</p>
-                                  <p><span className="font-semibold text-gray-900">Phone:</span> {memberDetails?.contactNo || memberDetails?.mobile || memberDetails?.phone || memberDetails?.phoneNumber || '-'}</p>
-                                  <p><span className="font-semibold text-gray-900">Unit:</span> {memberDetails?.unit || memberDetails?.unitName || '-'}</p>
-                                  <p><span className="font-semibold text-gray-900">District:</span> {memberDetails?.district || memberDetails?.districtName || '-'}</p>
-                                </div>
+                                <>
+                                  <div className="grid gap-1">
+                                    <p><span className="font-semibold text-gray-900">Email:</span> {memberDetails?.emailId || memberDetails?.email || memberDetails?.emailAddress || '-'}</p>
+                                    <p><span className="font-semibold text-gray-900">Phone:</span> {memberDetails?.contactNo || memberDetails?.mobile || memberDetails?.phone || memberDetails?.phoneNumber || '-'}</p>
+                                    <p><span className="font-semibold text-gray-900">Unit:</span> {memberDetails?.unit || memberDetails?.unitName || '-'}</p>
+                                    <p><span className="font-semibold text-gray-900">District:</span> {memberDetails?.district || memberDetails?.districtName || '-'}</p>
+                                  </div>
+                                  {renderCategoryEditor()}
+                                </>
                               ) : null}
                             </div>
                           )}
@@ -880,7 +932,10 @@ const UnitAdminDashboard = () => {
                           }`}
                         >
                             <td className="px-3 py-4 text-sm text-gray-900">
-                              <div className="font-semibold">{member.name}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">{member.name}</span>
+                                <MemberCategoryBadge category={member.memberCategory} />
+                              </div>
                             </td>
                           <td className="px-3 py-4 text-sm text-gray-900">{member.ruknId}</td>
                           <td className="px-3 py-4 text-sm text-gray-900">{member.role || member.position || 'Member'}</td>
@@ -928,6 +983,7 @@ const UnitAdminDashboard = () => {
                                     <p className="text-xs"><span className="font-semibold text-gray-900">District:</span> {memberDetails?.district || memberDetails?.districtName || '-'}</p>
                                   </div>
                                 )}
+                                {!memberDetailsLoading && renderCategoryEditor()}
                               </div>
                             </td>
                           </tr>

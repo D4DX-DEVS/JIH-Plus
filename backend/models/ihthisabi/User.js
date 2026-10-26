@@ -99,6 +99,28 @@ const userSchema = new mongoose.Schema({
     ref: 'AbroadUnit',
     default: null
   },
+  // Aged / Patient members are exempt from the regular form. Admins (any member)
+  // or unit admins (own unit) set this; from `memberCategoryFrom` onwards an
+  // alternative submission of this type is created for them automatically each
+  // quarter (utils/memberCategory.js).
+  memberCategory: {
+    type: String,
+    enum: ['Aged', 'Patient', null],
+    default: null
+  },
+  // First report quarter that is auto-submitted: the quarter after the one that
+  // was open for submission when the category was set.
+  memberCategoryFrom: {
+    year: { type: Number },
+    quarter: { type: Number, min: 1, max: 4 }
+  },
+  memberCategoryUpdatedAt: {
+    type: Date
+  },
+  memberCategoryUpdatedBy: {
+    type: String,
+    trim: true
+  },
   // Legacy fields for admin users (keep for backward compatibility)
   username: {
     type: String,

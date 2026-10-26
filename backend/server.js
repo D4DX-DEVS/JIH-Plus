@@ -6,6 +6,7 @@ const initializeMonthlyReportScheduler = require('./schedulers/monthlyReportSche
 const initializeYearlyReportScheduler = require('./schedulers/yearlyReportScheduler');
 const initializeQuarterlyReportScheduler = require('./schedulers/quarterlyReportScheduler');
 const initializeIhthisabiDynamicReportScheduler = require('./schedulers/ihthisabiDynamicReportScheduler');
+const initializeIhthisabiAutoAlternativeScheduler = require('./schedulers/ihthisabiAutoAlternativeScheduler');
 
 const app = express();
 app.use(cors());
@@ -77,6 +78,8 @@ ihthisabiConnection.on('connected', async () => {
 
     // Kick off dynamic report scheduler after connection is ready
     initializeIhthisabiDynamicReportScheduler();
+    // Auto-submit alternative reports for Aged / Patient members
+    initializeIhthisabiAutoAlternativeScheduler();
   } catch (indexErr) {
     console.error('Error syncing IHTHISABI User indexes:', indexErr);
   }

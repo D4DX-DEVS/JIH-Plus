@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../utils/ihthisabi/api'
-import { X, User, Phone, Mail, MapPin, Building2, Calendar, CheckCircle2, XCircle, Loader2, Users, FileText, Globe, Save } from 'lucide-react'
+import { X, User, Phone, Mail, MapPin, Building2, Calendar, CheckCircle2, XCircle, Loader2, Users, FileText, Globe, Save, HeartPulse } from 'lucide-react'
 import toast from 'react-hot-toast'
+import MemberCategoryControl, { MemberCategoryBadge } from './MemberCategoryControl'
 
 const UserProfileModal = ({ userId, isOpen, onClose }) => {
   const navigate = useNavigate()
@@ -15,6 +16,10 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
   const [isAbroadEdit, setIsAbroadEdit] = useState(false)
   const [abroadCountryEdit, setAbroadCountryEdit] = useState('')
   const [abroadSaving, setAbroadSaving] = useState(false)
+
+  // Report category (Aged / Patient) edit state
+  const [categoryEdit, setCategoryEdit] = useState(null)
+  const [categorySaving, setCategorySaving] = useState(false)
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -40,6 +45,7 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
       setUser(userData)
       setIsAbroadEdit(userData.isAbroad || false)
       setAbroadCountryEdit(userData.abroadCountry?._id || userData.abroadCountry || '')
+      setCategoryEdit(userData.memberCategory || null)
       
       // Fetch submissions for all users (not just rukn — role check is at render time)
       fetchSubmissions(userData._id || userId)
@@ -69,6 +75,21 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
       toast.error(err.response?.data?.message || 'Failed to update abroad status')
     } finally {
       setAbroadSaving(false)
+    }
+  }
+
+  const handleSaveCategory = async () => {
+    setCategorySaving(true)
+    try {
+      const res = await api.put(`/ihthisabi/admin/users/${userId}`, { memberCategory: categoryEdit })
+      const updatedUser = res.data.data.user
+      setUser(updatedUser)
+      setCategoryEdit(updatedUser.memberCategory || null)
+      toast.success('Report category updated')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update report category')
+    } finally {
+      setCategorySaving(false)
     }
   }
 
@@ -322,6 +343,39 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
                       >
                         <Save className="w-4 h-4" />
                         {abroadSaving ? 'Saving...' : 'Save Abroad Status'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Report Category — Aged / Patient members are auto-submitted */}
+              {user.role === 'rukn' && (
+                <div className="border-t border-gray-200 pt-6">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-3 pb-2">
+                    <span className="flex items-center">
+                      <HeartPulse className="w-5 h-5 mr-2 text-rose-600" />
+                      Report Category
+                    </span>
+                    <MemberCategoryBadge category={user.memberCategory} />
+                  </h4>
+
+                  <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 space-y-4">
+                    <MemberCategoryControl
+                      value={categoryEdit}
+                      savedValue={user.memberCategory}
+                      savedFrom={user.memberCategoryFrom}
+                      onChange={setCategoryEdit}
+                      disabled={categorySaving}
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleSaveCategory}
+                        disabled={categorySaving || (categoryEdit || null) === (user.memberCategory || null)}
+                        className="inline-flex min-h-[44px] items-center gap-2 px-4 py-2.5 bg-[#161F2F] text-white text-sm font-medium rounded-lg hover:bg-[#1a2538] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-700 disabled:opacity-100 transition-colors sm:min-h-0"
+                      >
+                        <Save className="w-4 h-4" />
+                        {categorySaving ? 'Saving...' : 'Save Category'}
                       </button>
                     </div>
                   </div>
