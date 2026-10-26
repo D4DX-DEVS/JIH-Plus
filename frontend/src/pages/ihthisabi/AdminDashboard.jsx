@@ -49,7 +49,7 @@ import { renderTemplate, getDefaultBlocks } from '../../utils/ihthisabi/replyTem
 import ReplyTemplateBuilder from '../../components/ihthisabi/ReplyTemplateBuilder'
 import ArchiveManagement from '../../components/ihthisabi/ArchiveManagement'
 import MasterDataManagement from '../../components/ihthisabi/MasterDataManagement'
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, RadialBarChart, RadialBar, CartesianGrid } from 'recharts'
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, RadialBarChart, RadialBar, PolarAngleAxis, CartesianGrid } from 'recharts'
 
 // Shared chart styling: no heavy axis rules, muted ticks, soft floating tooltip.
 const AXIS = { tick: { fontSize: 10, fill: '#98A2B3' }, axisLine: false, tickLine: false }
@@ -63,6 +63,9 @@ const TOOLTIP = {
   },
   cursor: { fill: 'rgba(16,24,40,0.04)' },
 }
+// Share of `total` as a percentage, floored to one decimal (same rule as the
+// backend) so it only reads 100% when every member submitted.
+const pctOf = (n, total) => (total > 0 ? Math.floor((n / total) * 1000) / 10 : 0)
 // Dynamic Forms temporarily hidden
 
 const AdminDashboard = () => {
@@ -133,9 +136,7 @@ const AdminDashboard = () => {
   const [unitsStatusLoading, setUnitsStatusLoading] = useState(false)
   const [unitsStatusDistrict, setUnitsStatusDistrict] = useState('')
   const [unitsStatusArea, setUnitsStatusArea] = useState('')
-  const [unitsStatusDistricts, setUnitsStatusDistricts] = useState([])
-  const [unitsStatusAreas, setUnitsStatusAreas] = useState([])
-  const [unitsListTab, setUnitsListTab] = useState('pending')
+  const [unitsListTab, setUnitsListTab] = useState('notSubmitted')
 
   // Unit Reply Form State
   // Submission quarter = previous quarter (units submit for the prior quarter)
@@ -199,13 +200,12 @@ const AdminDashboard = () => {
       fetchReplyDistricts()
       fetchReplyTemplate()
       fetchDistrictStats()
-      fetchUnitsStatusDistrictOptions()
       fetchUnitsStatus()
     }
   }, [user])
 
-  // Default to just the single most active district — the full list is too dense
-  // to be useful as a default view. Districts are pre-sorted by current count desc.
+  // Default to just the single largest district — the full list is too dense
+  // to be useful as a default view. Districts are pre-sorted by member count desc.
   useEffect(() => {
     if (!chartDistrictsInitialized && districtStats.length > 0) {
       setSelectedChartDistricts([districtStats[0].district])
@@ -402,26 +402,6 @@ const AdminDashboard = () => {
     }
   }
 
-  const fetchUnitsStatusDistrictOptions = async () => {
-    try {
-      const response = await api.get('/location/districts')
-      setUnitsStatusDistricts((response.data.data || []).map(d => d.name || d.id))
-    } catch (error) {
-      console.error('Error fetching district options:', error)
-    }
-  }
-
-  const fetchUnitsStatusAreaOptions = async (district) => {
-    try {
-      setUnitsStatusAreas([])
-      if (!district) return
-      const response = await api.get(`/location/areas/${encodeURIComponent(district)}`)
-      setUnitsStatusAreas((response.data.data || []).map(a => a.name || a.id))
-    } catch (error) {
-      console.error('Error fetching area options:', error)
-    }
-  }
-
   const fetchUnitsStatus = async (district = '', area = '') => {
     try {
       setUnitsStatusLoading(true)
@@ -441,7 +421,6 @@ const AdminDashboard = () => {
   const handleUnitsStatusDistrictChange = (district) => {
     setUnitsStatusDistrict(district)
     setUnitsStatusArea('')
-    fetchUnitsStatusAreaOptions(district)
     fetchUnitsStatus(district, '')
   }
 
@@ -1809,6 +1788,9 @@ const AdminDashboard = () => {
               <p className="ih-stat-meta mt-1">
                 Q{dashboardData.prevQuarter} {dashboardData.prevYear} → Q{dashboardData.currentQuarter} {dashboardData.currentYear}
               </p>
+              <p className="ih-stat-meta mt-0.5">
+                {dashboardData.previousQuarterCompletionPercent ?? 0}% → <span className="font-semibold text-gray-700">{dashboardData.currentQuarterCompletionPercent ?? 0}%</span> of members
+              </p>
             </div>
 
             {/* Current Period Submissions */}
@@ -1825,15 +1807,44 @@ const AdminDashboard = () => {
                   <FileText className="w-4 h-4 text-purple-600" />
                 </div>
               </div>
+              {/* Male + Female (+ Other) always adds up to the total above */}
               <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] sm:text-xs">
                 <span className="font-medium text-blue-600">{dashboardData.currentQuarterMale || 0} M</span>
                 <span className="font-medium text-pink-600">{dashboardData.currentQuarterFemale || 0} F</span>
+                {dashboardData.currentQuarterOther > 0 && (
+                  <span
+                    className="font-medium text-gray-500"
+                    title="Submissions from members who are now inactive, removed, or have no gender on record"
+                  >
+                    {dashboardData.currentQuarterOther} other
+                  </span>
+                )}
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate('submissions') }}
                   className="font-medium text-blue-600 transition-colors hover:text-blue-700"
                 >
                   View all →
                 </button>
+              </div>
+              {/* Completion against active members */}
+              <div className="mt-2">
+                <div
+                  className="h-1.5 w-full overflow-hidden rounded-full bg-purple-100"
+                  role="progressbar"
+                  aria-label="Members who submitted this period"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={dashboardData.currentQuarterCompletionPercent ?? 0}
+                >
+                  <div
+                    className="h-full rounded-full bg-purple-500"
+                    style={{ width: `${dashboardData.currentQuarterCompletionPercent ?? 0}%` }}
+                  />
+                </div>
+                <p className="ih-stat-meta mt-1">
+                  <span className="font-semibold text-gray-700">{dashboardData.currentQuarterCompletionPercent ?? 0}%</span>
+                  {' '}· {dashboardData.currentQuarterSubmittedMembers ?? 0}/{dashboardData.totalRuknUsers || 0} members
+                </p>
               </div>
             </div>
 
@@ -1876,15 +1887,21 @@ const AdminDashboard = () => {
               <ResponsiveContainer width="100%" height={170}>
                 <BarChart
                   data={[
-                    { name: 'Male', value: dashboardData.currentQuarterMale || 0, fill: '#3b82f6' },
-                    { name: 'Female', value: dashboardData.currentQuarterFemale || 0, fill: '#ec4899' },
+                    { name: 'Male', value: dashboardData.currentQuarterMale || 0, members: dashboardData.maleUsers || 0, fill: '#3b82f6' },
+                    { name: 'Female', value: dashboardData.currentQuarterFemale || 0, members: dashboardData.femaleUsers || 0, fill: '#ec4899' },
                   ]}
                   margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
                 >
                   <CartesianGrid {...GRID} />
                   <XAxis dataKey="name" {...AXIS} />
                   <YAxis {...AXIS} allowDecimals={false} width={32} />
-                  <Tooltip {...TOOLTIP} />
+                  <Tooltip
+                    {...TOOLTIP}
+                    formatter={(value, _name, item) => [
+                      `${value} of ${item.payload.members} (${pctOf(value, item.payload.members)}%)`,
+                      'Submitted',
+                    ]}
+                  />
                   <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                     {[{ fill: '#3b82f6' }, { fill: '#ec4899' }].map((entry, index) => (
                       <Cell key={index} fill={entry.fill} />
@@ -1899,13 +1916,13 @@ const AdminDashboard = () => {
               <h3 className="mb-2 text-[11px] font-semibold text-gray-700 sm:text-sm">Members Status</h3>
               {(() => {
                 const totalUsers = dashboardData.totalRuknUsers || 0;
-                const submitted = dashboardData.currentQuarterSubmissions || 0;
-                const notSubmitted = Math.max(0, totalUsers - submitted);
+                const submitted = dashboardData.currentQuarterSubmittedMembers || 0;
+                const notSubmitted = dashboardData.currentQuarterPendingMembers || 0;
                 // Counts live in the legend rather than in slice labels — outside
                 // labels overflow the chart box on narrow screens.
                 const pieData = [
-                  { name: `Submitted (${submitted})`, value: submitted },
-                  { name: `Pending (${notSubmitted})`, value: notSubmitted },
+                  { name: `Submitted ${submitted} (${pctOf(submitted, totalUsers)}%)`, value: submitted },
+                  { name: `Pending ${notSubmitted} (${pctOf(notSubmitted, totalUsers)}%)`, value: notSubmitted },
                 ];
                 return (
                   <ResponsiveContainer width="100%" height={170}>
@@ -1915,7 +1932,13 @@ const AdminDashboard = () => {
                         <Cell fill="#e5e7eb" />
                       </Pie>
                       <Tooltip {...TOOLTIP} cursor={false} />
-                      <Legend iconSize={8} iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                      {/* Legend text in grey: the pale Pending slice colour is unreadable as text */}
+                      <Legend
+                        iconSize={8}
+                        iconType="circle"
+                        wrapperStyle={{ fontSize: 11 }}
+                        formatter={(value) => <span className="text-gray-600">{value}</span>}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 );
@@ -1927,15 +1950,16 @@ const AdminDashboard = () => {
           {(() => {
             const prev = dashboardData.previousQuarterSubmissions || 0;
             const curr = dashboardData.currentQuarterSubmissions || 0;
-            const maxVal = Math.max(prev, curr, 1);
             const gaugeData = [
-              { name: `Q${dashboardData.prevQuarter} ${dashboardData.prevYear}`, value: Math.round((prev / maxVal) * 100), fill: '#94a3b8', rawCount: prev },
-              { name: `Q${dashboardData.currentQuarter} ${dashboardData.currentYear}`, value: Math.round((curr / maxVal) * 100), fill: '#002349', rawCount: curr },
+              { name: `Q${dashboardData.prevQuarter} ${dashboardData.prevYear}`, value: dashboardData.previousQuarterCompletionPercent ?? 0, fill: '#94a3b8', rawCount: prev },
+              { name: `Q${dashboardData.currentQuarter} ${dashboardData.currentYear}`, value: dashboardData.currentQuarterCompletionPercent ?? 0, fill: '#002349', rawCount: curr },
             ];
             return (
               <div className="ih-surface p-3 sm:p-6 mb-8">
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">Quarter vs Quarter Submissions</h3>
-                <p className="text-xs text-gray-400 mb-4">Relative comparison of submissions between quarters</p>
+                <p className="text-xs text-gray-400 mb-4">
+                  Share of the {dashboardData.totalRuknUsers || 0} active members who submitted in each quarter
+                </p>
                 <ResponsiveContainer width="100%" height={200}>
                   <RadialBarChart
                     innerRadius="30%"
@@ -1944,6 +1968,8 @@ const AdminDashboard = () => {
                     startAngle={180}
                     endAngle={0}
                   >
+                    {/* Full arc = 100% of members */}
+                    <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
                     <RadialBar
                       minAngle={5}
                       dataKey="value"
@@ -1951,11 +1977,11 @@ const AdminDashboard = () => {
                       label={false}
                     />
                     <Tooltip
-                      formatter={(value, name, props) => [`${props.payload.rawCount} submissions`, props.payload.name]}
+                      formatter={(value, name, props) => [`${props.payload.rawCount} submissions · ${value}% of members`, props.payload.name]}
                     />
                     <Legend
                       iconType="circle"
-                      formatter={(value, entry) => `${entry.payload.name}: ${entry.payload.rawCount}`}
+                      formatter={(value, entry) => `${entry.payload.name}: ${entry.payload.rawCount} (${entry.payload.value}%)`}
                     />
                   </RadialBarChart>
                 </ResponsiveContainer>
@@ -1965,7 +1991,7 @@ const AdminDashboard = () => {
           </>
         )}
 
-        {/* District-wise submissions & comparison with last period */}
+        {/* District-wise completion: active members vs members who submitted */}
         {dashboardData && (
           <div className="ih-surface p-3 sm:p-6 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
@@ -1973,7 +1999,7 @@ const AdminDashboard = () => {
                 <h3 className="text-sm font-semibold text-gray-700">District-wise Submissions</h3>
                 <p className="text-xs text-gray-400">
                   {districtStats.length > 0 &&
-                    `Q${dashboardData.prevQuarter} ${dashboardData.prevYear} vs Q${dashboardData.currentQuarter} ${dashboardData.currentYear}, by district`}
+                    `Members vs submitted, Q${dashboardData.currentQuarter} ${dashboardData.currentYear}, by district`}
                 </p>
               </div>
               <div className="relative" ref={chartDistrictDropdownRef}>
@@ -2038,7 +2064,7 @@ const AdminDashboard = () => {
                               className="rounded border-gray-300"
                             />
                             <span className="flex-1 truncate">{d.district}</span>
-                            <span className="text-xs text-gray-400">{d.current}</span>
+                            <span className="text-xs text-gray-400">{d.completionPercent}%</span>
                           </label>
                         ))}
                       {districtStats.filter((d) => d.district.toLowerCase().includes(chartDistrictSearch.toLowerCase())).length === 0 && (
@@ -2066,10 +2092,25 @@ const AdminDashboard = () => {
                       <CartesianGrid {...GRID} />
                       <XAxis type="number" allowDecimals={false} {...AXIS} />
                       <YAxis type="category" dataKey="district" width={110} {...AXIS} />
-                      <Tooltip {...TOOLTIP} />
+                      <Tooltip
+                        cursor={TOOLTIP.cursor}
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.length) return null
+                          const d = payload[0].payload
+                          return (
+                            <div style={TOOLTIP.contentStyle} className="bg-white px-3 py-2">
+                              <p className="mb-1 font-semibold text-gray-900">{d.district}</p>
+                              <p className="text-gray-500">Total members: <span className="font-medium text-gray-900">{d.totalMembers}</span></p>
+                              <p className="text-gray-500">Submitted: <span className="font-medium text-gray-900">{d.submitted}</span></p>
+                              <p className="text-gray-500">Pending: <span className="font-medium text-gray-900">{d.pending}</span></p>
+                              <p className="mt-1 font-semibold text-emerald-600">{d.completionPercent}% completed</p>
+                            </div>
+                          )
+                        }}
+                      />
                       <Legend />
-                      <Bar dataKey="previous" name={`Q${dashboardData.prevQuarter} ${dashboardData.prevYear}`} fill="#94a3b8" radius={[0, 4, 4, 0]} />
-                      <Bar dataKey="current" name={`Q${dashboardData.currentQuarter} ${dashboardData.currentYear}`} fill="#002349" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="totalMembers" name="Total members" fill="#94a3b8" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="submitted" name={`Submitted (Q${dashboardData.currentQuarter} ${dashboardData.currentYear})`} fill="#002349" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 )
@@ -2078,12 +2119,15 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Submitted / Pending units */}
+        {/* Unit completion: how many members of each unit submitted this period */}
         <div className="ih-surface p-3 sm:p-6 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
             <div>
               <h3 className="text-sm font-semibold text-gray-700">Unit Submission Status</h3>
-              <p className="text-xs text-gray-400">Units that have submitted this period, and units still pending</p>
+              <p className="text-xs text-gray-400">
+                {unitsStatus && `Q${unitsStatus.currentQuarter} ${unitsStatus.currentYear} · `}
+                How many members of each unit have submitted
+              </p>
             </div>
             <div className="flex gap-2">
               <select
@@ -2092,7 +2136,7 @@ const AdminDashboard = () => {
                 className="form-select text-base flex-1 min-w-0"
               >
                 <option value="">All Districts</option>
-                {unitsStatusDistricts.map((d) => (
+                {(unitsStatus?.districtOptions || []).map((d) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
@@ -2103,7 +2147,7 @@ const AdminDashboard = () => {
                 disabled={!unitsStatusDistrict}
               >
                 <option value="">All Areas</option>
-                {unitsStatusAreas.map((a) => (
+                {(unitsStatus?.areaOptions || []).map((a) => (
                   <option key={a} value={a}>{a}</option>
                 ))}
               </select>
@@ -2113,80 +2157,109 @@ const AdminDashboard = () => {
           {unitsStatusLoading ? (
             <div className="text-center py-8 text-sm text-gray-500">Loading unit status...</div>
           ) : unitsStatus ? (
-            <>
-              <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
-                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-gray-900">{unitsStatus.totalUnits}</p>
-                  <p className="text-xs text-gray-500">Total Units</p>
-                </div>
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <p className="text-2xl font-bold text-green-600">{unitsStatus.submittedCount}</p>
-                  <p className="text-xs text-gray-500">Submitted</p>
-                </div>
-                <div className="text-center p-3 bg-amber-50 rounded-lg">
-                  <p className="text-2xl font-bold text-amber-600">{unitsStatus.pendingCount}</p>
-                  <p className="text-xs text-gray-500">Pending</p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 mb-3 border-b border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => setUnitsListTab('pending')}
-                  className={`px-3 py-2 text-sm font-medium ${unitsListTab === 'pending' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-gray-500'}`}
-                >
-                  Pending ({unitsStatus.pendingCount})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUnitsListTab('submitted')}
-                  className={`px-3 py-2 text-sm font-medium ${unitsListTab === 'submitted' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
-                >
-                  Submitted ({unitsStatus.submittedCount})
-                </button>
-              </div>
-
-              <div className="max-h-64 overflow-y-auto">
-                {(unitsListTab === 'pending' ? unitsStatus.pendingUnits : unitsStatus.submittedUnits).length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-6">No units in this list</p>
-                ) : (
-                  <>
-                    {/* Mobile: roomy rows — one full-width row per record */}
-                    <div className="lg:hidden divide-y divide-gray-100">
-                      {(unitsListTab === 'pending' ? unitsStatus.pendingUnits : unitsStatus.submittedUnits).map((u, idx) => (
-                        <div key={`${u.district}-${u.area}-${u.unit}-${idx}`} className="min-h-[56px] flex items-center px-1 py-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">{u.unit}</p>
-                            <p className="text-[11px] text-gray-500 mt-0.5">{u.area} · {u.district}</p>
-                          </div>
-                        </div>
-                      ))}
+            (() => {
+              const tabs = [
+                { key: 'notSubmitted', label: 'Not submitted', count: unitsStatus.notSubmittedCount, units: unitsStatus.notSubmittedUnits, activeClass: 'text-rose-600 border-b-2 border-rose-600' },
+                { key: 'partial', label: 'Partial', count: unitsStatus.partialCount, units: unitsStatus.partialUnits, activeClass: 'text-amber-600 border-b-2 border-amber-600' },
+                { key: 'completed', label: 'Completed', count: unitsStatus.completedCount, units: unitsStatus.completedUnits, activeClass: 'text-green-600 border-b-2 border-green-600' },
+              ]
+              const activeList = (tabs.find((t) => t.key === unitsListTab) || tabs[0]).units
+              return (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-3">
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <p className="text-2xl font-bold text-gray-900">{unitsStatus.totalUnits}</p>
+                      <p className="text-xs text-gray-500">Total Units</p>
                     </div>
-                    {/* Desktop: table */}
-                    <div className="hidden lg:block overflow-x-auto">
-                      <ResponsiveTable className="min-w-full text-sm">
-                        <thead>
-                          <tr className="text-left text-xs text-gray-500 uppercase">
-                            <th className="py-2 pr-4">Unit</th>
-                            <th className="py-2 pr-4">Area</th>
-                            <th className="py-2 pr-4">District</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {(unitsListTab === 'pending' ? unitsStatus.pendingUnits : unitsStatus.submittedUnits).map((u, idx) => (
-                            <tr key={`${u.district}-${u.area}-${u.unit}-${idx}`}>
-                              <td className="py-2 pr-4 font-medium text-gray-900">{u.unit}</td>
-                              <td className="py-2 pr-4 text-gray-600">{u.area}</td>
-                              <td className="py-2 pr-4 text-gray-600">{u.district}</td>
-                            </tr>
+                    <div className="text-center p-3 bg-green-50 rounded-lg">
+                      <p className="text-2xl font-bold text-green-600">{unitsStatus.completedCount}</p>
+                      <p className="text-xs text-gray-500">Completed</p>
+                      <p className="text-[10px] text-gray-400">All members submitted</p>
+                    </div>
+                    <div className="text-center p-3 bg-amber-50 rounded-lg">
+                      <p className="text-2xl font-bold text-amber-600">{unitsStatus.partialCount}</p>
+                      <p className="text-xs text-gray-500">Partial</p>
+                      <p className="text-[10px] text-gray-400">Some members submitted</p>
+                    </div>
+                    <div className="text-center p-3 bg-rose-50 rounded-lg">
+                      <p className="text-2xl font-bold text-rose-600">{unitsStatus.notSubmittedCount}</p>
+                      <p className="text-xs text-gray-500">Not submitted</p>
+                      <p className="text-[10px] text-gray-400">No member submitted</p>
+                    </div>
+                  </div>
+                  <p className="mb-4 text-xs text-gray-500">
+                    Members: <span className="font-semibold text-gray-900">{unitsStatus.submittedMembers}</span> of {unitsStatus.totalMembers} submitted
+                    {' '}(<span className="font-semibold text-gray-900">{unitsStatus.completionPercent}%</span>)
+                    {' '}· <span className="font-semibold text-amber-600">{unitsStatus.pendingMembers}</span> pending
+                  </p>
+
+                  {/* Three equal columns on phones (count under label) so no tab is clipped */}
+                  <div className="grid grid-cols-3 sm:flex sm:gap-2 mb-3 border-b border-gray-200">
+                    {tabs.map((t) => (
+                      <button
+                        key={t.key}
+                        type="button"
+                        onClick={() => setUnitsListTab(t.key)}
+                        className={`min-h-[44px] px-2 sm:px-3 py-2 text-sm font-medium leading-tight ${unitsListTab === t.key ? t.activeClass : 'text-gray-500'}`}
+                      >
+                        <span className="block sm:inline">{t.label}</span> ({t.count})
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="max-h-64 overflow-y-auto">
+                    {activeList.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-6">No units in this list</p>
+                    ) : (
+                      <>
+                        {/* Mobile: roomy rows — one full-width row per record */}
+                        <div className="lg:hidden divide-y divide-gray-100">
+                          {activeList.map((u) => (
+                            <div key={`${u.district}-${u.area}-${u.unit}`} className="min-h-[56px] flex items-center gap-3 px-1 py-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">{u.unit}</p>
+                                <p className="text-[11px] text-gray-500 mt-0.5">{u.area} · {u.district}</p>
+                              </div>
+                              <div className="shrink-0 text-right">
+                                <p className="text-[13px] font-semibold text-gray-900">{u.submitted}/{u.totalMembers}</p>
+                                <p className="text-[11px] text-gray-500">{u.completionPercent}%</p>
+                              </div>
+                            </div>
                           ))}
-                        </tbody>
-                      </ResponsiveTable>
-                    </div>
-                  </>
-                )}
-              </div>
-            </>
+                        </div>
+                        {/* Desktop: table */}
+                        <div className="hidden lg:block overflow-x-auto">
+                          <ResponsiveTable className="min-w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-xs text-gray-500 uppercase">
+                                <th className="py-2 pr-4">Unit</th>
+                                <th className="py-2 pr-4">Area</th>
+                                <th className="py-2 pr-4">District</th>
+                                <th className="py-2 pr-4 text-right">Submitted / Members</th>
+                                <th className="py-2 pr-4 text-right">Pending</th>
+                                <th className="py-2 pr-4 text-right">Completion</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {activeList.map((u) => (
+                                <tr key={`${u.district}-${u.area}-${u.unit}`}>
+                                  <td className="py-2 pr-4 font-medium text-gray-900">{u.unit}</td>
+                                  <td className="py-2 pr-4 text-gray-600">{u.area}</td>
+                                  <td className="py-2 pr-4 text-gray-600">{u.district}</td>
+                                  <td className="py-2 pr-4 text-right text-gray-900">{u.submitted} / {u.totalMembers}</td>
+                                  <td className="py-2 pr-4 text-right text-gray-600">{u.pending}</td>
+                                  <td className="py-2 pr-4 text-right font-medium text-gray-900">{u.completionPercent}%</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </ResponsiveTable>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              )
+            })()
           ) : (
             <p className="text-sm text-gray-400 text-center py-6">No data</p>
           )}
