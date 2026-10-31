@@ -2473,531 +2473,219 @@ router.get('/unitadmins/:id', async (req, res) => {
   }
 });
 
-// ─── Helpers for dynamic-form → static field extraction ─────────────────────
+// ─── Unit reply ──────────────────────────────────────────────────────────────
+// The admin replies to each unit from that quarter's reply template (see
+// models/ihthisabi/ReplyTemplate.js). The backend supplies the quarter's form
+// questions and every unit member with their answers; the frontend renders
+// the template, so the template editor's live preview and the real reply run
+// through the same engine (frontend/src/utils/ihthisabi/replyTemplateEngine.js).
 
-// Map dynamic question to a known static-field category using question text keywords
-function _identifyDynamicField(question) {
-  const text = ((question.questionTextMl || question.questionText || '') + '').toLowerCase();
-  const qId  = (question.questionId || '').toLowerCase();
+// Strips the invisible joiners the form builder leaves in Malayalam labels.
+const cleanReplyText = (value) => String(value || '')
+  .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '')
+  .replace(/\s+/g, ' ')
+  .trim();
 
-  if (text.includes('ഖുർആൻ') || text.includes('quran') || qId.includes('quran')) return 'quranStudy';
-  if (text.includes('ഹദീസ്') || text.includes('hadith') || qId.includes('hadith')) return 'hadithCount';
-  // Weekly meeting – must not contain jamaath
-  if ((text.includes('ആഴ്ചയോഗം') || (text.includes('ആഴ്ച') && text.includes('യോഗ')) || text.includes('weekly')) &&
-      !text.includes('ജമാഅത്ത്')) return 'weeklyMeeting';
-  if (text.includes('ജമാഅത്ത്') || text.includes('jamaath')) return 'jamaathMeeting';
-  if (text.includes('ഗൃഹ') || text.includes('griha')) return 'grihaMeetings';
-  if (text.includes('ബൈത') || text.includes('baith') || qId.includes('baith') ||
-      text.includes('സക്കാത്ത') || text.includes('zakat') || qId.includes('zakat')) {
-    // Only the choice-based "2% paid" field (radio/dropdown/checkbox with കൃത്യം/ഭാഗികം)
-    // should drive baitulmalPaid classification. Number/text fields (e.g. "70% amount")
-    // must be ignored to avoid overwriting the correct paid/defaulter status.
-    if (['radio', 'dropdown', 'checkbox'].includes(question.answerType)) return 'baitulmal';
-    return null;
-  }
-  if (text.includes('ദഅ്‌വ') || text.includes('ദഅ്വ') || text.includes('recruit') ||
-      qId.includes('recruit') || (text.includes('ഉദ്യമ') && text.includes('മൂന്ന')) ||
-      (text.includes('ശ്രമ') && text.includes('മൂന്ന'))) return 'recruitEffort';
-  // 1:3 target – new halqa members (checkbox, values 0-3)
-  if (text.includes('ഹൽക്ക') || text.includes('halqa') || text.includes('halka') ||
-      (text.includes('1:3') && (text.includes('കൊണ്ടുവ') || text.includes('ലക്ഷ്യ') || text.includes('ആൾ')))) return 'newHalqaMembers';
-  // 1:20 target – Muslim personal relations (number)
-  if ((text.includes('1:20') || (text.includes('മുസ്ലിം') && text.includes('ബന്ധ'))) &&
-      !text.includes('ഹൽക്ക')) return 'muslimRelations';
-  // 1:10 target – community / fraternal relations (number)
-  if (text.includes('1:10') || (text.includes('സദ്ദ') && text.includes('ബന്ധ')) ||
-      (text.includes('സഹോദര') && text.includes('ബന്ധ'))) return 'communityRelations';
-  // Quarterly visits / score count (number)
-  if (text.includes('ത്രൈമാസ') || text.includes('quarterly') || qId.includes('quarterly') ||
-      qId.includes('score') || (text.includes('നടത്തിയ') && text.includes('ഡൗ'))) return 'quarterlyVisits';
-  if ((text.includes('ഇസ്‌ലാം') || text.includes('ഇസ്ലാം') || text.includes('ഇസ്ലാമിക') || text.includes('islami')) &&
-      (text.includes('വായന') || text.includes('പുസ്തക') || text.includes('സാഹിത്യ'))) return 'bookReadingIslami';
-  if ((text.includes('ആത്മ') || text.includes('atma') || text.includes('മദീന')) &&
-      (text.includes('വായന') || text.includes('പുസ്തക') || text.includes('സാഹിത്യ'))) return 'bookReadingAtma';
-  if (text.includes('വായന') || text.includes('book') || text.includes('പുസ്തക') || text.includes('സാഹിത്യ')) return 'bookReading';
-  return null;
-}
-
-// Normalise a dynamic form answer value to the English equivalent used in static form
-const _DYNAMIC_VAL_MAP = {
-  'പൂർണം': 'complete', 'complete': 'complete',
-  'കൃത്യം': 'complete',
-  'ഭാഗികം': 'partial',  'partial': 'partial',
-  'വായിച്ചില്ല': 'notread', 'notread': 'notread', 'none': 'none',
-  'അപൂർണം': 'incomplete', 'incomplete': 'incomplete',
-  'അതെ': 'yes', 'yes': 'yes',
-  'ഇല്ല': 'no',  'no': 'no',
-  'തൃപ്തികരം': 'satisfactory',    'satisfactory': 'satisfactory',
-  'തൃപ്തികരമല്ല': 'unsatisfactory', 'unsatisfactory': 'unsatisfactory',
+const parseReplyPeriod = (source) => {
+  const year = parseInt(source.year, 10);
+  const quarter = parseInt(source.quarter, 10);
+  if (!Number.isInteger(year) || year < 2020 || year > 2100) return null;
+  if (!Number.isInteger(quarter) || quarter < 1 || quarter > 4) return null;
+  return { year, quarter };
 };
-function _normDynVal(val) {
-  if (val === null || val === undefined) return null;
-  return _DYNAMIC_VAL_MAP[String(val)] || String(val);
-}
 
-// Find the absent-count subfield value in a dynamic group question answer
-function _groupAbsent(val, subFields) {
-  if (!val || typeof val !== 'object' || !subFields) return 0;
-  for (const sf of subFields) {
-    const lbl = ((sf.labelMl || sf.label || '') + '').toLowerCase();
-    const fid = (sf.fieldId || '').toLowerCase();
-    if (lbl.includes('absent') || lbl.includes('ഗ്ഹ') || fid.includes('absent')) {
-      return Number(val[sf.fieldId || fid]) || 0;
-    }
-  }
-  return 0;
-}
+const replyPeriodMatch = ({ year, quarter }) => ({
+  'submissionPeriod.year': year,
+  'submissionPeriod.quarter': quarter
+});
 
-// Build a static-equivalent `form` object from dynamicFormData + ApplicationForm questions
-function _extractStaticFromDynamic(dynamicFormData, appFormQuestions) {
-  const f = {};
-  for (const question of appFormQuestions) {
-    const fieldType = _identifyDynamicField(question);
-    if (!fieldType) continue;
-    const val = dynamicFormData[question.questionId];
-    if (val === undefined || val === null) continue;
+// The quarter's report form, reduced to what the template editor needs.
+const loadReplyForm = async (year, quarter) => {
+  const form = await ApplicationForm.findOne({ year, quarter }).lean();
+  if (!form) return null;
+  return {
+    id: String(form._id),
+    title: form.title,
+    status: form.status,
+    questions: [...(form.questions || [])]
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(q => ({
+        questionId: q.questionId,
+        text: cleanReplyText(q.questionTextMl || q.questionText).replace(/\s*:\s*$/, ''),
+        type: q.answerType,
+        section: cleanReplyText(q.sectionMl || q.section),
+        options: (q.options || []).map(o => ({
+          value: o.value,
+          label: cleanReplyText(o.labelMl || o.label || o.value)
+        })),
+        subFields: (q.subFields || []).map(s => ({
+          fieldId: s.fieldId,
+          label: cleanReplyText(s.labelMl || s.label),
+          type: s.type || 'number'
+        }))
+      }))
+  };
+};
 
-    if (fieldType === 'quranStudy') {
-      f.quranStudy = { status: _normDynVal(val) || 'none' };
-    } else if (fieldType === 'hadithCount') {
-      f.hadithCount = Number(val) || 0;
-    } else if (fieldType === 'weeklyMeeting') {
-      if (question.answerType === 'group' && typeof val === 'object') {
-        f.weeklyMeeting = { absent: _groupAbsent(val, question.subFields) };
-      } else {
-        f.weeklyMeeting = { absent: Number(val) || 0 };
-      }
-    } else if (fieldType === 'jamaathMeeting') {
-      if (question.answerType === 'group' && typeof val === 'object') {
-        f.jamaathMeeting = { absent: _groupAbsent(val, question.subFields) };
-      } else {
-        f.jamaathMeeting = { absent: Number(val) || 0 };
-      }
-    } else if (fieldType === 'grihaMeetings') {
-      f.grihameetings = Number(val) || 0;
-    } else if (fieldType === 'baitulmal') {
-      // The stored value is option.value (set by admin), which could be any string.
-      // Strategy: normalise the raw value; if that fails, fall back to checking
-      // the option's label text directly from the ApplicationForm question options.
-      const rawVal = String(val || '').trim();
-      const norm = _normDynVal(rawVal);
-      const selectedOpt = question.options?.find(o => o.value === rawVal);
-      const optText = ((selectedOpt?.labelMl || selectedOpt?.label || '') + '').trim();
-      const normLabel = _normDynVal(optText);
-      // Paid: value or label normalises to 'complete', OR label text contains paid keywords
-      const isPaid = norm === 'complete' || normLabel === 'complete' ||
-        optText.includes('കൃത്യം') || optText.includes('പൂർണം') ||
-        rawVal.includes('കൃത്യം') || rawVal.includes('പൂർണം');
-      // Defaulter: not paid, and value or label normalises to 'partial', OR contains ഭാഗികം
-      const isDefaulter = !isPaid && (
-        norm === 'partial' || normLabel === 'partial' ||
-        optText.includes('ഭാഗികം') || rawVal.includes('ഭാഗികം')
-      );
-      if (isPaid) {
-        f._baitulmal2pct = 'paid';
-      } else if (isDefaulter) {
-        f._baitulmal2pct = 'defaulter';
-      }
-    } else if (fieldType === 'recruitEffort') {
-      f.recruitEffort = _normDynVal(val);
-    } else if (fieldType === 'newHalqaMembers') {
-      f.newHalqaMembers = Number(val) || 0;
-    } else if (fieldType === 'muslimRelations') {
-      f.muslimRelations = Number(val) || 0;
-    } else if (fieldType === 'communityRelations') {
-      f.communityRelations = Number(val) || 0;
-    } else if (fieldType === 'quarterlyVisits') {
-      f.quarterlyVisits = Number(val) || 0;
-    } else if (fieldType === 'bookReadingIslami') {
-      if (!f.bookReading) f.bookReading = {};
-      f.bookReading.islami = _normDynVal(val) || 'notread';
-      f.bookReading._explicit = true;
-    } else if (fieldType === 'bookReadingAtma') {
-      if (!f.bookReading) f.bookReading = {};
-      f.bookReading.atma = _normDynVal(val) || 'notread';
-      f.bookReading._explicit = true;
-    } else if (fieldType === 'bookReading') {
-      if (!f.bookReading) f.bookReading = {};
-      if (!f.bookReading.islami) f.bookReading.islami = _normDynVal(val) || 'notread';
-      f.bookReading._explicit = true;
-    }
-  }
-  return f;
-}
+const escapeReplyRegex = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-// ─── Route ───────────────────────────────────────────────────────────────────
+// Same unit-name matching as the unit admin's own roster
+// (buildUnitExactMatch in routes/ihthisabi/unitAdmin.js).
+const unitNameMatch = (unit) => {
+  const raw = String(unit || '').trim();
+  const normalized = raw.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+  return { $in: [...new Set([raw, normalized].filter(Boolean))].map(v => new RegExp(`^${escapeReplyRegex(v)}$`, 'i')) };
+};
 
-// @desc    Get aggregated submission data for unit admin reply
-// @route   GET /api/admin/unit-reply-data
+// Active members of a unit, scoped like getUnitAdminScope in
+// routes/ihthisabi/unitAdmin.js: abroad unit admins own their members by the
+// `abroadUnit` ref; a domestic unit matches on unit name and leaves out
+// abroad members who still carry a Kerala unit string.
+const loadUnitRoster = (unitAdmin, unit) => {
+  const scope = unitAdmin && unitAdmin.isAbroad && unitAdmin.abroadUnit
+    ? { isAbroad: true, abroadUnit: unitAdmin.abroadUnit }
+    : { unit: unitNameMatch(unit), isAbroad: { $ne: true } };
+  return User.find({ ...ACTIVE_RUKN_MATCH, ...scope }).select('name ruknId').lean();
+};
+
+// @desc    Unit members and their answers for one quarter (unit reply)
+// @route   GET /api/ihthisabi/admin/unit-reply-data?unit=&year=&quarter=
 // @access  Private (Admin only)
 router.get('/unit-reply-data', async (req, res) => {
   try {
-    const { unit, year, quarter } = req.query;
-
-    if (!unit || !year || !quarter) {
-      return res.status(400).json({
-        success: false,
-        message: 'Unit, year, and quarter are required'
-      });
+    const unit = String(req.query.unit || '').trim();
+    const period = parseReplyPeriod(req.query);
+    if (!unit || !period) {
+      return res.status(400).json({ success: false, message: 'Unit, year, and quarter are required' });
     }
+    const periodMatch = replyPeriodMatch(period);
 
-    const yearNum = parseInt(year);
-    const quarterNum = parseInt(quarter);
-
-    // Get all current members of this unit (to catch submissions stored under a
-    // different unit name due to unit transfers)
-    const currentUnitMembers = await User.find({ unit: unit }).select('_id').lean();
-    const currentUnitMemberIds = currentUnitMembers.map(u => u._id);
-
-    // Get all submissions for this unit and quarter:
-    // - by stored unit name (normal case)
-    // - by current unit membership (catches transferred members)
-    const [unitSubmissions, memberSubmissions, alternativeSubmissions] = await Promise.all([
-      Submission.find({
-        unit: unit,
-        'submissionPeriod.year': yearNum,
-        'submissionPeriod.quarter': quarterNum
-      })
-        .populate('userId', 'name ruknId')
-        .populate('submittedBy', 'name ruknId')
-        .sort({ createdAt: -1 }),
-      Submission.find({
-        userId: { $in: currentUnitMemberIds },
-        unit: { $ne: unit },
-        'submissionPeriod.year': yearNum,
-        'submissionPeriod.quarter': quarterNum
-      })
-        .populate('userId', 'name ruknId')
-        .populate('submittedBy', 'name ruknId')
-        .sort({ createdAt: -1 }),
-      AlternativeSubmit.find({
-        unit: unit,
-        'submissionPeriod.year': yearNum,
-        'submissionPeriod.quarter': quarterNum
-      }).sort({ createdAt: -1 })
+    const unitAdmin = await UnitAdmin.findOne({ unit })
+      .select('name contactNo district area isAbroad abroadUnit')
+      .lean();
+    const [form, roster, existingReply] = await Promise.all([
+      loadReplyForm(period.year, period.quarter),
+      loadUnitRoster(unitAdmin, unit),
+      UnitAdminReply.findOne({ unit, ...periodMatch }).populate('repliedBy', 'name username').lean()
     ]);
 
-    // Merge, deduplicating by submission _id
-    const seenIds = new Set(unitSubmissions.map(s => String(s._id)));
-    const submissions = [...unitSubmissions];
-    for (const s of memberSubmissions) {
-      if (!seenIds.has(String(s._id))) {
-        seenIds.add(String(s._id));
-        submissions.push(s);
-      }
-    }
-
-    const emptyAgg = {
-      submittedMembers: [],
-      quranStudyCompleted: [],
-      quranStudyNotCompleted: [],
-      hadithReadingCompleted: [],
-      hadithReadingNotCompleted: [],
-      bookReadingCompleted: [],
-      bookReadingNotCompleted: [],
-      weeklyMeetingAbsentees: [],
-      jamaathMeetingAbsentees: [],
-      grihaMeetingsThreeOrMore: [],
-      grihaMeetingsLessThanThree: [],
-      baitulmalDefaulters: [],
-      presentationEffort: { satisfactory: [], unsatisfactory: [] }
+    const ownerMatch = {
+      $or: [
+        { ruknId: { $in: roster.map(m => m.ruknId).filter(Boolean) } },
+        { userId: { $in: roster.map(m => m._id) } }
+      ]
     };
+    const [submissions, alternatives] = await Promise.all([
+      Submission.find({ ...periodMatch, ...ownerMatch })
+        .select('userId ruknId dynamicFormData createdAt')
+        .sort({ createdAt: 1 })
+        .lean(),
+      AlternativeSubmit.find({ ...periodMatch, ...ownerMatch }).select('userId ruknId type').lean()
+    ]);
 
-    if (submissions.length === 0 && alternativeSubmissions.length === 0) {
-      return res.json({
-        success: true,
-        data: { unit, year: yearNum, quarter: quarterNum, submissions: [], aggregatedData: emptyAgg }
-      });
-    }
+    // A member who submits while logged in as unit admin carries that
+    // account's id as userId, so resolve by ruknId first (same rule as
+    // utils/submissionOwnerMatch).
+    const byRuknId = new Map();
+    const byId = new Map();
+    roster.forEach(m => {
+      if (m.ruknId) byRuknId.set(m.ruknId, m);
+      byId.set(String(m._id), m);
+    });
+    const resolveMember = s => (s.ruknId && byRuknId.get(s.ruknId)) || byId.get(String(s.userId));
 
-    // Pre-load any ApplicationForms needed for dynamic submissions
-    const appFormCache = {};
-    const dynamicFormIds = [...new Set(
-      submissions.filter(s => s.dynamicFormId).map(s => String(s.dynamicFormId))
-    )];
-    if (dynamicFormIds.length > 0) {
-      const appForms = await ApplicationForm.find({ _id: { $in: dynamicFormIds } }).lean();
-      appForms.forEach(af => { appFormCache[String(af._id)] = af; });
-    }
-
-    // Aggregate data
-    const submittedMembers = [];
-    const quranStudyCompleted = [];
-    const quranStudyNotCompleted = [];
-    const hadithReadingCompleted = [];
-    const hadithReadingNotCompleted = [];
-    const bookReadingCompleted = [];
-    const bookReadingNotCompleted = [];
-    const weeklyMeetingAbsentees = [];
-    const jamaathMeetingAbsentees = [];
-    const grihaMeetingsThreeOrMore = [];
-    const grihaMeetingsLessThanThree = [];
-    const baitulmalDefaulters = [];
-    const baitulmalPaid = [];
-    const weeklyMeetingPresent = [];
-    const jamaathMeetingPresent = [];
-    const presentationSatisfactory = [];
-    const presentationUnsatisfactory = [];
-    const newHalqaMembersOnePlus = [];
-    const newHalqaMembersZero = [];
-    const muslimRelationsOnePlus = [];
-    const muslimRelationsZero = [];
-    const communityRelationsOnePlus = [];
-    const communityRelationsZero = [];
-    const quarterlyVisitsOnePlus = [];
-    const quarterlyVisitsZero = [];
-
-    submissions.forEach(submission => {
-      const memberName = (submission.ruknName || submission.userId?.name || submission.submittedBy?.name || 'Unknown').toUpperCase();
-
-      // Submitted members
-      if (!submittedMembers.includes(memberName)) submittedMembers.push(memberName);
-
-      // Resolve effective form fields:
-      // For dynamic submissions, extract static-equivalent fields from dynamicFormData.
-      // Merge over base form so static defaults don't pollute dynamic results.
-      let form = Object.assign({}, submission.form || {});
-      if (submission.dynamicFormData && submission.dynamicFormId) {
-        const appForm = appFormCache[String(submission.dynamicFormId)];
-        if (appForm && appForm.questions && appForm.questions.length) {
-          const extracted = _extractStaticFromDynamic(submission.dynamicFormData, appForm.questions);
-          // Merge extracted fields (override static defaults for this submission)
-          if (extracted.quranStudy) form.quranStudy = extracted.quranStudy;
-          if (extracted.hadithCount !== undefined) form.hadithCount = extracted.hadithCount;
-          if (extracted.weeklyMeeting) form.weeklyMeeting = extracted.weeklyMeeting;
-          if (extracted.jamaathMeeting) form.jamaathMeeting = extracted.jamaathMeeting;
-          if (extracted.grihameetings !== undefined) form.grihameetings = extracted.grihameetings;
-          if (extracted._baitulmal2pct) form._baitulmal2pct = extracted._baitulmal2pct;
-          if (extracted.recruitEffort !== undefined) form.recruitEffort = extracted.recruitEffort;
-          if (extracted.newHalqaMembers !== undefined) form.newHalqaMembers = extracted.newHalqaMembers;
-          if (extracted.muslimRelations !== undefined) form.muslimRelations = extracted.muslimRelations;
-          if (extracted.communityRelations !== undefined) form.communityRelations = extracted.communityRelations;
-          if (extracted.quarterlyVisits !== undefined) form.quarterlyVisits = extracted.quarterlyVisits;
-          if (extracted.bookReading) {
-            form.bookReading = Object.assign({}, form.bookReading || {}, extracted.bookReading);
-          }
-        }
-      }
-
-      // Quran study
-      if (form.quranStudy?.status === 'complete') {
-        if (!quranStudyCompleted.includes(memberName)) quranStudyCompleted.push(memberName);
-        // upgrade: remove from notCompleted if present
-        const qIdx = quranStudyNotCompleted.indexOf(memberName);
-        if (qIdx !== -1) quranStudyNotCompleted.splice(qIdx, 1);
-      } else if (form.quranStudy?.status === 'none' || form.quranStudy?.status === 'partial') {
-        // only add to notCompleted if not already in completed
-        if (!quranStudyCompleted.includes(memberName) && !quranStudyNotCompleted.includes(memberName))
-          quranStudyNotCompleted.push(memberName);
-      }
-
-      // Hadith reading
-      if (form.hadithCount > 0) {
-        if (!hadithReadingCompleted.includes(memberName)) hadithReadingCompleted.push(memberName);
-        const hIdx = hadithReadingNotCompleted.indexOf(memberName);
-        if (hIdx !== -1) hadithReadingNotCompleted.splice(hIdx, 1);
-      } else {
-        if (!hadithReadingCompleted.includes(memberName) && !hadithReadingNotCompleted.includes(memberName))
-          hadithReadingNotCompleted.push(memberName);
-      }
-
-      // Book reading: only classify if user explicitly answered (not just Mongoose defaults)
-      const hasBookReadingData = (
-        submission.dynamicFormData
-          ? (form.bookReading && (form.bookReading._explicit === true))
-          : (submission.form && submission.form.bookReading !== undefined)
-      );
-      if (hasBookReadingData) {
-        // Check only the subfields that actually exist in the data
-        const br = form.bookReading || {};
-        const hasIslami = br.islami && br.islami !== 'notread';
-        const hasAtma   = br.atma   && br.atma   !== 'notread';
-        const islamiOk  = !hasIslami || br.islami === 'complete';
-        const atmaOk    = !hasAtma   || br.atma   === 'complete';
-        const anyFieldPresent = hasIslami || hasAtma;
-
-        if (anyFieldPresent && islamiOk && atmaOk) {
-          if (!bookReadingCompleted.includes(memberName)) bookReadingCompleted.push(memberName);
-          const bIdx = bookReadingNotCompleted.indexOf(memberName);
-          if (bIdx !== -1) bookReadingNotCompleted.splice(bIdx, 1);
-        } else if (anyFieldPresent) {
-          if (!bookReadingCompleted.includes(memberName) && !bookReadingNotCompleted.includes(memberName))
-            bookReadingNotCompleted.push(memberName);
-        }
-      }
-
-      // Weekly meeting
-      const absentCount = form.weeklyMeeting?.absent || 0;
-      if (absentCount > 0) {
-        const existing = weeklyMeetingAbsentees.find(a => a.name === memberName);
-        if (existing) {
-          existing.absentCount += absentCount;
-        } else {
-          weeklyMeetingAbsentees.push({ name: memberName, leaveCount: 0, absentCount });
-        }
-      } else if (form.weeklyMeeting !== undefined) {
-        if (!weeklyMeetingPresent.includes(memberName)) weeklyMeetingPresent.push(memberName);
-      }
-
-      // Jamaath meeting
-      const jamaathAbsent = form.jamaathMeeting?.absent || 0;
-      if (jamaathAbsent > 0) {
-        if (!jamaathMeetingAbsentees.includes(memberName)) jamaathMeetingAbsentees.push(memberName);
-      } else if (form.jamaathMeeting !== undefined) {
-        if (!jamaathMeetingPresent.includes(memberName)) jamaathMeetingPresent.push(memberName);
-      }
-
-      // Griha meetings (threshold: 2)
-      const grihaMeetingsCount = form.grihameetings || 0;
-      if (grihaMeetingsCount >= 2) {
-        if (!grihaMeetingsThreeOrMore.includes(memberName)) grihaMeetingsThreeOrMore.push(memberName);
-        const gIdx = grihaMeetingsLessThanThree.indexOf(memberName);
-        if (gIdx !== -1) grihaMeetingsLessThanThree.splice(gIdx, 1);
-      } else {
-        if (!grihaMeetingsThreeOrMore.includes(memberName) && !grihaMeetingsLessThanThree.includes(memberName))
-          grihaMeetingsLessThanThree.push(memberName);
-      }
-
-      // Baitulmal — only the single 2%-paid choice question (കൃത്യം/ഭാഗികം) counts.
-      // Dynamic: _baitulmal2pct is set only from the radio/dropdown question; 70% amount field never reaches here.
-      // Static: use baithulmaal but ONLY 'complete'/'partial' — 'incomplete' is the Mongoose default, not an explicit answer.
-      if (form._baitulmal2pct === 'paid') {
-        if (!baitulmalPaid.includes(memberName)) baitulmalPaid.push(memberName);
-        const bm1 = baitulmalDefaulters.indexOf(memberName);
-        if (bm1 !== -1) baitulmalDefaulters.splice(bm1, 1);
-      } else if (form._baitulmal2pct === 'defaulter') {
-        if (!baitulmalDefaulters.includes(memberName)) baitulmalDefaulters.push(memberName);
-        const bm2 = baitulmalPaid.indexOf(memberName);
-        if (bm2 !== -1) baitulmalPaid.splice(bm2, 1);
-      } else if (!submission.dynamicFormId) {
-        // Static form only: explicit 'complete' → paid, explicit 'partial' → defaulter
-        if (form.baithulmaal === 'complete') {
-          if (!baitulmalPaid.includes(memberName)) baitulmalPaid.push(memberName);
-        } else if (form.baithulmaal === 'partial') {
-          if (!baitulmalDefaulters.includes(memberName)) baitulmalDefaulters.push(memberName);
-        }
-      }
-
-      // Presentation effort
-      if (form.recruitEffort === 'satisfactory') {
-        if (!presentationSatisfactory.includes(memberName)) presentationSatisfactory.push(memberName);
-        const pIdx = presentationUnsatisfactory.indexOf(memberName);
-        if (pIdx !== -1) presentationUnsatisfactory.splice(pIdx, 1);
-      } else if (form.recruitEffort === 'unsatisfactory') {
-        if (!presentationSatisfactory.includes(memberName) && !presentationUnsatisfactory.includes(memberName))
-          presentationUnsatisfactory.push(memberName);
-      }
-
-      // 1:3 target – new halqa members (checkbox, values 0-3)
-      if (form.newHalqaMembers !== undefined) {
-        if (Number(form.newHalqaMembers) >= 1) {
-          if (!newHalqaMembersOnePlus.includes(memberName)) newHalqaMembersOnePlus.push(memberName);
-        } else {
-          if (!newHalqaMembersZero.includes(memberName)) newHalqaMembersZero.push(memberName);
-        }
-      }
-
-      // 1:20 target – Muslim personal relations (number)
-      if (form.muslimRelations !== undefined) {
-        if (Number(form.muslimRelations) >= 1) {
-          if (!muslimRelationsOnePlus.includes(memberName)) muslimRelationsOnePlus.push(memberName);
-        } else {
-          if (!muslimRelationsZero.includes(memberName)) muslimRelationsZero.push(memberName);
-        }
-      }
-
-      // 1:10 target – community / fraternal relations (number)
-      if (form.communityRelations !== undefined) {
-        if (Number(form.communityRelations) >= 1) {
-          if (!communityRelationsOnePlus.includes(memberName)) communityRelationsOnePlus.push(memberName);
-        } else {
-          if (!communityRelationsZero.includes(memberName)) communityRelationsZero.push(memberName);
-        }
-      }
-
-      // Quarterly visits / score count (number)
-      if (form.quarterlyVisits !== undefined) {
-        if (Number(form.quarterlyVisits) >= 1) {
-          if (!quarterlyVisitsOnePlus.includes(memberName)) quarterlyVisitsOnePlus.push(memberName);
-        } else {
-          if (!quarterlyVisitsZero.includes(memberName)) quarterlyVisitsZero.push(memberName);
-        }
-      }
+    const answersByMember = new Map(); // oldest first, so the latest submission wins
+    submissions.forEach(s => {
+      const member = resolveMember(s);
+      if (member) answersByMember.set(String(member._id), s.dynamicFormData || {});
+    });
+    const alternativeByMember = new Map();
+    alternatives.forEach(a => {
+      const member = resolveMember(a);
+      if (member) alternativeByMember.set(String(member._id), a.type);
     });
 
-    weeklyMeetingAbsentees.sort((a, b) => b.absentCount - a.absentCount);
+    const members = roster
+      .map(m => {
+        const id = String(m._id);
+        const status = answersByMember.has(id) ? 'form' : alternativeByMember.has(id) ? 'alternative' : 'pending';
+        return {
+          id,
+          name: cleanReplyText(m.name).toUpperCase() || 'UNKNOWN',
+          ruknId: m.ruknId || null,
+          status,
+          altType: status === 'alternative' ? alternativeByMember.get(id) : null,
+          answers: status === 'form' ? answersByMember.get(id) : null
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
 
-    // Include alternative submission members (Aged/Patient) in submittedMembers list
-    alternativeSubmissions.forEach(altSub => {
-      const memberName = (altSub.ruknName || 'Unknown').toUpperCase();
-      if (!submittedMembers.includes(memberName)) submittedMembers.push(memberName);
-    });
-
-    const district = submissions[0]?.district || alternativeSubmissions[0]?.district || '';
+    const counts = { total: members.length, form: 0, alternative: 0, pending: 0 };
+    members.forEach(m => { counts[m.status] += 1; });
 
     res.json({
       success: true,
       data: {
         unit,
-        district,
-        year: yearNum,
-        quarter: quarterNum,
-        totalSubmissions: submissions.length + alternativeSubmissions.length,
-        aggregatedData: {
-          submittedMembers,
-          quranStudyCompleted,
-          quranStudyNotCompleted,
-          hadithReadingCompleted,
-          hadithReadingNotCompleted,
-          bookReadingCompleted,
-          bookReadingNotCompleted,
-          weeklyMeetingAbsentees,
-          weeklyMeetingPresent,
-          jamaathMeetingAbsentees,
-          jamaathMeetingPresent,
-          grihaMeetingsThreeOrMore,
-          grihaMeetingsLessThanThree,
-          baitulmalDefaulters,
-          baitulmalPaid,
-          presentationEffort: {
-            satisfactory: presentationSatisfactory,
-            unsatisfactory: presentationUnsatisfactory
-          },
-          newHalqaMembersOnePlus,
-          newHalqaMembersZero,
-          muslimRelationsOnePlus,
-          muslimRelationsZero,
-          communityRelationsOnePlus,
-          communityRelationsZero,
-          quarterlyVisitsOnePlus,
-          quarterlyVisitsZero
-        }
+        district: unitAdmin?.district || '',
+        area: unitAdmin?.area || '',
+        year: period.year,
+        quarter: period.quarter,
+        unitAdmin: unitAdmin ? { name: unitAdmin.name, contactNo: unitAdmin.contactNo || '' } : null,
+        form,
+        members,
+        counts,
+        existingReply: existingReply
+          ? {
+              repliedAt: existingReply.repliedAt,
+              repliedBy: existingReply.repliedBy?.name || existingReply.repliedBy?.username || null,
+              whatsappSent: !!existingReply.whatsappSent,
+              formattedMessage: existingReply.formattedMessage
+            }
+          : null
       }
     });
   } catch (error) {
     console.error('Get unit reply data error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 });
 
-// @desc    Send structured reply to unit admin
-// @route   POST /api/admin/unit-reply
+// @desc    Units of a district/area that already have a reply for the quarter
+// @route   GET /api/ihthisabi/admin/unit-reply-status?year=&quarter=&district=&area=
+// @access  Private (Admin only)
+router.get('/unit-reply-status', async (req, res) => {
+  try {
+    const period = parseReplyPeriod(req.query);
+    if (!period) {
+      return res.status(400).json({ success: false, message: 'Year and quarter are required' });
+    }
+    const unitFilter = {};
+    if (req.query.district) unitFilter.district = req.query.district;
+    if (req.query.area) unitFilter.area = req.query.area;
+    const units = await UnitAdmin.distinct('unit', unitFilter);
+    const replies = await UnitAdminReply.find({ unit: { $in: units }, ...replyPeriodMatch(period) })
+      .select('unit repliedAt whatsappSent')
+      .lean();
+    const replied = {};
+    replies.forEach(r => {
+      replied[r.unit] = { repliedAt: r.repliedAt, whatsappSent: !!r.whatsappSent };
+    });
+    res.json({ success: true, data: { replied } });
+  } catch (error) {
+    console.error('Get unit reply status error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
+
+// @desc    Send the reply to a unit admin (saved, then sent on WhatsApp)
+// @route   POST /api/ihthisabi/admin/unit-reply
 // @access  Private (Admin only)
 router.post('/unit-reply', async (req, res) => {
   try {
-    const {
-      unit,
-      year,
-      quarter,
-      replyData,
-      formattedMessage
-    } = req.body;
+    const { unit, year, quarter, formattedMessage } = req.body;
 
-    if (!unit || !year || !quarter || !formattedMessage) {
+    if (!unit || !year || !quarter || !formattedMessage || !String(formattedMessage).trim()) {
       return res.status(400).json({
         success: false,
         message: 'Unit, year, quarter, and formatted message are required'
@@ -3013,14 +2701,6 @@ router.post('/unit-reply', async (req, res) => {
       });
     }
 
-    // Get district from submissions
-    const submission = await Submission.findOne({
-      unit,
-      'submissionPeriod.year': parseInt(year),
-      'submissionPeriod.quarter': parseInt(quarter)
-    });
-    const district = submission?.district || '';
-
     // Create or update reply
     const reply = await UnitAdminReply.findOneAndUpdate(
       {
@@ -3030,12 +2710,11 @@ router.post('/unit-reply', async (req, res) => {
       },
       {
         unit,
-        district,
+        district: unitAdmin.district || '',
         submissionPeriod: {
           year: parseInt(year),
           quarter: parseInt(quarter)
         },
-        replyData: replyData || {},
         formattedMessage: formattedMessage.trim(),
         repliedBy: req.user.userId,
         repliedAt: new Date()
@@ -3052,7 +2731,7 @@ router.post('/unit-reply', async (req, res) => {
       if (unitAdmin.contactNo && unitAdmin.contactNo.trim()) {
         const formattedWhatsAppMessage = formatStructuredReplyMessage(unitAdmin, formattedMessage.trim());
         whatsappResult = await sendWhatsAppMessage(unitAdmin.contactNo, formattedWhatsAppMessage);
-        
+
         if (whatsappResult.success) {
           reply.whatsappSent = true;
           reply.whatsappSentAt = new Date();
@@ -4549,16 +4228,190 @@ router.delete('/mekhala-nazims/:id', requireSuperAdmin, async (req, res) => {
   }
 });
 
-// ── Reply Template (singleton) ─────────────────────────────────────────────
+// ── Reply templates (one per quarter) ──────────────────────────────────────
 
-// GET /ihthisabi/admin/reply-template
-// Returns the saved template, or { template: null } if never configured.
+const REPLY_STATUS_VALUES = ['reported', 'form', 'alternative', 'pending', 'all'];
+const REPLY_OPS_BY_KIND = {
+  choice: ['in', 'notIn', 'answered', 'blank'],
+  multi: ['in', 'notIn', 'answered', 'blank'],
+  number: ['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'between', 'answered', 'blank'],
+  text: ['answered', 'blank', 'contains']
+};
+const MAX_REPLY_SECTIONS = 100;
+const MAX_REPLY_TEXT = 10000;
+
+// Same mapping as questionKind() in the frontend template engine.
+const replyQuestionKind = (question, subFieldId) => {
+  switch (question.type) {
+    case 'radio':
+    case 'dropdown':
+      return 'choice';
+    case 'checkbox':
+      return 'multi';
+    case 'number':
+    case 'star':
+      return 'number';
+    case 'text':
+    case 'textarea':
+      return 'text';
+    case 'group': {
+      const sub = (question.subFields || []).find(s => s.fieldId === subFieldId);
+      if (!sub) return null;
+      return sub.type === 'text' ? 'text' : 'number';
+    }
+    default:
+      return null;
+  }
+};
+
+// Validates the paragraphs sent by the template editor against the quarter's
+// form. Returns { sections } or { error } naming the paragraph at fault.
+const sanitizeReplySections = (input, form) => {
+  if (!Array.isArray(input) || input.length === 0) {
+    return { error: 'Add at least one paragraph to the template' };
+  }
+  if (input.length > MAX_REPLY_SECTIONS) {
+    return { error: `A template can have at most ${MAX_REPLY_SECTIONS} paragraphs` };
+  }
+  const questions = new Map((form?.questions || []).map(q => [q.questionId, q]));
+  const str = v => (typeof v === 'string' ? v : '');
+  const num = v => (v === '' || v === null || v === undefined ? null : Number(v));
+
+  const sections = [];
+  for (let i = 0; i < input.length; i += 1) {
+    const s = input[i] || {};
+    const where = `Paragraph ${i + 1}`;
+    const text = str(s.text);
+    if (text.length > MAX_REPLY_TEXT || str(s.emptyText).length > MAX_REPLY_TEXT) {
+      return { error: `${where} is too long` };
+    }
+
+    if (s.kind === 'text') {
+      if (!text.trim()) return { error: `${where} is empty. Write some text or remove it.` };
+      sections.push({ id: str(s.id) || undefined, kind: 'text', text });
+      continue;
+    }
+    if (s.kind !== 'members') return { error: `${where} has an unknown type` };
+    if (!text.trim()) return { error: `${where}: write the sentence that lists the members` };
+
+    const conditionInput = Array.isArray(s.conditions) ? s.conditions : [];
+    if (conditionInput.length === 0) return { error: `${where}: choose which members to list` };
+    if (conditionInput.length > 10) return { error: `${where}: use at most 10 conditions` };
+
+    const conditions = [];
+    for (const c of conditionInput) {
+      if (c && c.type === 'status' && REPLY_STATUS_VALUES.includes(c.status)) {
+        conditions.push({ type: 'status', status: c.status });
+        continue;
+      }
+      if (!c || c.type !== 'question') return { error: `${where}: choose which members to list` };
+      const question = questions.get(c.questionId);
+      if (!question) {
+        return { error: `${where} uses a question that is not in this quarter's form. Pick the question again.` };
+      }
+      const kind = replyQuestionKind(question, c.subFieldId);
+      if (!kind) return { error: `${where}: choose which part of "${question.text}" to check` };
+      if (!REPLY_OPS_BY_KIND[kind].includes(c.op)) {
+        return { error: `${where}: choose a condition for "${question.text}"` };
+      }
+
+      const condition = { type: 'question', questionId: c.questionId, op: c.op };
+      if (question.type === 'group') condition.subFieldId = c.subFieldId;
+      if (c.op === 'in' || c.op === 'notIn') {
+        const allowed = new Set(question.options.map(o => o.value));
+        const values = (Array.isArray(c.values) ? c.values : []).filter(v => typeof v === 'string' && allowed.has(v));
+        if (values.length === 0) return { error: `${where}: pick at least one answer for "${question.text}"` };
+        condition.values = [...new Set(values)];
+      } else if (c.op === 'contains') {
+        const word = str(Array.isArray(c.values) ? c.values[0] : '').trim();
+        if (!word) return { error: `${where}: type the word to look for in "${question.text}"` };
+        condition.values = [word.slice(0, 200)];
+      } else if (kind === 'number' && c.op !== 'answered' && c.op !== 'blank') {
+        const value = num(c.value);
+        if (value === null || !Number.isFinite(value)) {
+          return { error: `${where}: enter a number for "${question.text}"` };
+        }
+        condition.value = value;
+        if (c.op === 'between') {
+          const value2 = num(c.value2);
+          if (value2 === null || !Number.isFinite(value2)) {
+            return { error: `${where}: enter both numbers for "${question.text}"` };
+          }
+          condition.value2 = value2;
+        }
+      }
+      conditions.push(condition);
+    }
+
+    const limit = num(s.limit);
+    sections.push({
+      id: str(s.id) || undefined,
+      kind: 'members',
+      text,
+      match: s.match === 'any' ? 'any' : 'all',
+      conditions,
+      emptyMode: s.emptyMode === 'text' ? 'text' : 'skip',
+      emptyText: str(s.emptyText),
+      listStyle: ['comma', 'lines', 'numbered'].includes(s.listStyle) ? s.listStyle : 'comma',
+      showValue: s.showValue === true,
+      limit: Number.isInteger(limit) && limit > 0 ? limit : null
+    });
+  }
+  return { sections };
+};
+
+// @desc    One quarter's reply template, with that quarter's form questions,
+//          the other saved templates (to copy from) and the units to preview with
+// @route   GET /api/ihthisabi/admin/reply-template?year=&quarter=
+// @access  Private (Admin only)
 router.get('/reply-template', async (req, res) => {
   try {
-    const template = await ReplyTemplate.getSingleton();
+    const period = parseReplyPeriod(req.query);
+    if (!period) {
+      return res.status(400).json({ success: false, message: 'Year and quarter are required' });
+    }
+    const periodMatch = replyPeriodMatch(period);
+
+    const [template, form, submissionCount, saved, legacy, units, busiestUnits] = await Promise.all([
+      ReplyTemplate.findOne({ year: period.year, quarter: period.quarter }).lean(),
+      loadReplyForm(period.year, period.quarter),
+      Submission.countDocuments(periodMatch),
+      ReplyTemplate.find({ year: { $ne: null }, 'sections.0': { $exists: true } })
+        .select('year quarter updatedAt')
+        .sort({ year: -1, quarter: -1 })
+        .lean(),
+      ReplyTemplate.findOne({ year: null, 'blocks.0': { $exists: true } }).select('blocks').lean(),
+      UnitAdmin.find({}).select('unit district area -_id').sort({ district: 1, area: 1, unit: 1 }).lean(),
+      Submission.aggregate([
+        { $match: periodMatch },
+        { $group: { _id: '$unit', n: { $sum: 1 } } },
+        { $sort: { n: -1 } },
+        { $limit: 10 }
+      ])
+    ]);
+
+    // Preview with the unit that sent the most reports, so the editor shows
+    // real answers straight away.
+    const unitNames = new Set(units.map(u => u.unit));
+    const sampleUnit = (busiestUnits.find(u => unitNames.has(u._id)) || {})._id || units[0]?.unit || '';
+
     res.json({
       success: true,
-      data: { template: template ? { blocks: template.blocks, updatedAt: template.updatedAt } : null }
+      data: {
+        year: period.year,
+        quarter: period.quarter,
+        template: template && template.sections && template.sections.length
+          ? { sections: template.sections, updatedAt: template.updatedAt }
+          : null,
+        form,
+        submissionCount,
+        savedTemplates: saved
+          .filter(t => !(t.year === period.year && t.quarter === period.quarter))
+          .map(t => ({ year: t.year, quarter: t.quarter, updatedAt: t.updatedAt })),
+        legacyBlocks: legacy ? legacy.blocks : null,
+        units: units.map(u => ({ unit: u.unit, district: u.district || '', area: u.area || '' })),
+        sampleUnit
+      }
     });
   } catch (error) {
     console.error('Get reply template error:', error);
@@ -4566,169 +4419,33 @@ router.get('/reply-template', async (req, res) => {
   }
 });
 
-// PUT /ihthisabi/admin/reply-template
-// Upserts the global reply template. Body: { blocks: [] }
+// @desc    Save one quarter's reply template. Body: { year, quarter, sections }
+// @route   PUT /api/ihthisabi/admin/reply-template
+// @access  Private (Admin only)
 router.put('/reply-template', async (req, res) => {
   try {
-    const { blocks } = req.body;
-
-    if (!Array.isArray(blocks) || blocks.length === 0) {
-      return res.status(400).json({ success: false, message: 'blocks must be a non-empty array' });
+    const period = parseReplyPeriod(req.body || {});
+    if (!period) {
+      return res.status(400).json({ success: false, message: 'Year and quarter are required' });
     }
-
-    // Validate each block
-    for (const block of blocks) {
-      if (!['static', 'data'].includes(block.type)) {
-        return res.status(400).json({ success: false, message: `Invalid block type: ${block.type}` });
-      }
-      if (block.type === 'data') {
-        if (!block.fieldKey || typeof block.fieldKey !== 'string') {
-          return res.status(400).json({ success: false, message: 'Data blocks must have a fieldKey' });
-        }
-        if (!block.textTemplate || typeof block.textTemplate !== 'string') {
-          return res.status(400).json({ success: false, message: 'Data blocks must have a textTemplate' });
-        }
-      }
+    const form = await loadReplyForm(period.year, period.quarter);
+    const { sections, error } = sanitizeReplySections(req.body.sections, form);
+    if (error) {
+      return res.status(400).json({ success: false, message: error });
     }
 
     const template = await ReplyTemplate.findOneAndUpdate(
-      {},
-      { blocks, updatedBy: String(req.user._id || req.user.id || ''), updatedAt: new Date() },
+      { year: period.year, quarter: period.quarter },
+      { $set: { sections, updatedBy: String(req.user.userId || req.user._id || ''), updatedAt: new Date() } },
       { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    ).lean();
 
     res.json({
       success: true,
-      data: { template: { blocks: template.blocks, updatedAt: template.updatedAt } }
+      data: { template: { sections: template.sections, updatedAt: template.updatedAt } }
     });
   } catch (error) {
     console.error('Save reply template error:', error);
-    res.status(500).json({ success: false, message: 'Server error', error: error.message });
-  }
-});
-
-// ── Form Fields for Reply Template Builder ─────────────────────────────────
-
-/**
- * Build a fieldKey → Malayalam label map from ApplicationForm questions.
- */
-function _buildFieldLabels(questions) {
-  const labels = {};
-  for (const q of questions) {
-    const fieldType = _identifyDynamicField(q);
-    if (!fieldType) continue;
-    const base = q.questionTextMl || q.questionText || '';
-    if (fieldType === 'quranStudy') {
-      labels.quranStudyCompleted    = `${base} - പൂർണം`;
-      labels.quranStudyNotCompleted = `${base} - അപൂർണം`;
-    } else if (fieldType === 'hadithCount') {
-      labels.hadithReadingCompleted    = `${base} - 1+`;
-      labels.hadithReadingNotCompleted = `${base} - 0`;
-    } else if (fieldType === 'weeklyMeeting') {
-      labels.weeklyMeetingPresent   = `${base} - ഹാജർ`;
-      labels.weeklyMeetingAbsentees = `${base} - ആബ്സൻ്റ്`;
-    } else if (fieldType === 'jamaathMeeting') {
-      labels.jamaathMeetingPresent   = `${base} - ഹാജർ`;
-      labels.jamaathMeetingAbsentees = `${base} - ആബ്സൻ്റ്`;
-    } else if (fieldType === 'grihaMeetings') {
-      labels.grihaMeetingsThreeOrMore    = `${base} - 2+`;
-      labels.grihaMeetingsLessThanThree  = `${base} - 2ൽ കുറവ്`;
-    } else if (fieldType === 'baitulmal') {
-      labels.baitulmalPaid       = `${base} - അടച്ചവർ`;
-      labels.baitulmalDefaulters = `${base} - അടക്കാത്തവർ`;
-    } else if (fieldType === 'recruitEffort') {
-      labels.presentationSatisfactory    = `${base} - തൃപ്തികരം`;
-      labels.presentationUnsatisfactory  = `${base} - തൃപ്തികരമല്ല`;
-    } else if (fieldType === 'newHalqaMembers') {
-      labels.newHalqaMembersOnePlus = `${base} - 1+`;
-      labels.newHalqaMembersZero    = `${base} - 0`;
-    } else if (fieldType === 'muslimRelations') {
-      labels.muslimRelationsOnePlus = `${base} - 1+`;
-      labels.muslimRelationsZero    = `${base} - 0`;
-    } else if (fieldType === 'communityRelations') {
-      labels.communityRelationsOnePlus = `${base} - 1+`;
-      labels.communityRelationsZero    = `${base} - 0`;
-    } else if (fieldType === 'quarterlyVisits') {
-      labels.quarterlyVisitsOnePlus = `${base} - 1+`;
-      labels.quarterlyVisitsZero    = `${base} - 0`;
-    } else if (['bookReadingIslami', 'bookReadingAtma', 'bookReading'].includes(fieldType)) {
-      if (!labels.bookReadingCompleted)    labels.bookReadingCompleted    = `${base} - പൂർണം`;
-      if (!labels.bookReadingNotCompleted) labels.bookReadingNotCompleted = `${base} - അപൂർണം`;
-    }
-  }
-  return labels;
-}
-
-// GET /ihthisabi/admin/form-fields?quarter=X&year=Y
-// Returns aggregated field keys with labels derived from the published
-// ApplicationForm for that quarter, falling back to Malayalam defaults.
-router.get('/form-fields', async (req, res) => {
-  try {
-    const quarterNum = parseInt(req.query.quarter) || 0;
-    const yearNum    = parseInt(req.query.year)    || new Date().getFullYear();
-
-    if (!quarterNum || quarterNum < 1 || quarterNum > 4) {
-      return res.status(400).json({ success: false, message: 'quarter (1-4) is required' });
-    }
-
-    const FALLBACK_LABELS = {
-      submittedMembers:          'റിപ്പോർട്ട് അയച്ചവർ',
-      quranStudyCompleted:       'ഖുർആൻ പഠനം - പൂർണം',
-      quranStudyNotCompleted:    'ഖുർആൻ പഠനം - അപൂർണം',
-      hadithReadingCompleted:    'ഹദീസ് പഠനം - 1+',
-      hadithReadingNotCompleted: 'ഹദീസ് പഠനം - 0',
-      bookReadingCompleted:      'പുസ്തക വായന - പൂർണം',
-      bookReadingNotCompleted:   'പുസ്തക വായന - അപൂർണം',
-      weeklyMeetingPresent:     'ആഴ്ചയോഗം - ഹാജർ',
-      weeklyMeetingAbsentees:    'ആഴ്ചയോഗം - ആബ്സൻ്റ്',
-      jamaathMeetingPresent:     'ജമാഅത്ത് യോഗം - ഹാജർ',
-      jamaathMeetingAbsentees:   'ജമാഅത്ത് യോഗം - ആബ്സൻ്റ്',
-      grihaMeetingsThreeOrMore:  'ഗൃഹ യോഗം - 2+',
-      grihaMeetingsLessThanThree:'ഗൃഹ യോഗം - 2ൽ കുറവ്',
-      baitulmalPaid:             'ബൈത്തുൽമാൽ - അടച്ചവർ',
-      baitulmalDefaulters:       'ബൈത്തുൽമാൽ - അടക്കാത്തവർ',
-      presentationSatisfactory:  'ദഅ്‌വ ഉദ്യമം - തൃപ്തികരം',
-      presentationUnsatisfactory:'ദഅ്‌വ ഉദ്യമം - തൃപ്തികരമല്ല',
-      newHalqaMembersOnePlus:    '1:3 ഹൽക്ക - 1+',
-      newHalqaMembersZero:       '1:3 ഹൽക്ക - 0',
-      muslimRelationsOnePlus:    '1:20 മുസ്ലിം ബന്ധ - 1+',
-      muslimRelationsZero:       '1:20 മുസ്ലിം ബന്ധ - 0',
-      communityRelationsOnePlus: '1:10 സദ്ദഹോദര ബന്ധ - 1+',
-      communityRelationsZero:    '1:10 സദ്ദഹോദര ബന്ധ - 0',
-      quarterlyVisitsOnePlus:    'ത്രൈമാസ ഡൗ - 1+',
-      quarterlyVisitsZero:       'ത്രൈമാസ ഡൗ - 0',
-    };
-
-    let formTitle = null;
-    let fieldLabels = { ...FALLBACK_LABELS };
-
-    // Try to find a published ApplicationForm for this quarter/year
-    let appForm = await ApplicationForm.findOne({
-      quarter: quarterNum,
-      year: yearNum,
-      status: 'published'
-    }).lean();
-
-    // Fall back to most recent published form for this quarter (any year)
-    if (!appForm) {
-      appForm = await ApplicationForm.findOne({
-        quarter: quarterNum,
-        status: 'published'
-      }).sort({ year: -1 }).lean();
-    }
-
-    if (appForm && appForm.questions && appForm.questions.length > 0) {
-      const derived = _buildFieldLabels(appForm.questions);
-      fieldLabels = { ...FALLBACK_LABELS, ...derived };
-      formTitle = appForm.title;
-    }
-
-    res.json({
-      success: true,
-      data: { quarter: quarterNum, year: yearNum, formTitle, fieldLabels }
-    });
-  } catch (error) {
-    console.error('Get form fields error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 });
