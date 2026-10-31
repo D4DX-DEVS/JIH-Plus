@@ -1,9 +1,7 @@
-import NumericInput from "../../components/NumericInput";
 import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/ihthisabi/AuthContext'
-import { useError } from '../../contexts/ErrorContext'
 import { api } from '../../utils/ihthisabi/api'
 import UserManagement from '../../components/ihthisabi/UserManagement'
 import UserManagementDynamic from '../../components/ihthisabi/UserManagementDynamic'
@@ -14,7 +12,6 @@ import UnitAdminProfileModal from '../../components/ihthisabi/UnitAdminProfileMo
 import DistrictAdminProfileModal from '../../components/ihthisabi/DistrictAdminProfileModal'
 import ConfirmationModal from '../../components/ihthisabi/ConfirmationModal'
 import Pagination from '../../components/ihthisabi/Pagination'
-import letterheadImage from '../../assets/LH.png'
 import { 
   Users, 
   FileText, 
@@ -31,7 +28,6 @@ import {
   Mail,
   MessageSquare,
   Send,
-  Download,
   Globe,
   Archive,
   Database,
@@ -40,13 +36,10 @@ import {
   Search,
   Plus,
   MapPin,
-  SlidersHorizontal,
-  Copy
+  SlidersHorizontal
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { downloadUnitReplyPDF } from '../../utils/unitReplyPdfGenerator'
-import { renderTemplate, getDefaultBlocks } from '../../utils/ihthisabi/replyTemplateEngine'
-import ReplyTemplateBuilder from '../../components/ihthisabi/ReplyTemplateBuilder'
+import UnitReplyPanel from '../../components/ihthisabi/UnitReplyPanel'
 import ArchiveManagement from '../../components/ihthisabi/ArchiveManagement'
 import MasterDataManagement from '../../components/ihthisabi/MasterDataManagement'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, RadialBarChart, RadialBar, PolarAngleAxis, CartesianGrid } from 'recharts'
@@ -72,7 +65,6 @@ const AdminDashboard = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isAuthenticated, loading: authLoading } = useAuth()
-  const { showError } = useError()
   const [dashboardData, setDashboardData] = useState(null)
   const [submissions, setSubmissions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -138,54 +130,6 @@ const AdminDashboard = () => {
   const [unitsStatusArea, setUnitsStatusArea] = useState('')
   const [unitsListTab, setUnitsListTab] = useState('notSubmitted')
 
-  // Unit Reply Form State
-  // Submission quarter = previous quarter (units submit for the prior quarter)
-  const _currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3)
-  const _submissionQuarter = _currentQuarter === 1 ? 4 : _currentQuarter - 1
-  const _submissionYear = _currentQuarter === 1 ? new Date().getFullYear() - 1 : new Date().getFullYear()
-
-  const [replyFormData, setReplyFormData] = useState({
-    unit: '',
-    year: _submissionYear,
-    quarter: _submissionQuarter,
-    submittedMembers: [],
-    quranStudyCompleted: [],
-    quranStudyNotCompleted: [],
-    hadithReadingCompleted: [],
-    hadithReadingNotCompleted: [],
-    bookReadingCompleted: [],
-    bookReadingNotCompleted: [],
-    weeklyMeetingAbsentees: [],
-    weeklyMeetingPresent: [],
-    jamaathMeetingAbsentees: [],
-    jamaathMeetingPresent: [],
-    grihaMeetingsThreeOrMore: [],
-    grihaMeetingsLessThanThree: [],
-    baitulmalDefaulters: [],
-    baitulmalPaid: [],
-    presentationSatisfactory: [],
-    presentationUnsatisfactory: []
-  })
-  // Cascading unit selection for unit reply
-  const [replyDistrict, setReplyDistrict] = useState('')
-  const [replyArea, setReplyArea] = useState('')
-  const [replyDistricts, setReplyDistricts] = useState([])
-  const [replyAreas, setReplyAreas] = useState([])
-  const [replyUnits, setReplyUnits] = useState([])
-  const [replyAreasLoading, setReplyAreasLoading] = useState(false)
-  const [replyUnitsLoading, setReplyUnitsLoading] = useState(false)
-  const [replyDataLoading, setReplyDataLoading] = useState(false)
-  const [replySending, setReplySending] = useState(false)
-  const [formattedReply, setFormattedReply] = useState('')
-  const [pdfGenerating, setPdfGenerating] = useState(false)
-
-  // Reply template state
-  const [replyTemplate, setReplyTemplate] = useState(getDefaultBlocks())
-  const [templateEditing, setTemplateEditing] = useState(false)
-  const [templateSaving, setTemplateSaving] = useState(false)
-  const [formFieldLabels, setFormFieldLabels] = useState({})
-  const [templateQuarter, setTemplateQuarter] = useState(() => Math.ceil((new Date().getMonth() + 1) / 3))
-
   const isSuperAdmin = user?.isAdmin || user?.role === 'mainAdmin'
 
   useEffect(() => {
@@ -197,8 +141,6 @@ const AdminDashboard = () => {
     if (user && (user.role === 'admin' || user.role === 'mainAdmin')) {
       fetchDashboardData()
       fetchSubmissions()
-      fetchReplyDistricts()
-      fetchReplyTemplate()
       fetchDistrictStats()
       fetchUnitsStatus()
     }
@@ -565,236 +507,6 @@ const AdminDashboard = () => {
     fetchUnitAdmins('', '')
   }
 
-  const fetchReplyTemplate = async () => {
-    try {
-      const response = await api.get('/ihthisabi/admin/reply-template')
-      if (response.data.data.template?.blocks?.length > 0) {
-        setReplyTemplate(response.data.data.template.blocks)
-      }
-      // If null (never saved), keep the default blocks already in state
-    } catch (error) {
-      console.error('Error fetching reply template:', error)
-      // Silent — default template will be used
-    }
-  }
-
-  const fetchFormFields = async (quarter) => {
-    try {
-      const response = await api.get('/ihthisabi/admin/form-fields', {
-        params: { quarter, year: new Date().getFullYear() },
-      })
-      if (response.data.success) setFormFieldLabels(response.data.data.fieldLabels || {})
-    } catch (error) {
-      console.error('Error fetching form fields:', error)
-    }
-  }
-
-  const saveReplyTemplate = async (blocks) => {
-    try {
-      setTemplateSaving(true)
-      const response = await api.put('/ihthisabi/admin/reply-template', { blocks })
-      if (response.data.success) {
-        setReplyTemplate(blocks)
-        setTemplateEditing(false)
-        toast.success('Reply template saved')
-      }
-    } catch (error) {
-      console.error('Error saving reply template:', error)
-      toast.error(error.response?.data?.message || 'Failed to save template')
-    } finally {
-      setTemplateSaving(false)
-    }
-  }
-
-  const fetchReplyDistricts = async () => {
-    try {
-      const response = await api.get('/ihthisabi/admin/unitadmins/districts')
-      setReplyDistricts(response.data.data.districts || [])
-    } catch (error) {
-      console.error('Error fetching reply districts:', error)
-    }
-  }
-
-  const fetchReplyAreas = async (district) => {
-    try {
-      setReplyAreasLoading(true)
-      setReplyAreas([])
-      setReplyUnits([])
-      setReplyArea('')
-      setReplyFormData(prev => ({ ...prev, unit: '' }))
-      const response = await api.get('/ihthisabi/admin/unitadmins/areas', { params: { district } })
-      setReplyAreas(response.data.data.areas || [])
-    } catch (error) {
-      console.error('Error fetching reply areas:', error)
-    } finally {
-      setReplyAreasLoading(false)
-    }
-  }
-
-  const fetchReplyUnits = async (district, area) => {
-    try {
-      setReplyUnitsLoading(true)
-      setReplyUnits([])
-      setReplyFormData(prev => ({ ...prev, unit: '' }))
-      const response = await api.get('/ihthisabi/admin/unitadmins/units', { params: { district, area } })
-      setReplyUnits(response.data.data.units || [])
-    } catch (error) {
-      console.error('Error fetching reply units:', error)
-    } finally {
-      setReplyUnitsLoading(false)
-    }
-  }
-
-  const fetchReplyData = async () => {
-    if (!replyFormData.unit || !replyFormData.year || !replyFormData.quarter) {
-      toast.error('Please select unit, year, and quarter')
-      return
-    }
-
-    try {
-      setReplyDataLoading(true)
-      const response = await api.get('/ihthisabi/admin/unit-reply-data', {
-        params: {
-          unit: replyFormData.unit,
-          year: replyFormData.year,
-          quarter: replyFormData.quarter
-        }
-      })
-
-      if (response.data.success) {
-        const data = response.data.data.aggregatedData
-        setReplyFormData(prev => ({
-          ...prev,
-          submittedMembers: data.submittedMembers || [],
-          quranStudyCompleted: data.quranStudyCompleted || [],
-          quranStudyNotCompleted: data.quranStudyNotCompleted || [],
-          hadithReadingCompleted: data.hadithReadingCompleted || [],
-          hadithReadingNotCompleted: data.hadithReadingNotCompleted || [],
-          bookReadingCompleted: data.bookReadingCompleted || [],
-          bookReadingNotCompleted: data.bookReadingNotCompleted || [],
-          weeklyMeetingAbsentees: data.weeklyMeetingAbsentees || [],
-          weeklyMeetingPresent: data.weeklyMeetingPresent || [],
-          jamaathMeetingAbsentees: data.jamaathMeetingAbsentees || [],
-          jamaathMeetingPresent: data.jamaathMeetingPresent || [],
-          grihaMeetingsThreeOrMore: data.grihaMeetingsThreeOrMore || [],
-          grihaMeetingsLessThanThree: data.grihaMeetingsLessThanThree || [],
-          baitulmalDefaulters: data.baitulmalDefaulters || [],
-          baitulmalPaid: data.baitulmalPaid || [],
-          presentationSatisfactory: data.presentationEffort?.satisfactory || [],
-          presentationUnsatisfactory: data.presentationEffort?.unsatisfactory || []
-        }))
-        generateFormattedReply(response.data.data)
-        toast.success('Data loaded successfully')
-      }
-    } catch (error) {
-      console.error('Error fetching reply data:', error)
-      toast.error(error.response?.data?.message || 'Failed to fetch reply data')
-    } finally {
-      setReplyDataLoading(false)
-    }
-  }
-
-  const generateFormattedReply = (data) => {
-    const { unit, district, year, quarter, aggregatedData } = data
-    const message = renderTemplate(replyTemplate, aggregatedData, { unit, district: district || '', year, quarter })
-    setFormattedReply(message)
-  }
-
-  const handleSendReply = async () => {
-    if (!replyFormData.unit || !replyFormData.year || !replyFormData.quarter || !formattedReply) {
-      toast.error('Please fill all required fields and generate reply')
-      return
-    }
-
-    try {
-      setReplySending(true)
-      const response = await api.post('/ihthisabi/admin/unit-reply', {
-        unit: replyFormData.unit,
-        year: replyFormData.year,
-        quarter: replyFormData.quarter,
-        replyData: {
-          submittedMembers: replyFormData.submittedMembers,
-          quranStudyCompleted: replyFormData.quranStudyCompleted,
-          quranStudyNotCompleted: replyFormData.quranStudyNotCompleted,
-          hadithReadingCompleted: replyFormData.hadithReadingCompleted,
-          hadithReadingNotCompleted: replyFormData.hadithReadingNotCompleted,
-          bookReadingCompleted: replyFormData.bookReadingCompleted,
-          bookReadingNotCompleted: replyFormData.bookReadingNotCompleted,
-          weeklyMeetingAbsentees: replyFormData.weeklyMeetingAbsentees,
-          jamaathMeetingAbsentees: replyFormData.jamaathMeetingAbsentees,
-          grihaMeetingsThreeOrMore: replyFormData.grihaMeetingsThreeOrMore,
-          grihaMeetingsLessThanThree: replyFormData.grihaMeetingsLessThanThree,
-          baitulmalDefaulters: replyFormData.baitulmalDefaulters,
-          presentationEffort: {
-            satisfactory: replyFormData.presentationSatisfactory,
-            unsatisfactory: replyFormData.presentationUnsatisfactory
-          }
-        },
-        formattedMessage: formattedReply
-      })
-
-      if (response.data.success) {
-        const whatsappSent = response.data.data?.whatsappSent
-        if (whatsappSent) {
-          toast.success('Reply sent successfully and WhatsApp message delivered!')
-        } else {
-          toast.success('Reply sent successfully')
-          showError({ type: 'whatsapp_failed' })
-        }
-        // Preserve district/area/unit — only clear the loaded reply data
-        setReplyFormData(prev => ({
-          ...prev,
-          submittedMembers: [],
-          quranStudyCompleted: [],
-          quranStudyNotCompleted: [],
-          hadithReadingCompleted: [],
-          hadithReadingNotCompleted: [],
-          bookReadingCompleted: [],
-          bookReadingNotCompleted: [],
-          weeklyMeetingAbsentees: [],
-          weeklyMeetingPresent: [],
-          jamaathMeetingAbsentees: [],
-          jamaathMeetingPresent: [],
-          grihaMeetingsThreeOrMore: [],
-          grihaMeetingsLessThanThree: [],
-          baitulmalDefaulters: [],
-          baitulmalPaid: [],
-          presentationSatisfactory: [],
-          presentationUnsatisfactory: []
-        }))
-        setFormattedReply('')
-      }
-    } catch (error) {
-      console.error('Error sending reply:', error)
-      toast.error(error.response?.data?.message || 'Failed to send reply')
-    } finally {
-      setReplySending(false)
-    }
-  }
-
-  const handleDownloadPDF = async () => {
-    if (!formattedReply) {
-      toast.error('Please generate a reply first')
-      return
-    }
-
-    try {
-      setPdfGenerating(true)
-      await downloadUnitReplyPDF(
-        formattedReply,
-        replyFormData.unit,
-        replyFormData.year,
-        replyFormData.quarter
-      )
-      toast.success('PDF downloaded successfully')
-    } catch (error) {
-      console.error('Error generating PDF:', error)
-      toast.error('Failed to generate PDF. Please try again.')
-    } finally {
-      setPdfGenerating(false)
-    }
-  }
-
   const _getStatusColor = (status) => {
     switch (status) {
       case 'approved': return 'text-green-600 bg-green-50 border-green-200'
@@ -896,243 +608,7 @@ const AdminDashboard = () => {
         ) : activeTab === 'users' ? (
           <UserManagement />
         ) : activeTab === 'unitreply' ? (
-          <div className="space-y-3 sm:space-y-6">
-            {/* Step 1 — pick the unit and quarter. Compact two-column grid on
-                phones; the template editor is a small toggle, not a header row. */}
-            <div className="ih-surface p-3 sm:p-6">
-              <div className="mb-3 flex items-center justify-between gap-2 sm:mb-4">
-                <div className="min-w-0">
-                  <h3 className="hidden text-lg font-semibold text-gray-900 lg:block">Send Reply to Unit Admin</h3>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 lg:hidden">Unit &amp; quarter</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = !templateEditing
-                    setTemplateEditing(next)
-                    if (next) fetchFormFields(templateQuarter)
-                  }}
-                  aria-expanded={templateEditing}
-                  className={`inline-flex h-[40px] shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors sm:h-9 sm:text-sm ${
-                    templateEditing ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                  }`}
-                >
-                  <Settings className="w-4 h-4" />
-                  {templateEditing ? 'Close template' : 'Reply template'}
-                </button>
-              </div>
-
-              {/* Template Builder (collapsible) */}
-              {templateEditing && (
-                <div className="mb-4 sm:mb-6">
-                  <ReplyTemplateBuilder
-                    blocks={replyTemplate}
-                    onChange={setReplyTemplate}
-                    onSave={saveReplyTemplate}
-                    onCancel={() => setTemplateEditing(false)}
-                    onReset={() => {}}
-                    saving={templateSaving}
-                    fieldLabels={formFieldLabels}
-                    selectedQuarter={templateQuarter}
-                    onQuarterChange={(q) => { setTemplateQuarter(q); fetchFormFields(q) }}
-                  />
-                </div>
-              )}
-
-              {/* Cascading District → Area → Unit Selection */}
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">District</label>
-                  <select
-                    value={replyDistrict}
-                    onChange={(e) => {
-                      setReplyDistrict(e.target.value)
-                      if (e.target.value) fetchReplyAreas(e.target.value)
-                      else { setReplyAreas([]); setReplyArea(''); setReplyUnits([]); setReplyFormData(prev => ({ ...prev, unit: '' })) }
-                    }}
-                    className="form-select truncate text-base sm:text-sm"
-                  >
-                    <option value="">Select District</option>
-                    {replyDistricts.map(d => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">Area</label>
-                  <select
-                    value={replyArea}
-                    onChange={(e) => {
-                      setReplyArea(e.target.value)
-                      if (e.target.value) fetchReplyUnits(replyDistrict, e.target.value)
-                      else { setReplyUnits([]); setReplyFormData(prev => ({ ...prev, unit: '' })) }
-                    }}
-                    className="form-select truncate text-base sm:text-sm"
-                    disabled={!replyDistrict || replyAreasLoading}
-                  >
-                    <option value="">
-                      {replyAreasLoading ? 'Loading...' : (!replyDistrict ? 'Select District first' : 'Select Area')}
-                    </option>
-                    {replyAreas.map(a => (
-                      <option key={a} value={a}>{a}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="col-span-2 sm:col-span-1">
-                  <label className="mb-1 block text-xs font-medium text-gray-500">Unit</label>
-                  <select
-                    value={replyFormData.unit}
-                    onChange={(e) => setReplyFormData(prev => ({ ...prev, unit: e.target.value }))}
-                    className="form-select truncate text-base sm:text-sm"
-                    disabled={!replyArea || replyUnitsLoading}
-                  >
-                    <option value="">
-                      {replyUnitsLoading ? 'Loading...' : (!replyArea ? 'Select Area first' : 'Select Unit')}
-                    </option>
-                    {replyUnits.map(u => (
-                      <option key={u} value={u}>{u}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Year & Quarter */}
-              <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-4 sm:max-w-md sm:gap-4">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">Year</label>
-                  <NumericInput
-                    type="number"
-                    value={replyFormData.year}
-                    onChange={(e) => setReplyFormData(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
-                    className="form-input text-base sm:text-sm"
-                    min="2020"
-                    max={new Date().getFullYear() + 1}
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-500">Quarter</label>
-                  <select
-                    value={replyFormData.quarter}
-                    onChange={(e) => setReplyFormData(prev => ({ ...prev, quarter: parseInt(e.target.value) }))}
-                    className="form-select truncate text-base sm:text-sm"
-                  >
-                    <option value={1}>Q1 (Jan-Mar)</option>
-                    <option value={2}>Q2 (Apr-Jun)</option>
-                    <option value={3}>Q3 (Jul-Sep)</option>
-                    <option value={4}>Q4 (Oct-Dec)</option>
-                  </select>
-                </div>
-              </div>
-
-              <button
-                onClick={fetchReplyData}
-                disabled={!replyFormData.unit || replyDataLoading}
-                className="btn-primary mt-3 w-full gap-2 sm:mt-4 sm:w-auto"
-              >
-                {replyDataLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Loading...</span>
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-4 h-4" />
-                    <span>{formattedReply ? 'Reload data' : 'Load data & generate reply'}</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Step 2 — preview, copy / download, send */}
-            {formattedReply && (
-              <div className="ih-surface overflow-hidden">
-                <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-3 py-2.5 sm:px-6 sm:py-4">
-                  <div className="min-w-0">
-                    <h4 className="text-sm font-semibold text-gray-900 sm:text-base">Reply preview</h4>
-                    <p className="text-[11px] text-gray-500 sm:text-xs">
-                      {replyFormData.unit} · Q{replyFormData.quarter} {replyFormData.year}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(formattedReply)
-                        toast.success('Reply copied to clipboard')
-                      }}
-                      className="ih-action ih-action-neutral"
-                      aria-label="Copy reply text"
-                      title="Copy reply text"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDownloadPDF}
-                      disabled={pdfGenerating}
-                      className="ih-action ih-action-neutral"
-                      aria-label="Download PDF"
-                      title="Download PDF"
-                    >
-                      {pdfGenerating ? (
-                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                      ) : (
-                        <Download className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Letter preview — scaled paddings on phones, print-like from sm: */}
-                <div className="bg-gray-100 p-2 sm:p-4">
-                  <div className="overflow-hidden rounded-lg border border-gray-300 bg-white shadow-sm">
-                    <div className="border-b-2 border-black px-3 pb-3 pt-4 text-center sm:px-[20mm] sm:pb-5 sm:pt-[15mm]">
-                      <img
-                        src={letterheadImage}
-                        alt="Letterhead"
-                        className="mx-auto mb-2 h-auto max-w-full"
-                        style={{ maxHeight: '120px' }}
-                      />
-                    </div>
-                    <div
-                      className="malayalam-text px-3 py-4 text-[13px] sm:px-[20mm] sm:pb-[15mm] sm:pt-[30px] sm:text-sm"
-                      style={{
-                        lineHeight: '1.8',
-                        color: '#000',
-                        whiteSpace: 'pre-wrap',
-                        wordWrap: 'break-word'
-                      }}
-                    >
-                      {formattedReply}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-100 p-3 sm:px-6 sm:py-4">
-                  <button
-                    onClick={handleSendReply}
-                    disabled={replySending}
-                    className="btn-primary w-full gap-2 bg-green-600 hover:bg-green-700 sm:w-auto"
-                  >
-                    {replySending ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Sending...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" />
-                        <span>Send reply to unit admin</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <UnitReplyPanel />
         ) : activeTab === 'unitadmins' ? (
           <div className="space-y-6">
             

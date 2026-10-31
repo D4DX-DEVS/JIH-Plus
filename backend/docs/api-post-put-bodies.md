@@ -398,10 +398,24 @@ Example bodies for every POST and PUT endpoint (paths are as defined in each rou
 
 ### POST /unit-reply
 ```json
-{ "unit": "Test Unit", "year": 2025, "quarter": 1, "formattedMessage": "Key gaps: ...", "replyData": { "quranCompleted": ["Ali"], "absentees": ["Basu"] } }
+{ "unit": "Test Unit", "year": 2025, "quarter": 1, "formattedMessage": "Key gaps: ..." }
 ```
 ```json
 { "success": true, "message": "Reply sent successfully", "data": { "reply": { "id": "...", "unit": "Test Unit", "periodDisplay": "Q1 2025", "whatsappSent": true }, "whatsappSent": true } }
+```
+
+### PUT /reply-template
+*(one template per report quarter; paragraphs are validated against that quarter's form)*
+```json
+{ "year": 2026, "quarter": 3, "sections": [
+  { "id": "s1", "kind": "text", "text": "{unit} പ്രാദേശിക ജമാഅത്ത് ... {quarter}" },
+  { "id": "s2", "kind": "members", "text": "{names} എന്നിവർ ...", "match": "all",
+    "conditions": [{ "type": "question", "questionId": "q_123", "op": "in", "values": ["തൃപ്തികരമല്ല"] }],
+    "emptyMode": "skip", "emptyText": "", "listStyle": "comma", "showValue": false, "limit": null }
+] }
+```
+```json
+{ "success": true, "data": { "template": { "sections": [], "updatedAt": "2026-10-31T10:00:00.000Z" } } }
 ```
 
 ### POST /migrate-q4-to-q3
