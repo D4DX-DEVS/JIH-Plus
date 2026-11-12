@@ -2,7 +2,7 @@ import ResponsiveTable from "../tables/ResponsiveTable.jsx";
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { RefreshCw, BarChart3, Hash, Table2, Type, ListChecks, Users, ChevronDown, SlidersHorizontal, Eye, ListOrdered } from 'lucide-react';
+import { RefreshCw, BarChart3, Hash, Table2, Type, ListChecks, Users, ChevronDown, SlidersHorizontal, Eye, ListOrdered, FileDown } from 'lucide-react';
 import ConsolidationDrillDown from './ConsolidationDrillDown.jsx';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -99,6 +99,7 @@ export default function ConsolidationTab({ scope = 'admin' }) {
   // Drill-down sheet: { field, option } for "who chose this", { field } for number breakdowns
   const [drill, setDrill] = useState(null);
   const closeDrill = useCallback(() => setDrill(null), []);
+  const [exporting, setExporting] = useState(false);
 
   // Load districts on mount (admin) / the caller's own areas and units (district, area)
   useEffect(() => {
@@ -218,6 +219,21 @@ export default function ConsolidationTab({ scope = 'admin' }) {
     if (r.quarter) parts.push(`Q${r.quarter}`);
     if (r.year) parts.push(r.year);
     return parts.join(' ');
+  };
+
+  // The PDF library is heavy, so it loads only when someone exports.
+  const exportPdf = async () => {
+    setExporting(true);
+    try {
+      const { downloadConsolidationPdf } = await import('../../utils/consolidationPdfGenerator.jsx');
+      const period = periodLabel(result.report);
+      await downloadConsolidationPdf(result, `${period}${period ? ' · ' : ''}${scopeLabel()}`);
+    } catch (e) {
+      console.error('Export consolidation PDF error', e);
+      toast.error('Failed to export PDF');
+    } finally {
+      setExporting(false);
+    }
   };
 
   // ── Renderers per breakdown kind ──────────────────────────────────────────
@@ -545,12 +561,23 @@ export default function ConsolidationTab({ scope = 'admin' }) {
                   {periodLabel(result.report)}{periodLabel(result.report) ? ' · ' : ''}{scopeLabel()}
                 </p>
               </div>
-              <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2 shrink-0">
-                <Users className="w-4 h-4 text-blue-200" />
-                <div className="text-sm">
-                  <span className="font-bold">{result.stats.submittedCount}</span>
-                  <span className="text-blue-200"> / {result.stats.totalLocations} submitted ({result.stats.submissionRate}%)</span>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
+                  <Users className="w-4 h-4 text-blue-200" />
+                  <div className="text-sm">
+                    <span className="font-bold">{result.stats.submittedCount}</span>
+                    <span className="text-blue-200"> / {result.stats.totalLocations} submitted ({result.stats.submissionRate}%)</span>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={exportPdf}
+                  disabled={exporting}
+                  className="inline-flex min-h-[44px] sm:min-h-[36px] items-center gap-1.5 rounded-lg bg-white px-3 text-sm font-semibold text-[#002349] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 disabled:opacity-60 transition-colors"
+                >
+                  {exporting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                  {exporting ? 'Exporting...' : 'Export PDF'}
+                </button>
               </div>
             </div>
           </div>
