@@ -2,8 +2,9 @@ import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Copy, Eye, EyeOff, Globe, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Copy, Eye, EyeOff, Globe, Inbox, Pencil, Plus, Trash2 } from 'lucide-react'
 import { api, apiError } from '../../utils/members/api'
+import FormPreview from '../../components/members/FormPreview'
 import {
   Button, Card, EmptyState, FilterBar, Modal, PageHeader, Pagination,
   SearchInput, Select, Spinner, TableWrap, Th, PAGE_SIZE
@@ -26,6 +27,21 @@ export default function FormsPage() {
   const [searchBox, setSearchBox] = useState('')
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({ formType: '', state: '' })
+  // { template, loading, mode } while the read-only preview overlay is open.
+  const [preview, setPreview] = useState(null)
+
+  const openPreview = (template) => {
+    setPreview({ template, loading: true, mode: 'applicant' })
+    // The list payload may omit pages, so fetch the full template.
+    api.get(`/forms/${template._id}`)
+      .then(({ data }) => setPreview(prev => (
+        prev?.template._id === template._id ? { ...prev, template: data.template, loading: false } : prev
+      )))
+      .catch(err => {
+        toast.error(apiError(err, 'Failed to load the form'))
+        setPreview(prev => (prev?.template._id === template._id ? null : prev))
+      })
+  }
 
   const load = () => {
     setLoading(true)
@@ -166,16 +182,24 @@ export default function FormsPage() {
                       )}
                     </div>
                   </div>
-                  {/* Actions get their own full-width line so five targets stay
+                  {/* Actions get their own full-width line so six targets stay
                       thumb-sized instead of squeezing beside the title. */}
                   <div className="mt-2.5 flex items-center gap-1 border-t border-gray-100 pt-2">
+                    <button
+                      title="Preview form"
+                      aria-label="Preview form"
+                      onClick={() => openPreview(template)}
+                      className={`${mobileIconBtn} active:text-blue-600 active:bg-blue-50`}
+                    >
+                      <Eye size={18} />
+                    </button>
                     <button
                       title="View submissions"
                       aria-label="View submissions"
                       onClick={() => navigate(`/members/applications?formType=${template.formType}`)}
-                      className={`${mobileIconBtn} active:text-blue-600 active:bg-blue-50`}
+                      className={`${mobileIconBtn} active:text-amber-600 active:bg-amber-50`}
                     >
-                      <Eye size={18} />
+                      <Inbox size={18} />
                     </button>
                     <button
                       title="Edit"
@@ -254,12 +278,20 @@ export default function FormsPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                         <button
-                          title="View submissions"
-                          aria-label="View submissions"
-                          onClick={() => navigate(`/members/applications?formType=${template.formType}`)}
+                          title="Preview form"
+                          aria-label="Preview form"
+                          onClick={() => openPreview(template)}
                           className={`${iconBtn} hover:text-blue-600 hover:bg-blue-50`}
                         >
                           <Eye size={16} />
+                        </button>
+                        <button
+                          title="View submissions"
+                          aria-label="View submissions"
+                          onClick={() => navigate(`/members/applications?formType=${template.formType}`)}
+                          className={`${iconBtn} hover:text-amber-600 hover:bg-amber-50`}
+                        >
+                          <Inbox size={16} />
                         </button>
                         <button
                           title="Edit"
@@ -305,6 +337,16 @@ export default function FormsPage() {
       </Card>
 
       <Pagination page={page} total={total} onChange={setPage} />
+
+      {preview && (
+        <FormPreview
+          template={preview.template}
+          mode={preview.mode}
+          loading={preview.loading}
+          onModeChange={mode => setPreview(prev => ({ ...prev, mode }))}
+          onClose={() => setPreview(null)}
+        />
+      )}
 
       <Modal
         open={Boolean(toDelete)}
