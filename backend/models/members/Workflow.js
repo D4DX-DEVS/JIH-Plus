@@ -91,6 +91,32 @@ function stageGraphError(stages) {
       }
     }
   }
+
+  // Finalize stages assign the member ID. If approval ends the workflow, or the
+  // normal path never forwards to them, approved applications finish without one.
+  const finalizers = (stages || []).filter(s => s.kind === 'finalize');
+  if (finalizers.length) {
+    const endingDecision = stages.find(s => s.kind === 'decision' && (s.isTerminal || !s.nextStageKey));
+    if (endingDecision) {
+      return `"${endingDecision.name}" ends the workflow when approved, so "${finalizers[0].name}" is never reached. Set its "Forwards to" to the next stage.`;
+    }
+
+    const byKey = new Map(stages.map(s => [s.key, s]));
+    const orderOf = (s) => s.order ?? stages.indexOf(s) + 1;
+    const first = [...stages].sort((a, b) => orderOf(a) - orderOf(b))[0];
+    const reached = new Set();
+    const pending = [first];
+    while (pending.length) {
+      const stage = pending.pop();
+      if (!stage || reached.has(stage.key)) continue;
+      reached.add(stage.key);
+      if (!stage.isTerminal) pending.push(byKey.get(stage.nextStageKey), byKey.get(stage.skipToStageKey));
+    }
+    const unreachable = finalizers.find(s => !reached.has(s.key));
+    if (unreachable) {
+      return `"${unreachable.name}" can never be reached: no stage forwards to it. Set "Forwards to" on the stage before it.`;
+    }
+  }
   return null;
 }
 

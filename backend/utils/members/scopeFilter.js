@@ -58,12 +58,22 @@ function isInScope(account, scope) {
  * Returns { scope, missing } — `missing` names any level that could not be
  * resolved, so callers can reject rather than silently store a half scope.
  */
+// Names repeat under different parents, so prefer the record under the parents
+// the caller picked; fall back to a name-only match for callers that send just
+// the name.
+async function findLocation(type, name, parents) {
+  const base = { type, name, isActive: true };
+  const narrowed = { ...base };
+  for (const [key, value] of Object.entries(parents)) if (value) narrowed[key] = value;
+  return (await LocationMaster.findOne(narrowed).lean()) || LocationMaster.findOne(base).lean();
+}
+
 async function resolveScopeChain(partial = {}) {
   const scope = { mekhala: '', district: '', area: '', unit: '' };
   const missing = [];
 
   if (partial.unit) {
-    const unit = await LocationMaster.findOne({ type: 'unit', name: partial.unit, isActive: true }).lean();
+    const unit = await findLocation('unit', partial.unit, { area: partial.area, district: partial.district });
     if (!unit) {
       missing.push(`unit "${partial.unit}"`);
     } else {
@@ -72,7 +82,7 @@ async function resolveScopeChain(partial = {}) {
       scope.district = unit.district;
     }
   } else if (partial.area) {
-    const area = await LocationMaster.findOne({ type: 'area', name: partial.area, isActive: true }).lean();
+    const area = await findLocation('area', partial.area, { district: partial.district });
     if (!area) {
       missing.push(`area "${partial.area}"`);
     } else {

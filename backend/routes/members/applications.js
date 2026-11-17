@@ -445,6 +445,63 @@ router.put('/:id/stage', async (req, res) => {
   }
 });
 
+/**
+ * PUT /:id/member-id — super admin only. Assigns the member ID to an approved
+ * application that finished its workflow without one (e.g. approval was set to
+ * end the workflow before the finalize stage).
+ *
+ * body: { memberId }
+ */
+router.put('/:id/member-id', async (req, res) => {
+  try {
+    if (!req.user.isSuperAdmin) {
+      return res.status(403).json({ success: false, message: 'Only the super admin can assign a member ID' });
+    }
+
+    const ctx = await loadContext(req.params.id, req.user);
+    if (ctx.error) return res.status(ctx.error.code).json({ success: false, message: ctx.error.message });
+    const { application, workflow } = ctx;
+
+    if (application.status !== 'approved' || workflow.stageByKey(application.currentStageKey)) {
+      return res.status(400).json({ success: false, message: 'Only an approved application that has finished its workflow can be given an ID here' });
+    }
+    if (application.memberId) {
+      return res.status(400).json({ success: false, message: 'This application already has a member ID' });
+    }
+
+    const memberId = String(req.body?.memberId || '').trim();
+    if (!memberId) return res.status(400).json({ success: false, message: 'Enter the member ID' });
+
+    const clash = await Application.findOne({
+      formType: application.formType,
+      memberId,
+      _id: { $ne: application._id }
+    }).select('_id').lean();
+    if (clash) return res.status(409).json({ success: false, message: 'That member ID is already in use' });
+
+    // Record it against the workflow's ID stage so history labels it the same way.
+    const idStage = (workflow.stages || []).find(s => s.kind === 'finalize' && (s.captureFields || []).some(f => f.key === 'memberId'));
+    application.memberId = memberId;
+    application.memberIdAssignedAt = new Date();
+    application.stageHistory.push({
+      stageKey: idStage?.key || 'memberId',
+      stageName: idStage?.name || 'Member ID assigned',
+      actorId: actorId(req.user),
+      actorRoleKey: roleKeyOf(req.user),
+      actorName: actorLabel(req.user),
+      action: 'finalized',
+      data: { memberId },
+      at: new Date()
+    });
+    await application.save();
+
+    res.json({ success: true, application });
+  } catch (error) {
+    console.error('Members assign member ID error:', error);
+    res.status(500).json({ success: false, message: 'Failed to assign the member ID' });
+  }
+});
+
 /** DELETE /:id — super admin only; also frees the access link */
 router.delete('/:id', async (req, res) => {
   try {
