@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Eye, Plus, Save, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Eye, Plus, Save, Trash2 } from 'lucide-react'
 import { api, apiError } from '../../utils/members/api'
 import FieldCanvas from '../../components/reportBuilder/FieldCanvas'
 import FieldTypeSelector from '../../components/reportBuilder/FieldTypeSelector'
-import DynamicFormRenderer from '../../components/reportRenderer/DynamicFormRenderer'
+import FormPreview from '../../components/members/FormPreview'
 import { Button, Card, Field, Input, Modal, Select, Spinner, Textarea } from '../../components/members/ui'
 
 // Field ids must be unique across the whole form — the conditional-logic editor
@@ -234,16 +234,6 @@ export default function FormBuilderPage() {
     }
   }
 
-  // What the applicant would actually receive — role pages and fields removed.
-  const previewTemplate = useMemo(() => {
-    if (preview === 'full') return { ...meta, pages }
-    const filtered = pages
-      .filter(p => p.audience !== 'role')
-      .map(p => ({ ...p, fields: (p.fields || []).filter(f => f.audience !== 'role') }))
-      .filter(p => (p.fields || []).length > 0)
-    return { ...meta, pages: filtered }
-  }, [preview, pages, meta])
-
   if (loading) return <Spinner />
 
   return (
@@ -394,27 +384,7 @@ export default function FormBuilderPage() {
       )}
 
       {preview && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-gray-100">
-          <div className="bg-white border-b px-4 py-3 flex items-center gap-3 flex-shrink-0">
-            <button onClick={() => setPreview(null)} className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 -ml-2 p-2 flex-shrink-0">
-              <X size={18} /> <span className="text-sm font-medium">Close preview</span>
-            </button>
-            <span className="hidden sm:block text-sm text-gray-500 truncate">
-              {preview === 'applicant'
-                ? 'Exactly what the applicant sees — role comment sections removed.'
-                : 'Full form including every role comment section.'}
-            </span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="max-w-3xl mx-auto bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
-              {previewTemplate.pages.length === 0 ? (
-                <p className="text-sm text-gray-500">Nothing to preview yet.</p>
-              ) : (
-                <DynamicFormRenderer report={previewTemplate} onSubmit={() => {}} disabled />
-              )}
-            </div>
-          </div>
-        </div>
+        <FormPreview template={{ ...meta, pages }} mode={preview} onClose={() => setPreview(null)} />
       )}
 
       <Modal

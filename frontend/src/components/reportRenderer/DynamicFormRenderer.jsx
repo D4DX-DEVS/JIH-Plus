@@ -153,7 +153,9 @@ export default function DynamicFormRenderer({
   };
 
   const goNext = () => {
-    if (!validatePage()) return;
+    // A disabled (read-only) form can't be filled in, so don't let required
+    // fields trap the viewer on the first page.
+    if (!disabled && !validatePage()) return;
     setCurrentPage(p => Math.min(p + 1, pages.length - 1));
     focusPageStart();
   };
