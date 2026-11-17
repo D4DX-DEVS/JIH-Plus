@@ -1292,3 +1292,302 @@ input[type="number"] {
     line-height: 1.5;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Members portal theme ("royal ink")
+   Royal blue taken from the logo, ink-navy surfaces, cool mist canvas.
+   Tokens become utilities (bg-royal-600, text-ink, border-line, bg-mist).
+   Everything else is scoped under .mbr (the members shell / standalone
+   pages) so the JIH and ihthisabi portals are untouched. To re-skin the
+   portal, change the royal scale here.
+   ════════════════════════════════════════════════════════════════════════ */
+@theme {
+  --color-royal-50: #f0f4ff;
+  --color-royal-100: #e1e8fe;
+  --color-royal-200: #c8d5fd;
+  --color-royal-300: #a1b6f9;
+  --color-royal-400: #6f8df2;
+  --color-royal-500: #4566e6;
+  --color-royal-600: #2a4bd6;
+  --color-royal-700: #1f3bb0;
+  --color-royal-800: #1c328c;
+  --color-royal-900: #1a2c6b;
+  --color-royal-950: #0d1640;
+  --color-ink: #0b1430;
+  --color-mist: #f4f6fb;
+  --color-line: #e5e9f2;
+}
+
+/* Inter for Latin; the Malayalam face stays first (it is unicode-range
+   limited) so Malayalam text keeps its native shaping. */
+.mbr,
+.mbr * {
+  font-family: 'MalayalamUI', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+.mbr :is(code, kbd, samp, .font-mono) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.mbr {
+  color: #1e293b;
+  -webkit-tap-highlight-color: transparent;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+/* The shell and its scroller sit on the mist canvas (the global white-canvas
+   rule above only has single-class specificity). */
+.mbr.app-viewport,
+.mbr .app-scroll-region,
+.mbr-canvas {
+  background-color: #f4f6fb;
+}
+
+@layer components {
+  .mbr-card {
+    background-color: #fff;
+    border: 1px solid #e5e9f2;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  @media (min-width: 640px) {
+    .mbr-card { border-radius: 1.125rem; }
+  }
+
+  /* Deep royal surface used by the dashboard hero, login panel and sidebar. */
+  .mbr-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    color: #fff;
+    background:
+      radial-gradient(120% 140% at 100% 0%, rgba(111, 141, 242, 0.55) 0%, rgba(111, 141, 242, 0) 55%),
+      linear-gradient(140deg, #2140c0 0%, #172f8a 48%, #0d1a4f 100%);
+  }
+  .mbr-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='.09'%3E%3Crect x='17' y='17' width='22' height='22'/%3E%3Crect x='17' y='17' width='22' height='22' transform='rotate(45 28 28)'/%3E%3Cpath d='M0 28h9M47 28h9M28 0v9M28 47v9'/%3E%3C/g%3E%3C/svg%3E");
+    -webkit-mask-image: linear-gradient(200deg, #000 10%, transparent 75%);
+    mask-image: linear-gradient(200deg, #000 10%, transparent 75%);
+  }
+  .mbr-sidebar {
+    color: #c9d3f0;
+    background: linear-gradient(180deg, #111f55 0%, #0b1438 100%);
+  }
+
+  /* Horizontal chip / pill rows: scroll sideways, no visible scrollbar. */
+  .mbr-scroll-x {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .mbr-scroll-x::-webkit-scrollbar { display: none; }
+
+  /* Bottom sheet (More menu, dialogs on phones). */
+  .mbr-sheet-in { animation: mbrSheetIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .mbr-fade-in { animation: mbrFadeIn 0.18s ease both; }
+  @keyframes mbrSheetIn {
+    from { opacity: 0.6; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes mbrFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Floating action button, phones only, parked above the bottom bar. */
+  .mbr-fab {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(4.25rem + env(safe-area-inset-bottom) + 0.875rem);
+    z-index: 20;
+    box-shadow: 0 6px 16px rgba(42, 75, 214, 0.35), 0 2px 4px rgba(15, 23, 42, 0.12);
+  }
+  /* Sticky review bar inside the scroller, clear of the bottom bar. */
+  .mbr-sticky-action {
+    position: sticky;
+    bottom: calc(4.25rem + env(safe-area-inset-bottom) + 0.5rem);
+    z-index: 10;
+  }
+  @media (min-width: 1024px) {
+    .mbr-sticky-action { bottom: 1rem; }
+  }
+
+  .mbr-skeleton {
+    background: linear-gradient(90deg, #eef1f7 0%, #f7f9fc 50%, #eef1f7 100%);
+    background-size: 200% 100%;
+    animation: mbrShimmer 1.2s ease-in-out infinite;
+  }
+  @keyframes mbrShimmer {
+    from { background-position: 100% 0; }
+    to { background-position: -100% 0; }
+  }
+}
+
+/* Members shell: bottom-bar height is 4.25rem here, not the 4.5rem the other
+   portals use, so the content pad follows it. */
+.mbr .mbr-bottom-safe {
+  padding-bottom: calc(4.25rem + env(safe-area-inset-bottom) + 1rem);
+}
+@media (min-width: 1024px) {
+  .mbr .mbr-bottom-safe { padding-bottom: 2.5rem; }
+}
+
+/* ── Dynamic form renderer, members skin ──────────────────────────────────
+   The renderer is shared with the JIH and ihthisabi portals, so it is skinned
+   here through its data-fr hooks instead of by changing its classes.
+   Unlayered on purpose: these must outrank the renderer's own utilities. */
+.mbr-form [data-fr='root'] {
+  padding: 0;
+}
+.mbr-form :is(input:not([type='radio']):not([type='checkbox']):not([type='file']):not([type='range']):not([type='color']), select, textarea) {
+  min-height: 44px;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #d5dce9;
+  border-radius: 0.75rem;
+  background-color: #fff;
+  color: #0b1430;
+  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mbr-form :is(input, select, textarea):focus {
+  outline: none;
+  border-color: #4566e6;
+  box-shadow: 0 0 0 4px rgba(69, 102, 230, 0.15);
+}
+.mbr-form :is(input, select, textarea):disabled {
+  opacity: 1;
+  color: #1e293b;
+  -webkit-text-fill-color: #1e293b;
+  background-color: #f4f6fb;
+  border-color: #e5e9f2;
+  box-shadow: none;
+}
+.mbr-form :is(input, select, textarea)[aria-invalid='true'] {
+  border-color: #e11d48;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
+}
+.mbr-form input[type='radio'],
+.mbr-form input[type='checkbox'] {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  accent-color: #2a4bd6;
+}
+/* Choices become tappable option cards. */
+.mbr-form :is([role='radiogroup'], [role='group']) {
+  gap: 0.5rem;
+}
+/* Checkbox lists pack into columns instead of one long stack. */
+.mbr-form [role='group']:is(.space-y-2, .space-y-1) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.5rem;
+}
+.mbr-form [role='group']:is(.space-y-2, .space-y-1) > * {
+  margin-block: 0;
+}
+.mbr-form label:has(> input[type='radio']),
+.mbr-form label:has(> input[type='checkbox']) {
+  min-height: 44px;
+  gap: 0.625rem;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid #dfe4ee;
+  border-radius: 0.75rem;
+  background-color: #fff;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.mbr-form label:has(> input:checked) {
+  border-color: #4566e6;
+  background-color: #f0f4ff;
+  box-shadow: inset 0 0 0 1px #4566e6;
+}
+.mbr-form label:has(> input:checked) span {
+  color: #1c328c;
+  font-weight: 600;
+}
+.mbr-form label:has(> input:disabled) {
+  cursor: default;
+}
+.mbr-form [data-fr='field-label'] {
+  color: #1e293b;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+/* Section titles placed inside a page. */
+.mbr-form h3 {
+  border-bottom: 0;
+  padding: 0 0 0 0.625rem;
+  border-left: 3px solid #2a4bd6;
+  color: #0b1430;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+.mbr-form [data-fr='progress-track'] {
+  height: 0.375rem;
+  background-color: #e5e9f2;
+}
+.mbr-form [data-fr='progress-fill'] {
+  height: 0.375rem;
+  background: linear-gradient(90deg, #4566e6, #1f3bb0);
+}
+.mbr-form [data-fr='error-summary'] {
+  border-radius: 0.75rem;
+}
+/* Navigation stays reachable while a long page scrolls. */
+.mbr-form [data-fr='nav'] {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 1.25rem -1rem -1rem;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  border-top: 1px solid #e5e9f2;
+  border-radius: 0 0 1rem 1rem;
+  background-color: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+@media (min-width: 640px) {
+  .mbr-form [data-fr='nav'] {
+    margin: 1.5rem -1.5rem -1.5rem;
+    padding: 0.875rem 1.5rem;
+    border-radius: 0 0 1.125rem 1.125rem;
+  }
+}
+.mbr-form :is([data-fr='next'], [data-fr='submit'], [data-fr='submit-any'], [data-fr='draft'], [data-fr='prev'], [data-fr='cancel']) {
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mbr-form :is([data-fr='next'], [data-fr='submit']) {
+  padding: 0 1.25rem;
+  background-color: #2a4bd6;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1), 0 4px 12px rgba(42, 75, 214, 0.25);
+}
+.mbr-form :is([data-fr='next'], [data-fr='submit']):hover {
+  background-color: #1f3bb0;
+}
+.mbr-form [data-fr='submit-any'] {
+  background-color: #047857;
+}
+.mbr-form :is([data-fr='draft'], [data-fr='prev'], [data-fr='cancel']) {
+  border: 1px solid #d5dce9;
+  background-color: #fff;
+  color: #334155;
+}
+.mbr-form [data-fr='upload'] {
+  border: 1.5px dashed #c3cde0;
+  border-radius: 0.875rem;
+  background-color: #f8faff;
+}
+.mbr-form [data-fr='upload']:hover {
+  border-color: #4566e6;
+}

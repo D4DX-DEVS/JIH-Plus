@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { Bell, BellOff, CheckCheck, ChevronRight, FileText } from 'lucide-react'
 import { api, apiError } from '../../utils/members/api'
 import {
-  Button, Card, EmptyState, FilterBar, PageHeader, Pagination, Select,
-  Spinner, PAGE_SIZE
+  Button, Card, EmptyState, ErrorState, ListSkeleton, PageHeader, Pagination, Tabs, PAGE_SIZE
 } from '../../components/members/ui'
+import { cx, timeAgo } from '../../utils/members/format'
+
+const FILTER_TABS = [
+  { value: '', label: 'All' },
+  { value: '1', label: 'Unread' }
+]
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([])
@@ -47,74 +53,75 @@ export default function NotificationsPage() {
     }
   }
 
+  const hasUnread = notifications.some(n => !n.read)
+
   return (
     <div>
       <PageHeader
         title="Notifications"
         subtitle="Updates on applications reaching your stage."
         hideTitleOnMobile
-        actions={
-          notifications.some(n => !n.read)
-            ? <Button variant="secondary" onClick={markAll}>Mark all read</Button>
-            : null
-        }
       />
 
-      <FilterBar
-        active={Boolean(unreadOnly)}
-        onClear={() => { setUnreadOnly(''); setPage(1) }}
-      >
-        <Select
-          className="sm:w-48"
-          value={unreadOnly}
-          onChange={e => { setUnreadOnly(e.target.value); setPage(1) }}
-        >
-          <option value="">All notifications</option>
-          <option value="1">Unread only</option>
-        </Select>
-      </FilterBar>
+      <div className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
+        <Tabs tabs={FILTER_TABS} value={unreadOnly} onChange={value => { setUnreadOnly(value); setPage(1) }} className="!w-auto" />
+        {hasUnread && (
+          <Button variant="soft" size="sm" onClick={markAll}>
+            <CheckCheck size={15} /> Mark all read
+          </Button>
+        )}
+      </div>
 
-      <Card>
-        {loading ? <Spinner /> : error ? (
-          <div className="py-14 px-4 text-center">
-            <p className="text-sm text-red-600 mb-3">{error}</p>
-            <Button variant="secondary" onClick={load}>Retry</Button>
-          </div>
+      <Card className="overflow-hidden">
+        {loading ? <ListSkeleton rows={6} /> : error ? (
+          <ErrorState message={error} onRetry={load} />
         ) : notifications.length === 0 ? (
           <EmptyState
+            icon={unreadOnly ? CheckCheck : BellOff}
             title={unreadOnly ? 'Nothing unread' : 'Nothing yet'}
             message={unreadOnly
               ? 'Everything addressed to you has been read.'
               : "You'll be notified when an application reaches your stage."}
           />
         ) : (
-          <ul className="divide-y divide-gray-100">
-            {notifications.map(n => (
-              <li key={n._id} className={`p-4 ${n.read ? '' : 'bg-[#faf5ff]'}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 break-words leading-relaxed">{n.title}</p>
-                    {n.body && <p className="text-sm text-gray-600 mt-0.5 break-words leading-relaxed">{n.body}</p>}
-                    <p className="text-xs text-gray-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    {n.applicationId && (
-                      <Link
-                        to={`/members/applications/${n.applicationId}`}
-                        className="text-sm text-[#5b21b6] hover:underline py-1.5 px-1 -mr-1"
-                      >
-                        Open
-                      </Link>
-                    )}
-                    {!n.read && (
-                      <button onClick={() => markRead(n._id)} className="text-xs text-gray-500 hover:text-gray-700 py-1.5 px-1 -mr-1">
-                        Mark read
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </li>
-            ))}
+          <ul className="divide-y divide-line">
+            {notifications.map(n => {
+              const Icon = n.applicationId ? FileText : Bell
+              const body = (
+                <>
+                  <span className={cx('mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full', n.read ? 'bg-slate-100 text-slate-400' : 'bg-royal-50 text-royal-600')}>
+                    <Icon size={17} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className={cx('block text-sm leading-snug [overflow-wrap:anywhere]', n.read ? 'font-medium text-slate-700' : 'font-semibold text-ink')}>{n.title}</span>
+                    {n.body && <span className="mt-0.5 block text-[13px] leading-relaxed text-slate-500 [overflow-wrap:anywhere]">{n.body}</span>}
+                    <span className="mt-1 block text-xs text-slate-400" title={new Date(n.createdAt).toLocaleString()}>{timeAgo(n.createdAt)}</span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-1.5 self-center">
+                    {!n.read && <span className="h-2 w-2 rounded-full bg-royal-600" aria-label="Unread" />}
+                    {n.applicationId && <ChevronRight size={16} className="text-slate-300" aria-hidden="true" />}
+                  </span>
+                </>
+              )
+              const rowClass = cx(
+                'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-mist active:bg-royal-50/60 sm:px-5',
+                !n.read && 'bg-royal-50/40'
+              )
+              return (
+                <li key={n._id}>
+                  {n.applicationId ? (
+                    // Opening the application counts as reading the notification.
+                    <Link to={`/members/applications/${n.applicationId}`} onClick={() => { if (!n.read) markRead(n._id) }} className={rowClass}>
+                      {body}
+                    </Link>
+                  ) : (
+                    <button type="button" onClick={() => { if (!n.read) markRead(n._id) }} className={rowClass} disabled={n.read}>
+                      {body}
+                    </button>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         )}
       </Card>

@@ -521,11 +521,12 @@ const IhthisabiRoutes = () => {
 const MembersNotFound = () => {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="text-center max-w-sm">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Page not found</h2>
-        <p className="text-gray-600 mb-4">This page doesn't exist or has moved.</p>
-        <button onClick={() => navigate('/members')} className="px-4 py-2 rounded-lg bg-[#5b21b6] text-white">
+    <div className="mbr mbr-canvas min-h-dvh flex items-center justify-center px-4">
+      <div className="mbr-card w-full max-w-sm p-6 text-center">
+        <p className="text-4xl font-bold tracking-tight text-royal-600">404</p>
+        <h2 className="mt-2 text-lg font-bold text-ink">Page not found</h2>
+        <p className="mt-1 text-sm leading-relaxed text-slate-500">This page doesn't exist or has moved.</p>
+        <button onClick={() => navigate('/members')} className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-royal-600 px-4 text-sm font-semibold text-white hover:bg-royal-700">
           Go to dashboard
         </button>
       </div>

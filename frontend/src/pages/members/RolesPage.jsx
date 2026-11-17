@@ -1,12 +1,13 @@
 import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Plus, Trash2 } from 'lucide-react'
+import { Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react'
 import { api, apiError } from '../../utils/members/api'
 import {
-  Button, Card, Field, Input, Modal, PageHeader, Pagination, Select, Spinner,
-  TableWrap, Th, PAGE_SIZE
+  Badge, Button, Card, EmptyState, Field, IconButton, IconTile, Input, ListRow, ListSkeleton,
+  Modal, PageHeader, Pagination, Select, TableWrap, ToggleRow, Th, PAGE_SIZE
 } from '../../components/members/ui'
+import { cx } from '../../utils/members/format'
 
 const SCOPE_TYPES = ['state', 'mekhala', 'district', 'area', 'unit']
 const BLANK = { key: '', name: '', nameMl: '', level: 5, scopeType: 'unit', canCreateAccessLinks: false }
@@ -77,87 +78,96 @@ export default function RolesPage() {
         title="Roles"
         subtitle="The hierarchy that drives scoping, form comment sections and workflow stages."
         hideTitleOnMobile
-        actions={<Button onClick={() => setEditing({ ...BLANK })}><Plus size={16} /> New role</Button>}
+        primaryAction={{ label: 'New role', mobileLabel: 'New', icon: Plus, onClick: () => setEditing({ ...BLANK }) }}
       />
 
-      <Card>
-        {loading ? <Spinner /> : (
+      <Card className="overflow-hidden">
+        {loading ? <ListSkeleton rows={6} /> : roles.length === 0 ? (
+          <EmptyState
+            icon={ShieldCheck}
+            title="No roles yet"
+            message="Roles define the hierarchy that scopes accounts, form comment sections and workflow stages."
+          />
+        ) : (
           <>
-            {/* Mobile: roomy tappable rows — one full-width target per record */}
-            <div className="lg:hidden divide-y divide-gray-100">
+            {/* Phones and tablets: tap a row to edit; the bin sits beside it */}
+            <div className="divide-y divide-line lg:hidden">
               {roles.map(role => (
-                <div key={role._id} className="min-h-[56px] flex items-center gap-2 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">
-                      {role.name}
-                      {role.nameMl && <span className="block text-[11px] font-normal text-gray-500 break-words leading-relaxed">{role.nameMl}</span>}
-                    </p>
-                    <p className="text-[11px] text-gray-500 mt-0.5">
-                      Rank {role.level} · {role.key} · <span className="capitalize">{role.scopeType}</span> ·{' '}
-                      {role.canCreateAccessLinks ? 'Can issue access links' : 'No access links'}
-                    </p>
-                    {!role.isActive && <p className="text-[11px] text-red-500 mt-0.5">Inactive</p>}
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button
-                      onClick={() => setEditing(role)}
-                      className="flex min-h-11 min-w-11 items-center justify-center text-[#5b21b6] text-[13px] font-medium"
-                    >
-                      Edit
-                    </button>
-                    {!role.isSystem && (
-                      <button
-                        onClick={() => setToDelete(role)}
-                        aria-label="Delete role"
-                        className="flex min-h-11 min-w-11 items-center justify-center text-gray-400 active:text-red-600"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    )}
-                  </div>
+                <div key={role._id} className={cx('flex items-center', !role.isSystem && 'pr-2 sm:pr-3')}>
+                  <ListRow
+                    className="min-w-0 flex-1"
+                    chevron={false}
+                    onClick={() => setEditing(role)}
+                    leading={<IconTile icon={ShieldCheck} tone={role.isActive ? 'royal' : 'slate'} />}
+                    title={
+                      <>
+                        {role.name}
+                        {role.nameMl && <span className="block text-xs font-normal text-slate-500">{role.nameMl}</span>}
+                      </>
+                    }
+                    meta={<>Rank {role.level} · {role.key} · <span className="capitalize">{role.scopeType}</span></>}
+                    trailing={(role.canCreateAccessLinks || role.isSystem || !role.isActive) ? (
+                      <>
+                        {role.canCreateAccessLinks && <Badge tone="royal">Can issue links</Badge>}
+                        {role.isSystem && <Badge tone="slate">System</Badge>}
+                        {!role.isActive && <Badge tone="rose">Inactive</Badge>}
+                      </>
+                    ) : null}
+                  />
+                  {!role.isSystem && (
+                    <IconButton icon={Trash2} tone="danger" label="Delete role" onClick={() => setToDelete(role)} />
+                  )}
                 </div>
               ))}
             </div>
-            {/* Desktop: table */}
-            <TableWrap>
-            <ResponsiveTable className="hidden lg:table w-full text-sm min-w-[680px]">
-              <thead className="bg-gray-50/80 border-b border-gray-100">
-                <tr>
-                  <Th>Rank</Th>
-                  <Th>Role</Th>
-                  <Th>Key</Th>
-                  <Th>Scope</Th>
-                  <Th>Access links</Th>
-                  <Th />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {roles.map(role => (
-                  <tr key={role._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-500">{role.level}</td>
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-gray-900">{role.name}</span>
-                      {role.nameMl && <span className="block text-xs text-gray-500 break-words leading-relaxed">{role.nameMl}</span>}
-                      {!role.isActive && <span className="block text-xs text-red-500">Inactive</span>}
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600">{role.key}</td>
-                    <td className="px-4 py-3 text-gray-600 capitalize">{role.scopeType}</td>
-                    <td className="px-4 py-3 text-gray-600">{role.canCreateAccessLinks ? 'Yes' : 'No'}</td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <button onClick={() => setEditing(role)} className="text-[#5b21b6] hover:underline py-2 px-1 mr-2">
-                        Edit
-                      </button>
-                      {!role.isSystem && (
-                        <button onClick={() => setToDelete(role)} aria-label="Delete role" className="text-gray-400 hover:text-red-600 p-2">
-                          <Trash2 size={15} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </ResponsiveTable>
-            </TableWrap>
+
+            {/* Desktop table */}
+            <div className="hidden lg:block">
+              <TableWrap>
+                <ResponsiveTable className="w-full min-w-[680px] text-sm">
+                  <thead>
+                    <tr>
+                      <Th>Rank</Th>
+                      <Th>Role</Th>
+                      <Th>Key</Th>
+                      <Th>Scope</Th>
+                      <Th>Access links</Th>
+                      <Th />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line">
+                    {roles.map(role => (
+                      <tr key={role._id} className="transition-colors hover:bg-mist/70">
+                        <td className="px-4 py-3 pl-5 text-slate-500">{role.level}</td>
+                        <td className="px-4 py-3">
+                          <span className="block font-semibold text-ink">{role.name}</span>
+                          {role.nameMl && <span className="block text-xs leading-relaxed text-slate-500 [overflow-wrap:anywhere]">{role.nameMl}</span>}
+                          {(role.isSystem || !role.isActive) && (
+                            <span className="mt-1 flex flex-wrap gap-1">
+                              {role.isSystem && <Badge tone="slate">System</Badge>}
+                              {!role.isActive && <Badge tone="rose">Inactive</Badge>}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs text-slate-600">{role.key}</td>
+                        <td className="px-4 py-3 capitalize text-slate-600">{role.scopeType}</td>
+                        <td className="px-4 py-3">
+                          {role.canCreateAccessLinks ? <Badge tone="green">Yes</Badge> : <span className="text-slate-400">No</span>}
+                        </td>
+                        <td className="px-4 py-2 pr-5 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1">
+                            <IconButton icon={Pencil} tone="royal" label="Edit role" onClick={() => setEditing(role)} />
+                            {!role.isSystem && (
+                              <IconButton icon={Trash2} tone="danger" label="Delete role" onClick={() => setToDelete(role)} />
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </ResponsiveTable>
+              </TableWrap>
+            </div>
           </>
         )}
       </Card>
@@ -171,7 +181,7 @@ export default function RolesPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setEditing(null)}>Cancel</Button>
-            <Button form="role-form" type="submit" disabled={busy}>{busy ? 'Saving...' : 'Save role'}</Button>
+            <Button form="role-form" type="submit" loading={busy}>{busy ? 'Saving...' : 'Save role'}</Button>
           </>
         }
       >
@@ -200,42 +210,38 @@ export default function RolesPage() {
               <Input value={editing.nameMl || ''} onChange={e => setEditing({ ...editing, nameMl: e.target.value })} />
             </Field>
 
-            <Field label="Rank" required hint="0 is highest. Lower ranks get larger numbers.">
-              <Input
-                type="number"
-                min="0"
-                value={editing.level}
-                onChange={e => setEditing({ ...editing, level: Number(e.target.value) })}
-                required
-              />
-            </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Rank" required hint="0 is highest. Lower ranks get larger numbers.">
+                <Input
+                  type="number"
+                  min="0"
+                  value={editing.level}
+                  onChange={e => setEditing({ ...editing, level: Number(e.target.value) })}
+                  required
+                />
+              </Field>
 
-            <Field label="Scope" required hint="What geography an account with this role is posted to.">
-              <Select value={editing.scopeType} onChange={e => setEditing({ ...editing, scopeType: e.target.value })}>
-                {SCOPE_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
-              </Select>
-            </Field>
+              <Field label="Scope" required hint="What geography an account with this role is posted to.">
+                <Select value={editing.scopeType} onChange={e => setEditing({ ...editing, scopeType: e.target.value })}>
+                  {SCOPE_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
+                </Select>
+              </Field>
+            </div>
 
-            <label className="flex items-start gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={Boolean(editing.canCreateAccessLinks)}
-                onChange={e => setEditing({ ...editing, canCreateAccessLinks: e.target.checked })}
-                className="mt-0.5"
-              />
-              <span>Can issue temporary form access links to applicants</span>
-            </label>
+            <ToggleRow
+              checked={Boolean(editing.canCreateAccessLinks)}
+              onChange={checked => setEditing({ ...editing, canCreateAccessLinks: checked })}
+              label="Issue form access links"
+              description="Can issue temporary form access links to applicants."
+            />
 
             {editing._id && !editing.isSystem && (
-              <label className="flex items-start gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={editing.isActive !== false}
-                  onChange={e => setEditing({ ...editing, isActive: e.target.checked })}
-                  className="mt-0.5"
-                />
-                <span>Active</span>
-              </label>
+              <ToggleRow
+                checked={editing.isActive !== false}
+                onChange={checked => setEditing({ ...editing, isActive: checked })}
+                label="Active"
+                description="Inactive roles can't be assigned, and accounts that hold one cannot sign in."
+              />
             )}
           </form>
         )}
@@ -248,14 +254,14 @@ export default function RolesPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setToDelete(null)}>Cancel</Button>
-            <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
+            <Button variant="danger" onClick={confirmDelete} loading={deleting}>
               {deleting ? 'Deleting...' : 'Delete role'}
             </Button>
           </>
         }
       >
-        <p className="text-sm text-gray-600">
-          <strong>{toDelete?.name}</strong> will be removed permanently. Accounts using this role must be
+        <p className="text-sm leading-relaxed text-slate-600">
+          <strong className="text-ink">{toDelete?.name}</strong> will be removed permanently. Accounts using this role must be
           reassigned first.
         </p>
       </Modal>

@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { CheckCircle2 } from 'lucide-react'
+import { AlertTriangle, ArrowRight, CheckCircle2, Lock, ShieldCheck, User } from 'lucide-react'
 import { applicantApi, apiError, APPLICANT_TOKEN_KEY } from '../../utils/members/api'
 import DynamicFormRenderer from '../../components/reportRenderer/DynamicFormRenderer'
-import { Button, Field, Input, Spinner } from '../../components/members/ui'
+import { Button, Field, Input, PasswordInput } from '../../components/members/ui'
+import AuthLayout from '../../components/members/AuthLayout'
 import BrandLogo from '../../components/branding/BrandLogo'
 
 /**
@@ -157,87 +158,102 @@ export default function ApplicantAccessPage() {
 
   if (done) {
     return (
-      <Shell>
-        <div className="text-center py-10">
-          <CheckCircle2 size={48} className="mx-auto text-green-600 mb-4" />
-          <h1 className="text-xl font-semibold text-gray-900">Application submitted</h1>
-          <p className="text-sm text-gray-600 mt-2 max-w-sm mx-auto">
-            Your application has been sent for verification. Your unit admin will contact you
-            if anything else is needed. You can close this page.
-          </p>
-        </div>
-      </Shell>
+      <StatusScreen
+        tone="success"
+        title="Application submitted"
+        message="Your application has been sent for verification. Your unit admin will contact you if anything else is needed. You can close this page."
+      />
     )
   }
 
   if (blockedMessage) {
     return (
-      <Shell>
-        <div className="text-center py-10">
-          <h1 className="text-lg font-semibold text-gray-900">Form unavailable</h1>
-          <p className="text-sm text-gray-600 mt-2 max-w-sm mx-auto">{blockedMessage}</p>
-          <Button variant="secondary" className="mt-4" onClick={() => { setBlockedMessage(''); loadForm() }}>
+      <StatusScreen
+        tone="warning"
+        title="Form unavailable"
+        message={blockedMessage}
+        action={
+          <Button variant="secondary" className="w-full" onClick={() => { setBlockedMessage(''); loadForm() }}>
             Try again
           </Button>
-        </div>
-      </Shell>
+        }
+      />
     )
   }
 
   if (!authed) {
     return (
-      <Shell>
+      <AuthLayout
+        title="Application Form"
+        subtitle="Rukn & Karkoon membership application"
+        showPortalsLink={false}
+        footer="Your application link and credentials are private. Do not share them."
+      >
         <form onSubmit={signIn} className="space-y-4">
-          <div className="text-center mb-2">
-            <h1 className="text-xl font-semibold text-gray-900">Application Form</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Enter the username and password your unit admin gave you.
-            </p>
+          <div className="mb-5 flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-royal-50 text-royal-700">
+              <ShieldCheck size={20} />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-ink">Sign in to continue</h2>
+              <p className="mt-1 text-sm leading-relaxed text-slate-500">
+                Enter the username and password your unit admin gave you.
+              </p>
+            </div>
           </div>
 
           <Field label="Username" required>
             <Input
+              icon={User}
               value={credentials.username}
               onChange={e => setCredentials({ ...credentials, username: e.target.value })}
               autoComplete="off"
-              autoFocus
+              autoCapitalize="none"
+              placeholder="Your username"
               required
             />
           </Field>
 
           <Field label="Password" required>
-            <Input
-              type="password"
+            <PasswordInput
+              icon={Lock}
               value={credentials.password}
               onChange={e => setCredentials({ ...credentials, password: e.target.value })}
               autoComplete="off"
+              placeholder="Your password"
               required
             />
           </Field>
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Checking...' : 'Open form'}
+          <Button type="submit" size="lg" loading={loading} className="!mt-6 w-full">
+            {loading ? 'Checking…' : <>Open form <ArrowRight size={18} strokeWidth={2.4} /></>}
           </Button>
         </form>
-      </Shell>
+      </AuthLayout>
     )
   }
 
-  if (loading || !template) return <Shell><Spinner label="Loading the form..." /></Shell>
+  if (loading || !template) return <StatusScreen tone="loading" title="Loading the form…" />
 
   return (
-    <div className="mobile-readable-content min-h-screen bg-gray-50 px-3 py-4 sm:px-6 sm:py-6">
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-3 flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:mb-4">
-          <BrandLogo alt="JIH Plus" size="sm" />
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#6d28d9]">Members Application</p>
-            <h1 className="break-words text-xl font-semibold leading-snug text-gray-900 [overflow-wrap:anywhere]">{template.title}</h1>
-            {template.description && <p className="mt-1 break-words text-sm leading-relaxed text-gray-600 [overflow-wrap:anywhere]">{template.description}</p>}
+    <div className="mbr mbr-canvas mobile-readable-content min-h-dvh">
+      <header className="mbr-hero px-4 pb-12 pt-[calc(env(safe-area-inset-top)+1rem)] sm:px-6 sm:pb-16 sm:pt-8">
+        <div className="mx-auto max-w-3xl">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.12] ring-1 ring-inset ring-white/20">
+              <BrandLogo variant="white" size="xs" alt="JIH Plus" className="!h-5" />
+            </span>
+            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-royal-100/80">Members Application</p>
           </div>
+          <h1 className="mt-3 text-xl font-bold leading-snug tracking-tight text-white [overflow-wrap:anywhere] sm:text-3xl">{template.title}</h1>
+          {template.description && (
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-royal-100/80 [overflow-wrap:anywhere]">{template.description}</p>
+          )}
         </div>
+      </header>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
+      <main className="relative z-[1] -mt-7 px-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:-mt-10 sm:px-6">
+        <div className="mbr-card mbr-form mx-auto max-w-3xl p-4 shadow-[0_8px_32px_rgba(11,20,48,0.08)] sm:p-6">
           <DynamicFormRenderer
             report={template}
             initialData={draft.formData}
@@ -247,23 +263,37 @@ export default function ApplicantAccessPage() {
             onSaveDraft={saveDraft}
           />
         </div>
-      </div>
+        <p className="mx-auto mt-4 flex max-w-3xl items-center justify-center gap-1.5 text-center text-xs text-slate-500">
+          <Lock size={13} className="shrink-0" /> Your answers are saved privately against your personal link.
+        </p>
+      </main>
     </div>
   )
 }
 
-function Shell({ children }) {
+/** Full-screen centred state for the applicant: done, unavailable or loading. */
+function StatusScreen({ tone, title, message, action }) {
+  const icon = {
+    success: <CheckCircle2 size={30} />,
+    warning: <AlertTriangle size={28} />
+  }[tone]
   return (
-    <div className="mobile-readable-content min-h-screen bg-gradient-to-br from-[#f5f3ff] to-[#ede9fe] px-3 py-4 sm:flex sm:items-center sm:justify-center sm:px-6 sm:py-10">
-      <div className="mx-auto w-full max-w-md">
-        <div className="mb-3 text-center">
-          <BrandLogo alt="JIH Plus" size="md" className="mx-auto mb-2" />
-          <p className="text-sm font-semibold text-gray-700">Members Application</p>
-        </div>
-        <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-lg shadow-violet-100 sm:p-6">{children}</div>
-        <p className="mt-4 text-center text-xs leading-relaxed text-gray-500">
-          Your application link and credentials are private. Do not share them.
-        </p>
+    <div className="mbr mbr-canvas mobile-readable-content flex min-h-dvh flex-col items-center justify-center px-4 py-10">
+      <div className="mbr-card w-full max-w-sm p-6 text-center sm:p-8">
+        {tone === 'loading' ? (
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-[3px] border-royal-100 border-t-royal-600" role="status" />
+        ) : (
+          <span className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${tone === 'success' ? 'bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60' : 'bg-amber-50 text-amber-600 ring-8 ring-amber-50/60'}`}>
+            {icon}
+          </span>
+        )}
+        <h1 className="text-xl font-bold tracking-tight text-ink">{title}</h1>
+        {message && <p className="mt-2 text-sm leading-relaxed text-slate-500">{message}</p>}
+        {action && <div className="mt-6">{action}</div>}
+      </div>
+      <div className="mt-6 flex items-center gap-2 text-xs text-slate-400">
+        <BrandLogo size="xs" alt="JIH Plus" className="!h-5 opacity-80" />
+        Members Application
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 import React from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { ShieldAlert } from 'lucide-react'
 import { useAuth } from '../../contexts/members/AuthContext'
 
 /**
@@ -14,10 +15,10 @@ export default function ProtectedRoute({ children, allowedRoles = [], superAdmin
 
   if (initializing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-10 h-10 mx-auto mb-4 border-2 border-gray-200 border-t-[#5b21b6] rounded-full animate-spin" />
-          <p className="text-gray-600">Loading...</p>
+      <div className="mbr mbr-canvas flex min-h-dvh items-center justify-center">
+        <div className="text-center" role="status">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-[3px] border-royal-100 border-t-royal-600" />
+          <p className="text-sm font-medium text-slate-500">Loading your workspace…</p>
         </div>
       </div>
     )
@@ -38,12 +39,15 @@ export default function ProtectedRoute({ children, allowedRoles = [], superAdmin
       else navigate('/members')
     }
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="text-center max-w-sm">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-          <p className="text-gray-600 mb-4">You don't have permission to view this page.</p>
-          <button onClick={goBack} className="px-4 py-2 rounded-lg bg-[#5b21b6] text-white">
-            Go Back
+      <div className="mbr mbr-canvas flex min-h-dvh items-center justify-center px-4">
+        <div className="mbr-card w-full max-w-sm p-6 text-center">
+          <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+            <ShieldAlert size={24} />
+          </span>
+          <h2 className="text-lg font-bold text-ink">Access denied</h2>
+          <p className="mt-1 text-sm leading-relaxed text-slate-500">You don't have permission to view this page.</p>
+          <button onClick={goBack} className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-royal-600 px-4 text-sm font-semibold text-white hover:bg-royal-700">
+            Go back
           </button>
         </div>
       </div>
