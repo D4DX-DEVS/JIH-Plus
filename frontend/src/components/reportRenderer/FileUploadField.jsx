@@ -45,6 +45,7 @@ export default function FileUploadField({ field, value, onChange, inputId, ariaI
     <div>
       <label
         htmlFor={inputId}
+        data-fr="upload"
         className="block cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-4 text-center transition-colors hover:border-blue-400"
       >
         <Upload size={20} className="mx-auto text-gray-400 mb-1" />

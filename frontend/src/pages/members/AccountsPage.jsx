@@ -1,17 +1,35 @@
 import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Plus, Trash2 } from 'lucide-react'
+import { Pencil, Plus, SearchX, Trash2, Users } from 'lucide-react'
 import { api, apiError } from '../../utils/members/api'
 import {
-  Button, Card, EmptyState, Field, FilterBar, Input, Modal, PageHeader,
-  Pagination, SearchInput, Select, Spinner, TableWrap, Th, PAGE_SIZE
+  Avatar, Badge, Button, Card, EmptyState, Field, FilterBar, IconButton, Input, ListRow,
+  ListSkeleton, Modal, PageHeader, Pagination, PasswordInput, SearchInput, Select,
+  TableWrap, ToggleRow, Th, PAGE_SIZE
 } from '../../components/members/ui'
+import LocationCascade from '../../components/members/LocationCascade'
 
 const BLANK = {
   username: '', password: '', name: '', contactNo: '', email: '',
   roleKey: '', isRukn: false, scope: { mekhala: '', district: '', area: '', unit: '' }
 }
+
+// The pickers each role's posting needs, top-down. Area and unit postings start
+// from the district so every list only holds the chosen parent's children; the
+// backend fills in the rest of the chain (mekhala) from master data.
+const CHAIN = { mekhala: ['mekhala'], district: ['district'], area: ['district', 'area'], unit: ['district', 'area', 'unit'] }
+
+// Keep only the levels the new role uses, so switching role never leaves a
+// stale lower level (e.g. a unit) behind on an area account.
+const scopeFor = (scope, type) => ({
+  ...BLANK.scope,
+  ...Object.fromEntries((CHAIN[type] || []).map(level => [level, scope?.[level] || '']))
+})
+
+// Where an account is posted: the lowest level it holds, else the whole state.
+const postingOf = (account) =>
+  account.scope?.unit || account.scope?.area || account.scope?.district || account.scope?.mekhala || 'State'
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState([])
@@ -76,9 +94,7 @@ export default function AccountsPage() {
     [roles, editing?.roleKey]
   )
 
-  // Only the level the role is posted to needs picking; the backend fills in the
-  // parents from master data.
-  const optionsFor = (type) => locations.filter(l => l.type === type)
+  const levels = CHAIN[selectedRole?.scopeType] || []
 
   const save = async (e) => {
     e.preventDefault()
@@ -126,32 +142,36 @@ export default function AccountsPage() {
         title="Accounts"
         subtitle="Reviewer logins. Each account holds one role and one posting."
         hideTitleOnMobile
-        actions={<Button onClick={() => setEditing({ ...BLANK })}><Plus size={16} /> New account</Button>}
+        primaryAction={{ label: 'New account', mobileLabel: 'New', icon: Plus, onClick: () => setEditing({ ...BLANK }) }}
       />
 
-      <FilterBar active={filtersActive} onClear={clearFilters}>
-        <SearchInput
-          className="flex-1 min-w-[200px]"
-          placeholder="Search by name, username or contact"
-          value={searchBox}
-          onChange={e => setSearchBox(e.target.value)}
-        />
-
-        <Select className="sm:w-44" value={filters.roleKey} onChange={e => setFilter('roleKey', e.target.value)}>
+      <FilterBar
+        search={
+          <SearchInput
+            placeholder="Search by name, username or contact"
+            value={searchBox}
+            onChange={e => setSearchBox(e.target.value)}
+          />
+        }
+        active={filtersActive}
+        activeCount={[filters.roleKey, filters.scopeName, filters.status].filter(Boolean).length}
+        onClear={clearFilters}
+      >
+        <Select className="sm:w-44" value={filters.roleKey} onChange={e => setFilter('roleKey', e.target.value)} aria-label="Role">
           <option value="">All roles</option>
           {roles.map(r => <option key={r.key} value={r.key}>{r.name}</option>)}
         </Select>
 
         {/* District is the useful grouping level here — a unit-level list would
             run to hundreds of options. Any account inside the district matches. */}
-        <Select className="sm:w-44" value={filters.scopeName} onChange={e => setFilter('scopeName', e.target.value)}>
+        <Select className="sm:w-44" value={filters.scopeName} onChange={e => setFilter('scopeName', e.target.value)} aria-label="District">
           <option value="">All districts</option>
           {locations.filter(l => l.type === 'district').map(l => (
             <option key={l._id} value={l.name}>{l.name}</option>
           ))}
         </Select>
 
-        <Select className="sm:w-40" value={filters.status} onChange={e => setFilter('status', e.target.value)}>
+        <Select className="col-span-2 sm:col-span-1 sm:w-40" value={filters.status} onChange={e => setFilter('status', e.target.value)} aria-label="Status">
           <option value="">All statuses</option>
           <option value="active">Active</option>
           <option value="inactive">Deactivated</option>
@@ -159,94 +179,83 @@ export default function AccountsPage() {
         </Select>
       </FilterBar>
 
-      <Card>
-        {loading ? <Spinner /> : accounts.length === 0 ? (
+      <Card className="overflow-hidden">
+        {loading ? <ListSkeleton rows={6} /> : accounts.length === 0 ? (
           <EmptyState
+            icon={filtersActive ? SearchX : Users}
             title={filtersActive ? 'No accounts match these filters' : 'No accounts yet'}
             message={filtersActive
               ? 'Try widening or clearing the filters.'
               : 'Create reviewer logins for each level of the hierarchy.'}
-            action={filtersActive && <Button variant="secondary" onClick={clearFilters}>Clear filters</Button>}
+            action={filtersActive && <Button variant="secondary" size="sm" onClick={clearFilters}>Clear filters</Button>}
           />
         ) : (
           <>
-            {/* Mobile: roomy tappable rows — one full-width target per record */}
-            <div className="lg:hidden divide-y divide-gray-100">
+            {/* Phones and tablets: tap a row to edit; the bin sits beside it */}
+            <div className="divide-y divide-line lg:hidden">
               {accounts.map(account => (
-                <div key={account._id} className="min-h-[56px] flex items-center gap-2 px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-semibold text-gray-900 break-words leading-snug">
-                      {account.name}
-                    </p>
-                    <p className="text-[11px] text-gray-500 mt-0.5">
-                      {account.username} · {account.role?.name || '—'} ·{' '}
-                      {account.scope?.unit || account.scope?.area || account.scope?.district || account.scope?.mekhala || 'State'}
-                    </p>
-                    {(account.isRukn || !account.isActive) && (
-                      <p className="text-[11px] mt-0.5">
-                        {account.isRukn && <span className="text-gray-500">Rukn</span>}
-                        {account.isRukn && !account.isActive && <span className="text-gray-400"> · </span>}
-                        {!account.isActive && <span className="text-red-500">Deactivated</span>}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button
-                      onClick={() => startEdit(account)}
-                      className="flex min-h-11 min-w-11 items-center justify-center text-[#5b21b6] text-[13px] font-medium"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setToDelete(account)}
-                      aria-label="Delete account"
-                      className="flex min-h-11 min-w-11 items-center justify-center text-gray-400 active:text-red-600"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
+                <div key={account._id} className="flex items-center pr-2 sm:pr-3">
+                  <ListRow
+                    className="min-w-0 flex-1"
+                    chevron={false}
+                    onClick={() => startEdit(account)}
+                    leading={<Avatar name={account.name} />}
+                    title={account.name}
+                    meta={[account.username, account.role?.name || '—', postingOf(account)].join(' · ')}
+                    trailing={(account.isRukn || !account.isActive) ? (
+                      <>
+                        {account.isRukn && <Badge tone="royal">Rukn</Badge>}
+                        {!account.isActive && <Badge tone="rose">Deactivated</Badge>}
+                      </>
+                    ) : null}
+                  />
+                  <IconButton icon={Trash2} tone="danger" label="Delete account" onClick={() => setToDelete(account)} />
                 </div>
               ))}
             </div>
-            {/* Desktop: table */}
-            <TableWrap>
-            <ResponsiveTable className="hidden lg:table w-full text-sm min-w-[720px]">
-              <thead className="bg-gray-50/80 border-b border-gray-100">
-                <tr>
-                  <Th>Name</Th>
-                  <Th>Username</Th>
-                  <Th>Role</Th>
-                  <Th>Posting</Th>
-                  <Th>Rukn</Th>
-                  <Th />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {accounts.map(account => (
-                  <tr key={account._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-gray-900">{account.name}</span>
-                      {!account.isActive && <span className="block text-xs text-red-500">Deactivated</span>}
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600">{account.username}</td>
-                    <td className="px-4 py-3 text-gray-600">{account.role?.name || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {account.scope?.unit || account.scope?.area || account.scope?.district || account.scope?.mekhala || 'State'}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{account.isRukn ? 'Yes' : '—'}</td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <button onClick={() => startEdit(account)} className="text-[#5b21b6] hover:underline py-2 px-1 mr-2">
-                        Edit
-                      </button>
-                      <button onClick={() => setToDelete(account)} aria-label="Delete account" className="text-gray-400 hover:text-red-600 p-2">
-                        <Trash2 size={15} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </ResponsiveTable>
-            </TableWrap>
+
+            {/* Desktop table */}
+            <div className="hidden lg:block">
+              <TableWrap>
+                <ResponsiveTable className="w-full min-w-[720px] text-sm">
+                  <thead>
+                    <tr>
+                      <Th>Name</Th>
+                      <Th>Username</Th>
+                      <Th>Role</Th>
+                      <Th>Posting</Th>
+                      <Th>Rukn</Th>
+                      <Th />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line">
+                    {accounts.map(account => (
+                      <tr key={account._id} className="transition-colors hover:bg-mist/70">
+                        <td className="px-4 py-3 pl-5">
+                          <div className="flex items-center gap-3">
+                            <Avatar name={account.name} size="sm" />
+                            <span className="min-w-0">
+                              <span className="block font-semibold text-ink">{account.name}</span>
+                              {!account.isActive && <Badge tone="rose" className="mt-0.5">Deactivated</Badge>}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs text-slate-600">{account.username}</td>
+                        <td className="px-4 py-3 text-slate-600">{account.role?.name || '—'}</td>
+                        <td className="px-4 py-3 text-slate-600">{postingOf(account)}</td>
+                        <td className="px-4 py-3">{account.isRukn ? <Badge tone="royal">Rukn</Badge> : <span className="text-slate-400">—</span>}</td>
+                        <td className="px-4 py-2 pr-5 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1">
+                            <IconButton icon={Pencil} tone="royal" label="Edit account" onClick={() => startEdit(account)} />
+                            <IconButton icon={Trash2} tone="danger" label="Delete account" onClick={() => setToDelete(account)} />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </ResponsiveTable>
+              </TableWrap>
+            </div>
           </>
         )}
       </Card>
@@ -260,7 +269,7 @@ export default function AccountsPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setEditing(null)}>Cancel</Button>
-            <Button form="account-form" type="submit" disabled={busy}>{busy ? 'Saving...' : 'Save account'}</Button>
+            <Button form="account-form" type="submit" loading={busy}>{busy ? 'Saving...' : 'Save account'}</Button>
           </>
         }
       >
@@ -284,8 +293,7 @@ export default function AccountsPage() {
               required={!editing._id}
               hint={editing._id ? 'Leave blank to keep the current password.' : 'At least 6 characters.'}
             >
-              <Input
-                type="password"
+              <PasswordInput
                 value={editing.password || ''}
                 onChange={e => setEditing({ ...editing, password: e.target.value })}
                 required={!editing._id}
@@ -296,7 +304,10 @@ export default function AccountsPage() {
             <Field label="Role" required>
               <Select
                 value={editing.roleKey}
-                onChange={e => setEditing({ ...editing, roleKey: e.target.value })}
+                onChange={e => {
+                  const role = roles.find(r => r.key === e.target.value)
+                  setEditing({ ...editing, roleKey: e.target.value, scope: scopeFor(editing.scope, role?.scopeType) })
+                }}
                 required
               >
                 <option value="">Select a role</option>
@@ -306,58 +317,37 @@ export default function AccountsPage() {
               </Select>
             </Field>
 
-            {selectedRole && selectedRole.scopeType !== 'state' && (
-              <Field label={selectedRole.scopeType} required>
-                <Select
-                  value={editing.scope?.[selectedRole.scopeType] || ''}
-                  onChange={e => setEditing({
-                    ...editing,
-                    scope: { ...BLANK.scope, [selectedRole.scopeType]: e.target.value }
-                  })}
-                  required
-                >
-                  <option value="">Select a {selectedRole.scopeType}</option>
-                  {optionsFor(selectedRole.scopeType).map(l => (
-                    <option key={l._id} value={l.name}>
-                      {l.name}
-                      {l.area ? ` — ${l.area}, ${l.district}` : l.district ? ` — ${l.district}` : ''}
-                    </option>
-                  ))}
-                </Select>
+            <LocationCascade
+              locations={locations}
+              levels={levels}
+              value={editing.scope || BLANK.scope}
+              onChange={next => setEditing({ ...editing, scope: { ...BLANK.scope, ...next } })}
+            />
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Contact number">
+                <Input value={editing.contactNo || ''} onChange={e => setEditing({ ...editing, contactNo: e.target.value })} />
               </Field>
-            )}
 
-            <Field label="Contact number">
-              <Input value={editing.contactNo || ''} onChange={e => setEditing({ ...editing, contactNo: e.target.value })} />
-            </Field>
+              <Field label="Email">
+                <Input type="email" value={editing.email || ''} onChange={e => setEditing({ ...editing, email: e.target.value })} />
+              </Field>
+            </div>
 
-            <Field label="Email">
-              <Input type="email" value={editing.email || ''} onChange={e => setEditing({ ...editing, email: e.target.value })} />
-            </Field>
-
-            <label className="flex items-start gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={Boolean(editing.isRukn)}
-                onChange={e => setEditing({ ...editing, isRukn: e.target.checked })}
-                className="mt-0.5"
-              />
-              <span>
-                This person is a Rukn — in the Karkoon workflow a Unit Nazim/Nazimath who is
-                a Rukn may fill the area admin's comments and skip that stage.
-              </span>
-            </label>
+            <ToggleRow
+              checked={Boolean(editing.isRukn)}
+              onChange={checked => setEditing({ ...editing, isRukn: checked })}
+              label="This person is a Rukn"
+              description="In the Karkoon workflow a Unit Nazim/Nazimath who is a Rukn may fill the area admin's comments and skip that stage."
+            />
 
             {editing._id && (
-              <label className="flex items-start gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={editing.isActive !== false}
-                  onChange={e => setEditing({ ...editing, isActive: e.target.checked })}
-                  className="mt-0.5"
-                />
-                <span>Active</span>
-              </label>
+              <ToggleRow
+                checked={editing.isActive !== false}
+                onChange={checked => setEditing({ ...editing, isActive: checked })}
+                label="Active"
+                description="Deactivated accounts cannot sign in."
+              />
             )}
           </form>
         )}
@@ -370,14 +360,14 @@ export default function AccountsPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setToDelete(null)}>Cancel</Button>
-            <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
+            <Button variant="danger" onClick={confirmDelete} loading={deleting}>
               {deleting ? 'Deleting...' : 'Delete account'}
             </Button>
           </>
         }
       >
-        <p className="text-sm text-gray-600">
-          <strong>{toDelete?.name}</strong>'s login will be removed permanently. This cannot be undone.
+        <p className="text-sm leading-relaxed text-slate-600">
+          <strong className="text-ink">{toDelete?.name}</strong>'s login will be removed permanently. This cannot be undone.
         </p>
       </Modal>
     </div>

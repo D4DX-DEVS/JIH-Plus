@@ -1,12 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Eye, Plus, Save, Trash2 } from 'lucide-react'
+import { ArrowLeft, Eye, Globe, Lock, Plus, Save, Trash2 } from 'lucide-react'
 import { api, apiError } from '../../utils/members/api'
 import FieldCanvas from '../../components/reportBuilder/FieldCanvas'
 import FieldTypeSelector from '../../components/reportBuilder/FieldTypeSelector'
 import FormPreview from '../../components/members/FormPreview'
-import { Button, Card, Field, Input, Modal, Select, Spinner, Textarea } from '../../components/members/ui'
+import {
+  Button, Card, Field, IconButton, Input, Modal, Notice, PageHeader, Select, Spinner
+} from '../../components/members/ui'
+import { cx } from '../../utils/members/format'
 
 // Field ids must be unique across the whole form — the conditional-logic editor
 // and the renderer both address fields by bare id.
@@ -237,36 +240,60 @@ export default function FormBuilderPage() {
     }
   }
 
-  if (loading) return <Spinner />
+  if (loading) return <Spinner label="Loading form..." />
 
   return (
     <div>
+      {/* The phone app bar already carries a back arrow; this guarded one shows
+          on desktop, and on phones once there are unsaved edits to confirm. */}
       <button
         onClick={() => (dirty ? setConfirmLeave(true) : navigate('/members/forms'))}
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 -ml-2 p-2 mb-1 min-h-11"
+        className={cx(
+          '-ml-2 mb-1 min-h-11 items-center gap-1.5 rounded-xl px-2 text-sm font-semibold text-slate-500 hover:text-ink',
+          dirty ? 'inline-flex' : 'hidden lg:inline-flex'
+        )}
       >
         <ArrowLeft size={16} /> Back to forms
       </button>
 
+      <PageHeader
+        title={isNew ? 'New form' : 'Edit form'}
+        hideTitleOnMobile
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setPreview('applicant')}>
+              <Eye size={15} />
+              <span className="sm:hidden">Applicant view</span>
+              <span className="hidden sm:inline">Preview as applicant</span>
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setPreview('full')}>
+              <Eye size={15} />
+              <span className="sm:hidden">Full form</span>
+              <span className="hidden sm:inline">Preview full form</span>
+            </Button>
+          </>
+        }
+      />
+
       {published && !structureLocked && (
-        <Card className="p-3 mb-4 bg-green-50 border-green-200">
-          <p className="text-sm text-green-800">
-            This form is live. Changes you save here update the published form immediately.
-          </p>
-        </Card>
+        <Notice tone="success" icon={Globe} className="mb-3 sm:mb-4">
+          This form is live. Changes you save here update the published form immediately.
+        </Notice>
       )}
       {structureLocked && (
-        <Card className="p-3 mb-4 bg-amber-50 border-amber-200">
-          <p className="text-sm text-amber-800">
-            {usageCount} application{usageCount === 1 ? ' has' : 's have'} been submitted against this
-            form, so its structure is locked — only the title and description can be changed. Clone it
-            from the forms list to restructure.
-          </p>
-        </Card>
+        <Notice tone="warning" icon={Lock} className="mb-3 sm:mb-4">
+          {usageCount} application{usageCount === 1 ? ' has' : 's have'} been submitted against this
+          form, so its structure is locked — only the title and description can be changed. Clone it
+          from the forms list to restructure.
+        </Notice>
       )}
 
-      <Card className="p-4 mb-4">
-        <div className="grid sm:grid-cols-3 gap-4">
+      <Card as="section" className="mb-3 overflow-hidden sm:mb-4">
+        <div className="flex items-center gap-2.5 border-b border-line px-4 py-3 sm:px-5">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-royal-50 text-xs font-bold text-royal-700">1</span>
+          <h2 className="text-[15px] font-semibold leading-snug text-ink">Form details</h2>
+        </div>
+        <div className="grid gap-3 px-4 py-4 sm:grid-cols-3 sm:gap-4 sm:px-5">
           <Field label="Application type" required>
             <Select
               value={meta.formType}
@@ -294,42 +321,53 @@ export default function FormBuilderPage() {
         </div>
       </Card>
 
-      <Card className="mb-4 overflow-hidden">
-        <div className="px-4 pt-3">
-          <div className="mobile-tab-grid flex items-center gap-2 overflow-x-auto pb-1 border-b border-gray-200">
-            {pages.map((page, i) => (
-              <div key={i} className="flex-shrink-0 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActivePage(i)}
-                  className={`px-3 py-2 text-sm rounded-t-md border-b-2 transition-colors ${
-                    i === activePage
-                      ? 'border-[#5b21b6] text-[#5b21b6] bg-[#faf5ff] font-medium'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {page.title || `Page ${i + 1}`}
-                  {page.audience === 'role' && (
-                    <span className="ml-1.5 text-[10px] uppercase tracking-wide text-gray-400">
-                      {page.audienceRole}
-                    </span>
+      <Card as="section" className="mb-3 overflow-hidden sm:mb-4">
+        {/* Page switcher: scrolls sideways on phones instead of wrapping */}
+        <div className="border-b border-line bg-mist/60 px-3 py-2.5 sm:px-4">
+          <div className="mbr-scroll-x items-center gap-2">
+            {pages.map((page, i) => {
+              const active = i === activePage
+              return (
+                <div
+                  key={i}
+                  className={cx(
+                    'flex shrink-0 items-center rounded-xl ring-1 ring-inset transition-colors',
+                    active ? 'bg-royal-50 ring-royal-300' : 'bg-[#fff] ring-slate-200'
                   )}
-                </button>
-                {pages.length > 1 && !structureLocked && (
-                  <button type="button" onClick={() => removePage(i)} className="text-gray-300 hover:text-red-400 p-2">
-                    <Trash2 size={12} />
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActivePage(i)}
+                    aria-current={active ? 'true' : undefined}
+                    className={cx(
+                      'inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3.5 text-sm font-semibold lg:min-h-10',
+                      active ? 'text-royal-800' : 'text-slate-600 hover:text-ink'
+                    )}
+                  >
+                    {page.title || `Page ${i + 1}`}
+                    {page.audience === 'role' && (
+                      <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                        {page.audienceRole}
+                      </span>
+                    )}
                   </button>
-                )}
-              </div>
-            ))}
+                  {pages.length > 1 && !structureLocked && (
+                    <IconButton
+                      icon={Trash2}
+                      label={`Remove ${page.title || `page ${i + 1}`}`}
+                      tone="danger"
+                      size={15}
+                      onClick={() => removePage(i)}
+                      className="-ml-2"
+                    />
+                  )}
+                </div>
+              )
+            })}
             {!structureLocked && (
-              <button
-                type="button"
-                onClick={addPage}
-                className="flex-shrink-0 flex items-center gap-1 px-2 py-1.5 text-xs text-gray-500 hover:text-[#5b21b6] hover:bg-[#faf5ff] rounded"
-              >
-                <Plus size={14} /> Add Page
-              </button>
+              <Button variant="soft" size="sm" onClick={addPage} className="shrink-0">
+                <Plus size={14} /> Add page
+              </Button>
             )}
           </div>
         </div>
@@ -355,28 +393,24 @@ export default function FormBuilderPage() {
         </div>
       </Card>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="secondary" onClick={() => setPreview('applicant')}>
-          <Eye size={15} /> Preview as applicant
-        </Button>
-        <Button variant="secondary" onClick={() => setPreview('full')}>
-          <Eye size={15} /> Preview full form
-        </Button>
-        <div className="flex-1" />
-        {published ? (
-          <Button onClick={save} disabled={saving}>
-            <Save size={15} /> {saving ? 'Saving...' : 'Save changes'}
-          </Button>
-        ) : (
-          <>
-            <Button variant="secondary" onClick={save} disabled={saving}>
-              <Save size={15} /> {saving ? 'Saving...' : 'Save draft'}
+      {/* Save bar: floats above the phone bottom nav, stays in view while editing */}
+      <div className="mbr-sticky-action">
+        <div className="mbr-card flex items-center justify-end gap-2 p-2.5 shadow-[0_8px_28px_rgba(11,20,48,0.16)]">
+          {published ? (
+            <Button className="flex-1 sm:flex-none" onClick={save} loading={saving}>
+              {!saving && <Save size={15} />} {saving ? 'Saving...' : 'Save changes'}
             </Button>
-            <Button onClick={publish} disabled={saving}>
-              {saving ? 'Publishing...' : 'Save & publish'}
-            </Button>
-          </>
-        )}
+          ) : (
+            <>
+              <Button variant="secondary" className="flex-1 sm:flex-none" onClick={save} disabled={saving}>
+                <Save size={15} /> {saving ? 'Saving...' : 'Save draft'}
+              </Button>
+              <Button className="flex-1 sm:flex-none" onClick={publish} disabled={saving}>
+                {saving ? 'Publishing...' : 'Save & publish'}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {showFieldSelector && (
@@ -401,7 +435,7 @@ export default function FormBuilderPage() {
           </>
         }
       >
-        <p className="text-sm text-gray-600">
+        <p className="text-sm leading-relaxed text-slate-600">
           You have unsaved changes to this form. Leaving now will lose them.
         </p>
       </Modal>

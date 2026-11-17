@@ -214,7 +214,7 @@ export default function DynamicFormRenderer({
   const isLastPage = currentPage === pages.length - 1;
 
   return (
-    <div ref={rendererRef} className="px-2 py-3 sm:px-6 sm:py-4">
+    <div ref={rendererRef} data-fr="root" className="px-2 py-3 sm:px-6 sm:py-4">
       <div ref={pageStartRef} tabIndex={-1} aria-label={`ഫോം ഭാഗം ${currentPage + 1} / ${pages.length}`} className="scroll-mt-3 outline-none" />
       {/* Page progress indicator */}
       {pages.length > 1 && (
@@ -223,8 +223,9 @@ export default function DynamicFormRenderer({
             <span className="shrink-0">Page {currentPage + 1} of {pages.length}</span>
             {page.title && <span className="min-w-0 truncate font-medium text-gray-700">{page.title}</span>}
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-1.5">
+          <div data-fr="progress-track" className="w-full bg-gray-200 rounded-full h-1.5">
             <div
+              data-fr="progress-fill"
               className="bg-blue-500 h-1.5 rounded-full transition-all"
               style={{ width: `${((currentPage + 1) / pages.length) * 100}%` }}
             />
@@ -240,6 +241,7 @@ export default function DynamicFormRenderer({
         <div
           role="alert"
           aria-live="assertive"
+          data-fr="error-summary"
           className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700"
         >
           Please correct {Object.keys(errors).length === 1 ? 'the highlighted field' : `${Object.keys(errors).length} highlighted fields`} before continuing.
@@ -284,6 +286,7 @@ export default function DynamicFormRenderer({
                 <label
                   htmlFor={controlId}
                   id={labelId}
+                  data-fr="field-label"
                   className={`${compactNumber ? 'min-w-0 flex-1' : 'sm:w-1/3 sm:flex-shrink-0'} text-sm font-semibold leading-snug text-gray-800`}
                 >
                   {field.label}
@@ -316,6 +319,7 @@ export default function DynamicFormRenderer({
               <label
                 id={labelId}
                 htmlFor={['row', 'radio', 'checkbox', 'multiselect', 'yesno'].includes(field.type) ? undefined : controlId}
+                data-fr="field-label"
                 className="mb-1 block text-sm font-semibold leading-snug text-gray-800"
               >
                 {field.label}
@@ -344,12 +348,13 @@ export default function DynamicFormRenderer({
 
       {/* Navigation — Save Draft / Previous / Next stay on one row, on phones
           too, so the footer never costs a whole extra screen of height. */}
-      <div className="flex flex-wrap items-center justify-between gap-2 sm:flex-nowrap sm:gap-3 mt-6 pt-4 border-t border-gray-100">
+      <div data-fr="nav" className="flex flex-wrap items-center justify-between gap-2 sm:flex-nowrap sm:gap-3 mt-6 pt-4 border-t border-gray-100">
         <div className="flex flex-wrap items-center gap-2 min-w-0">
           {!disabled && onSaveDraft && (
             <button
               type="button"
               onClick={handleDraft}
+              data-fr="draft"
               disabled={submitting}
               className="flex items-center gap-1 px-3 sm:px-4 py-2 min-h-[44px] sm:min-h-0 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
             >
@@ -360,6 +365,7 @@ export default function DynamicFormRenderer({
             <button
               type="button"
               onClick={onCancelEdit}
+              data-fr="cancel"
               disabled={submitting}
               className="flex items-center gap-1 px-3 sm:px-4 py-2 min-h-[44px] sm:min-h-0 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
             >
@@ -372,6 +378,7 @@ export default function DynamicFormRenderer({
             <button
               type="button"
               onClick={goPrev}
+              data-fr="prev"
               disabled={submitting}
               className="flex items-center gap-1 px-3 sm:px-4 py-2 min-h-[44px] sm:min-h-0 border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
             >
@@ -382,6 +389,7 @@ export default function DynamicFormRenderer({
             <button
               type="button"
               onClick={handleSubmit}
+              data-fr="submit-any"
               disabled={submitting}
               className="flex items-center gap-1.5 px-3 sm:px-5 py-2 min-h-[44px] sm:min-h-0 bg-green-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-green-700 disabled:opacity-60 whitespace-nowrap"
             >
@@ -398,6 +406,7 @@ export default function DynamicFormRenderer({
               <button
                 type="button"
                 onClick={handleSubmit}
+                data-fr="submit"
                 disabled={submitting}
                 className="flex items-center gap-1.5 px-3 sm:px-5 py-2 min-h-[44px] sm:min-h-0 bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 disabled:opacity-60 whitespace-nowrap"
               >
@@ -413,6 +422,7 @@ export default function DynamicFormRenderer({
             <button
               type="button"
               onClick={goNext}
+              data-fr="next"
               disabled={submitting}
               className="flex items-center gap-1 px-3 sm:px-4 py-2 min-h-[44px] sm:min-h-0 bg-blue-600 text-white rounded-lg text-xs sm:text-sm hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
             >

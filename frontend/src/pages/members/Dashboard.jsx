@@ -1,15 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  FileText, UserCheck, Users, Clock, CheckCircle2, XCircle, Link2, ArrowRight
+  ArrowRight, Bell, CheckCircle2, FileText, Inbox, Link2, Plus, Settings2,
+  Sparkles, Users, Workflow as WorkflowIcon
 } from 'lucide-react'
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-  PieChart, Pie, Cell, AreaChart, Area, Legend
+  ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area
 } from 'recharts'
 import { api, apiError } from '../../utils/members/api'
 import { useAuth } from '../../contexts/members/AuthContext'
-import { Button, Card, PageHeader, Spinner, StatusBadge } from '../../components/members/ui'
+import {
+  Avatar, Card, CardHeader, ErrorState, IconTile, ListRow, Skeleton, StatusBadge
+} from '../../components/members/ui'
+import { TYPE_TONE, cx, timeAgo } from '../../utils/members/format'
 import { FORM_TYPE_LABEL } from '../../utils/members/constants'
 
 /** Sums an aggregate result of { _id: {...}, count } down to a flat map. */
@@ -23,16 +26,24 @@ function tally(rows, key) {
   return out
 }
 
-const RUKN_COLOR = '#7c3aed'
-const KARKOON_COLOR = '#c4b5fd'
+// Series colours (validated for colour-vision deficiency): Rukn royal, Karkoon gold.
+const RUKN_COLOR = '#2a4bd6'
+const KARKOON_COLOR = '#e0a21b'
 
-const STATUS_META = {
-  submitted: { label: 'Submitted', color: '#3b82f6' },
-  in_review: { label: 'In review', color: '#f59e0b' },
-  approved: { label: 'Approved', color: '#22c55e' },
-  rejected: { label: 'Rejected', color: '#ef4444' },
-  hold: { label: 'On hold', color: '#9ca3af' }
-}
+const STATUS_META = [
+  { key: 'submitted', label: 'Submitted', color: '#0ea5e9' },
+  { key: 'in_review', label: 'In review', color: '#f59e0b' },
+  { key: 'approved', label: 'Approved', color: '#10b981' },
+  { key: 'rejected', label: 'Rejected', color: '#f43f5e' },
+  { key: 'hold', label: 'On hold', color: '#94a3b8' }
+]
+
+const LINK_META = [
+  { key: 'active', label: 'Active', dot: 'bg-emerald-500' },
+  { key: 'used', label: 'Used', dot: 'bg-royal-500' },
+  { key: 'blocked', label: 'Blocked', dot: 'bg-rose-500' },
+  { key: 'expired', label: 'Expired', dot: 'bg-slate-400' }
+]
 
 /** Last six months as [{ month: '2026-03', label: 'Mar' }, ...] ending this month. */
 function lastSixMonths() {
@@ -48,31 +59,82 @@ function lastSixMonths() {
   return out
 }
 
-function StatTile({ icon: Icon, label, value, tint, link }) {
-  const body = (
-    <Card className="h-full p-3 transition-shadow hover:shadow-md sm:p-4">
-      <div className="flex items-center gap-2.5 sm:gap-3">
-        <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 sm:rounded-xl ${tint}`}>
-          {React.createElement(Icon, { size: 18 })}
-        </div>
-        <div className="min-w-0">
-          <p className="text-xl font-bold leading-tight text-gray-900 sm:text-2xl">{value}</p>
-          <p className="mt-0.5 break-words text-sm leading-snug text-gray-600 sm:text-xs">{label}</p>
-        </div>
-      </div>
-    </Card>
+function greeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
+/** The four shortcuts each kind of account reaches for most. */
+function quickActions({ isSuperAdmin, canCreateAccessLinks }) {
+  const newLink = { to: '/members/access-links?new=1', label: 'New link', hint: 'Issue an applicant link', icon: Plus, tone: 'royal' }
+  const waiting = { to: '/members/applications?mine=1', label: 'Waiting on me', hint: 'Your review queue', icon: Inbox, tone: 'gold' }
+  const all = { to: '/members/applications', label: 'Applications', hint: 'Everything in scope', icon: FileText, tone: 'sky' }
+  if (isSuperAdmin) {
+    return [
+      newLink,
+      { to: '/members/accounts', label: 'Accounts', hint: 'Reviewer logins', icon: Users, tone: 'green' },
+      { to: '/members/forms', label: 'Forms', hint: 'Build the forms', icon: Settings2, tone: 'violet' },
+      { to: '/members/workflows', label: 'Workflows', hint: 'Review stages', icon: WorkflowIcon, tone: 'gold' }
+    ]
+  }
+  if (canCreateAccessLinks) {
+    return [newLink, waiting, all, { to: '/members/access-links', label: 'My links', hint: 'Issued links', icon: Link2, tone: 'green' }]
+  }
+  return [
+    waiting,
+    all,
+    { to: '/members/applications?status=approved', label: 'Approved', hint: 'Completed approvals', icon: CheckCircle2, tone: 'green' },
+    { to: '/members/notifications', label: 'Alerts', hint: 'Updates for you', icon: Bell, tone: 'violet' }
+  ]
+}
+
+function ChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-xl border border-line bg-[#fff] px-3 py-2 text-xs shadow-[0_8px_24px_rgba(11,20,48,0.12)]">
+      <p className="mb-1 font-semibold text-ink">{label}</p>
+      {payload.map(entry => (
+        <p key={entry.dataKey} className="flex items-center gap-2 text-slate-600">
+          <span className="h-2 w-2 rounded-full" style={{ background: entry.color }} />
+          {entry.name}
+          <span className="ml-auto pl-3 font-semibold tabular-nums text-ink">{entry.value}</span>
+        </p>
+      ))}
+    </div>
   )
-  return link ? <Link to={link}>{body}</Link> : body
+}
+
+function SeriesLegend({ rukn, karkoon }) {
+  return (
+    <div className="flex items-center gap-3 text-xs text-slate-600">
+      <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: RUKN_COLOR }} />Rukn{rukn !== undefined && <b className="font-semibold text-ink">{rukn}</b>}</span>
+      <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: KARKOON_COLOR }} />Karkoon{karkoon !== undefined && <b className="font-semibold text-ink">{karkoon}</b>}</span>
+    </div>
+  )
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-3 sm:space-y-4" role="status" aria-label="Loading dashboard">
+      <Skeleton className="h-[188px] rounded-[1.5rem]" />
+      <div className="grid grid-cols-4 gap-2 sm:gap-3">
+        {[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-[76px] rounded-2xl" />)}
+      </div>
+      <Skeleton className="h-72 rounded-[1.125rem]" />
+    </div>
+  )
 }
 
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user, isSuperAdmin, canCreateAccessLinks } = useAuth()
   const [stats, setStats] = useState(null)
   const [workflows, setWorkflows] = useState([])
   const [waiting, setWaiting] = useState([])
+  const [waitingTotal, setWaitingTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [showMobileCharts, setShowMobileCharts] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -84,6 +146,7 @@ export default function Dashboard() {
       .then(([statsRes, mineRes, wfRes]) => {
         setStats(statsRes.data.stats)
         setWaiting(mineRes.data.applications || [])
+        setWaitingTotal(mineRes.data.pagination?.total ?? (mineRes.data.applications || []).length)
         setWorkflows(wfRes.data.workflows || [])
         setError('')
       })
@@ -97,31 +160,27 @@ export default function Dashboard() {
   const byType = useMemo(() => tally(stats?.byStatus, 'formType'), [stats])
   const linkStatus = useMemo(() => tally(stats?.links, 'status'), [stats])
 
-  // Applications currently sitting at each workflow stage, split by type.
+  // Applications sitting at each workflow stage, split by type, in stage order.
+  // Applications that have left the workflow are grouped as "Completed".
   const stageData = useMemo(() => {
     if (!stats?.byStage) return []
-    const stageName = (formType, key) => {
+    const lookup = (formType, key) => {
       const wf = workflows.find(w => w.formType === formType)
-      return wf?.stages?.find(s => s.key === key)?.name || key
+      const stage = wf?.stages?.find(s => s.key === key)
+      return { name: stage?.name || key, order: stage?.order ?? 999 }
     }
     const map = new Map()
     for (const row of stats.byStage) {
       const { formType, stage } = row._id || {}
-      if (!stage) continue
-      const name = stageName(formType, stage)
-      const entry = map.get(name) || { name, rukn: 0, karkoon: 0 }
+      const { name, order } = stage ? lookup(formType, stage) : { name: 'Completed', order: 10000 }
+      const entry = map.get(name) || { name, order, rukn: 0, karkoon: 0 }
+      entry.order = Math.min(entry.order, order)
       entry[formType === 'karkoon' ? 'karkoon' : 'rukn'] += row.count
       map.set(name, entry)
     }
-    return [...map.values()]
+    return [...map.values()].sort((a, b) => a.order - b.order)
   }, [stats, workflows])
-
-  const statusData = useMemo(
-    () => Object.entries(STATUS_META)
-      .map(([key, meta]) => ({ name: meta.label, value: byStatus[key] || 0, color: meta.color }))
-      .filter(d => d.value > 0),
-    [byStatus]
-  )
+  const stageMax = Math.max(1, ...stageData.map(s => s.rukn + s.karkoon))
 
   const monthlyData = useMemo(() => {
     const months = lastSixMonths()
@@ -133,198 +192,261 @@ export default function Dashboard() {
     }
     return months.map(m => map[m.month])
   }, [stats])
+  const monthlyTotals = monthlyData.reduce((acc, m) => ({ rukn: acc.rukn + m.rukn, karkoon: acc.karkoon + m.karkoon }), { rukn: 0, karkoon: 0 })
 
-  if (loading) return <Spinner />
-  if (error) return (
-    <Card className="p-6 text-center">
-      <p className="text-sm text-red-600 mb-3">{error}</p>
-      <Button variant="secondary" onClick={load}>Retry</Button>
-    </Card>
-  )
+  if (loading) return <DashboardSkeleton />
+  if (error) return <Card><ErrorState message={error} onRetry={load} /></Card>
 
   const totalApplications = (byType.rukn || 0) + (byType.karkoon || 0)
+  const inReview = (byStatus.submitted || 0) + (byStatus.in_review || 0)
+  const statusTotal = STATUS_META.reduce((sum, s) => sum + (byStatus[s.key] || 0), 0)
+  const linksTotal = LINK_META.reduce((sum, l) => sum + (linkStatus[l.key] || 0), 0)
+  const firstName = String(user?.name || '').trim().split(/\s+/)[0] || 'there'
+  const scopeLabel = user?.scope?.unit || user?.scope?.area || user?.scope?.district || user?.scope?.mekhala || (isSuperAdmin ? 'State' : '')
+  const actions = quickActions({ isSuperAdmin, canCreateAccessLinks })
 
-  const tiles = [
-    { label: 'Total applications', value: totalApplications, icon: FileText, tint: 'bg-violet-100 text-[#5b21b6]', link: '/members/applications' },
-    { label: 'Rukn applications', value: byType.rukn || 0, icon: UserCheck, tint: 'bg-indigo-100 text-indigo-700', link: '/members/applications?formType=rukn' },
-    { label: 'Karkoon applications', value: byType.karkoon || 0, icon: Users, tint: 'bg-sky-100 text-sky-700', link: '/members/applications?formType=karkoon' },
-    { label: 'In review', value: (byStatus.submitted || 0) + (byStatus.in_review || 0), icon: Clock, tint: 'bg-amber-100 text-amber-700', link: '/members/applications?status=in_review' },
-    { label: 'Approved', value: byStatus.approved || 0, icon: CheckCircle2, tint: 'bg-green-100 text-green-700', link: '/members/applications?status=approved' },
-    { label: 'Open form links', value: linkStatus.active || 0, icon: Link2, tint: 'bg-rose-100 text-rose-700' }
+  const heroStats = [
+    { label: 'Total', value: totalApplications, to: '/members/applications' },
+    { label: 'Rukn', value: byType.rukn || 0, to: '/members/applications?formType=rukn' },
+    { label: 'Karkoon', value: byType.karkoon || 0, to: '/members/applications?formType=karkoon' }
   ]
-
-  const tooltipStyle = {
-    borderRadius: 12,
-    border: '1px solid #e5e7eb',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-    fontSize: 12
-  }
+  // The headline is the reviewer's own queue; once that is empty it becomes
+  // what is still in review across their scope.
+  const headline = waitingTotal > 0
+    ? { value: waitingTotal, label: `application${waitingTotal === 1 ? '' : 's'} waiting on you`, to: '/members/applications?mine=1', cta: 'Review' }
+    : { value: inReview, label: 'in progress across your scope', to: '/members/applications', cta: inReview > 0 ? 'View' : '', caughtUp: true }
 
   return (
-    <div>
-      <PageHeader
-        title={`Welcome, ${user?.name || 'there'}`}
-        subtitle={user?.role?.name ? `Signed in as ${user.role.name}` : undefined}
-        hideTitleOnMobile
-      />
-
-      <Card className="mb-4 p-3 sm:mb-6 sm:p-5">
-        <div className="mb-2 flex items-center justify-between gap-3 sm:mb-4">
+    <div className="space-y-3 sm:space-y-4">
+      {/* ── Hero ─────────────────────────────────────────────────────── */}
+      <section className="mbr-hero rounded-[1.5rem] p-4 sm:p-6 lg:p-7">
+        <div className="lg:flex lg:items-end lg:justify-between lg:gap-8">
           <div className="min-w-0">
-            <h2 className="font-semibold text-gray-900">Waiting on you</h2>
-            <p className="mt-0.5 text-xs text-gray-600">Applications ready for your action</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.12] px-2.5 py-1 text-xs font-medium text-royal-50 ring-1 ring-inset ring-white/15">
+                <Sparkles size={12} />
+                {[user?.role?.name || (isSuperAdmin ? 'Super admin' : ''), scopeLabel].filter(Boolean).join(' · ')}
+              </span>
+            </div>
+            <h1 className="mt-3 text-xl font-bold tracking-tight text-white sm:text-2xl">
+              {greeting()}, {firstName}
+            </h1>
+
+            <div className="mt-4 flex items-end justify-between gap-4 lg:justify-start lg:gap-6">
+              <div>
+                <p className="text-[2.75rem] font-bold leading-none tracking-tight tabular-nums text-white">{headline.value}</p>
+                <p className="mt-1.5 text-sm text-royal-100/85">{headline.label}</p>
+                {headline.caughtUp && (
+                  <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-200">
+                    <CheckCircle2 size={13} /> Nothing waiting on you
+                  </p>
+                )}
+              </div>
+              {headline.cta && (
+                <Link
+                  to={headline.to}
+                  className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-[#fff] px-4 text-sm font-semibold text-royal-800 shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition hover:bg-royal-50"
+                >
+                  {headline.cta} <ArrowRight size={16} />
+                </Link>
+              )}
+            </div>
           </div>
+
+          <div className="mt-5 grid grid-cols-3 divide-x divide-white/15 rounded-2xl bg-white/[0.08] py-3 ring-1 ring-inset ring-white/10 lg:mt-0 lg:w-[380px] lg:shrink-0">
+            {heroStats.map(stat => (
+              <Link key={stat.label} to={stat.to} className="px-3 text-center transition hover:opacity-80">
+                <p className="text-xl font-bold tabular-nums text-white">{stat.value}</p>
+                <p className="mt-0.5 text-xs text-royal-100/75">{stat.label}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Quick actions ────────────────────────────────────────────── */}
+      <nav aria-label="Quick actions" className="grid grid-cols-4 gap-2 sm:gap-3">
+        {actions.map(action => (
           <Link
-            to="/members/applications?mine=1"
-            className="inline-flex min-h-[44px] flex-shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-medium text-[#5b21b6] hover:bg-violet-50"
+            key={action.label}
+            to={action.to}
+            className="mbr-card flex min-h-[80px] flex-col items-center justify-center gap-1.5 px-1 py-2.5 text-center transition hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] active:scale-[0.98] lg:flex-row lg:justify-start lg:gap-3 lg:px-4 lg:py-3.5 lg:text-left"
           >
-            View all <ArrowRight size={14} />
+            <IconTile icon={action.icon} tone={action.tone} size="sm" />
+            <span className="min-w-0">
+              <span className="block text-xs font-semibold leading-tight text-ink lg:text-sm">{action.label}</span>
+              <span className="mt-0.5 hidden text-xs text-slate-500 lg:block">{action.hint}</span>
+            </span>
           </Link>
+        ))}
+      </nav>
+
+      {/* Phones: one column in reading order (order-*). Desktop: two
+          independent stacks, so a short card never leaves a hole beside a
+          tall one. The column wrappers are display:contents below lg. */}
+      <div className="flex flex-col gap-3 sm:gap-4 lg:grid lg:grid-cols-3 lg:items-start">
+        <div className="contents lg:col-span-2 lg:flex lg:flex-col lg:gap-4">
+        {/* ── Waiting on you ─────────────────────────────────────────── */}
+        <Card className="order-1">
+          <CardHeader
+            title="Waiting on you"
+            subtitle="Applications ready for your action"
+            action={
+              <Link to="/members/applications?mine=1" className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-[13px] font-semibold text-royal-700 hover:bg-royal-50">
+                View all <ArrowRight size={14} />
+              </Link>
+            }
+          />
+          {waiting.length === 0 ? (
+            <div className="mx-4 mb-4 flex items-center gap-3 rounded-xl bg-emerald-50 px-3.5 py-3 text-sm text-emerald-800 sm:mx-5">
+              <CheckCircle2 size={18} className="shrink-0" />
+              Nothing is waiting for your action.
+            </div>
+          ) : (
+            <div className="divide-y divide-line border-t border-line">
+              {waiting.map(app => (
+                <ListRow
+                  key={app._id}
+                  to={`/members/applications/${app._id}`}
+                  leading={<Avatar name={app.applicantName} tone={TYPE_TONE[app.formType]} />}
+                  title={app.applicantName || 'Unnamed applicant'}
+                  meta={[FORM_TYPE_LABEL[app.formType], app.scope?.unit || app.scope?.area || app.scope?.district, timeAgo(app.submittedAt)].filter(Boolean).join(' · ')}
+                  trailing={<StatusBadge status={app.status} />}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* ── Pipeline by stage ──────────────────────────────────────── */}
+        <Card className="order-3">
+          <CardHeader title="Pipeline" subtitle="By current stage" action={<SeriesLegend />} />
+          <div className="px-4 pb-4 sm:px-5">
+            {stageData.length === 0 ? (
+              <p className="rounded-xl bg-mist px-3.5 py-6 text-center text-sm text-slate-500">No applications in progress.</p>
+            ) : (
+              <ul className="space-y-3">
+                {stageData.map(stage => {
+                  const total = stage.rukn + stage.karkoon
+                  return (
+                    <li key={stage.name}>
+                      <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
+                        <span className="min-w-0 font-medium text-slate-700 [overflow-wrap:anywhere]">{stage.name}</span>
+                        <span className="flex shrink-0 items-center gap-2.5 text-xs tabular-nums text-slate-500">
+                          {stage.rukn > 0 && <span className="inline-flex items-center gap-1" title="Rukn"><span className="h-1.5 w-1.5 rounded-full" style={{ background: RUKN_COLOR }} />{stage.rukn}</span>}
+                          {stage.karkoon > 0 && <span className="inline-flex items-center gap-1" title="Karkoon"><span className="h-1.5 w-1.5 rounded-full" style={{ background: KARKOON_COLOR }} />{stage.karkoon}</span>}
+                          <b className="min-w-5 text-right font-semibold text-ink">{total}</b>
+                        </span>
+                      </div>
+                      <div className="flex h-2 gap-0.5 rounded-full bg-mist" title={`Rukn ${stage.rukn} · Karkoon ${stage.karkoon}`}>
+                        {stage.rukn > 0 && <span className="h-full rounded-full" style={{ width: `${(stage.rukn / stageMax) * 100}%`, background: RUKN_COLOR }} />}
+                        {stage.karkoon > 0 && <span className="h-full rounded-full" style={{ width: `${(stage.karkoon / stageMax) * 100}%`, background: KARKOON_COLOR }} />}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        </Card>
+
+        {/* ── Submissions trend ──────────────────────────────────────── */}
+        <Card className="order-5">
+          <CardHeader
+            title="Submissions"
+            subtitle="Last 6 months"
+            action={<SeriesLegend rukn={monthlyTotals.rukn} karkoon={monthlyTotals.karkoon} />}
+          />
+          <div className="h-[170px] pb-3 pr-3 sm:h-[220px] sm:pr-5">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={monthlyData} margin={{ top: 6, right: 4, left: -22, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="mbrRuknFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={RUKN_COLOR} stopOpacity={0.22} />
+                    <stop offset="100%" stopColor={RUKN_COLOR} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="mbrKarkoonFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={KARKOON_COLOR} stopOpacity={0.22} />
+                    <stop offset="100%" stopColor={KARKOON_COLOR} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 4" vertical={false} stroke="#e5e9f2" />
+                <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#c8d5fd', strokeWidth: 1 }} />
+                <Area type="monotone" dataKey="rukn" name="Rukn" stroke={RUKN_COLOR} strokeWidth={2} fill="url(#mbrRuknFill)" activeDot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} />
+                <Area type="monotone" dataKey="karkoon" name="Karkoon" stroke={KARKOON_COLOR} strokeWidth={2} fill="url(#mbrKarkoonFill)" activeDot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
         </div>
 
-        {waiting.length === 0 ? (
-          <p className="rounded-lg bg-gray-50 px-3 py-4 text-sm text-gray-600">Nothing is waiting for your action.</p>
-        ) : (
-          <ul className="divide-y divide-gray-100">
-            {waiting.map(app => (
-              <li key={app._id}>
-                <Link
-                  to={`/members/applications/${app._id}`}
-                  className="flex min-h-[52px] items-center justify-between gap-3 rounded-lg px-2 py-2.5 hover:bg-gray-50"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block break-words text-sm font-medium leading-snug text-gray-900">
-                      {app.applicantName || 'Unnamed applicant'}
-                    </span>
-                    <span className="mt-0.5 block break-words text-xs leading-snug text-gray-600">
-                      {FORM_TYPE_LABEL[app.formType]} · {app.scope?.unit || app.scope?.area || app.scope?.district}
-                    </span>
-                  </span>
-                  <span className="flex flex-shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
-                    <StatusBadge status={app.status} />
-                    <span className="hidden text-xs text-gray-500 sm:block">
-                      {new Date(app.submittedAt).toLocaleDateString()}
-                    </span>
-                  </span>
+        <div className="contents lg:flex lg:flex-col lg:gap-4">
+        {/* ── Status breakdown ───────────────────────────────────────── */}
+        <Card className="order-2">
+          <CardHeader title="Status" subtitle={`${statusTotal} application${statusTotal === 1 ? '' : 's'} in your scope`} />
+          <div className="px-4 pb-4 sm:px-5">
+            {statusTotal === 0 ? (
+              <p className="rounded-xl bg-mist px-3.5 py-6 text-center text-sm text-slate-500">No applications yet.</p>
+            ) : (
+              <>
+                <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full" role="img" aria-label="Applications by status">
+                  {STATUS_META.filter(s => byStatus[s.key]).map(s => (
+                    <span key={s.key} className="h-full first:rounded-l-full last:rounded-r-full" style={{ width: `${(byStatus[s.key] / statusTotal) * 100}%`, background: s.color }} />
+                  ))}
+                </div>
+                <ul className="mt-3 -mx-2">
+                  {STATUS_META.map(s => {
+                    const value = byStatus[s.key] || 0
+                    return (
+                      <li key={s.key}>
+                        <Link
+                          to={`/members/applications?status=${s.key}`}
+                          className="flex min-h-10 items-center gap-2.5 rounded-lg px-2 text-sm hover:bg-mist"
+                        >
+                          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
+                          <span className="flex-1 text-slate-600">{s.label}</span>
+                          <span className="font-semibold tabular-nums text-ink">{value}</span>
+                          <span className="w-10 text-right text-xs tabular-nums text-slate-400">
+                            {Math.round((value / statusTotal) * 100)}%
+                          </span>
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </>
+            )}
+          </div>
+        </Card>
+
+        {/* ── Access links (roles that issue them) ───────────────────── */}
+        {canCreateAccessLinks && (
+          <Card className="order-4">
+            <CardHeader
+              title="Form access links"
+              subtitle={`${linksTotal} issued`}
+              action={
+                <Link to="/members/access-links" className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-[13px] font-semibold text-royal-700 hover:bg-royal-50">
+                  Manage <ArrowRight size={14} />
                 </Link>
-              </li>
-            ))}
-          </ul>
+              }
+            />
+            <div className="grid grid-cols-2 gap-2 px-4 pb-4 sm:px-5">
+              {LINK_META.map(l => (
+                <div key={l.key} className="rounded-xl bg-mist px-3 py-2.5">
+                  <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <span className={cx('h-1.5 w-1.5 rounded-full', l.dot)} />
+                    {l.label}
+                  </p>
+                  <p className="mt-0.5 text-lg font-bold tabular-nums text-ink">{linkStatus[l.key] || 0}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
         )}
-      </Card>
-
-      <div className="mb-4 grid grid-cols-2 gap-2.5 sm:mb-6 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
-        {tiles.map(tile => <StatTile key={tile.label} {...tile} />)}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setShowMobileCharts(value => !value)}
-        className="mb-4 flex min-h-[48px] w-full items-center justify-between rounded-xl border border-violet-200 bg-white px-4 text-sm font-semibold text-[#5b21b6] shadow-sm sm:hidden"
-        aria-expanded={showMobileCharts}
-        aria-controls="members-dashboard-statistics"
-      >
-        <span>{showMobileCharts ? 'Hide detailed statistics' : 'Show detailed statistics'}</span>
-        <span aria-hidden="true">{showMobileCharts ? '−' : '+'}</span>
-      </button>
-
-      <div
-        id="members-dashboard-statistics"
-        className={`${showMobileCharts ? 'block' : 'hidden'} sm:block`}
-      >
-      <div className="mb-6 grid gap-4 sm:gap-6 lg:grid-cols-3">
-        <Card className="p-4 sm:p-5 lg:col-span-2">
-          <h2 className="font-semibold text-gray-900 mb-1">Submissions over time</h2>
-          <p className="text-xs text-gray-500 mb-4">Applications submitted in the last 6 months</p>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={monthlyData} margin={{ top: 5, right: 8, left: -18, bottom: 0 }}>
-              <defs>
-                <linearGradient id="ruknFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={RUKN_COLOR} stopOpacity={0.25} />
-                  <stop offset="100%" stopColor={RUKN_COLOR} stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="karkoonFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={KARKOON_COLOR} stopOpacity={0.35} />
-                  <stop offset="100%" stopColor={KARKOON_COLOR} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-              <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Area type="monotone" dataKey="rukn" name="Rukn" stroke={RUKN_COLOR} strokeWidth={2} fill="url(#ruknFill)" />
-              <Area type="monotone" dataKey="karkoon" name="Karkoon" stroke={KARKOON_COLOR} strokeWidth={2} fill="url(#karkoonFill)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card className="p-4 sm:p-5">
-          <h2 className="font-semibold text-gray-900 mb-1">Status breakdown</h2>
-          <p className="text-xs text-gray-500 mb-4">All applications in your scope</p>
-          {statusData.length === 0 ? (
-            <p className="text-sm text-gray-500 py-14 text-center">No applications yet.</p>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={170}>
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={50}
-                    outerRadius={78}
-                    paddingAngle={3}
-                    strokeWidth={0}
-                  >
-                    {statusData.map(d => <Cell key={d.name} fill={d.color} />)}
-                  </Pie>
-                  <Tooltip contentStyle={tooltipStyle} />
-                </PieChart>
-              </ResponsiveContainer>
-              <ul className="mt-3 space-y-1.5">
-                {statusData.map(d => (
-                  <li key={d.name} className="flex items-center gap-2 text-sm">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
-                    <span className="text-gray-600 flex-1">{d.name}</span>
-                    <span className="font-medium text-gray-900">{d.value}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </Card>
-      </div>
-
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-1">
-        <Card className="p-4 sm:p-5">
-          <h2 className="font-semibold text-gray-900 mb-1">Applications by stage</h2>
-          <p className="text-xs text-gray-500 mb-4">Where the pipeline currently stands</p>
-          {stageData.length === 0 ? (
-            <p className="text-sm text-gray-500 py-14 text-center">No applications in progress.</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={Math.max(200, stageData.length * 44)}>
-              <BarChart data={stageData} layout="vertical" margin={{ top: 0, right: 12, left: 8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
-                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={130}
-                  tick={{ fontSize: 12, fill: '#374151' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#f9fafb' }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="rukn" name="Rukn" stackId="a" fill={RUKN_COLOR} radius={[0, 0, 0, 0]} barSize={18} />
-                <Bar dataKey="karkoon" name="Karkoon" stackId="a" fill={KARKOON_COLOR} radius={[0, 6, 6, 0]} barSize={18} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </Card>
-
-      </div>
+        </div>
       </div>
     </div>
   )

@@ -1,15 +1,18 @@
 import React, { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowRight, ExternalLink, Link2, Lock, ShieldCheck, User, Users } from 'lucide-react'
+import { ArrowRight, ExternalLink, Link2, Lock, ShieldCheck, User } from 'lucide-react'
 import { useAuth } from '../../contexts/members/AuthContext'
-import AuthShell from '../../components/auth/AuthShell'
-import { AuthButton, AuthField, AuthInfoBanner, AuthTabs } from '../../components/auth/AuthControls'
+import AuthLayout from '../../components/members/AuthLayout'
+import { Button, Field, Input, PasswordInput, Tabs } from '../../components/members/ui'
 
 const ACCESS_TABS = [
-  { value: 'staff', label: 'Staff login', icon: ShieldCheck },
-  { value: 'applicant', label: 'Applicant form', icon: Link2 },
+  { value: 'staff', label: 'Staff sign in', icon: ShieldCheck },
+  { value: 'applicant', label: 'Applicant', icon: Link2 },
 ]
+
+// Autofocus only where it can't pop the phone keyboard over the page.
+const isDesktop = () => typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1024px)').matches
 
 export default function LoginPage() {
   const { login, isAuthenticated, initializing } = useAuth()
@@ -59,74 +62,70 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthShell title="Members Application" subtitle="Rukn & Karkoon application portal">
-      <AuthTabs variant="soft" label="Access type" tabs={ACCESS_TABS} value={mode} onChange={setMode} />
+    <AuthLayout>
+      <Tabs tabs={ACCESS_TABS} value={mode} onChange={setMode} fill />
 
       {mode === 'staff' ? (
-        <form onSubmit={submit} className="mt-5 space-y-5" aria-busy={busy}>
-          <AuthInfoBanner
-            icon={Users}
-            title="Administration access"
-            description="For authorised administrators and reviewers."
-          />
-          <AuthField
-            id="members-username"
-            label="Username"
-            required
-            icon={User}
-            value={form.username}
-            onChange={e => setForm({ ...form, username: e.target.value })}
-            placeholder="Enter username"
-            autoComplete="username"
-            autoFocus
-          />
-          <AuthField
-            id="members-password"
-            label="Password"
-            required
-            icon={Lock}
-            type="password"
-            value={form.password}
-            onChange={e => setForm({ ...form, password: e.target.value })}
-            placeholder="Enter password"
-            autoComplete="current-password"
-          />
-          <AuthButton type="submit" loading={busy} loadingLabel="Signing in..." className="w-full">
-            Sign in
-            <ArrowRight className="h-5 w-5" strokeWidth={2.4} />
-          </AuthButton>
+        <form onSubmit={submit} className="mt-6 space-y-4" aria-busy={busy}>
+          <div className="mb-5">
+            <h2 className="text-xl font-bold tracking-tight text-ink">Welcome back</h2>
+            <p className="mt-1 text-sm text-slate-500">Sign in as an administrator or reviewer.</p>
+          </div>
+          <Field label="Username" required>
+            <Input
+              id="members-username"
+              icon={User}
+              value={form.username}
+              onChange={e => setForm({ ...form, username: e.target.value })}
+              placeholder="Enter your username"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoFocus={isDesktop()}
+              required
+            />
+          </Field>
+          <Field label="Password" required>
+            <PasswordInput
+              id="members-password"
+              icon={Lock}
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              required
+            />
+          </Field>
+          <Button type="submit" size="lg" loading={busy} className="!mt-6 w-full">
+            {busy ? 'Signing in…' : <>Sign in <ArrowRight size={18} strokeWidth={2.4} /></>}
+          </Button>
         </form>
       ) : (
-        <form onSubmit={openApplicantForm} className="mt-5 space-y-5">
-          <AuthInfoBanner
-            icon={Link2}
-            title="Open your application"
-            description="Paste the personal link shared by your unit administrator. Your username and password will be requested on the next screen."
-          />
-          <AuthField
-            id="members-access-link"
-            label="Personal application link"
-            required
-            icon={Link2}
-            value={accessLink}
-            onChange={e => setAccessLink(e.target.value)}
-            placeholder="Paste link here"
-            inputMode="url"
-            autoComplete="off"
-            autoFocus
-            hint="Only a valid Members Application link can be opened."
-          />
-          <AuthButton type="submit" className="w-full">
-            Open application form
-            <ExternalLink className="h-5 w-5" strokeWidth={2.2} />
-          </AuthButton>
+        <form onSubmit={openApplicantForm} className="mt-6 space-y-4">
+          <div className="mb-5">
+            <h2 className="text-xl font-bold tracking-tight text-ink">Open your application</h2>
+            <p className="mt-1 text-sm leading-relaxed text-slate-500">
+              Paste the personal link your unit administrator shared. You'll enter your username and password on the next screen.
+            </p>
+          </div>
+          <Field label="Personal application link" required hint="Only a valid Members Application link can be opened.">
+            <Input
+              id="members-access-link"
+              icon={Link2}
+              value={accessLink}
+              onChange={e => setAccessLink(e.target.value)}
+              placeholder="Paste link here"
+              inputMode="url"
+              autoComplete="off"
+              autoCapitalize="none"
+              autoFocus={isDesktop()}
+              required
+            />
+          </Field>
+          <Button type="submit" size="lg" className="!mt-6 w-full">
+            Open application form <ExternalLink size={17} />
+          </Button>
         </form>
       )}
-
-      <p className="mt-6 flex items-start justify-center gap-2 px-2 text-center text-sm leading-relaxed text-[#5b6b85]">
-        <Lock className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-        <span>Application access is private. Use only the link and credentials issued to you.</span>
-      </p>
-    </AuthShell>
+    </AuthLayout>
   )
 }

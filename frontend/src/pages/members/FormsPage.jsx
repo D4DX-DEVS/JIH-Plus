@@ -2,14 +2,27 @@ import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Copy, Eye, EyeOff, Globe, Inbox, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Copy, Eye, EyeOff, FileSearch, FileText, Globe, Inbox, Pencil, Plus, Trash2 } from 'lucide-react'
 import { api, apiError } from '../../utils/members/api'
 import FormPreview from '../../components/members/FormPreview'
 import {
-  Button, Card, EmptyState, FilterBar, Modal, PageHeader, Pagination,
-  SearchInput, Select, Spinner, TableWrap, Th, PAGE_SIZE
+  Button, Card, EmptyState, ErrorState, FilterBar, IconButton, IconTile, ListSkeleton, Modal,
+  PageHeader, Pagination, SearchInput, Select, TableWrap, Th, TypeBadge, PAGE_SIZE
 } from '../../components/members/ui'
-import { FORM_TYPE_LABEL } from '../../utils/members/constants'
+import { TYPE_TONE, cx, shortDate } from '../../utils/members/format'
+
+/** Dot + label pill for a template's publish state. */
+function PublishState({ published }) {
+  return (
+    <span className={cx(
+      'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset',
+      published ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/15' : 'bg-slate-100 text-slate-600 ring-slate-500/15'
+    )}>
+      <span className={cx('h-1.5 w-1.5 rounded-full', published ? 'bg-emerald-500' : 'bg-slate-400')} aria-hidden="true" />
+      {published ? 'Published' : 'Draft'}
+    </span>
+  )
+}
 
 /**
  * One published form per application type. A form stays editable after
@@ -20,6 +33,7 @@ export default function FormsPage() {
   const navigate = useNavigate()
   const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [toDelete, setToDelete] = useState(null)
   const [busy, setBusy] = useState(false)
   const [total, setTotal] = useState(0)
@@ -49,8 +63,13 @@ export default function FormsPage() {
       .then(({ data }) => {
         setTemplates(data.templates || [])
         setTotal(data.pagination?.total || 0)
+        setError('')
       })
-      .catch(err => toast.error(apiError(err, 'Failed to load forms')))
+      .catch(err => {
+        const message = apiError(err, 'Failed to load forms')
+        toast.error(message)
+        setError(message)
+      })
       .finally(() => setLoading(false))
   }
 
@@ -105,9 +124,26 @@ export default function FormsPage() {
     }
   }
 
-  const iconBtn = 'p-2 text-gray-400 rounded-lg transition-colors'
-  // Mobile action bar: equal-width, thumb-sized targets across the row.
-  const mobileIconBtn = 'flex h-11 flex-1 items-center justify-center text-gray-400 rounded-lg transition-colors'
+  // The same six actions serve the phone rows and the desktop table.
+  const renderActions = (template) => (
+    <>
+      <IconButton icon={Eye} label="Preview form" onClick={() => openPreview(template)} />
+      <IconButton
+        icon={Inbox}
+        label="View submissions"
+        onClick={() => navigate(`/members/applications?formType=${template.formType}`)}
+      />
+      <IconButton icon={Pencil} label="Edit" tone="royal" onClick={() => navigate(`/members/forms/${template._id}`)} />
+      <IconButton icon={Copy} label="Clone to a new draft" onClick={() => act(template, 'clone')} />
+      <IconButton
+        icon={template.isPublished ? EyeOff : Globe}
+        label={template.isPublished ? 'Unpublish' : 'Publish'}
+        tone={template.isPublished ? 'default' : 'success'}
+        onClick={() => act(template, template.isPublished ? 'unpublish' : 'publish')}
+      />
+      <IconButton icon={Trash2} label="Delete" tone="danger" onClick={() => setToDelete(template)} />
+    </>
+  )
 
   return (
     <div>
@@ -115,223 +151,125 @@ export default function FormsPage() {
         title="Form Builder"
         subtitle="Configure the Rukn and Karkoon application forms, including each role's comment sections."
         hideTitleOnMobile
-        actions={
-          <Button onClick={() => navigate('/members/forms/new')}>
-            <Plus size={16} /> New form
-          </Button>
-        }
+        primaryAction={{
+          label: 'New form',
+          icon: Plus,
+          onClick: () => navigate('/members/forms/new')
+        }}
       />
 
-      <FilterBar active={filtersActive} onClear={clearFilters}>
-        <SearchInput
-          className="flex-1 min-w-[200px]"
-          placeholder="Search forms by title"
-          value={searchBox}
-          onChange={e => setSearchBox(e.target.value)}
-        />
-        <Select className="sm:w-40" value={filters.formType} onChange={e => setFilter('formType', e.target.value)}>
+      <FilterBar
+        search={
+          <SearchInput
+            placeholder="Search forms by title"
+            value={searchBox}
+            onChange={e => setSearchBox(e.target.value)}
+          />
+        }
+        active={filtersActive}
+        activeCount={(filters.formType ? 1 : 0) + (filters.state ? 1 : 0)}
+        onClear={clearFilters}
+      >
+        <Select className="sm:w-40" value={filters.formType} onChange={e => setFilter('formType', e.target.value)} aria-label="Application type">
           <option value="">All types</option>
           <option value="rukn">Rukn</option>
           <option value="karkoon">Karkoon</option>
         </Select>
-        <Select className="sm:w-40" value={filters.state} onChange={e => setFilter('state', e.target.value)}>
+        <Select className="sm:w-40" value={filters.state} onChange={e => setFilter('state', e.target.value)} aria-label="Form state">
           <option value="">All states</option>
           <option value="published">Published</option>
           <option value="draft">Draft</option>
         </Select>
       </FilterBar>
 
-      <Card>
-        {loading ? <Spinner /> : templates.length === 0 ? (
+      <Card className="overflow-hidden">
+        {loading ? <ListSkeleton rows={5} /> : error ? (
+          <ErrorState message={error} onRetry={load} />
+        ) : templates.length === 0 ? (
           <EmptyState
+            icon={filtersActive ? FileSearch : FileText}
             title={filtersActive ? 'No forms match these filters' : 'No forms yet'}
             message={filtersActive
               ? 'Try widening or clearing the filters.'
               : 'Build a form for each application type, then publish it so unit admins can issue access links.'}
             action={filtersActive
-              ? <Button variant="secondary" onClick={clearFilters}>Clear filters</Button>
+              ? <Button variant="secondary" size="sm" onClick={clearFilters}>Clear filters</Button>
               : <Button onClick={() => navigate('/members/forms/new')}><Plus size={16} /> New form</Button>}
           />
         ) : (
           <>
-            {/* Mobile: roomy tappable rows — one full-width target per record */}
-            <div className="lg:hidden divide-y divide-gray-100">
+            {/* Phones and tablets: one compact card per form, actions on their own line */}
+            <div className="divide-y divide-line lg:hidden">
               {templates.map(template => (
-                <div key={template._id} className="min-h-[56px] px-4 py-3">
-                  <div className="min-w-0">
-                    <Link
-                      to={`/members/forms/${template._id}`}
-                      className="block text-[13px] font-semibold text-gray-900 hover:text-[#5b21b6] break-words leading-snug"
-                    >
-                      {template.title}
-                    </Link>
-                    <p className="text-[11px] text-gray-500 mt-0.5">
-                      {FORM_TYPE_LABEL[template.formType]} · v{template.version} ·{' '}
-                      {new Date(template.updatedAt).toLocaleDateString()}
-                    </p>
-                    <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                      <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${
-                        template.isPublished
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : 'bg-gray-100 text-gray-600 border-gray-200'
-                      }`}>
-                        {template.isPublished ? 'Published' : 'Draft'}
-                      </span>
-                      {template.isLegacyImport && (
-                        <span className="text-[11px] text-gray-500">Imported from the old portal</span>
-                      )}
+                <div key={template._id} className="px-4 py-3 sm:px-5">
+                  <div className="flex items-start gap-3">
+                    <IconTile icon={FileText} tone={TYPE_TONE[template.formType] || 'slate'} />
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        to={`/members/forms/${template._id}`}
+                        className="block text-sm font-semibold leading-snug text-ink [overflow-wrap:anywhere] hover:text-royal-700"
+                      >
+                        {template.title}
+                      </Link>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        v{template.version} · Updated {shortDate(template.updatedAt)}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <TypeBadge type={template.formType} />
+                        <PublishState published={template.isPublished} />
+                        {template.isLegacyImport && (
+                          <span className="text-xs text-slate-500">Imported from the old portal</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  {/* Actions get their own full-width line so six targets stay
-                      thumb-sized instead of squeezing beside the title. */}
-                  <div className="mt-2.5 flex items-center gap-1 border-t border-gray-100 pt-2">
-                    <button
-                      title="Preview form"
-                      aria-label="Preview form"
-                      onClick={() => openPreview(template)}
-                      className={`${mobileIconBtn} active:text-blue-600 active:bg-blue-50`}
-                    >
-                      <Eye size={18} />
-                    </button>
-                    <button
-                      title="View submissions"
-                      aria-label="View submissions"
-                      onClick={() => navigate(`/members/applications?formType=${template.formType}`)}
-                      className={`${mobileIconBtn} active:text-amber-600 active:bg-amber-50`}
-                    >
-                      <Inbox size={18} />
-                    </button>
-                    <button
-                      title="Edit"
-                      aria-label="Edit"
-                      onClick={() => navigate(`/members/forms/${template._id}`)}
-                      className={`${mobileIconBtn} active:text-green-600 active:bg-green-50`}
-                    >
-                      <Pencil size={18} />
-                    </button>
-                    <button
-                      title="Clone to a new draft"
-                      aria-label="Clone to a new draft"
-                      onClick={() => act(template, 'clone')}
-                      className={`${mobileIconBtn} active:text-indigo-600 active:bg-indigo-50`}
-                    >
-                      <Copy size={18} />
-                    </button>
-                    <button
-                      title={template.isPublished ? 'Unpublish' : 'Publish'}
-                      aria-label={template.isPublished ? 'Unpublish' : 'Publish'}
-                      onClick={() => act(template, template.isPublished ? 'unpublish' : 'publish')}
-                      className={`${mobileIconBtn} active:text-[#5b21b6] active:bg-violet-50`}
-                    >
-                      {template.isPublished ? <EyeOff size={18} /> : <Globe size={18} />}
-                    </button>
-                    <button
-                      title="Delete"
-                      aria-label="Delete"
-                      onClick={() => setToDelete(template)}
-                      className={`${mobileIconBtn} active:text-red-600 active:bg-red-50`}
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                  <div className="mt-2 flex items-center justify-between border-t border-line pt-1.5">
+                    {renderActions(template)}
                   </div>
                 </div>
               ))}
             </div>
+
             {/* Desktop: table */}
-            <TableWrap>
-            <ResponsiveTable className="hidden lg:table w-full text-sm min-w-[680px]">
-              <thead className="bg-gray-50/80 border-b border-gray-100">
-                <tr>
-                  <Th>Title</Th>
-                  <Th>Type</Th>
-                  <Th>Version</Th>
-                  <Th>State</Th>
-                  <Th>Updated</Th>
-                  <Th className="text-right">Actions</Th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {templates.map(template => (
-                  <tr key={template._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <Link to={`/members/forms/${template._id}`} className="font-medium text-gray-900 hover:text-[#5b21b6]">
-                        {template.title}
-                      </Link>
-                      {template.isLegacyImport && (
-                        <span className="block text-xs text-gray-500">Imported from the old portal</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{FORM_TYPE_LABEL[template.formType]}</td>
-                    <td className="px-4 py-3 text-gray-600">v{template.version}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${
-                        template.isPublished
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : 'bg-gray-100 text-gray-600 border-gray-200'
-                      }`}>
-                        {template.isPublished ? 'Published' : 'Draft'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500">
-                      {new Date(template.updatedAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
-                        <button
-                          title="Preview form"
-                          aria-label="Preview form"
-                          onClick={() => openPreview(template)}
-                          className={`${iconBtn} hover:text-blue-600 hover:bg-blue-50`}
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          title="View submissions"
-                          aria-label="View submissions"
-                          onClick={() => navigate(`/members/applications?formType=${template.formType}`)}
-                          className={`${iconBtn} hover:text-amber-600 hover:bg-amber-50`}
-                        >
-                          <Inbox size={16} />
-                        </button>
-                        <button
-                          title="Edit"
-                          aria-label="Edit"
-                          onClick={() => navigate(`/members/forms/${template._id}`)}
-                          className={`${iconBtn} hover:text-green-600 hover:bg-green-50`}
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          title="Clone to a new draft"
-                          aria-label="Clone to a new draft"
-                          onClick={() => act(template, 'clone')}
-                          className={`${iconBtn} hover:text-indigo-600 hover:bg-indigo-50`}
-                        >
-                          <Copy size={16} />
-                        </button>
-                        <button
-                          title={template.isPublished ? 'Unpublish' : 'Publish'}
-                          aria-label={template.isPublished ? 'Unpublish' : 'Publish'}
-                          onClick={() => act(template, template.isPublished ? 'unpublish' : 'publish')}
-                          className={`${iconBtn} hover:text-[#5b21b6] hover:bg-violet-50`}
-                        >
-                          {template.isPublished ? <EyeOff size={16} /> : <Globe size={16} />}
-                        </button>
-                        <button
-                          title="Delete"
-                          aria-label="Delete"
-                          onClick={() => setToDelete(template)}
-                          className={`${iconBtn} hover:text-red-600 hover:bg-red-50`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </ResponsiveTable>
-            </TableWrap>
+            <div className="hidden lg:block">
+              <TableWrap>
+                <ResponsiveTable className="w-full min-w-[680px] text-sm">
+                  <thead>
+                    <tr>
+                      <Th>Title</Th>
+                      <Th>Type</Th>
+                      <Th>Version</Th>
+                      <Th>State</Th>
+                      <Th>Updated</Th>
+                      <Th className="text-right">Actions</Th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line">
+                    {templates.map(template => (
+                      <tr key={template._id} className="group transition-colors hover:bg-mist/70">
+                        <td className="px-4 py-3 pl-5">
+                          <Link to={`/members/forms/${template._id}`} className="font-semibold text-ink group-hover:text-royal-700">
+                            {template.title}
+                          </Link>
+                          {template.isLegacyImport && (
+                            <span className="block text-xs text-slate-500">Imported from the old portal</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3"><TypeBadge type={template.formType} /></td>
+                        <td className="px-4 py-3 text-slate-600">v{template.version}</td>
+                        <td className="px-4 py-3"><PublishState published={template.isPublished} /></td>
+                        <td className="px-4 py-3 text-slate-500">{shortDate(template.updatedAt)}</td>
+                        <td className="px-4 py-3 pr-4">
+                          <div className="flex items-center justify-end gap-0.5 whitespace-nowrap">
+                            {renderActions(template)}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </ResponsiveTable>
+              </TableWrap>
+            </div>
           </>
         )}
       </Card>
@@ -355,14 +293,14 @@ export default function FormsPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setToDelete(null)}>Cancel</Button>
-            <Button variant="danger" onClick={confirmDelete} disabled={busy}>
+            <Button variant="danger" onClick={confirmDelete} loading={busy}>
               {busy ? 'Deleting...' : 'Delete form'}
             </Button>
           </>
         }
       >
-        <p className="text-sm text-gray-600">
-          <strong>{toDelete?.title}</strong> will be removed permanently.
+        <p className="text-sm leading-relaxed text-slate-600">
+          <strong className="font-semibold text-ink">{toDelete?.title}</strong> will be removed permanently.
           {toDelete?.isPublished && ' It is currently published — applicants will no longer be able to open it.'}
           {' '}A form that already has submitted applications cannot be deleted.
         </p>
