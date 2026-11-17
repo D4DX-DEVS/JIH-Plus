@@ -98,6 +98,19 @@ membersConnection.on('connected', async () => {
   } catch (seedErr) {
     console.error('Error seeding MEMBERS defaults:', seedErr);
   }
+
+  // The members connection runs with bufferCommands off, so Mongoose's automatic
+  // index build at model load fires before the connection is open and silently
+  // fails — leaving every unique constraint (usernames, link tokens, locations)
+  // unenforced. Build the declared indexes once the connection is up.
+  const results = await Promise.allSettled(
+    Object.values(membersConnection.models).map(model => model.createIndexes())
+  );
+  const failed = results
+    .map((r, i) => (r.status === 'rejected' ? `${Object.keys(membersConnection.models)[i]}: ${r.reason?.message}` : null))
+    .filter(Boolean);
+  if (failed.length) console.error('MEMBERS index build failed:', failed.join('; '));
+  else console.log('MEMBERS indexes ensured');
 });
 
 // Health check route for DigitalOcean

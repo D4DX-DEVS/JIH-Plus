@@ -23,9 +23,9 @@ export function PageHeader({ title, subtitle, actions, hideTitleOnMobile }) {
   )
 }
 
-export function Card({ children, className = '' }) {
+export function Card({ children, className = '', ...props }) {
   return (
-    <div className={`bg-white border border-gray-200/80 rounded-xl shadow-sm ${className}`}>{children}</div>
+    <div {...props} className={`bg-white border border-gray-200/80 rounded-xl shadow-sm ${className}`}>{children}</div>
   )
 }
 

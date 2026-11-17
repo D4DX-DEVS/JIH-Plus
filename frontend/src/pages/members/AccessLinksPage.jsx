@@ -1,7 +1,7 @@
 import ResponsiveTable from "../../components/tables/ResponsiveTable.jsx";
 import React, { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Copy, Plus, Ban, RotateCcw, Trash2 } from 'lucide-react'
+import { Copy, MessageCircle, Plus, Ban, RotateCcw, Trash2 } from 'lucide-react'
 import { api, apiError } from '../../utils/members/api'
 import { useAuth } from '../../contexts/members/AuthContext'
 import {
@@ -70,7 +70,7 @@ export default function AccessLinksPage() {
         body.scope = { unit: unit.name, area: unit.area, district: unit.district, mekhala: unit.mekhala }
       }
       const { data } = await api.post('/access-links', body)
-      setIssued(data.credentials)
+      setIssued({ ...data.credentials, formType: form.formType, name: form.applicantName, mobile: form.applicantMobile })
       setCreating(false)
       setForm({ formType: 'rukn', applicantName: '', applicantMobile: '', expiryDays: 7, unit: '' })
       load()
@@ -110,6 +110,22 @@ export default function AccessLinksPage() {
   // Mobile action bar: equal-width, thumb-sized targets across the row —
   // matches the pattern already used in FormsPage.jsx.
   const mobileIconBtn = 'flex h-11 flex-1 items-center justify-center text-gray-500 rounded-lg transition-colors'
+
+  // One message carrying everything the applicant needs, ready to paste or send.
+  const shareText = (cred) => [
+    `${cred.name ? `${cred.name}, your` : 'Your'} ${FORM_TYPE_LABEL[cred.formType] || ''} application form:`.replace(/\s+/g, ' '),
+    `Link: ${fullUrl(cred.path)}`,
+    `Username: ${cred.username}`,
+    `Password: ${cred.password}`,
+    'Please keep these private.'
+  ].join('\n')
+
+  // wa.me needs the number in international form; a bare 10-digit number is Indian.
+  const whatsappUrl = (cred) => {
+    let digits = String(cred.mobile || '').replace(/\D/g, '')
+    if (digits.length === 10) digits = `91${digits}`
+    return `https://wa.me/${digits}?text=${encodeURIComponent(shareText(cred))}`
+  }
 
   const copy = async (text) => {
     try {
@@ -343,7 +359,7 @@ export default function AccessLinksPage() {
           </Field>
 
           <Field label="Applicant mobile" hint="Used to WhatsApp them the final decision.">
-            <Input value={form.applicantMobile} onChange={e => setForm({ ...form, applicantMobile: e.target.value })} />
+            <Input type="tel" inputMode="tel" autoComplete="tel" value={form.applicantMobile} onChange={e => setForm({ ...form, applicantMobile: e.target.value })} />
           </Field>
 
           <Field label="Valid for (days)">
@@ -362,7 +378,22 @@ export default function AccessLinksPage() {
         open={Boolean(issued)}
         onClose={() => setIssued(null)}
         title="Share these with the applicant"
-        footer={<Button onClick={() => setIssued(null)}>Done</Button>}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => copy(shareText(issued))}>
+              <Copy size={14} /> Copy all
+            </Button>
+            <a
+              href={issued ? whatsappUrl(issued) : '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg text-sm font-medium bg-[#25D366] text-white hover:bg-[#1ebe5b] shadow-sm"
+            >
+              <MessageCircle size={15} /> Share on WhatsApp
+            </a>
+            <Button onClick={() => setIssued(null)}>Done</Button>
+          </>
+        }
       >
         <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
           The password is shown only now. Copy it before closing — it cannot be recovered later.

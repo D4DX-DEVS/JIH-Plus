@@ -110,14 +110,15 @@ applicationSchema.index({ 'scope.area': 1, formType: 1 });
 applicationSchema.index({ 'scope.district': 1, formType: 1 });
 applicationSchema.index({ 'scope.mekhala': 1, formType: 1 });
 applicationSchema.index({ submittedAt: -1 });
-// A member ID must be unique per form type once assigned; sparse so blanks don't clash.
+// A member ID must be unique per form type once assigned; blanks don't clash.
+// Partial indexes can't use $ne, so `$gt: ''` is what excludes the empty string.
 applicationSchema.index(
   { formType: 1, memberId: 1 },
-  { unique: true, partialFilterExpression: { memberId: { $type: 'string', $ne: '' } } }
+  { unique: true, partialFilterExpression: { memberId: { $type: 'string', $gt: '' } } }
 );
 applicationSchema.index(
   { 'legacySource.model': 1, 'legacySource.id': 1 },
-  { unique: true, partialFilterExpression: { 'legacySource.id': { $type: 'string', $ne: '' } } }
+  { unique: true, partialFilterExpression: { 'legacySource.id': { $type: 'string', $gt: '' } } }
 );
 
 module.exports = membersConnection.model('Application', applicationSchema);

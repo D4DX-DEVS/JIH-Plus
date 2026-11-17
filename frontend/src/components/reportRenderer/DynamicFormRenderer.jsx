@@ -125,16 +125,48 @@ export default function DynamicFormRenderer({
     return false;
   };
 
+  // The rules a form builder can set on a field (min/max, length, pattern),
+  // plus a basic email check. Only applied to a filled-in value.
+  const ruleError = (field, val) => {
+    if (val === undefined || val === null || val === '' || typeof val === 'object') return null;
+    const rules = field.validation || {};
+    const has = (n) => n !== undefined && n !== null && n !== '' && !Number.isNaN(Number(n));
+    const fail = (fallback) => rules.customMessage || fallback;
+    const text = String(val).trim();
+    if (field.type === 'number') {
+      const n = Number(text);
+      if (Number.isNaN(n)) return fail('Enter a number');
+      if (has(rules.min) && n < Number(rules.min)) return fail(`Must be at least ${rules.min}`);
+      if (has(rules.max) && n > Number(rules.max)) return fail(`Must be at most ${rules.max}`);
+    }
+    if (has(rules.minLength) && text.length < Number(rules.minLength)) return fail(`Must be at least ${rules.minLength} characters`);
+    if (has(rules.maxLength) && text.length > Number(rules.maxLength)) return fail(`Must be at most ${rules.maxLength} characters`);
+    if (rules.pattern) {
+      try {
+        if (!new RegExp(rules.pattern).test(text)) return fail('Please enter a valid value');
+      } catch {
+        // An invalid pattern saved in the builder must not block the applicant.
+      }
+    }
+    if (field.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) return fail('Enter a valid email address');
+    return null;
+  };
+
   const validatePage = () => {
     const page = pages[currentPage];
     const newErrors = {};
     (page.fields || []).forEach(field => {
       if (!isFieldVisible(field)) return;
+      const val = formData[`field_${field.id}`];
       if (isFieldRequired(field)) {
-        const val = formData[`field_${field.id}`];
         const empty = val === undefined || val === '' || val === null || (Array.isArray(val) && val.length === 0);
-        if (empty) newErrors[`field_${field.id}`] = field.validation?.customMessage || 'This field is required';
+        if (empty) {
+          newErrors[`field_${field.id}`] = field.validation?.customMessage || 'This field is required';
+          return;
+        }
       }
+      const broken = ruleError(field, val);
+      if (broken) newErrors[`field_${field.id}`] = broken;
     });
     const errorKeys = Object.keys(newErrors);
     pendingErrorFocus.current = errorKeys[0] || null;

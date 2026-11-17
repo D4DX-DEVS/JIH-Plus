@@ -219,6 +219,10 @@ export default function FormBuilderPage() {
       if (isNew) {
         const { data } = await api.post('/forms', payload())
         formId = data.template._id
+        // It is a saved draft from here on. Move the editor onto it so a retry
+        // after a refused publish updates this draft instead of creating another.
+        setDirty(false)
+        navigate(`/members/forms/${formId}`, { replace: true })
       } else {
         await api.put(`/forms/${id}`, payload())
       }
@@ -226,7 +230,6 @@ export default function FormBuilderPage() {
       toast.success('Form published')
       setPublished(true)
       setDirty(false)
-      if (isNew) navigate(`/members/forms/${formId}`, { replace: true })
     } catch (err) {
       toast.error(apiError(err, 'Could not publish the form'))
     } finally {

@@ -36,7 +36,8 @@ function validateTemplatePayload(body, { publishing, roleKeys }) {
   const seenPageIds = new Set();
   let applicantFieldCount = 0;
 
-  for (const page of pages) {
+  for (const [pageIndex, page] of pages.entries()) {
+    const pageName = page.title ? `page "${page.title}"` : `page ${pageIndex + 1}`;
     if (!Number.isInteger(page.id)) return 'Each page needs a numeric id';
     if (seenPageIds.has(page.id)) return `Duplicate page id ${page.id}`;
     seenPageIds.add(page.id);
@@ -48,14 +49,20 @@ function validateTemplatePayload(body, { publishing, roleKeys }) {
       }
     }
 
-    for (const field of page.fields || []) {
+    for (const [fieldIndex, field] of (page.fields || []).entries()) {
+      // Admins can't see field ids in the builder; name the position instead.
+      const where = `field ${fieldIndex + 1} on ${pageName}`;
       if (!Number.isInteger(field.id)) return 'Each field needs a numeric id';
       if (seenFieldIds.has(field.id)) return `Duplicate field id ${field.id}`;
       seenFieldIds.add(field.id);
       if (!field.type) return 'Each field must have a type';
 
+      // A reviewer-only field with no owning role could never be filled in.
+      if (field.audience === 'role' && page.audience !== 'role' && !field.audienceRole) {
+        return `The ${where} is for reviewers but names no role`;
+      }
       if (field.audience === 'role' && field.audienceRole && !roleKeys.has(field.audienceRole)) {
-        return `Field #${field.id} names unknown role "${field.audienceRole}"`;
+        return `The ${where} names unknown role "${field.audienceRole}"`;
       }
 
       const isRoleScoped = page.audience === 'role' || field.audience === 'role';
@@ -63,11 +70,11 @@ function validateTemplatePayload(body, { publishing, roleKeys }) {
 
       if (publishing) {
         if (!LAYOUT_FIELD_TYPES.includes(field.type) && !String(field.label || '').trim()) {
-          return `Field #${field.id} needs a label before publishing`;
+          return `The ${field.type} ${where} needs a label before publishing`;
         }
         if (CHOICE_FIELD_TYPES.includes(field.type)) {
           const options = (field.options || []).filter(o => String(o).trim());
-          if (!options.length) return `Field "${field.label || field.id}" needs at least one option`;
+          if (!options.length) return `"${field.label || `The ${field.type} ${where}`}" needs at least one option`;
         }
       }
     }

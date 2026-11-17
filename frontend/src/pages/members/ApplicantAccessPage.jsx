@@ -21,6 +21,52 @@ import BrandLogo from '../../components/branding/BrandLogo'
 // alongside it so a resume only happens when they match.
 const APPLICANT_LINK_KEY = `${APPLICANT_TOKEN_KEY}_link`
 
+// The server stores uploads on the CDN, which only accepts these image types,
+// and the whole submission must fit the API's 10 MB request limit.
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+const MAX_FILE_BYTES = 5 * 1024 * 1024
+const MAX_TOTAL_FILE_BYTES = 7 * 1024 * 1024
+
+const readAsDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader()
+  reader.onload = () => resolve(reader.result)
+  reader.onerror = () => reject(reader.error)
+  reader.readAsDataURL(file)
+})
+
+// The renderer holds chosen files as File objects, which JSON turns into {}.
+// Send them as data URLs, which the server uploads and swaps for CDN links.
+async function serializeFiles(formData) {
+  const out = { ...formData }
+  let total = 0
+  for (const [key, value] of Object.entries(out)) {
+    if (!(value instanceof File)) continue
+    if (!IMAGE_TYPES.includes(value.type)) {
+      throw new Error(`"${value.name}" is not a supported image. Upload a JPG, PNG, GIF or WEBP file.`)
+    }
+    if (value.size > MAX_FILE_BYTES) throw new Error(`"${value.name}" is larger than 5 MB.`)
+    total += value.size
+    if (total > MAX_TOTAL_FILE_BYTES) throw new Error('The attached files together must be under 7 MB.')
+    out[key] = await readAsDataUrl(value)
+  }
+  return out
+}
+
+// Drafts keep the typed answers only; a chosen file is picked again on return.
+const withoutFiles = (formData) =>
+  Object.fromEntries(Object.entries(formData || {}).filter(([, value]) => !(value instanceof File)))
+
+// Steer the file picker to the image types the server accepts.
+const withImageAccept = (template) => ({
+  ...template,
+  pages: (template.pages || []).map(page => ({
+    ...page,
+    fields: (page.fields || []).map(field => (field.type === 'file' && !field.accept
+      ? { ...field, accept: IMAGE_TYPES.join(',') }
+      : field))
+  }))
+})
+
 export default function ApplicantAccessPage() {
   const { token } = useParams()
   const [credentials, setCredentials] = useState({ username: '', password: '' })
@@ -36,7 +82,7 @@ export default function ApplicantAccessPage() {
     setLoading(true)
     try {
       const { data } = await applicantApi.get('/access/form')
-      setTemplate(data.template)
+      setTemplate(withImageAccept(data.template))
       setDraft(data.draft || { formData: {}, lastPage: 0 })
       setAuthed(true)
     } catch (error) {
@@ -87,8 +133,9 @@ export default function ApplicantAccessPage() {
 
   const saveDraft = async (formData, lastPage) => {
     try {
-      await applicantApi.put('/access/draft', { formData, lastPage })
-      toast.success('Progress saved')
+      await applicantApi.put('/access/draft', { formData: withoutFiles(formData), lastPage })
+      const hadFiles = Object.values(formData || {}).some(value => value instanceof File)
+      toast.success(hadFiles ? 'Progress saved. Attach your files again before you submit.' : 'Progress saved')
     } catch (error) {
       toast.error(apiError(error, 'Could not save your progress'))
     }
@@ -97,7 +144,7 @@ export default function ApplicantAccessPage() {
   const submit = async (formData) => {
     setSubmitting(true)
     try {
-      await applicantApi.post('/access/submit', { formData })
+      await applicantApi.post('/access/submit', { formData: await serializeFiles(formData) })
       localStorage.removeItem(APPLICANT_TOKEN_KEY)
       localStorage.removeItem(APPLICANT_LINK_KEY)
       setDone(true)

@@ -175,7 +175,7 @@ export default function FieldRenderer({
       );
 
     case 'file':
-      return <FileUploadField field={field} value={value} onChange={handleChange} inputId={controlId} ariaInvalid={ariaInvalid} ariaDescribedBy={ariaDescribedBy} />;
+      return <FileUploadField field={field} value={value} onChange={handleChange} inputId={controlId} ariaInvalid={ariaInvalid} ariaDescribedBy={ariaDescribedBy} disabled={disabled} />;
 
     case 'row':
       return (
@@ -225,7 +225,7 @@ export default function FieldRenderer({
         <input
           {...controlA11y}
           type={field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : 'text'}
-          inputMode={field.type === 'phone' ? 'tel' : field.type === 'email' ? 'email' : undefined}
+          inputMode={field.type === 'phone' ? 'tel' : field.type === 'email' ? 'email' : field.type === 'url' ? 'url' : undefined}
           value={value || ''}
           onChange={e => handleChange(e.target.value)}
           placeholder={field.placeholder || ''}

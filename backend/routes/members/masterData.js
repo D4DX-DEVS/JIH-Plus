@@ -12,6 +12,38 @@ const router = express.Router();
 
 const LocationMaster = require('../../models/members/LocationMaster');
 const MemberAdmin = require('../../models/members/MemberAdmin');
+const Application = require('../../models/members/Application');
+const AccessLink = require('../../models/members/AccessLink');
+const Notification = require('../../models/members/Notification');
+
+// The parent level that disambiguates a name. Location names are not globally
+// unique (e.g. the same unit name under two areas), so a rename must only touch
+// records filed under this location's own parent.
+const PARENT_OF = { unit: 'area', area: 'district', district: 'mekhala' };
+
+/**
+ * Rewrite every stored copy of a renamed location. Accounts, applications,
+ * access links and notifications all store scope by name, not id, so leaving
+ * any of them behind would hide those records from the reviewers they belong to.
+ */
+async function cascadeRename(location, oldName, newName) {
+  const parentKey = PARENT_OF[location.type];
+  const parentValue = parentKey ? location[parentKey] : '';
+
+  const childFilter = { [location.type]: oldName };
+  if (parentKey && parentValue) childFilter[parentKey] = parentValue;
+  await LocationMaster.updateMany(childFilter, { $set: { [location.type]: newName } });
+
+  const scopeFilter = { [`scope.${location.type}`]: oldName };
+  if (parentKey && parentValue) scopeFilter[`scope.${parentKey}`] = parentValue;
+  const scopeSet = { $set: { [`scope.${location.type}`]: newName } };
+  await Promise.all([
+    MemberAdmin.updateMany(scopeFilter, scopeSet),
+    Application.updateMany(scopeFilter, scopeSet),
+    AccessLink.updateMany(scopeFilter, scopeSet),
+    Notification.updateMany(scopeFilter, scopeSet)
+  ]);
+}
 const { protect, requireSuperAdmin } = require('../../middlewares/members/auth');
 
 router.use(protect);
@@ -147,13 +179,7 @@ router.put('/:id', requireSuperAdmin, async (req, res) => {
     if (newName !== oldName) {
       location.name = newName;
       await location.save();
-
-      // Cascade the rename down the hierarchy and into account postings.
-      await LocationMaster.updateMany({ [location.type]: oldName }, { $set: { [location.type]: newName } });
-      await MemberAdmin.updateMany(
-        { [`scope.${location.type}`]: oldName },
-        { $set: { [`scope.${location.type}`]: newName } }
-      );
+      await cascadeRename(location, oldName, newName);
     }
 
     if (isActive !== undefined) {
