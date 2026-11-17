@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Lock, Pencil, Save, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, Lock, Pencil, Save, X } from 'lucide-react'
 import { api, apiError } from '../../utils/members/api'
 import { useAuth } from '../../contexts/members/AuthContext'
 import FieldRenderer from '../../components/reportRenderer/FieldRenderer'
@@ -51,6 +51,8 @@ export default function ApplicationDetailPage() {
         setCaptured({})
         setComment('')
         setUseSkip(false)
+        setDecision('approved')
+        setSendBackTo('')
         setError('')
       })
       .catch(err => setError(apiError(err, 'Failed to load the application')))
@@ -68,6 +70,33 @@ export default function ApplicationDetailPage() {
     return found?.name || key
   }, [data])
 
+  // Another role's comment fields that this actor may fill only by taking the
+  // Rukn skip; they stay hidden until the skip box is ticked.
+  const isSkipOnlyField = (field) => Boolean(
+    canSkip && field.ownerRoleKey && !field.readOnly &&
+    field.ownerRoleKey !== stage?.actorRoleKey &&
+    (stage?.skipFillsRoleKeys || []).includes(field.ownerRoleKey)
+  )
+
+  // Only earlier stages are real send-back targets (the server enforces this).
+  const sendBackOptions = useMemo(() => {
+    if (!stage) return []
+    const orderOf = (key) => data?.workflow?.stages?.find(s => s.key === key)?.order ?? Infinity
+    return (stage.allowedNextStageKeys || []).filter(k => k !== stage.nextStageKey && orderOf(k) < stage.order)
+  }, [stage, data])
+
+  // Reviewers land at the top of a long application; take them to their part.
+  const jumpToMyPart = () => {
+    const target = document.querySelector('[data-my-field]') || document.getElementById('your-action')
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  // History stores captured values by key; show the stage's own field label.
+  const captureLabel = (stageKey, key) => {
+    const found = data?.workflow?.stages?.find(s => s.key === stageKey)
+    return found?.captureFields?.find(f => f.key === key)?.label || key
+  }
+
   const nextStageLabel = useMemo(() => {
     if (!stage) return ''
     if (useSkip && stage.skipToStageKey) return stageName(stage.skipToStageKey)
@@ -77,7 +106,12 @@ export default function ApplicationDetailPage() {
   const submitStage = async (action) => {
     setBusy(true)
     try {
-      const body = { action, comment, roleData: roleDraft, captured, useSkip }
+      // Send only the comment fields this reviewer may write; earlier roles'
+      // answers are loaded for display and would otherwise come back "ignored".
+      const editableKeys = new Set(data.template.pages.flatMap(p =>
+        p.fields.filter(f => f.ownerRoleKey && !f.readOnly && (useSkip || !isSkipOnlyField(f))).map(f => `field_${f.id}`)))
+      const roleData = Object.fromEntries(Object.entries(roleDraft).filter(([key]) => editableKeys.has(key)))
+      const body = { action, comment, roleData, captured, useSkip }
       if (action === 'returned') body.nextStageKey = sendBackTo
       const { data: result } = await api.put(`/applications/${id}/stage`, body)
       if (result.ignoredFields?.length) {
@@ -157,11 +191,16 @@ export default function ApplicationDetailPage() {
       />
 
       {stage && (
-        <Card className="p-4 mb-4 bg-[#faf5ff] border-[#ddd6fe]">
+        <Card className="p-4 mb-4 bg-[#faf5ff] border-[#ddd6fe] flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-gray-700">
             Currently at <strong>{stage.name}</strong>
             {myTurn ? ' — waiting on you.' : ' — waiting on another role.'}
           </p>
+          {myTurn && (
+            <Button onClick={jumpToMyPart} className="w-full sm:w-auto">
+              <ArrowDown size={15} /> Go to my review
+            </Button>
+          )}
         </Card>
       )}
       {!stage && (
@@ -173,6 +212,8 @@ export default function ApplicationDetailPage() {
       {/* ── Form content ─────────────────────────────────────────────────── */}
       {template.pages.map(page => {
         const editable = page.hasEditableFields
+        const fields = page.fields.filter(f => useSkip || !isSkipOnlyField(f))
+        if (!fields.length) return null
         return (
           <Card key={page.id} className="p-4 sm:p-5 mb-4">
             <div className="flex items-start justify-between gap-3 mb-4">
@@ -193,10 +234,13 @@ export default function ApplicationDetailPage() {
             </div>
 
             <div className="grid grid-cols-12 gap-x-4 gap-y-4">
-              {page.fields.map(field => {
+              {fields.map(field => {
                 const key = `field_${field.id}`
+                const controlId = `application-${key}`
                 const isRoleField = Boolean(field.ownerRoleKey)
-                const readOnly = field.readOnly || (!isRoleField && !editing)
+                // Uploads can't be replaced from here: the edit endpoint stores
+                // JSON only, so a newly picked file would overwrite the photo.
+                const readOnly = field.readOnly || (!isRoleField && !editing) || field.type === 'file'
                 const value = isRoleField
                   ? roleDraft[key]
                   : (editing ? formDraft[key] : application.formData?.[key])
@@ -207,9 +251,9 @@ export default function ApplicationDetailPage() {
                 }
 
                 return (
-                  <div key={field.id} className={fieldWidthClass(field)}>
+                  <div key={field.id} className={`${fieldWidthClass(field)} scroll-mt-4`} data-my-field={isRoleField && !readOnly ? true : undefined}>
                     {!['title', 'html'].includes(field.type) && (
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label id={`${controlId}-label`} htmlFor={controlId} className="block text-sm font-medium text-gray-700 mb-1">
                         {field.label}
                         {field.required && !readOnly && <span className="text-red-500"> *</span>}
                       </label>
@@ -219,6 +263,8 @@ export default function ApplicationDetailPage() {
                       value={value ?? ''}
                       onChange={onChange}
                       disabled={readOnly}
+                      controlId={controlId}
+                      labelledBy={`${controlId}-label`}
                     />
                     {field.helpText && !['title'].includes(field.type) && (
                       <p className="text-xs text-gray-500 mt-1">{field.helpText}</p>
@@ -244,7 +290,7 @@ export default function ApplicationDetailPage() {
 
       {/* ── Reviewer action ──────────────────────────────────────────────── */}
       {myTurn && stage && (
-        <Card className="p-4 sm:p-5 mb-4">
+        <Card id="your-action" className="p-4 sm:p-5 mb-4 scroll-mt-4">
           <h2 className="font-semibold text-gray-900 mb-4">Your action</h2>
 
           {(stage.captureFields || []).length > 0 && (
@@ -309,17 +355,15 @@ export default function ApplicationDetailPage() {
               </>
             ) : (
               <Button onClick={() => submitStage(stage.kind === 'marker' ? 'marked' : stage.kind === 'finalize' ? 'finalized' : 'forwarded')} disabled={busy}>
-                {busy ? 'Saving...' : stage.isTerminal ? 'Complete' : `Verify & send to ${nextStageLabel}`}
+                {busy ? 'Saving...' : stage.isTerminal ? 'Complete' : `${stage.kind === 'verify' ? 'Verify' : 'Save'} & send to ${nextStageLabel}`}
               </Button>
             )}
 
-            {(stage.allowedNextStageKeys || []).length > 0 && !stage.isTerminal && (
+            {sendBackOptions.length > 0 && !stage.isTerminal && (
               <div className="flex items-center gap-2">
                 <Select value={sendBackTo} onChange={e => setSendBackTo(e.target.value)} className="sm:w-56">
                   <option value="">Send back to...</option>
-                  {stage.allowedNextStageKeys
-                    .filter(k => k !== stage.nextStageKey)
-                    .map(k => <option key={k} value={k}>{stageName(k)}</option>)}
+                  {sendBackOptions.map(k => <option key={k} value={k}>{stageName(k)}</option>)}
                 </Select>
                 <Button variant="secondary" disabled={!sendBackTo || busy} onClick={() => submitStage('returned')}>
                   Send back
@@ -353,7 +397,7 @@ export default function ApplicationDetailPage() {
                   {entry.data && Object.keys(entry.data).length > 0 && (
                     <ul className="text-xs text-gray-600 mt-1 space-y-0.5">
                       {Object.entries(entry.data).map(([k, v]) => (
-                        <li key={k}><span className="text-gray-400">{k}:</span> {String(v)}</li>
+                        <li key={k}><span className="text-gray-400">{captureLabel(entry.stageKey, k)}:</span> {String(v)}</li>
                       ))}
                     </ul>
                   )}

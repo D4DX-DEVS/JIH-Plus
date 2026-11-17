@@ -40,10 +40,11 @@ const accessLinkSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  // Null when the env-sourced super admin issued the link (it has no MemberAdmin row).
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'MemberAdmin',
-    required: true,
+    default: null,
     index: true
   },
   // Snapshot of the creator's scope, stamped onto the resulting Application so a

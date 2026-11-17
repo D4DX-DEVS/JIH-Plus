@@ -76,6 +76,9 @@ router.put('/:formType', requireSuperAdmin, async (req, res) => {
       }
     }
 
+    const graphError = Workflow.stageGraphError(stages);
+    if (graphError) return res.status(400).json({ success: false, message: graphError });
+
     const incomingKeys = new Set(stages.map(s => s.key));
     const occupied = await Application.distinct('currentStageKey', {
       formType,

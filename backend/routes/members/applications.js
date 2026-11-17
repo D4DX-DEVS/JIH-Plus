@@ -29,6 +29,7 @@ const { notifyRole, notifyApplicantDecision } = require('../../utils/members/not
 
 router.use(protect);
 
+const DECISIONS = ['approved', 'rejected', 'hold'];
 const roleKeyOf = (user) => user?.role?.key || '';
 const actorLabel = (user) => user?.name || user?.username || 'Unknown';
 const actorId = (user) => (user?.isSuperAdmin ? null : user?._id);
@@ -101,13 +102,19 @@ router.get('/', async (req, res) => {
     }
 
     // `mine=1` narrows to applications actually waiting on this caller's role.
-    if (mine && !req.user.isSuperAdmin) {
+    // The super admin can act anywhere, but what waits on them is the state
+    // stages; a Rukn stays "approved" while it moves through the post-decision
+    // state stages, so for them only a finished (stage-less) or rejected
+    // application is excluded.
+    if (mine) {
       const workflows = await Workflow.find(formType ? { formType } : {}).lean();
       const myStages = workflows.flatMap(w =>
         (w.stages || []).filter(s => s.actorRoleKey === roleKeyOf(req.user)).map(s => s.key)
       );
       query.currentStageKey = { $in: myStages };
-      query.status = query.status || { $nin: ['approved', 'rejected'] };
+      if (!query.status) {
+        query.status = req.user.isSuperAdmin ? { $ne: 'rejected' } : { $nin: ['approved', 'rejected'] };
+      }
     }
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -288,20 +295,39 @@ router.put('/:id/stage', async (req, res) => {
     // Work out where it goes next.
     let nextStageKey = '';
     let status = application.status === 'submitted' ? 'in_review' : application.status;
+    const permittedTargets = [stage.nextStageKey, ...(stage.allowedNextStageKeys || [])].filter(Boolean);
+
+    // Approve / reject / hold only mean something at a decision stage. Anywhere
+    // else they would forward the application while telling the applicant it
+    // was decided, so refuse them outright.
+    if (stage.kind !== 'decision' && DECISIONS.includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: `"${stage.name}" is not a decision stage; it cannot be ${action}`
+      });
+    }
 
     if (stage.kind === 'decision') {
-      if (!['approved', 'rejected', 'hold'].includes(action)) {
+      if (!DECISIONS.includes(action)) {
         return res.status(400).json({
           success: false,
           message: 'This stage needs a decision: approved, rejected or hold'
         });
       }
       status = action;
-      nextStageKey = action === 'approved' ? (req.body.nextStageKey || stage.nextStageKey || '') : '';
+      if (action === 'approved') {
+        nextStageKey = req.body.nextStageKey || stage.nextStageKey || '';
+        if (req.body.nextStageKey && !permittedTargets.includes(req.body.nextStageKey)) {
+          return res.status(400).json({ success: false, message: `This stage cannot forward to "${req.body.nextStageKey}"` });
+        }
+      }
       if (action === 'hold') nextStageKey = stage.key; // stays put until revisited
     } else if (action === 'returned') {
+      // A send-back only ever goes to an earlier stage; jumping forward that
+      // way would let anyone bypass the stages in between.
       const target = req.body.nextStageKey;
-      if (!target || !(stage.allowedNextStageKeys || []).includes(target)) {
+      const targetStage = target ? workflow.stageByKey(target) : null;
+      if (!targetStage || !(stage.allowedNextStageKeys || []).includes(target) || targetStage.order >= stage.order) {
         return res.status(400).json({ success: false, message: 'Choose a valid stage to send this back to' });
       }
       nextStageKey = target;
@@ -309,9 +335,12 @@ router.put('/:id/stage', async (req, res) => {
       nextStageKey = stage.skipToStageKey;
     } else if (req.body.nextStageKey) {
       const target = req.body.nextStageKey;
-      const permitted = [stage.nextStageKey, ...(stage.allowedNextStageKeys || [])].filter(Boolean);
-      if (!permitted.includes(target)) {
+      if (!permittedTargets.includes(target)) {
         return res.status(400).json({ success: false, message: `This stage cannot forward to "${target}"` });
+      }
+      // The skip target is reserved for actors who meet the skip condition.
+      if (stage.skipToStageKey && target === stage.skipToStageKey && target !== stage.nextStageKey) {
+        return res.status(400).json({ success: false, message: 'This stage cannot be skipped by your account' });
       }
       nextStageKey = target;
     } else {

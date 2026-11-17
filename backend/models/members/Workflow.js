@@ -72,20 +72,31 @@ const workflowSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-workflowSchema.pre('validate', function (next) {
-  const keys = (this.stages || []).map(s => s.key);
+/**
+ * Structural check for a stage list: unique keys, and every routing target names
+ * a stage that exists. Returns an error message, or null when the graph is sound.
+ * Exported because findOneAndUpdate (used by the workflow routes) skips the
+ * document-level pre('validate') hook below.
+ */
+function stageGraphError(stages) {
+  const keys = (stages || []).map(s => s.key);
   const duplicate = keys.find((k, i) => keys.indexOf(k) !== i);
-  if (duplicate) return next(new Error(`Duplicate stage key: ${duplicate}`));
+  if (duplicate) return `Duplicate stage key: ${duplicate}`;
 
-  for (const stage of this.stages || []) {
+  for (const stage of stages || []) {
     const targets = [stage.nextStageKey, stage.skipToStageKey, ...(stage.allowedNextStageKeys || [])];
     for (const target of targets) {
       if (target && !keys.includes(target)) {
-        return next(new Error(`Stage "${stage.key}" points at unknown stage "${target}"`));
+        return `Stage "${stage.key}" points at unknown stage "${target}"`;
       }
     }
   }
-  next();
+  return null;
+}
+
+workflowSchema.pre('validate', function (next) {
+  const error = stageGraphError(this.stages);
+  next(error ? new Error(error) : undefined);
 });
 
 // Convenience accessors used throughout routes/members/applications.js
@@ -99,3 +110,4 @@ workflowSchema.methods.firstStage = function () {
 
 module.exports = membersConnection.model('Workflow', workflowSchema);
 module.exports.STAGE_KINDS = STAGE_KINDS;
+module.exports.stageGraphError = stageGraphError;

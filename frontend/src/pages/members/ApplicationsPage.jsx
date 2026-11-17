@@ -62,6 +62,8 @@ export default function ApplicationsPage() {
 
   // Stage keys are opaque in the DB; the workflow config carries their labels.
   const stageName = (app) => {
+    // An empty stage means the application has left the workflow.
+    if (!app.currentStageKey) return app.status === 'rejected' ? 'Closed' : 'Completed'
     const workflow = workflows.find(w => w.formType === app.formType)
     const stage = workflow?.stages?.find(s => s.key === app.currentStageKey)
     return stage?.name || app.currentStageKey || '—'
@@ -174,7 +176,9 @@ export default function ApplicationsPage() {
                     {applications.map(app => (
                       <tr key={app._id} className="hover:bg-gray-50">
                         <td className="px-4 py-3">
-                          <span className="font-medium text-gray-900">{app.applicantName || 'Unnamed'}</span>
+                          <Link to={`/members/applications/${app._id}`} className="font-medium text-gray-900 hover:text-[#5b21b6]">
+                            {app.applicantName || 'Unnamed'}
+                          </Link>
                           {app.memberId && <span className="block text-xs text-gray-500">ID: {app.memberId}</span>}
                         </td>
                         <td className="px-4 py-3 text-gray-600">{FORM_TYPE_LABEL[app.formType]}</td>
