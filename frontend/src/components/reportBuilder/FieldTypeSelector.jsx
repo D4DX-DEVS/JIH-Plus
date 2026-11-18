@@ -21,12 +21,15 @@ const FIELD_TYPES = [
     { value: 'checkbox', label: 'Checkboxes' },
     { value: 'multiselect', label: 'Multi Select' },
     { value: 'yesno', label: 'Yes / No' },
+    { value: 'accept', label: 'Accept (Terms)' },
   ]},
   { group: 'Media & Files', types: [
     { value: 'file', label: 'File Upload' },
   ]},
   { group: 'Layout', types: [
     { value: 'title', label: 'Section Title' },
+    { value: 'subtitle', label: 'Subtitle' },
+    { value: 'note', label: 'Note' },
     { value: 'html', label: 'HTML / Rich Text' },
     { value: 'row', label: 'Table Row/Column' },
   ]},

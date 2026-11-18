@@ -19,7 +19,7 @@ const { protect, requireSuperAdmin } = require('../../middlewares/members/auth')
 const { flattenFields } = require('../../utils/members/formAccess');
 
 const CHOICE_FIELD_TYPES = ['select', 'dropdown', 'radio', 'checkbox', 'multiselect'];
-const LAYOUT_FIELD_TYPES = ['title', 'html'];
+const LAYOUT_FIELD_TYPES = ['title', 'subtitle', 'note', 'html'];
 
 /**
  * Drafts may be sparse; publishing demands a usable form.

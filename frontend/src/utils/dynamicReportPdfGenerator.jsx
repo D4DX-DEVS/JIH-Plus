@@ -2,6 +2,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, pdf } from '@react-pdf/renderer';
 import NotoSerifMalayalam from '../assets/fonts/NotoSerifMalayalam-Regular.ttf';
 import jihLogo from '../assets/LogoColor.png';
+import { isLayoutField } from './formFieldTypes';
 
 import {
   PDF_STYLES,
@@ -227,7 +228,7 @@ const NewFormatPage = ({ page, submission }) => (
   <View style={styles.pageSection}>
     {page.title && <Text style={styles.pageSectionTitle}>{page.title}</Text>}
     {(page.fields || [])
-      .filter(f => !['title', 'html'].includes(f.type))
+      .filter(f => !isLayoutField(f))
       .map(field => (
         <View key={field.id} style={styles.fieldBlock} wrap={false}>
           <Text style={styles.fieldLabel}>{field.label}</Text>

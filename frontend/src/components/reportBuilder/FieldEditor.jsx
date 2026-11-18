@@ -7,8 +7,17 @@ import RowColumnEditor from './RowColumnEditor';
 import ValidationEditor from './ValidationEditor';
 import ConditionalLogicEditor from './ConditionalLogicEditor';
 import { FIELD_WIDTHS, fieldWidth } from '../../utils/fieldWidth';
+import { isLayoutField } from '../../utils/formFieldTypes';
 
 const TYPES_WITH_OPTIONS = ['select', 'dropdown', 'radio', 'checkbox', 'multiselect'];
+
+const LABEL_PLACEHOLDER = {
+  title: 'Section title...',
+  subtitle: 'Subtitle...',
+  note: 'Note text...',
+  html: 'HTML content...',
+  accept: 'I agree to the terms and conditions',
+};
 
 export default function FieldEditor({
   field, allFields, onChange, onRemove, onCopy, onDuplicate, pageIndex, fieldIndex, isCopied,
@@ -32,7 +41,10 @@ export default function FieldEditor({
 
   const update = (key, val) => onChange({ ...field, [key]: val });
 
-  const isLayout = ['title', 'html'].includes(field.type);
+  const isLayout = isLayoutField(field);
+  // An accept (terms) tick box is always required: the form cannot move on
+  // until it is ticked, whatever the Required setting says.
+  const isAccept = field.type === 'accept';
 
   return (
     <div
@@ -59,7 +71,7 @@ export default function FieldEditor({
             type="text"
             value={field.label || ''}
             onChange={e => update('label', e.target.value)}
-            placeholder={isLayout ? (field.type === 'title' ? 'Section title...' : 'HTML content...') : 'Field label...'}
+            placeholder={LABEL_PLACEHOLDER[field.type] || 'Field label...'}
             className="w-full text-base sm:text-sm border-0 bg-transparent outline-none text-gray-700 placeholder-gray-300"
           />
         </div>
@@ -76,14 +88,18 @@ export default function FieldEditor({
           </select>
         )}
         {!isLayout && (
-          <label className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
+          <label
+            title={isAccept ? 'An accept field must always be ticked' : 'The form cannot be submitted until this field is filled'}
+            className="flex min-h-[44px] sm:min-h-0 items-center gap-1 text-xs text-gray-500 flex-shrink-0"
+          >
             <input
               type="checkbox"
-              checked={field.required || false}
+              checked={isAccept || field.required || false}
+              disabled={isAccept}
               onChange={e => update('required', e.target.checked)}
               className="rounded"
             />
-            Req
+            Required
           </label>
         )}
         <div className="flex items-center gap-3 flex-shrink-0">
@@ -169,7 +185,7 @@ export default function FieldEditor({
                   </p>
                 </div>
               )}
-              {!isLayout && (
+              {!isLayout && !isAccept && (
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Placeholder</label>
                   <input
@@ -180,15 +196,38 @@ export default function FieldEditor({
                   />
                 </div>
               )}
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Help Text</label>
-                <input
-                  type="text"
-                  value={field.helpText || ''}
-                  onChange={e => update('helpText', e.target.value)}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
-                />
-              </div>
+              {isAccept ? (
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Terms text (shown above the tick box)</label>
+                  <textarea
+                    value={field.helpText || ''}
+                    onChange={e => update('helpText', e.target.value)}
+                    rows={4}
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
+                  />
+                </div>
+              ) : field.type !== 'note' && (
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Help Text</label>
+                  <input
+                    type="text"
+                    value={field.helpText || ''}
+                    onChange={e => update('helpText', e.target.value)}
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
+                  />
+                </div>
+              )}
+              {field.type === 'note' && (
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Note Text</label>
+                  <textarea
+                    value={field.label || ''}
+                    onChange={e => update('label', e.target.value)}
+                    rows={4}
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-base sm:text-sm outline-none focus:ring-1 focus:ring-blue-400"
+                  />
+                </div>
+              )}
               {field.type === 'html' && (
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">HTML Content</label>

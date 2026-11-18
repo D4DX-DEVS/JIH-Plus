@@ -3,6 +3,7 @@ import useModalFocus from '../../hooks/useModalFocus';
 import { X, Download, Loader2, CheckCircle2, Clock } from 'lucide-react';
 import RowColumnReadonly from './RowColumnReadonly';
 import { fieldWidthClass, fieldWidth } from '../../utils/fieldWidth';
+import { isLayoutField } from '../../utils/formFieldTypes';
 
 // Mirrors DynamicFormRenderer's layout rule: simple value fields show
 // label + value on one row, everything else stays stacked.
@@ -139,7 +140,7 @@ export default function SubmissionPreviewModal({ open, loading, data, onClose, o
                       {page.title && <h4 className="text-sm font-bold text-[#002349] mb-3 border-b border-gray-200 pb-2">{page.title}</h4>}
                       <div className="grid grid-cols-12 gap-x-4 gap-y-3">
                         {(page.fields || [])
-                          .filter(f => !['title', 'html'].includes(f.type))
+                          .filter(f => !isLayoutField(f))
                           .map(field => (
                             INLINE_FIELD_TYPES.has(field.type) && fieldWidth(field) === 'full' ? (
                               <div key={field.id} className={`${fieldWidthClass(field)} border-l-4 border-[#002349]/60 pl-3 py-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3`}>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { isLayoutField } from '../../utils/formFieldTypes';
 
 const OPERATORS = [
   { value: 'equals', label: 'equals' },
@@ -20,7 +21,7 @@ export default function ConditionalLogicEditor({ logic, allFields, currentFieldI
   const update = (key, val) => onChange({ ...cl, [key]: val });
   const clear = () => onChange(null);
 
-  const triggerFields = allFields.filter(f => f.id !== currentFieldId && !['title', 'html'].includes(f.type));
+  const triggerFields = allFields.filter(f => f.id !== currentFieldId && !isLayoutField(f));
 
   return (
     <div className="space-y-2 bg-yellow-50 p-3 rounded-lg border border-yellow-200">

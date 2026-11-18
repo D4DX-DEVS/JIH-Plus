@@ -71,7 +71,7 @@ const loadSubmitter = async (submittedBy, submittedRole) => {
 };
 
 const CHOICE_FIELD_TYPES = ['select', 'dropdown', 'radio', 'checkbox', 'multiselect'];
-const LAYOUT_FIELD_TYPES = ['title', 'html'];
+const LAYOUT_FIELD_TYPES = ['title', 'subtitle', 'note', 'html'];
 
 // Pages-based payload. Drafts may be sparse; publishing demands a usable form.
 const validatePagesPayload = (body, { publishing }) => {

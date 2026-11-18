@@ -26,8 +26,8 @@ const WIDTH_CLASSES = {
   'two-thirds': 'col-span-12 sm:col-span-8',
 };
 
-// Section titles and raw HTML always own their line.
-const ALWAYS_FULL_TYPES = new Set(['title', 'html']);
+// Section titles, subtitles, notes and raw HTML always own their line.
+const ALWAYS_FULL_TYPES = new Set(['title', 'subtitle', 'note', 'html']);
 
 export function fieldWidth(field) {
   if (!field || ALWAYS_FULL_TYPES.has(field.type)) return 'full';

@@ -18,8 +18,8 @@ const mongoose = require('mongoose');
 const FIELD_TYPES = [
   'text', 'email', 'phone', 'number', 'date', 'datetime', 'time',
   'textarea', 'password', 'url', 'file',
-  'select', 'dropdown', 'radio', 'checkbox', 'multiselect', 'yesno',
-  'title', 'html', 'group', 'page', 'row', 'column'
+  'select', 'dropdown', 'radio', 'checkbox', 'multiselect', 'yesno', 'accept',
+  'title', 'subtitle', 'note', 'html', 'group', 'page', 'row', 'column'
 ];
 
 const FIELD_WIDTHS = ['full', 'three-quarters', 'two-thirds', 'half', 'third', 'quarter'];

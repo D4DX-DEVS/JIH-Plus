@@ -3,15 +3,16 @@ const mongoose = require('mongoose');
 // ─── Field sub-schema (mirrors FORM_CONFIGURATION_GUIDE) ─────────────────────
 const fieldSchema = new mongoose.Schema({
     id: { type: Number, required: true },
-    label: { type: String, required: true, maxlength: 200 },
+    // 2000 like the ihthisabi/members schemas: note and HTML fields keep their text here.
+    label: { type: String, required: true, maxlength: 2000 },
     type: {
         type: String,
         required: true,
         enum: [
             'text', 'email', 'phone', 'number', 'date', 'datetime', 'time',
             'textarea', 'password', 'url', 'file',
-            'select', 'dropdown', 'radio', 'checkbox', 'multiselect', 'yesno',
-            'title', 'html', 'group', 'page', 'row', 'column'
+            'select', 'dropdown', 'radio', 'checkbox', 'multiselect', 'yesno', 'accept',
+            'title', 'subtitle', 'note', 'html', 'group', 'page', 'row', 'column'
         ]
     },
     required: { type: Boolean, default: false },
