@@ -9,6 +9,7 @@ import { api, apiError } from '../../utils/members/api'
 import { useAuth } from '../../contexts/members/AuthContext'
 import FieldRenderer from '../../components/reportRenderer/FieldRenderer'
 import { fieldWidthClass } from '../../utils/fieldWidth'
+import { isLayoutField } from '../../utils/formFieldTypes'
 import {
   Avatar, Badge, Button, Card, ErrorState, Field, IconButton, Input, Modal, Notice, Select, Skeleton, StatusBadge, Textarea, ToggleRow, TypeBadge
 } from '../../components/members/ui'
@@ -24,7 +25,7 @@ const DECISION_ACTIONS = [
 // uploads and layout fields keep the shared renderer.
 const TEXT_VIEW_TYPES = new Set([
   'text', 'number', 'phone', 'email', 'url', 'textarea', 'select', 'dropdown',
-  'radio', 'yesno', 'date', 'time', 'datetime', 'checkbox', 'multiselect'
+  'radio', 'yesno', 'date', 'time', 'datetime', 'checkbox', 'multiselect', 'accept'
 ])
 
 const HISTORY_LOOK = {
@@ -464,7 +465,7 @@ export default function ApplicationDetailPage() {
 
                     return (
                       <div key={field.id} className={`${fieldWidthClass(field)} min-w-0 scroll-mt-4`} data-my-field={isRoleField && !readOnly ? true : undefined}>
-                        {!['title', 'html'].includes(field.type) && (
+                        {!isLayoutField(field) && field.type !== 'accept' && (
                           <label id={`${controlId}-label`} htmlFor={controlId} className={cx('mb-1 block', readOnly ? 'text-xs font-medium text-slate-500' : 'text-[13px] font-semibold text-slate-700')}>
                             {field.label}
                             {field.required && !readOnly && <span className="text-rose-500"> *</span>}
@@ -478,7 +479,7 @@ export default function ApplicationDetailPage() {
                           controlId={controlId}
                           labelledBy={`${controlId}-label`}
                         />
-                        {field.helpText && !['title'].includes(field.type) && !readOnly && (
+                        {field.helpText && !['title', 'subtitle'].includes(field.type) && !readOnly && (
                           <p className="mt-1 text-xs text-slate-500">{field.helpText}</p>
                         )}
                       </div>

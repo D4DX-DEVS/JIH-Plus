@@ -318,7 +318,7 @@ router.get('/admin/reports/for-consolidation', adminAuth, async (req, res) => {
 const CHOICE_TYPES = ['radio', 'select', 'dropdown', 'yesno'];
 const MULTI_TYPES = ['checkbox', 'multiselect'];
 // Layout-only field types that carry no answer data
-const LAYOUT_TYPES = ['title', 'html', 'page', 'group', 'column'];
+const LAYOUT_TYPES = ['title', 'subtitle', 'note', 'html', 'page', 'group', 'column'];
 
 const isEmptyAnswer = (v) =>
   v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);

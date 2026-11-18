@@ -2,6 +2,7 @@ import NumericInput from "../NumericInput";
 import React from 'react';
 import FileUploadField from './FileUploadField';
 import RowColumnField from './RowColumnField';
+import { ACCEPTED_VALUE } from '../../utils/formFieldTypes';
 
 // Input width tuned to the kind of value the field type actually holds,
 // so a 4-digit count field doesn't stretch as wide as a free-text field.
@@ -44,6 +45,44 @@ export default function FieldRenderer({
           </h3>
           {field.helpText && <p className="text-xs text-gray-500">{field.helpText}</p>}
         </div>
+      );
+
+    // One step lighter than a section title: semibold instead of bold, no rule.
+    case 'subtitle':
+      return (
+        <div>
+          <h4 data-fr="subtitle" className="text-sm font-semibold leading-snug text-gray-700 sm:text-base">
+            {field.label}
+          </h4>
+          {field.helpText && <p className="text-xs text-gray-500">{field.helpText}</p>}
+        </div>
+      );
+
+    case 'note':
+      return (
+        <p data-fr="note" className="whitespace-pre-line text-sm font-normal leading-relaxed text-gray-700">
+          {field.label}
+        </p>
+      );
+
+    // Agree-to-terms tick box. Always required; stores ACCEPTED_VALUE when ticked.
+    case 'accept':
+      return (
+        <label className="flex min-h-[44px] items-center gap-2 cursor-pointer">
+          <input
+            {...controlA11y}
+            type="checkbox"
+            aria-required="true"
+            checked={value === ACCEPTED_VALUE}
+            onChange={e => handleChange(e.target.checked ? ACCEPTED_VALUE : '')}
+            disabled={disabled}
+            className="rounded text-blue-600"
+          />
+          <span className="min-w-0 flex-1 break-words text-sm font-medium text-gray-800">
+            {field.label}
+            {!disabled && <span className="text-red-500 ml-0.5">*</span>}
+          </span>
+        </label>
       );
 
     case 'html':

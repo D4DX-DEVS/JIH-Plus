@@ -10,6 +10,7 @@ import ConfirmationModal from '../components/modals/ConfirmationModal';
 import RowColumnReadonly from '../components/reportRenderer/RowColumnReadonly';
 import MobileTopBar from '../components/sidebars/MobileTopBar';
 import { fieldWidthClass } from '../utils/fieldWidth';
+import { isLayoutField } from '../utils/formFieldTypes';
 
 const ReportSubmissionsPage = ({ onLogout }) => {
   const { id } = useParams();
@@ -518,7 +519,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
                         {page.fields && page.fields.length > 0 ? (
                           <div className="grid grid-cols-12 gap-x-4 gap-y-4">
                             {page.fields
-                              .filter(f => !['title', 'html'].includes(f.type))
+                              .filter(f => !isLayoutField(f))
                               .map((field) => {
                                 const rawValue = selectedSubmission.formData?.[`field_${field.id}`];
                                 return (

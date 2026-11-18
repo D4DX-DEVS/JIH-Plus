@@ -2,6 +2,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Send, Save } from 'lucide-react';
 import FieldRenderer from './FieldRenderer';
 import { fieldWidthClass, fieldWidth } from '../../utils/fieldWidth';
+import { isLayoutField } from '../../utils/formFieldTypes';
 
 // Simple value fields read better with the label and input on the same
 // row; everything else (textarea, html, row/column, choice fields, etc.)
@@ -115,7 +116,8 @@ export default function DynamicFormRenderer({
   };
 
   const isFieldRequired = (field) => {
-    if (field.required) return true;
+    // An accept (terms) tick box is always required.
+    if (field.required || field.type === 'accept') return true;
     const cl = field.conditionalLogic;
     if (!cl || !cl.field) return false;
     const result = evaluateCondition(cl, formData);
@@ -152,26 +154,47 @@ export default function DynamicFormRenderer({
     return null;
   };
 
-  const validatePage = () => {
-    const page = pages[currentPage];
+  const pageErrors = (pageIndex) => {
     const newErrors = {};
-    (page.fields || []).forEach(field => {
+    (pages[pageIndex]?.fields || []).forEach(field => {
       if (!isFieldVisible(field)) return;
       const val = formData[`field_${field.id}`];
       if (isFieldRequired(field)) {
         const empty = val === undefined || val === '' || val === null || (Array.isArray(val) && val.length === 0);
         if (empty) {
-          newErrors[`field_${field.id}`] = field.validation?.customMessage || 'This field is required';
+          newErrors[`field_${field.id}`] = field.validation?.customMessage
+            || (field.type === 'accept' ? 'Please tick this box to continue' : 'This field is required');
           return;
         }
       }
       const broken = ruleError(field, val);
       if (broken) newErrors[`field_${field.id}`] = broken;
     });
+    return newErrors;
+  };
+
+  const showErrors = (newErrors) => {
     const errorKeys = Object.keys(newErrors);
     pendingErrorFocus.current = errorKeys[0] || null;
     setErrors(newErrors);
     return errorKeys.length === 0;
+  };
+
+  const validatePage = () => showErrors(pageErrors(currentPage));
+
+  // Submitting checks every page, not only the one on screen: a resumed draft
+  // or "Save & Submit" from an early page must not skip required fields on
+  // other pages. The first page with a problem is brought into view.
+  const validateAllPages = () => {
+    const order = [currentPage, ...pages.map((_, i) => i).filter(i => i !== currentPage)];
+    for (const pageIndex of order) {
+      const found = pageErrors(pageIndex);
+      if (Object.keys(found).length > 0) {
+        if (pageIndex !== currentPage) setCurrentPage(pageIndex);
+        return showErrors(found);
+      }
+    }
+    return showErrors({});
   };
 
   const focusPageStart = () => {
@@ -198,7 +221,7 @@ export default function DynamicFormRenderer({
   };
 
   const handleSubmit = () => {
-    if (!validatePage()) return;
+    if (!validateAllPages()) return;
     onSubmit(formData, currentPage);
   };
 
@@ -259,7 +282,7 @@ export default function DynamicFormRenderer({
 
           const widthClass = fieldWidthClass(field);
 
-          if (field.type === 'title' || field.type === 'html') {
+          if (isLayoutField(field)) {
             return (
               <div key={field.id} className={widthClass}>
                 <FieldRenderer
@@ -268,6 +291,30 @@ export default function DynamicFormRenderer({
                   onChange={val => handleChange(field.id, val)}
                   disabled={disabled}
                 />
+              </div>
+            );
+          }
+
+          // The tick box carries its own label, so no label above it; the
+          // terms text (help text) sits above the box.
+          if (field.type === 'accept') {
+            return (
+              <div key={field.id} data-form-field-key={errorKey} tabIndex={-1} className={widthClass}>
+                {field.helpText && (
+                  <p className="mb-2 whitespace-pre-line text-sm leading-relaxed text-gray-700">{field.helpText}</p>
+                )}
+                <FieldRenderer
+                  field={field}
+                  controlId={controlId}
+                  ariaInvalid={Boolean(errors[errorKey])}
+                  ariaDescribedBy={errorId}
+                  value={formData[errorKey]}
+                  onChange={val => handleChange(field.id, val)}
+                  disabled={disabled}
+                />
+                {errors[errorKey] && (
+                  <p id={`${errorIdPrefix}-${errorKey}-error`} className="text-xs text-red-600 mt-1">{errors[errorKey]}</p>
+                )}
               </div>
             );
           }
