@@ -185,7 +185,7 @@ export default function ApplicantAccessPage() {
     return (
       <AuthLayout
         title="Application Form"
-        subtitle="Rukn & Karkoon membership application"
+        subtitle="Rukn & Karkun membership application"
         showPortalsLink={false}
         footer="Your application link and credentials are private. Do not share them."
       >

@@ -1,5 +1,5 @@
 /**
- * Members Application — a submitted Rukn or Karkoon application.
+ * Members Application — a submitted Rukn or Karkun application.
  *
  * Applicant answers and reviewer answers are kept in two separate maps so the
  * access rules stay simple: `formData` is everything the applicant filled in,

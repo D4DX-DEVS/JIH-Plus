@@ -27,7 +27,7 @@ const blankStage = (order) => ({
 
 /**
  * Both application types have their own pipeline. Stages, the role that acts at
- * each, and where each one forwards to are all data — the seeded Rukn and Karkoon
+ * each, and where each one forwards to are all data — the seeded Rukn and Karkun
  * flows can be reshaped here without a code change.
  */
 export default function WorkflowBuilderPage() {

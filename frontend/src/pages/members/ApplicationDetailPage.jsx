@@ -230,7 +230,7 @@ export default function ApplicationDetailPage() {
     return found?.captureFields?.find(f => f.key === key)?.label || key
   }
 
-  // The workflow's own name for the ID (Rukn ID / Karkoon ID).
+  // The workflow's own name for the ID (Rukn ID / Karkun ID).
   const idLabel = useMemo(() => (data?.workflow?.stages || [])
     .flatMap(s => s.captureFields || [])
     .find(f => f.key === 'memberId')?.label || 'Member ID', [data])

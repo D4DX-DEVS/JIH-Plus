@@ -26,9 +26,9 @@ function tally(rows, key) {
   return out
 }
 
-// Series colours (validated for colour-vision deficiency): Rukn royal, Karkoon gold.
+// Series colours (validated for colour-vision deficiency): Rukn royal, Karkun gold.
 const RUKN_COLOR = '#2a4bd6'
-const KARKOON_COLOR = '#e0a21b'
+const KARKUN_COLOR = '#e0a21b'
 
 const STATUS_META = [
   { key: 'submitted', label: 'Submitted', color: '#0ea5e9' },
@@ -110,7 +110,7 @@ function SeriesLegend({ rukn, karkoon }) {
   return (
     <div className="flex items-center gap-3 text-xs text-slate-600">
       <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: RUKN_COLOR }} />Rukn{rukn !== undefined && <b className="font-semibold text-ink">{rukn}</b>}</span>
-      <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: KARKOON_COLOR }} />Karkoon{karkoon !== undefined && <b className="font-semibold text-ink">{karkoon}</b>}</span>
+      <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: KARKUN_COLOR }} />Karkun{karkoon !== undefined && <b className="font-semibold text-ink">{karkoon}</b>}</span>
     </div>
   )
 }
@@ -208,7 +208,7 @@ export default function Dashboard() {
   const heroStats = [
     { label: 'Total', value: totalApplications, to: '/members/applications' },
     { label: 'Rukn', value: byType.rukn || 0, to: '/members/applications?formType=rukn' },
-    { label: 'Karkoon', value: byType.karkoon || 0, to: '/members/applications?formType=karkoon' }
+    { label: 'Karkun', value: byType.karkoon || 0, to: '/members/applications?formType=karkoon' }
   ]
   // The headline is the reviewer's own queue; once that is empty it becomes
   // what is still in review across their scope.
@@ -334,13 +334,13 @@ export default function Dashboard() {
                         <span className="min-w-0 font-medium text-slate-700 [overflow-wrap:anywhere]">{stage.name}</span>
                         <span className="flex shrink-0 items-center gap-2.5 text-xs tabular-nums text-slate-500">
                           {stage.rukn > 0 && <span className="inline-flex items-center gap-1" title="Rukn"><span className="h-1.5 w-1.5 rounded-full" style={{ background: RUKN_COLOR }} />{stage.rukn}</span>}
-                          {stage.karkoon > 0 && <span className="inline-flex items-center gap-1" title="Karkoon"><span className="h-1.5 w-1.5 rounded-full" style={{ background: KARKOON_COLOR }} />{stage.karkoon}</span>}
+                          {stage.karkoon > 0 && <span className="inline-flex items-center gap-1" title="Karkun"><span className="h-1.5 w-1.5 rounded-full" style={{ background: KARKUN_COLOR }} />{stage.karkoon}</span>}
                           <b className="min-w-5 text-right font-semibold text-ink">{total}</b>
                         </span>
                       </div>
-                      <div className="flex h-2 gap-0.5 rounded-full bg-mist" title={`Rukn ${stage.rukn} · Karkoon ${stage.karkoon}`}>
+                      <div className="flex h-2 gap-0.5 rounded-full bg-mist" title={`Rukn ${stage.rukn} · Karkun ${stage.karkoon}`}>
                         {stage.rukn > 0 && <span className="h-full rounded-full" style={{ width: `${(stage.rukn / stageMax) * 100}%`, background: RUKN_COLOR }} />}
-                        {stage.karkoon > 0 && <span className="h-full rounded-full" style={{ width: `${(stage.karkoon / stageMax) * 100}%`, background: KARKOON_COLOR }} />}
+                        {stage.karkoon > 0 && <span className="h-full rounded-full" style={{ width: `${(stage.karkoon / stageMax) * 100}%`, background: KARKUN_COLOR }} />}
                       </div>
                     </li>
                   )
@@ -365,9 +365,9 @@ export default function Dashboard() {
                     <stop offset="0%" stopColor={RUKN_COLOR} stopOpacity={0.22} />
                     <stop offset="100%" stopColor={RUKN_COLOR} stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="mbrKarkoonFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={KARKOON_COLOR} stopOpacity={0.22} />
-                    <stop offset="100%" stopColor={KARKOON_COLOR} stopOpacity={0} />
+                  <linearGradient id="mbrKarkunFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={KARKUN_COLOR} stopOpacity={0.22} />
+                    <stop offset="100%" stopColor={KARKUN_COLOR} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 4" vertical={false} stroke="#e5e9f2" />
@@ -375,7 +375,7 @@ export default function Dashboard() {
                 <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
                 <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#c8d5fd', strokeWidth: 1 }} />
                 <Area type="monotone" dataKey="rukn" name="Rukn" stroke={RUKN_COLOR} strokeWidth={2} fill="url(#mbrRuknFill)" activeDot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} />
-                <Area type="monotone" dataKey="karkoon" name="Karkoon" stroke={KARKOON_COLOR} strokeWidth={2} fill="url(#mbrKarkoonFill)" activeDot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} />
+                <Area type="monotone" dataKey="karkoon" name="Karkun" stroke={KARKUN_COLOR} strokeWidth={2} fill="url(#mbrKarkunFill)" activeDot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

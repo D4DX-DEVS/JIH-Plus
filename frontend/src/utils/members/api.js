@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-// Members Application (Rukn / Karkoon) runs against its own API prefix and its
+// Members Application (Rukn / Karkun) runs against its own API prefix and its
 // own token store. The key must not collide with the JIH portal ('userToken',
 // 'adminToken') or ihthisabi ('token'), which live in the same browser origin.
 export const MEMBERS_TOKEN_KEY = 'membersToken'

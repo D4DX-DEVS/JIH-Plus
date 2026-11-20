@@ -25,7 +25,7 @@ const LocationMaster = require('../models/members/LocationMaster');
 const Role = require('../models/members/Role');
 const Workflow = require('../models/members/Workflow');
 const { seedMembersDefaults } = require('../utils/members/seed');
-const { RUKN_PAGES, KARKOON_PAGES, LEGACY_COMMENT_ROLES } = require('./membersLegacyForms');
+const { RUKN_PAGES, KARKUN_PAGES, LEGACY_COMMENT_ROLES } = require('./membersLegacyForms');
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const log = (...args) => console.log(...args);
@@ -91,7 +91,7 @@ function buildTemplate(formType, pageDefs) {
   return {
     template: {
       formType,
-      title: `${formType === 'rukn' ? 'Rukn' : 'Karkoon'} Application (imported)`,
+      title: `${formType === 'rukn' ? 'Rukn' : 'Karkun'} Application (imported)`,
       description: 'Generated from the previous JIH portal form so imported applications stay readable.',
       pages,
       isPublished: false,
@@ -370,12 +370,12 @@ async function main() {
   });
   log(`  imported ${rukn.imported}, skipped ${rukn.skipped} of ${rukn.total}\n`);
 
-  log('Karkoon applications:');
+  log('Karkun applications:');
   const karkoon = await migrateCollection({
     LegacyModel: LegacyKarkunForm,
     modelName: 'KarkunForm',
     formType: 'karkoon',
-    pageDefs: KARKOON_PAGES,
+    pageDefs: KARKUN_PAGES,
     namesOf: (doc) => ({ unit: doc.halkhaName, area: doc.area, district: doc.district }),
     roleNames,
     unresolved

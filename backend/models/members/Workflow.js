@@ -41,7 +41,7 @@ const stageSchema = new mongoose.Schema({
   nextStageKey: { type: String, default: '' },
   allowedNextStageKeys: [{ type: String }],
   // Conditional shortcut. Currently the only supported condition is
-  // 'actorIsRukn', which the Karkoon flow uses to let a Unit Nazim who is also a
+  // 'actorIsRukn', which the Karkun flow uses to let a Unit Nazim who is also a
   // Rukn fill the area admin's comments and jump past that stage.
   skipWhen: { type: String, enum: ['', 'actorIsRukn'], default: '' },
   skipToStageKey: { type: String, default: '' },

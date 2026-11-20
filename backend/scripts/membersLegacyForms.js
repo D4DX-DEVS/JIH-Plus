@@ -105,7 +105,7 @@ const RUKN_PAGES = [
   }
 ];
 
-const KARKOON_PAGES = [
+const KARKUN_PAGES = [
   {
     title: 'Personal Information',
     fields: [
@@ -184,4 +184,4 @@ const LEGACY_COMMENT_ROLES = [
   { verificationKey: 'stateAdmin', roleKey: 'superAdmin', title: 'State Comments' }
 ];
 
-module.exports = { RUKN_PAGES, KARKOON_PAGES, LEGACY_COMMENT_ROLES };
+module.exports = { RUKN_PAGES, KARKUN_PAGES, LEGACY_COMMENT_ROLES };

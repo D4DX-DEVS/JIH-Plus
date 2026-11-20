@@ -53,7 +53,7 @@ const memberAdminSchema = new mongoose.Schema({
     area: { type: String, default: '', trim: true },
     unit: { type: String, default: '', trim: true }
   },
-  // Karkoon workflow: a Unit Nazim/Nazimath who is also a Rukn may add the
+  // Karkun workflow: a Unit Nazim/Nazimath who is also a Rukn may add the
   // area admin's comments and skip that stage. See models/members/Workflow.js.
   isRukn: {
     type: Boolean,

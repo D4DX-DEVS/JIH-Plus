@@ -20,7 +20,7 @@ const BLANK_FORM = {
 const TYPE_TABS = [
   { value: '', label: 'All types' },
   { value: 'rukn', label: 'Rukn' },
-  { value: 'karkoon', label: 'Karkoon' }
+  { value: 'karkoon', label: 'Karkun' }
 ]
 
 const STATUS_CHIPS = [
@@ -324,7 +324,7 @@ export default function AccessLinksPage() {
             <p className="mb-1.5 text-[13px] font-semibold text-slate-700">Application type <span className="text-rose-500">*</span></p>
             <Tabs
               fill
-              tabs={[{ value: 'rukn', label: 'Rukn' }, { value: 'karkoon', label: 'Karkoon' }]}
+              tabs={[{ value: 'rukn', label: 'Rukn' }, { value: 'karkoon', label: 'Karkun' }]}
               value={form.formType}
               onChange={value => setForm({ ...form, formType: value })}
             />
