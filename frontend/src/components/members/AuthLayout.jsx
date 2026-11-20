@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Bell, FileCheck2, Link2, Lock } from 'lucide-react'
 import BrandLogo from '../branding/BrandLogo'
+import PoweredByD4DX from '../sidebars/PoweredByD4DX'
 
 const HIGHLIGHTS = [
   { icon: Link2, title: 'Personal application links', text: 'Each applicant gets a private link and credential.' },
@@ -67,6 +68,9 @@ export default function AuthLayout({ title = 'Members Portal', subtitle = 'Rukn 
           <Lock size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
           <span>{footer || 'Access is private. Use only the link and credentials issued to you.'}</span>
         </p>
+        <div className="mx-auto mt-3">
+          <PoweredByD4DX />
+        </div>
       </section>
     </div>
   )

@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../../contexts/members/AuthContext'
 import { api } from '../../utils/members/api'
 import BrandLogo from '../branding/BrandLogo'
+import PoweredByD4DX from '../sidebars/PoweredByD4DX'
 import useModalFocus from '../../hooks/useModalFocus'
 import {
   Avatar
@@ -174,6 +175,9 @@ export default function Layout() {
           <LogOut size={17} />
         </button>
       </div>
+      <div className="-mt-1 px-3">
+        <PoweredByD4DX dark />
+      </div>
     </nav>
   )
 
@@ -328,6 +332,9 @@ export default function Layout() {
                 <LogOut size={17} />
                 Sign out
               </button>
+              <div className="mt-2">
+                <PoweredByD4DX />
+              </div>
             </div>
           )}
 
