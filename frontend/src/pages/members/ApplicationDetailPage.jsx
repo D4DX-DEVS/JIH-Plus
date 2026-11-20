@@ -55,8 +55,54 @@ function displayValue(field, value) {
   return String(value)
 }
 
+/**
+ * Read view of a checkbox / multi-select answer: every option with a ticked or
+ * empty box, as the applicant saw it. Picked values no longer in the options
+ * (an option renamed after submitting) are still listed, ticked.
+ */
+function OptionTicks({ field, value }) {
+  const picked = Array.isArray(value) ? value : (value ? [value] : [])
+  const options = field.options || []
+  const items = [...options, ...picked.filter(v => !options.includes(v))]
+  if (items.length === 0) return <span className="text-slate-300">—</span>
+  return (
+    <ul className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-x-4 gap-y-1.5 pt-1">
+      {items.map(opt => {
+        const on = picked.includes(opt)
+        return (
+          <li key={opt} className="flex items-start gap-2">
+            <span
+              className={cx(
+                'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px]',
+                on ? 'bg-royal-600 text-white' : 'border border-slate-300 bg-[#fff]'
+              )}
+              aria-hidden="true"
+            >
+              {on && <Check size={12} strokeWidth={3} />}
+            </span>
+            <span className={on ? 'font-medium text-ink' : 'text-slate-500'}>
+              {opt}
+              <span className="sr-only">{on ? ' (selected)' : ' (not selected)'}</span>
+            </span>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 /** Read view of one answer: small label over the value. */
 function AnswerView({ field, value }) {
+  if (field.type === 'checkbox' || field.type === 'multiselect') {
+    return (
+      <div className={cx(fieldWidthClass(field), 'min-w-0')}>
+        <dt className="text-xs font-medium leading-snug text-slate-500">{field.label}</dt>
+        <dd className="mt-0.5 text-sm leading-relaxed [overflow-wrap:anywhere]">
+          <OptionTicks field={field} value={value} />
+        </dd>
+      </div>
+    )
+  }
   const shown = displayValue(field, value)
   return (
     <div className={cx(fieldWidthClass(field), 'min-w-0')}>
