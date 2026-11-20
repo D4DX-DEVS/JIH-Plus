@@ -13,7 +13,7 @@ const Workflow = require('../../models/members/Workflow');
 const Application = require('../../models/members/Application');
 const Role = require('../../models/members/Role');
 const { protect, requireSuperAdmin } = require('../../middlewares/members/auth');
-const { RUKN_STAGES, KARKOON_STAGES } = require('../../utils/members/seed');
+const { RUKN_STAGES, KARKUN_STAGES } = require('../../utils/members/seed');
 
 router.use(protect);
 
@@ -113,7 +113,7 @@ router.put('/:formType', requireSuperAdmin, async (req, res) => {
 router.post('/:formType/reset', requireSuperAdmin, async (req, res) => {
   try {
     const { formType } = req.params;
-    const defaults = { rukn: RUKN_STAGES, karkoon: KARKOON_STAGES }[formType];
+    const defaults = { rukn: RUKN_STAGES, karkoon: KARKUN_STAGES }[formType];
     if (!defaults) return res.status(400).json({ success: false, message: 'Unknown form type' });
 
     const workflow = await Workflow.findOneAndUpdate(

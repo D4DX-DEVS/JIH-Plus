@@ -69,7 +69,7 @@ async function notifyAccount({ adminId, scope, title, body, applicationId }) {
 async function notifyApplicantDecision(application, outcome, note) {
   if (!application?.applicantMobile) return { success: false, error: 'no mobile number' };
 
-  const formLabel = application.formType === 'rukn' ? 'Rukn' : 'Karkoon';
+  const formLabel = application.formType === 'rukn' ? 'Rukn' : 'Karkun';
   const heading = outcome === 'approved'
     ? `*${formLabel} Application Approved*`
     : outcome === 'rejected'

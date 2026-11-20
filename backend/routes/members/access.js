@@ -238,7 +238,7 @@ router.post('/submit', applicantAuth, async (req, res) => {
     await notifyRole({
       roleKey: firstStage.actorRoleKey,
       scope: link.scope,
-      title: `New ${link.formType === 'rukn' ? 'Rukn' : 'Karkoon'} application`,
+      title: `New ${link.formType === 'rukn' ? 'Rukn' : 'Karkun'} application`,
       body: `${name || 'An applicant'} submitted an application awaiting your verification.`,
       applicationId: application._id
     });

@@ -149,7 +149,7 @@ export default function FormsPage() {
     <div>
       <PageHeader
         title="Form Builder"
-        subtitle="Configure the Rukn and Karkoon application forms, including each role's comment sections."
+        subtitle="Configure the Rukn and Karkun application forms, including each role's comment sections."
         hideTitleOnMobile
         primaryAction={{
           label: 'New form',
@@ -173,7 +173,7 @@ export default function FormsPage() {
         <Select className="sm:w-40" value={filters.formType} onChange={e => setFilter('formType', e.target.value)} aria-label="Application type">
           <option value="">All types</option>
           <option value="rukn">Rukn</option>
-          <option value="karkoon">Karkoon</option>
+          <option value="karkoon">Karkun</option>
         </Select>
         <Select className="sm:w-40" value={filters.state} onChange={e => setFilter('state', e.target.value)} aria-label="Form state">
           <option value="">All states</option>

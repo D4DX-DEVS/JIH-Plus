@@ -39,7 +39,7 @@ const ihthisabiDynamicReportRoutes = require('./routes/ihthisabi/dynamicReports'
 const ihthisabiApplicationFormRoutes = require('./routes/ihthisabi/applicationForm');
 const ihthisabiMasterDataRoutes = require('./routes/ihthisabi/masterData');
 
-// Import MEMBERS APPLICATION routes (Rukn / Karkoon)
+// Import MEMBERS APPLICATION routes (Rukn / Karkun)
 const membersAuthRoutes = require('./routes/members/auth');
 const membersAccessRoutes = require('./routes/members/access');
 const membersAdminRoutes = require('./routes/members/admin');
@@ -85,7 +85,7 @@ ihthisabiConnection.on('connected', async () => {
   }
 });
 
-// MongoDB Connection - MEMBERS APPLICATION Database (Rukn / Karkoon)
+// MongoDB Connection - MEMBERS APPLICATION Database (Rukn / Karkun)
 const membersConnection = require('./config/membersConnection');
 const { seedMembersDefaults } = require('./utils/members/seed');
 

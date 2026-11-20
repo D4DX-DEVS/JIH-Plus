@@ -125,7 +125,7 @@ export default function Layout() {
         <BrandLogo alt="JIH Plus" size="sm" variant="white" />
         <span className="min-w-0">
           <span className="block font-semibold leading-tight text-white">Members Portal</span>
-          <span className="mt-0.5 block text-xs text-royal-200/70">Rukn &amp; Karkoon</span>
+          <span className="mt-0.5 block text-xs text-royal-200/70">Rukn &amp; Karkun</span>
         </span>
       </Link>
 

@@ -1,7 +1,7 @@
 require('dotenv').config({ quiet: true }); // Ensure env is loaded even if entrypoint didn't load it yet
 const mongoose = require('mongoose');
 
-// Members Application (Rukn / Karkoon) runs on its own database, fully separate
+// Members Application (Rukn / Karkun) runs on its own database, fully separate
 // from the JIH and IHTHISABI ones.
 const membersUri = process.env.MEMBERS_MONGODB_URI;
 

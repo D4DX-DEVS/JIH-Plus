@@ -101,9 +101,9 @@ const RUKN_STAGES = [
   }
 ];
 
-// Karkoon: Unit Nazim/Nazimath -> Area Admin -> District Admin -> State.
+// Karkun: Unit Nazim/Nazimath -> Area Admin -> District Admin -> State.
 // A Unit Nazim who is also a Rukn fills the area admin's comments and skips that stage.
-const KARKOON_STAGES = [
+const KARKUN_STAGES = [
   {
     key: 'unitNazimVerify', name: 'Unit Nazim/Nazimath Verification', order: 1,
     actorRoleKey: 'unitNazim', kind: 'verify',
@@ -126,10 +126,10 @@ const KARKOON_STAGES = [
     nextStageKey: 'finalize', allowedNextStageKeys: ['finalize']
   },
   {
-    key: 'finalize', name: 'Assign Karkoon ID', order: 5,
+    key: 'finalize', name: 'Assign Karkun ID', order: 5,
     actorRoleKey: 'superAdmin', kind: 'finalize', isTerminal: true,
     captureFields: [
-      { key: 'memberId', label: 'Karkoon ID', type: 'text', required: true }
+      { key: 'memberId', label: 'Karkun ID', type: 'text', required: true }
     ]
   }
 ];
@@ -151,7 +151,7 @@ async function seedWorkflows() {
   let created = 0;
   const defaults = [
     { formType: 'rukn', stages: RUKN_STAGES },
-    { formType: 'karkoon', stages: KARKOON_STAGES }
+    { formType: 'karkoon', stages: KARKUN_STAGES }
   ];
   for (const workflow of defaults) {
     const existing = await Workflow.findOne({ formType: workflow.formType });
@@ -174,5 +174,5 @@ module.exports = {
   seedMembersDefaults,
   DEFAULT_ROLES,
   RUKN_STAGES,
-  KARKOON_STAGES
+  KARKUN_STAGES
 };

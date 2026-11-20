@@ -709,7 +709,7 @@ export function Badge({ tone = 'slate', className = '', children }) {
 }
 
 export function TypeBadge({ type }) {
-  return <Badge tone={TYPE_TONE[type] || 'slate'}>{type === 'karkoon' ? 'Karkoon' : type === 'rukn' ? 'Rukn' : type || '—'}</Badge>
+  return <Badge tone={TYPE_TONE[type] || 'slate'}>{type === 'karkoon' ? 'Karkun' : type === 'rukn' ? 'Rukn' : type || '—'}</Badge>
 }
 
 /* ── Tables and paging ──────────────────────────────────────────────────── */

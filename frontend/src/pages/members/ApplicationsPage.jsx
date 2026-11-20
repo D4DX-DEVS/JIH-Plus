@@ -91,7 +91,7 @@ export default function ApplicationsPage() {
     <div>
       <PageHeader
         title="Applications"
-        subtitle="Every Rukn and Karkoon application in your scope."
+        subtitle="Every Rukn and Karkun application in your scope."
         hideTitleOnMobile
       />
 
@@ -110,7 +110,7 @@ export default function ApplicationsPage() {
         <Select className="col-span-2 sm:w-44" value={formType} onChange={e => setParam('formType', e.target.value)} aria-label="Application type">
           <option value="">All types</option>
           <option value="rukn">Rukn</option>
-          <option value="karkoon">Karkoon</option>
+          <option value="karkoon">Karkun</option>
         </Select>
       </FilterBar>
 

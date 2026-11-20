@@ -301,7 +301,7 @@ export default function FormBuilderPage() {
               disabled={!isNew}
             >
               <option value="rukn">Rukn</option>
-              <option value="karkoon">Karkoon</option>
+              <option value="karkoon">Karkun</option>
             </Select>
           </Field>
 

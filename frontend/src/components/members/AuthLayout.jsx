@@ -14,7 +14,7 @@ const HIGHLIGHTS = [
  * login). Phones: royal hero on top, the form on a white sheet that overlaps
  * it. Desktop: brand panel on the left, form card on the right.
  */
-export default function AuthLayout({ title = 'Members Portal', subtitle = 'Rukn & Karkoon application portal', showPortalsLink = true, footer, children }) {
+export default function AuthLayout({ title = 'Members Portal', subtitle = 'Rukn & Karkun application portal', showPortalsLink = true, footer, children }) {
   return (
     <div className="mbr flex min-h-dvh flex-col bg-mist lg:flex-row">
       <section className="mbr-hero px-5 pb-14 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:px-8 lg:flex lg:w-[46%] lg:flex-col lg:justify-between lg:px-14 lg:pb-12 lg:pt-10">

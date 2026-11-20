@@ -31,7 +31,7 @@ import MekhalaNazimManagement from './pages/ihthisabi/MekhalaNazimManagement';
 import MekhalaNazimReports from './pages/ihthisabi/MekhalaNazimReports';
 import IhthisabiHelpDeskPage from './pages/ihthisabi/HelpDeskPage';
 
-// Members Application (Rukn / Karkoon) — the third section, with its own DB,
+// Members Application (Rukn / Karkun) — the third section, with its own DB,
 // admin, auth context and token key.
 import { AuthProvider as MembersAuthProvider } from './contexts/members/AuthContext';
 import MembersLayout from './components/members/Layout';

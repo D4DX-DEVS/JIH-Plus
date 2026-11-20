@@ -16,7 +16,7 @@ export const STATUS_LABEL = {
   inactive: 'Inactive'
 }
 
-/** Rukn = royal, Karkoon = gold, everywhere in the portal. */
+/** Rukn = royal, Karkun = gold, everywhere in the portal. */
 export const TYPE_TONE = { rukn: 'royal', karkoon: 'gold' }
 
 /** "3 days ago" style label for recent timestamps; falls back to a date. */

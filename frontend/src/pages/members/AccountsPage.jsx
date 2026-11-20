@@ -338,7 +338,7 @@ export default function AccountsPage() {
               checked={Boolean(editing.isRukn)}
               onChange={checked => setEditing({ ...editing, isRukn: checked })}
               label="This person is a Rukn"
-              description="In the Karkoon workflow a Unit Nazim/Nazimath who is a Rukn may fill the area admin's comments and skip that stage."
+              description="In the Karkun workflow a Unit Nazim/Nazimath who is a Rukn may fill the area admin's comments and skip that stage."
             />
 
             {editing._id && (

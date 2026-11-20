@@ -408,7 +408,7 @@ router.put('/:id/stage', async (req, res) => {
     await application.save();
 
     // Notifications are best-effort and never block the transition.
-    const label = application.formType === 'rukn' ? 'Rukn' : 'Karkoon';
+    const label = application.formType === 'rukn' ? 'Rukn' : 'Karkun';
     if (nextStageKey && nextStageKey !== stage.key) {
       const nextStage = workflow.stageByKey(nextStageKey);
       await notifyRole({
