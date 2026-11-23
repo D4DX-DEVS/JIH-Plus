@@ -26,6 +26,7 @@ const unitRoutes = require('./routes/unitRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const targetRoutes = require('./routes/targetRoutes');
+const formMasterDataRoutes = require('./routes/formMasterDataRoutes');
 
 // Import IHTHISABI routes
 const ihthisabiAuthRoutes = require('./routes/ihthisabi/auth');
@@ -49,6 +50,7 @@ const membersWorkflowRoutes = require('./routes/members/workflows');
 const membersAccessLinkRoutes = require('./routes/members/accessLinks');
 const membersApplicationRoutes = require('./routes/members/applications');
 const membersNotificationRoutes = require('./routes/members/notifications');
+const membersFormMasterDataRoutes = require('./routes/members/formMasterData');
 
 // MongoDB Connection - JIH Database
 mongoose.connect(process.env.MONGODB_URI, {
@@ -141,6 +143,7 @@ jihRouter.use('/area', areaRoutes);
 jihRouter.use('/district', districtRoutes);
 jihRouter.use('/unit', unitRoutes);
 jihRouter.use('/notifications', notificationRoutes);
+jihRouter.use('/form-master-data', formMasterDataRoutes);
 jihRouter.use('/', reportRoutes);
 jihRouter.use('/targets', targetRoutes);
 
@@ -174,6 +177,7 @@ app.use('/api/members/workflows', membersWorkflowRoutes);
 app.use('/api/members/access-links', membersAccessLinkRoutes);
 app.use('/api/members/applications', membersApplicationRoutes);
 app.use('/api/members/notifications', membersNotificationRoutes);
+app.use('/api/members/form-master-data', membersFormMasterDataRoutes);
 
 // PORT fix for DigitalOcean
 const PORT = process.env.PORT || 3000;

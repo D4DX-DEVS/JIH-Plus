@@ -6,6 +6,7 @@ import OptionsEditor from './OptionsEditor';
 import RowColumnEditor from './RowColumnEditor';
 import ValidationEditor from './ValidationEditor';
 import ConditionalLogicEditor from './ConditionalLogicEditor';
+import MasterDataEditor from './MasterDataEditor';
 import { FIELD_WIDTHS, fieldWidth } from '../../utils/fieldWidth';
 import { isLayoutField } from '../../utils/formFieldTypes';
 
@@ -17,6 +18,7 @@ const LABEL_PLACEHOLDER = {
   note: 'Note text...',
   html: 'HTML content...',
   accept: 'I agree to the terms and conditions',
+  masterdata: 'Field label (e.g. District)',
 };
 
 export default function FieldEditor({
@@ -247,6 +249,9 @@ export default function FieldEditor({
                     onChange={opts => update('options', opts)}
                   />
                 </div>
+              )}
+              {field.type === 'masterdata' && (
+                <MasterDataEditor field={field} allFields={allFields} onChange={onChange} />
               )}
               {field.type === 'row' && (
                 <RowColumnEditor field={field} onChange={onChange} />

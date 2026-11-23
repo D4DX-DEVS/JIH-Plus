@@ -99,6 +99,9 @@ const validatePagesPayload = (body, { publishing }) => {
           const options = (field.options || []).filter((o) => String(o).trim());
           if (options.length === 0) return `Field "${field.label || field.id}" needs at least one option`;
         }
+        if (field.type === 'masterdata' && !field.masterSource) {
+          return `Field "${field.label || field.id}" needs a master data list`;
+        }
       }
     }
   }

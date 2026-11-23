@@ -22,6 +22,7 @@ const FIELD_TYPES = [
     { value: 'multiselect', label: 'Multi Select' },
     { value: 'yesno', label: 'Yes / No' },
     { value: 'accept', label: 'Accept (Terms)' },
+    { value: 'masterdata', label: 'Master Data Dropdown' },
   ]},
   { group: 'Media & Files', types: [
     { value: 'file', label: 'File Upload' },

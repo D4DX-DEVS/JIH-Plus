@@ -13,7 +13,7 @@ const mongoose = require('mongoose');
 const FIELD_TYPES = [
   'text', 'email', 'phone', 'number', 'date', 'datetime', 'time',
   'textarea', 'password', 'url', 'file',
-  'select', 'dropdown', 'radio', 'checkbox', 'multiselect', 'yesno', 'accept',
+  'select', 'dropdown', 'radio', 'checkbox', 'multiselect', 'yesno', 'accept', 'masterdata',
   'title', 'subtitle', 'note', 'html', 'group', 'page', 'row', 'column'
 ];
 
@@ -33,6 +33,11 @@ const fieldSchema = new mongoose.Schema({
   // Layout width on the 12-column form grid; narrower fields share a line.
   width: { type: String, enum: FIELD_WIDTHS, default: 'full' },
   options: [{ type: String, maxlength: 200 }],
+  // 'masterdata' dropdowns list a portal master-data level (district, area, ...)
+  // instead of `options`; masterParentField narrows the list to the value of
+  // another masterdata field (e.g. areas of the chosen district).
+  masterSource: { type: String, default: '' },
+  masterParentField: { type: Number },
   validation: {
     pattern: { type: String, default: '' },
     minLength: { type: Number },
