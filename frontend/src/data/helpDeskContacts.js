@@ -1,36 +1,28 @@
 export const PUBLIC_HELP_DESK_CONTACTS = [
   {
-    id: 'common-queries',
-    topic: 'Common Queries',
-    person: 'Musthafa Hussain',
-    designation: 'Assistant Secretary JIH Kerala',
-    description: 'General support for JIH Plus Portal usage and coordination.',
-    phones: [
-      {
-        label: 'Primary Number',
-        value: '+91 7012545656'
-      }
-    ]
-  },
-  {
     id: 'member-applications',
     topic: 'Member Applications',
-    person: 'Ibrahim Mulla',
-    designation: 'Assistant Secretary JIH Kerala',
     description: 'Support for Rukn and Karkun application access and processing.',
+    // Two people, one per application type, so each number carries its own name.
     phones: [
       {
-        label: 'Primary Number',
+        label: 'Karkun',
+        person: 'Ibrahim Mulla',
         value: '+91 9447322439'
+      },
+      {
+        label: 'Rukn',
+        person: 'Najathullah K',
+        value: '+91 9946815337'
       }
     ]
   },
   {
     id: 'ihthisabi-report',
-    topic: 'Ihthisabi Report',
+    topic: 'JIH Portal and Ihthisabi',
     person: 'Musthafa Hussain',
     designation: 'Assistant Secretary JIH Kerala',
-    description: 'Support for Ihthisabi report access and reporting questions.',
+    description: 'Support for JIH Portal and Ihthisabi report access and reporting questions.',
     phones: [
       {
         label: 'Primary Number',
@@ -41,13 +33,24 @@ export const PUBLIC_HELP_DESK_CONTACTS = [
         value: '+91 9496361949'
       }
     ]
+  },
+  {
+    id: 'womens-portal',
+    topic: "Women's Portal",
+    person: 'Rajeena Beegam',
+    description: "Support for Women's portal access.",
+    phones: [
+      {
+        label: 'Primary Number',
+        value: '+91 8281437581'
+      }
+    ]
   }
 ]
 
-export const IHTHISABI_HELP_DESK_CONTACTS = [
-  PUBLIC_HELP_DESK_CONTACTS[0],
-  PUBLIC_HELP_DESK_CONTACTS[2]
-]
+export const IHTHISABI_HELP_DESK_CONTACTS = PUBLIC_HELP_DESK_CONTACTS.filter(
+  (contact) => contact.id === 'ihthisabi-report'
+)
 
 export const normalizePhoneNumber = (phone) => String(phone || '').replace(/[^\d+]/g, '')
 

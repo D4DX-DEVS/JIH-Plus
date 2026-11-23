@@ -1,8 +1,9 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Send, Save } from 'lucide-react';
 import FieldRenderer from './FieldRenderer';
 import { fieldWidthClass, fieldWidth } from '../../utils/fieldWidth';
 import { isLayoutField } from '../../utils/formFieldTypes';
+import { masterDependentIds, masterScopeFor } from '../../utils/masterData';
 
 // Simple value fields read better with the label and input on the same
 // row; everything else (textarea, html, row/column, choice fields, etc.)
@@ -48,6 +49,8 @@ export default function DynamicFormRenderer({
   const pageStartRef = useRef(null);
   const pendingErrorFocus = useRef(null);
   const errorIdPrefix = useId().replace(/:/g, '');
+  const allFields = useMemo(() => (report.pages || []).flatMap(p => p.fields || []), [report.pages]);
+  const fieldsById = useMemo(() => new Map(allFields.map(f => [f.id, f])), [allFields]);
 
   useEffect(() => {
     onPageChange && onPageChange(currentPage, pages[currentPage]);
@@ -101,7 +104,16 @@ export default function DynamicFormRenderer({
   }, [currentPage, errorIdPrefix, errors]);
 
   const handleChange = (fieldId, value) => {
-    setFormData(prev => ({ ...prev, [`field_${fieldId}`]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [`field_${fieldId}`]: value };
+      // A new district (say) makes the area and unit picked under the old one wrong.
+      if (prev[`field_${fieldId}`] !== value) {
+        masterDependentIds(fieldId, allFields).forEach(id => {
+          if (next[`field_${id}`]) next[`field_${id}`] = '';
+        });
+      }
+      return next;
+    });
     setErrors(prev => { const e = { ...prev }; delete e[`field_${fieldId}`]; return e; });
   };
 
@@ -384,6 +396,7 @@ export default function DynamicFormRenderer({
                 value={formData[errorKey]}
                 onChange={val => handleChange(field.id, val)}
                 disabled={disabled}
+                masterScope={field.type === 'masterdata' ? masterScopeFor(field, fieldsById, formData) : undefined}
               />
               {errors[errorKey] && (
                 <p id={`${errorIdPrefix}-${errorKey}-error`} className="text-xs text-red-600 mt-1">{errors[errorKey]}</p>

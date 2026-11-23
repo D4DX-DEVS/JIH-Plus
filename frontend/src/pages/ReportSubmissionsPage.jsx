@@ -285,7 +285,7 @@ const ReportSubmissionsPage = ({ onLogout }) => {
     }
 
     // ── Select / Radio / Dropdown ──
-    if (['select', 'dropdown', 'radio'].includes(field.type)) {
+    if (['select', 'dropdown', 'radio', 'masterdata'].includes(field.type)) {
       return (
         <span className="px-2 py-0.5 bg-indigo-50 text-indigo-800 rounded text-sm font-medium border border-indigo-200 break-words">
           {String(rawValue)}

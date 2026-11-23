@@ -2,6 +2,7 @@ import NumericInput from "../NumericInput";
 import React from 'react';
 import FileUploadField from './FileUploadField';
 import RowColumnField from './RowColumnField';
+import MasterDataSelect from './MasterDataSelect';
 import { ACCEPTED_VALUE } from '../../utils/formFieldTypes';
 
 // Input width tuned to the kind of value the field type actually holds,
@@ -24,6 +25,8 @@ export default function FieldRenderer({
   labelledBy,
   ariaInvalid = false,
   ariaDescribedBy,
+  // masterdata fields only: parent values chosen in the form (DynamicFormRenderer).
+  masterScope,
 }) {
   const inputBase =
     'border border-gray-300 rounded-lg px-3 py-2 text-base sm:text-sm outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 disabled:bg-gray-50 disabled:text-gray-500';
@@ -121,6 +124,19 @@ export default function FieldRenderer({
             <option key={i} value={opt}>{opt}</option>
           ))}
         </select>
+      );
+
+    case 'masterdata':
+      return (
+        <MasterDataSelect
+          field={field}
+          value={value}
+          onChange={handleChange}
+          disabled={disabled}
+          controlA11y={controlA11y}
+          className={`${inputBase} w-full`}
+          scope={masterScope}
+        />
       );
 
     case 'radio':

@@ -315,7 +315,7 @@ router.get('/admin/reports/for-consolidation', adminAuth, async (req, res) => {
 
 // ─── Consolidation (answer aggregation) helpers ──────────────────────────────
 
-const CHOICE_TYPES = ['radio', 'select', 'dropdown', 'yesno'];
+const CHOICE_TYPES = ['radio', 'select', 'dropdown', 'yesno', 'masterdata'];
 const MULTI_TYPES = ['checkbox', 'multiselect'];
 // Layout-only field types that carry no answer data
 const LAYOUT_TYPES = ['title', 'subtitle', 'note', 'html', 'page', 'group', 'column'];

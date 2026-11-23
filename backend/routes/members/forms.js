@@ -76,6 +76,9 @@ function validateTemplatePayload(body, { publishing, roleKeys }) {
           const options = (field.options || []).filter(o => String(o).trim());
           if (!options.length) return `"${field.label || `The ${field.type} ${where}`}" needs at least one option`;
         }
+        if (field.type === 'masterdata' && !field.masterSource) {
+          return `"${field.label || `The dropdown ${where}`}" needs a master data list`;
+        }
       }
     }
   }

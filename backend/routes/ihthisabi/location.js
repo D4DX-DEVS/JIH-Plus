@@ -4,6 +4,7 @@ const router = express.Router();
 const User = require('../../models/ihthisabi/User');
 const UnitAdmin = require('../../models/ihthisabi/UnitAdmin');
 const LocationMaster = require('../../models/ihthisabi/LocationMaster');
+const Mekhala = require('../../models/ihthisabi/Mekhala');
 
 // Fallback district data
 const fallbackDistricts = [
@@ -302,6 +303,86 @@ router.get('/hierarchy', async (req, res) => {
       message: 'Failed to fetch location hierarchy',
       error: error.message
     });
+  }
+});
+
+// ── Master-data lists for "masterdata" form dropdowns ───────────────────────
+// Same sources as the admin Master Data page: locations stored on rukn members
+// merged with the ones added in LocationMaster, plus mekhalas. Each entry
+// carries its parent names so a dropdown can be narrowed by another field.
+
+const FORM_MASTER_LOADERS = {
+  mekhala: async () => {
+    const rows = await Mekhala.find({ isActive: true }).select('name').sort({ name: 1 }).lean();
+    return rows.map(m => ({ name: m.name }));
+  },
+  district: async () => {
+    const [userNames, masterRows] = await Promise.all([
+      User.distinct('district', { role: 'rukn', district: { $nin: [null, ''] } }),
+      LocationMaster.find({ type: 'district', isActive: true }).select('name').lean()
+    ]);
+    const names = new Set(userNames);
+    masterRows.forEach(r => names.add(r.name));
+    return [...names].map(name => ({ name }));
+  },
+  area: async () => {
+    const [userRows, masterRows] = await Promise.all([
+      User.aggregate([
+        { $match: { role: 'rukn', district: { $nin: [null, ''] }, area: { $nin: [null, ''] } } },
+        { $group: { _id: { district: '$district', area: '$area' } } }
+      ]),
+      LocationMaster.find({ type: 'area', isActive: true }).select('name district').lean()
+    ]);
+    const rows = new Map();
+    userRows.forEach(r => rows.set(`${r._id.district}||${r._id.area}`, { name: r._id.area, district: r._id.district }));
+    masterRows.forEach(r => rows.set(`${r.district}||${r.name}`, { name: r.name, district: r.district }));
+    return [...rows.values()];
+  },
+  unit: async () => {
+    const [userRows, masterRows] = await Promise.all([
+      User.aggregate([
+        { $match: { role: 'rukn', district: { $nin: [null, ''] }, area: { $nin: [null, ''] }, unit: { $nin: [null, ''] } } },
+        { $group: { _id: { district: '$district', area: '$area', unit: '$unit' } } }
+      ]),
+      LocationMaster.find({ type: 'unit', isActive: true }).select('name district area').lean()
+    ]);
+    const rows = new Map();
+    userRows.forEach(r => rows.set(
+      `${r._id.district}||${r._id.area}||${r._id.unit}`,
+      { name: r._id.unit, district: r._id.district, area: r._id.area }
+    ));
+    masterRows.forEach(r => rows.set(`${r.district}||${r.area}||${r.name}`, { name: r.name, district: r.district, area: r.area }));
+    return [...rows.values()];
+  }
+};
+
+// @desc    Master-data entries for a form dropdown, with parent names
+// @route   GET /api/location/form-master-data/:source  (mekhala | district | area | unit)
+// @access  Public (names only, like the other location lists here)
+router.get('/form-master-data/:source', async (req, res) => {
+  const load = FORM_MASTER_LOADERS[req.params.source];
+  if (!load) {
+    return res.status(400).json({ success: false, message: `Unknown master data list "${req.params.source}"` });
+  }
+  try {
+    const [items, mekhalas] = await Promise.all([
+      load(),
+      Mekhala.find({ isActive: true }).select('name districts').lean()
+    ]);
+    // A district sits in at most one mekhala; give every entry below a mekhala its name.
+    const mekhalaOf = new Map();
+    mekhalas.forEach(m => (m.districts || []).forEach(d => mekhalaOf.set(d, m.name)));
+    const data = items
+      .map(item => (item.district && mekhalaOf.has(item.district)
+        ? { ...item, mekhala: mekhalaOf.get(item.district) }
+        : req.params.source === 'district' && mekhalaOf.has(item.name)
+          ? { ...item, mekhala: mekhalaOf.get(item.name) }
+          : item))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error loading form master data:', error);
+    res.status(500).json({ success: false, message: 'Failed to load master data' });
   }
 });
 

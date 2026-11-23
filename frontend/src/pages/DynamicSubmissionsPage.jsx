@@ -56,7 +56,6 @@ const SCOPE_CONFIG = {
   },
   district: {
     submissionsEndpoint: '/api/user/report-submissions',
-    reportsEndpoint: '/api/user/reports',
     tokenKey: 'userToken',
     basePath: '/district/dynamic-submissions',
     showDistrictFilter: false,
@@ -66,7 +65,6 @@ const SCOPE_CONFIG = {
   },
   area: {
     submissionsEndpoint: '/api/user/report-submissions',
-    reportsEndpoint: '/api/user/reports',
     tokenKey: 'userToken',
     basePath: '/area/dynamic-submissions',
     showDistrictFilter: false,
@@ -83,7 +81,7 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
   const config = SCOPE_CONFIG[scope] || SCOPE_CONFIG.admin;
 
   const [submissions, setSubmissions] = useState([]);
-  const [reportList, setReportList] = useState([]);
+  const [adminReportList, setAdminReportList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -171,16 +169,29 @@ const DynamicSubmissionsPage = ({ scope = 'admin', onLogout }) => {
     }
   };
 
+  // Only the state admin fetches the report list. /api/user/reports lists just the
+  // caller's own-level reports, so district/area admins got an empty dropdown;
+  // they build it from the submissions in their scope instead (see reportList).
   const fetchReportList = async () => {
+    if (scope !== 'admin') return;
     try {
       const token = localStorage.getItem(config.tokenKey);
-      const url = scope === 'admin'
-        ? `${import.meta.env.VITE_API_URL}${config.reportsEndpoint}?limit=200&type=${validType}`
-        : `${import.meta.env.VITE_API_URL}${config.reportsEndpoint}?type=${validType}`;
+      const url = `${import.meta.env.VITE_API_URL}${config.reportsEndpoint}?limit=200&type=${validType}`;
       const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.data.success) setReportList(res.data.data || []);
+      if (res.data.success) setAdminReportList(res.data.data || []);
     } catch (_) {}
   };
+
+  // Unique reports behind the loaded submissions, newest submission first.
+  const reportList = useMemo(() => {
+    if (scope === 'admin') return adminReportList;
+    const byId = new Map();
+    submissions.forEach(s => {
+      const r = s.reportId;
+      if (r?._id && !byId.has(r._id)) byId.set(r._id, r);
+    });
+    return [...byId.values()];
+  }, [scope, adminReportList, submissions]);
 
   // Derive unique dropdown values from loaded submissions
   const allDistricts = useMemo(() => {

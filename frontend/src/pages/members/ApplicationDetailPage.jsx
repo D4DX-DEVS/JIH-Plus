@@ -25,7 +25,7 @@ const DECISION_ACTIONS = [
 // uploads and layout fields keep the shared renderer.
 const TEXT_VIEW_TYPES = new Set([
   'text', 'number', 'phone', 'email', 'url', 'textarea', 'select', 'dropdown',
-  'radio', 'yesno', 'date', 'time', 'datetime', 'checkbox', 'multiselect', 'accept'
+  'radio', 'yesno', 'date', 'time', 'datetime', 'checkbox', 'multiselect', 'accept', 'masterdata'
 ])
 
 const HISTORY_LOOK = {

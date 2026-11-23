@@ -201,6 +201,17 @@ const applicantAuth = async (req, res, next) => {
   }
 };
 
+/**
+ * Lets either a members account or an applicant through, for data both sides
+ * need (form dropdown lists). The token's section only picks the check; the
+ * chosen middleware still verifies the token in full.
+ */
+const protectOrApplicant = (req, res, next) => {
+  const token = readToken(req);
+  const section = token ? jwt.decode(token)?.section : null;
+  return section === APPLICANT_SECTION ? applicantAuth(req, res, next) : protect(req, res, next);
+};
+
 /** Guard for routes that must fail fast when the members DB is unreachable. */
 const requireMembersDb = (req, res, next) => {
   if (!connectionReady(res)) return;
@@ -213,6 +224,7 @@ module.exports = {
   requireSuperAdmin,
   requireAccessLinkCreator,
   applicantAuth,
+  protectOrApplicant,
   requireMembersDb,
   signAdminToken,
   signApplicantToken,
