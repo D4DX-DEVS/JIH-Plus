@@ -13,6 +13,7 @@ export const STATUS_LABEL = {
   used: 'Used',
   blocked: 'Blocked',
   expired: 'Expired',
+  reopened: 'Reopened',
   inactive: 'Inactive'
 }
 

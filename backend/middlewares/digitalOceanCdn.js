@@ -31,11 +31,13 @@ const s3 = new AWS.S3({
     region: 'blr1'
 });
 
-const uploadToDigitalOcean = async (fileBuffer, originalname, mimetype) => {
+// `extraTypes` ({ mimetype: '.ext' }) lets one caller accept more than the
+// default image types without widening them for every other upload.
+const uploadToDigitalOcean = async (fileBuffer, originalname, mimetype, extraTypes = {}) => {
     try {
         const timestamp = Date.now();
         const randomString = Math.random().toString(36).substring(7);
-        const extension = digitalOceanConfig.allowedTypes[mimetype];
+        const extension = digitalOceanConfig.allowedTypes[mimetype] || extraTypes[mimetype];
         
         if (!extension) {
             console.error('Invalid file type:', mimetype);

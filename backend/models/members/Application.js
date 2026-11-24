@@ -12,7 +12,20 @@ const membersConnection = require('../../config/membersConnection');
 const { FORM_TYPES } = require('./FormTemplate');
 
 const STATUSES = ['submitted', 'in_review', 'approved', 'rejected', 'hold'];
-const ACTIONS = ['submitted', 'forwarded', 'returned', 'marked', 'approved', 'rejected', 'hold', 'finalized', 'edited'];
+// 'returned' is the old send-back, kept so earlier history still validates; new
+// send-backs are 'revision_requested' → 'revised'.
+const ACTIONS = [
+  'submitted', 'forwarded', 'returned', 'marked', 'approved', 'rejected', 'hold', 'finalized', 'edited',
+  'reopened', 'reopen_withdrawn', 'resubmitted', 'revision_requested', 'revised'
+];
+
+// A file an admin attached to their comment (image or PDF on the CDN).
+const attachmentSchema = new mongoose.Schema({
+  url: { type: String, required: true },
+  name: { type: String, default: '' },
+  type: { type: String, default: '' },
+  size: { type: Number, default: 0 }
+}, { _id: false });
 
 const stageHistorySchema = new mongoose.Schema({
   stageKey: { type: String, required: true },
@@ -22,6 +35,7 @@ const stageHistorySchema = new mongoose.Schema({
   actorName: { type: String, default: '' },
   action: { type: String, enum: ACTIONS, required: true },
   comment: { type: String, default: '' },
+  attachments: [attachmentSchema],
   // Values collected by the stage's captureFields (Rukn ID, attendance, dates...)
   data: { type: mongoose.Schema.Types.Mixed, default: {} },
   toStageKey: { type: String, default: '' },
@@ -37,7 +51,38 @@ const commentSchema = new mongoose.Schema({
   actorName: { type: String, default: '' },
   stageKey: { type: String, default: '' },
   text: { type: String, default: '' },
-  at: { type: Date, default: Date.now }
+  attachments: [attachmentSchema],
+  at: { type: Date, default: Date.now },
+  // Set when a later admin asked for this comment again and it was rewritten;
+  // the earlier wording stays in stageHistory.
+  revisedAt: { type: Date, default: null }
+}, { _id: false });
+
+// The first-stage admin sent the form back to the applicant to correct. While
+// `open`, the applicant's link works again and the stage cannot be acted on.
+const correctionSchema = new mongoose.Schema({
+  open: { type: Boolean, default: false },
+  reason: { type: String, default: '' },
+  stageKey: { type: String, default: '' },
+  requestedById: { type: mongoose.Schema.Types.ObjectId, ref: 'MemberAdmin', default: null },
+  requestedByName: { type: String, default: '' },
+  requestedByRoleKey: { type: String, default: '' },
+  requestedAt: { type: Date, default: null },
+  resolvedAt: { type: Date, default: null }
+}, { _id: false });
+
+// A later admin asked an earlier one to rewrite their comment. The application
+// sits at `toStageKey` until that admin resubmits, then returns to `fromStageKey`.
+const revisionRequestSchema = new mongoose.Schema({
+  open: { type: Boolean, default: false },
+  reason: { type: String, default: '' },
+  fromStageKey: { type: String, default: '' },
+  fromRoleKey: { type: String, default: '' },
+  fromName: { type: String, default: '' },
+  fromActorId: { type: mongoose.Schema.Types.ObjectId, ref: 'MemberAdmin', default: null },
+  toStageKey: { type: String, default: '' },
+  at: { type: Date, default: null },
+  resolvedAt: { type: Date, default: null }
 }, { _id: false });
 
 const applicationSchema = new mongoose.Schema({
@@ -77,9 +122,18 @@ const applicationSchema = new mongoose.Schema({
   applicantMobile: { type: String, default: '', trim: true },
   photo: { type: String, default: '' },
 
+  // Where the form was filled from (utils/members/origin.js); empty on
+  // applications submitted before the question existed.
+  origin: {
+    region: { type: String, default: '' },
+    country: { type: String, default: '' }
+  },
+
   currentStageKey: { type: String, default: '', index: true },
   stageHistory: [stageHistorySchema],
   comments: [commentSchema],
+  correction: { type: correctionSchema, default: () => ({}) },
+  revisionRequest: { type: revisionRequestSchema, default: () => ({}) },
 
   status: {
     type: String,
@@ -110,6 +164,7 @@ applicationSchema.index({ 'scope.area': 1, formType: 1 });
 applicationSchema.index({ 'scope.district': 1, formType: 1 });
 applicationSchema.index({ 'scope.mekhala': 1, formType: 1 });
 applicationSchema.index({ submittedAt: -1 });
+applicationSchema.index({ 'origin.region': 1, 'origin.country': 1 });
 // A member ID must be unique per form type once assigned; blanks don't clash.
 // Partial indexes can't use $ne, so `$gt: ''` is what excludes the empty string.
 applicationSchema.index(

@@ -39,6 +39,9 @@ export default function DynamicFormRenderer({
   submitting = false,
   allowSubmitOnEveryPage = false,
   onCancelEdit,
+  // When set, a page carrying an accept (declaration) tick box shows this on
+  // its Next button instead of "Next". Only the members form passes it.
+  acceptNextLabel,
 }) {
   const pages = report.pages || [];
   const clampPage = (p) => Math.min(Math.max(p, 0), Math.max(pages.length - 1, 0));
@@ -247,6 +250,9 @@ export default function DynamicFormRenderer({
 
   const page = pages[currentPage];
   const isLastPage = currentPage === pages.length - 1;
+  const nextLabel = acceptNextLabel && !isLastPage && (page.fields || []).some(f => f.type === 'accept' && isFieldVisible(f))
+    ? acceptNextLabel
+    : '';
 
   return (
     <div ref={rendererRef} data-fr="root" className="px-2 py-3 sm:px-6 sm:py-4">
@@ -433,7 +439,7 @@ export default function DynamicFormRenderer({
             </button>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-2 min-w-0">
+        <div className={`flex items-center gap-2 min-w-0 ${nextLabel ? 'w-full sm:w-auto' : 'flex-wrap'}`}>
           {currentPage > 0 && (
             <button
               type="button"
@@ -484,9 +490,9 @@ export default function DynamicFormRenderer({
               onClick={goNext}
               data-fr="next"
               disabled={submitting}
-              className="flex items-center gap-1 px-3 sm:px-4 py-2 min-h-[44px] sm:min-h-0 bg-blue-600 text-white rounded-lg text-xs sm:text-sm hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+              className={`flex items-center gap-1 px-3 sm:px-4 py-2 min-h-[44px] sm:min-h-0 bg-blue-600 text-white rounded-lg text-xs sm:text-sm hover:bg-blue-700 disabled:opacity-50 ${nextLabel ? 'flex-1 justify-center text-center sm:flex-none' : 'whitespace-nowrap'}`}
             >
-              Next <ChevronRight size={16} />
+              {nextLabel || 'Next'} <ChevronRight size={16} className="shrink-0" />
             </button>
           )}
         </div>
