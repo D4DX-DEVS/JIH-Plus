@@ -678,6 +678,7 @@ const STATUS_STYLES = {
   used: ['bg-royal-50 text-royal-700 ring-royal-600/15', 'bg-royal-500'],
   blocked: ['bg-rose-50 text-rose-700 ring-rose-600/15', 'bg-rose-500'],
   expired: ['bg-slate-100 text-slate-600 ring-slate-500/15', 'bg-slate-400'],
+  reopened: ['bg-amber-50 text-amber-800 ring-amber-600/20', 'bg-amber-500'],
   inactive: ['bg-slate-100 text-slate-600 ring-slate-500/15', 'bg-slate-400']
 }
 

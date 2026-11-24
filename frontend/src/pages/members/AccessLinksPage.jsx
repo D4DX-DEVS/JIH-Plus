@@ -27,6 +27,7 @@ const STATUS_CHIPS = [
   { value: '', label: 'All' },
   { value: 'active', label: 'Active', dot: 'bg-emerald-500' },
   { value: 'used', label: 'Used', dot: 'bg-royal-500' },
+  { value: 'reopened', label: 'Reopened', dot: 'bg-amber-500' },
   { value: 'blocked', label: 'Blocked', dot: 'bg-rose-500' },
   { value: 'expired', label: 'Expired', dot: 'bg-slate-400' }
 ]

@@ -26,6 +26,8 @@ const {
   rejectedKeys
 } = require('../../utils/members/formAccess');
 const { notifyRole, notifyApplicantDecision } = require('../../utils/members/notify');
+const { ORIGIN_REGIONS, GCC_COUNTRIES } = require('../../utils/members/origin');
+const { uploadToDigitalOcean } = require('../../middlewares/digitalOceanCdn');
 
 router.use(protect);
 
@@ -33,6 +35,123 @@ const DECISIONS = ['approved', 'rejected', 'hold'];
 const roleKeyOf = (user) => user?.role?.key || '';
 const actorLabel = (user) => user?.name || user?.username || 'Unknown';
 const actorId = (user) => (user?.isSuperAdmin ? null : user?._id);
+const labelOf = (application) => (application.formType === 'rukn' ? 'Rukn' : 'Karkun');
+
+class RequestError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+  }
+}
+
+// ─── Comment attachments ─────────────────────────────────────────────────────
+
+const DATA_URL = /^data:([a-zA-Z0-9/+.-]+);base64,(.+)$/;
+const ATTACHMENT_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+// The CDN uploader only knows image types; PDFs are allowed for comments alone.
+const EXTRA_UPLOAD_TYPES = { 'application/pdf': '.pdf' };
+const MAX_ATTACHMENTS = 5;
+const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Turn the client's attachment list into stored attachments.
+ * Each item is either `{ name, data }` (a new file as a data URL, uploaded here)
+ * or `{ url }` naming one of `keep` — a file already on the comment being revised.
+ * Any other URL is refused, so a client can't attach arbitrary links.
+ */
+function checkAttachments(incoming, keep = []) {
+  const list = Array.isArray(incoming) ? incoming : [];
+  if (list.length > MAX_ATTACHMENTS) {
+    throw new RequestError(400, `At most ${MAX_ATTACHMENTS} files can be attached to a comment`);
+  }
+  const known = new Map(keep.map(a => [a.url, a]));
+  return list.map(item => {
+    if (item?.url && known.has(item.url)) return { existing: known.get(item.url) };
+    const name = String(item?.name || 'attachment').slice(0, 200);
+    const match = typeof item?.data === 'string' ? item.data.match(DATA_URL) : null;
+    if (!match) throw new RequestError(400, `"${name}" could not be read. Attach it again.`);
+    const [, type, base64] = match;
+    if (!ATTACHMENT_TYPES.includes(type)) {
+      throw new RequestError(400, `"${name}" is not a supported file. Attach an image (JPG, PNG, GIF, WEBP) or a PDF.`);
+    }
+    const buffer = Buffer.from(base64, 'base64');
+    if (buffer.length > MAX_ATTACHMENT_BYTES) throw new RequestError(400, `"${name}" is larger than 5 MB`);
+    return { name, type, buffer };
+  });
+}
+
+/** Upload the new files from `checkAttachments`; call only once every other check has passed. */
+async function uploadAttachments(checked) {
+  const out = [];
+  for (const item of checked) {
+    if (item.existing) {
+      out.push(item.existing);
+      continue;
+    }
+    let url;
+    try {
+      url = await uploadToDigitalOcean(item.buffer, 'comment', item.type, EXTRA_UPLOAD_TYPES);
+    } catch (error) {
+      throw new RequestError(502, `"${item.name}" could not be uploaded. Try again.`);
+    }
+    out.push({ url, name: item.name, type: item.type, size: item.buffer.length });
+  }
+  return out;
+}
+
+const plainAttachments = (list) => (list || []).map(a => ({ url: a.url, name: a.name, type: a.type, size: a.size }));
+
+// ─── Who sees whose comments ─────────────────────────────────────────────────
+
+/**
+ * A comment (and its files) is visible to its author's role and every role above
+ * it: an area admin reads the unit admin's and unit nazim's comments, a district
+ * admin reads those and the area admin's, and so on up to the state. Role levels
+ * come from the Role collection (0 = highest).
+ *
+ * Exceptions: an author always sees their own comment, the admin asked to revise
+ * sees the reason they were given, and a reopen reason is shown to everyone.
+ */
+async function commentVisibility(user, workflow) {
+  const roles = await Role.find().select('key level').lean();
+  const levelOf = Object.fromEntries(roles.map(r => [r.key, r.level]));
+  const myRole = roleKeyOf(user);
+  const myLevel = user.isSuperAdmin ? 0 : (levelOf[myRole] ?? user.role?.level ?? Infinity);
+  const isMe = (id) => !user.isSuperAdmin && id && String(id) === String(user._id);
+
+  const canSeeRole = (roleKey) => !roleKey || user.isSuperAdmin || (levelOf[roleKey] ?? Infinity) >= myLevel;
+
+  const canSeeEntry = (entry) => {
+    if (canSeeRole(entry.actorRoleKey) || isMe(entry.actorId)) return true;
+    if (entry.action === 'reopened' || entry.action === 'reopen_withdrawn') return true;
+    if (entry.action === 'revision_requested') {
+      return workflow.stageByKey(entry.toStageKey)?.actorRoleKey === myRole;
+    }
+    return false;
+  };
+
+  const canSeeComment = (comment) => canSeeRole(comment.roleKey) || isMe(comment.actorId);
+
+  return { canSeeRole, canSeeEntry, canSeeComment };
+}
+
+/** Earlier verify stages whose admin already acted and whose comments this admin may read. */
+function revisionTargets(application, workflow, stage, visibility) {
+  if (!stage) return [];
+  const acted = new Set(
+    (application.stageHistory || [])
+      .filter(h => ['forwarded', 'revised', 'returned'].includes(h.action))
+      .map(h => h.stageKey)
+  );
+  return [...(workflow.stages || [])]
+    .filter(s => s.kind === 'verify'
+      && s.order < stage.order
+      && s.actorRoleKey
+      && s.actorRoleKey !== stage.actorRoleKey
+      && acted.has(s.key)
+      && visibility.canSeeRole(s.actorRoleKey))
+    .sort((a, b) => a.order - b.order);
+}
 
 /** Roles that have already acted, so their comments can be shown read-only. */
 function actedRoleKeys(application) {
@@ -91,11 +210,15 @@ async function loadContext(id, user) {
 /** GET / — applications the caller may see */
 router.get('/', async (req, res) => {
   try {
-    const { formType, status, stage, search, mine, page = 1, limit = 25 } = req.query;
+    const { formType, status, stage, search, mine, origin, country, page = 1, limit = 25 } = req.query;
     const query = { ...scopeQuery(req.user) };
     if (formType) query.formType = formType;
     if (status) query.status = status;
     if (stage) query.currentStageKey = stage;
+    // Where the form was filled from; 'none' finds applications from before the question.
+    if (origin === 'none') query['origin.region'] = { $in: ['', null] };
+    else if (ORIGIN_REGIONS[origin]) query['origin.region'] = origin;
+    if (GCC_COUNTRIES.includes(country)) query['origin.country'] = country;
     if (search) {
       const rx = new RegExp(String(search).trim(), 'i');
       query.$or = [{ applicantName: rx }, { applicantMobile: rx }, { memberId: rx }];
@@ -154,12 +277,18 @@ router.get('/:id', async (req, res) => {
     const { application, template, workflow } = ctx;
     const stage = workflow.stageByKey(application.currentStageKey);
     const myTurn = ownsCurrentStage(req.user, stage);
-    const skipping = myTurn && canSkip(req.user, stage);
-    const editable = myTurn ? editableRolesAt(req.user, stage, { skipping }) : [];
+    const correctionOpen = Boolean(application.correction?.open);
+    const revision = application.revisionRequest?.open ? application.revisionRequest : null;
+    const revising = Boolean(myTurn && revision && revision.toStageKey === stage?.key);
+    const skipping = myTurn && !revising && canSkip(req.user, stage);
+    // Nothing is writable while the applicant has the form back.
+    const editable = myTurn && !correctionOpen ? editableRolesAt(req.user, stage, { skipping }) : [];
+    const visibility = await commentVisibility(req.user, workflow);
 
+    // Earlier roles' comment pages follow the same upward-only rule as comments.
     const view = reviewerView(template, {
       editableRoleKeys: editable,
-      actedRoleKeys: actedRoleKeys(application)
+      actedRoleKeys: actedRoleKeys(application).filter(visibility.canSeeRole)
     });
 
     const visibleKeys = new Set(
@@ -170,17 +299,55 @@ router.get('/:id', async (req, res) => {
       if (visibleKeys.has(key)) roleData[key] = value;
     }
 
+    const plain = application.toObject();
+    // History rows stay (who did what, when); the words and files of a comment
+    // from a higher role are withheld.
+    plain.stageHistory = (plain.stageHistory || []).map(entry => (
+      visibility.canSeeEntry(entry)
+        ? entry
+        : { ...entry, comment: '', attachments: [], commentHidden: Boolean(entry.comment || entry.attachments?.length) }
+    ));
+    plain.comments = (plain.comments || []).filter(visibility.canSeeComment);
+    if (plain.revisionRequest?.open && !visibility.canSeeRole(plain.revisionRequest.fromRoleKey)
+      && workflow.stageByKey(plain.revisionRequest.toStageKey)?.actorRoleKey !== roleKeyOf(req.user)) {
+      plain.revisionRequest = { ...plain.revisionRequest, reason: '' };
+    }
+
+    // The reviewer's own last comment at this stage, to start from when revising.
+    const ownRoleKey = req.user.isSuperAdmin ? stage?.actorRoleKey : roleKeyOf(req.user);
+    const myComment = revising
+      ? [...(application.comments || [])].reverse().find(c => c.stageKey === stage.key && c.roleKey === ownRoleKey)
+      : null;
+
+    const firstStage = workflow.firstStage();
+    const canAct = myTurn && !correctionOpen;
+
     res.json({
       success: true,
-      application: { ...application.toObject(), roleData },
+      application: { ...plain, roleData },
       template: view,
       workflow: workflow.toObject(),
       permissions: {
         myTurn,
-        canSkip: skipping,
-        canEditFormData: myTurn,
+        canAct,
+        awaitingApplicant: correctionOpen,
+        canSkip: canAct && skipping,
+        canEditFormData: canAct,
         editableRoleKeys: editable,
-        stage: stage || null
+        stage: stage || null,
+        revision: revising ? {
+          reason: revision.reason,
+          fromName: revision.fromName,
+          fromStageKey: revision.fromStageKey,
+          at: revision.at
+        } : null,
+        myComment: myComment ? { text: myComment.text, attachments: plainAttachments(myComment.attachments) } : null,
+        revisionTargets: canAct && !revision
+          ? revisionTargets(application, workflow, stage, visibility).map(s => ({ key: s.key, name: s.name }))
+          : [],
+        // Only the admin right after the applicant can hand the form back to them.
+        canReopen: canAct && Boolean(application.accessLinkId) && stage?.key === firstStage?.key,
+        canWithdrawReopen: correctionOpen && (myTurn || Boolean(req.user.isSuperAdmin))
       }
     });
   } catch (error) {
@@ -209,6 +376,12 @@ router.put('/:id/form-data', async (req, res) => {
       return res.status(403).json({
         success: false,
         message: 'You can only edit an application while it is at your stage'
+      });
+    }
+    if (application.correction?.open) {
+      return res.status(409).json({
+        success: false,
+        message: 'The applicant is correcting this form right now. Wait for them to resubmit.'
       });
     }
 
@@ -250,8 +423,14 @@ router.put('/:id/form-data', async (req, res) => {
 /**
  * PUT /:id/stage — act on the application.
  *
- * body: { action, comment, roleData, captured, nextStageKey, useSkip }
- *   action  'forwarded' | 'returned' | 'marked' | 'approved' | 'rejected' | 'hold' | 'finalized'
+ * body: { action, comment, attachments, roleData, captured, nextStageKey, useSkip }
+ *   action       'forwarded' | 'marked' | 'approved' | 'rejected' | 'hold' | 'finalized'
+ *   comment      required on every action
+ *   attachments  [{ name, data: <data URL> }] new files, or [{ url }] to keep a file
+ *                already on the comment being revised
+ *
+ * When a later admin has asked this stage to revise its comment, any action here
+ * rewrites this role's comment and sends the application straight back to them.
  */
 router.put('/:id/stage', async (req, res) => {
   try {
@@ -269,8 +448,29 @@ router.put('/:id/stage', async (req, res) => {
     if (!ownsCurrentStage(req.user, stage)) {
       return res.status(403).json({ success: false, message: 'This application is not at your stage' });
     }
+    if (application.correction?.open) {
+      return res.status(409).json({
+        success: false,
+        message: 'This form is reopened for the applicant. Wait for them to resubmit, or withdraw the reopen.'
+      });
+    }
 
     const { action, comment = '', useSkip } = req.body || {};
+    const commentText = String(comment || '').trim();
+    if (!commentText) {
+      return res.status(400).json({ success: false, message: 'Add your comment before you continue' });
+    }
+    if (action === 'returned') {
+      return res.status(400).json({ success: false, message: 'To send this back, ask the earlier admin to revise their comment' });
+    }
+
+    const revision = application.revisionRequest?.open && application.revisionRequest.toStageKey === stage.key
+      ? application.revisionRequest
+      : null;
+    if (revision && useSkip) {
+      return res.status(400).json({ success: false, message: 'Resubmit your revised comment; the stage cannot be skipped now' });
+    }
+
     const skipping = Boolean(useSkip) && canSkip(req.user, stage);
     if (useSkip && !skipping) {
       return res.status(400).json({ success: false, message: 'This stage cannot be skipped by your account' });
@@ -307,7 +507,10 @@ router.put('/:id/stage', async (req, res) => {
       });
     }
 
-    if (stage.kind === 'decision') {
+    if (revision) {
+      // Straight back to whoever asked for the revision.
+      nextStageKey = revision.fromStageKey;
+    } else if (stage.kind === 'decision') {
       if (!DECISIONS.includes(action)) {
         return res.status(400).json({
           success: false,
@@ -322,15 +525,6 @@ router.put('/:id/stage', async (req, res) => {
         }
       }
       if (action === 'hold') nextStageKey = stage.key; // stays put until revisited
-    } else if (action === 'returned') {
-      // A send-back only ever goes to an earlier stage; jumping forward that
-      // way would let anyone bypass the stages in between.
-      const target = req.body.nextStageKey;
-      const targetStage = target ? workflow.stageByKey(target) : null;
-      if (!targetStage || !(stage.allowedNextStageKeys || []).includes(target) || targetStage.order >= stage.order) {
-        return res.status(400).json({ success: false, message: 'Choose a valid stage to send this back to' });
-      }
-      nextStageKey = target;
     } else if (skipping) {
       nextStageKey = stage.skipToStageKey;
     } else if (req.body.nextStageKey) {
@@ -347,7 +541,20 @@ router.put('/:id/stage', async (req, res) => {
       nextStageKey = stage.nextStageKey || '';
     }
 
-    if (stage.isTerminal) nextStageKey = '';
+    if (stage.isTerminal && !revision) nextStageKey = '';
+
+    // Files on the comment being revised may be kept; anything else must be new.
+    const ownComments = (application.comments || []).filter(c => c.stageKey === stage.key && editable.includes(c.roleKey));
+    let checkedAttachments;
+    try {
+      checkedAttachments = checkAttachments(
+        req.body?.attachments,
+        revision ? ownComments.flatMap(c => plainAttachments(c.attachments)) : []
+      );
+    } catch (error) {
+      if (error instanceof RequestError) return res.status(error.code).json({ success: false, message: error.message });
+      throw error;
+    }
 
     // Finalize stages assign the member ID and any dates.
     if (stage.kind === 'finalize') {
@@ -367,22 +574,43 @@ router.put('/:id/stage', async (req, res) => {
       if (stage.isTerminal && application.status !== 'rejected') status = 'approved';
     }
 
+    let attachments;
+    try {
+      attachments = await uploadAttachments(checkedAttachments);
+    } catch (error) {
+      if (error instanceof RequestError) return res.status(error.code).json({ success: false, message: error.message });
+      throw error;
+    }
+
     // Apply the write.
     application.roleData = { ...(application.roleData || {}), ...rolePatch };
     application.markModified('roleData');
 
-    if (comment && String(comment).trim()) {
-      const roleDocs = await Role.find({ key: { $in: editable } }).select('key name').lean();
-      const nameByKey = Object.fromEntries(roleDocs.map(r => [r.key, r.name]));
-      for (const key of editable) {
+    const now = new Date();
+    const roleDocs = await Role.find({ key: { $in: editable } }).select('key name').lean();
+    const nameByKey = Object.fromEntries(roleDocs.map(r => [r.key, r.name]));
+    for (const key of editable) {
+      // A revision rewrites this role's comment; the old wording stays in history.
+      const previous = revision
+        ? [...application.comments].reverse().find(c => c.stageKey === stage.key && c.roleKey === key)
+        : null;
+      if (previous) {
+        previous.text = commentText;
+        previous.attachments = attachments;
+        previous.actorId = actorId(req.user);
+        previous.actorName = actorLabel(req.user);
+        previous.at = now;
+        previous.revisedAt = now;
+      } else {
         application.comments.push({
           roleKey: key,
           roleName: nameByKey[key] || key,
           actorId: actorId(req.user),
           actorName: actorLabel(req.user),
           stageKey: stage.key,
-          text: String(comment).trim(),
-          at: new Date()
+          text: commentText,
+          attachments,
+          at: now
         });
       }
     }
@@ -393,29 +621,36 @@ router.put('/:id/stage', async (req, res) => {
       actorId: actorId(req.user),
       actorRoleKey: roleKeyOf(req.user),
       actorName: actorLabel(req.user),
-      action: ['approved', 'rejected', 'hold'].includes(action) ? action
-        : stage.kind === 'marker' ? 'marked'
-          : stage.kind === 'finalize' ? 'finalized'
-            : action === 'returned' ? 'returned' : 'forwarded',
-      comment: String(comment || '').trim(),
+      action: revision ? 'revised'
+        : ['approved', 'rejected', 'hold'].includes(action) ? action
+          : stage.kind === 'marker' ? 'marked'
+            : stage.kind === 'finalize' ? 'finalized' : 'forwarded',
+      comment: commentText,
+      attachments,
       data: captured,
       toStageKey: nextStageKey,
-      at: new Date()
+      at: now
     });
 
+    if (revision) {
+      application.revisionRequest.open = false;
+      application.revisionRequest.resolvedAt = now;
+    }
     application.currentStageKey = nextStageKey;
     application.status = status;
     await application.save();
 
     // Notifications are best-effort and never block the transition.
-    const label = application.formType === 'rukn' ? 'Rukn' : 'Karkun';
+    const label = labelOf(application);
     if (nextStageKey && nextStageKey !== stage.key) {
       const nextStage = workflow.stageByKey(nextStageKey);
       await notifyRole({
         roleKey: nextStage?.actorRoleKey,
         scope: application.scope,
-        title: `${label} application awaiting you`,
-        body: `${application.applicantName || 'An applicant'} reached "${nextStage?.name || nextStageKey}".`,
+        title: revision ? `${label} comment revised` : `${label} application awaiting you`,
+        body: revision
+          ? `${actorLabel(req.user)} revised their comment on ${application.applicantName || 'an application'} as you asked.`
+          : `${application.applicantName || 'An applicant'} reached "${nextStage?.name || nextStageKey}".`,
         applicationId: application._id
       });
     }
@@ -442,6 +677,206 @@ router.put('/:id/stage', async (req, res) => {
   } catch (error) {
     console.error('Members stage action error:', error);
     res.status(500).json({ success: false, message: 'Failed to update the application stage' });
+  }
+});
+
+// ─── Asking an earlier admin to revise their comment ─────────────────────────
+
+/**
+ * PUT /:id/request-revision — the admin at the current stage is not satisfied
+ * with an earlier admin's comment. The application moves to that admin's stage;
+ * when they resubmit (PUT /:id/stage) it comes straight back here.
+ *
+ * body: { targetStageKey, reason }
+ */
+router.put('/:id/request-revision', async (req, res) => {
+  try {
+    const ctx = await loadContext(req.params.id, req.user);
+    if (ctx.error) return res.status(ctx.error.code).json({ success: false, message: ctx.error.message });
+
+    const { application, workflow } = ctx;
+    const stage = workflow.stageByKey(application.currentStageKey);
+    if (!ownsCurrentStage(req.user, stage)) {
+      return res.status(403).json({ success: false, message: 'This application is not at your stage' });
+    }
+    if (application.correction?.open) {
+      return res.status(409).json({ success: false, message: 'This form is reopened for the applicant. Wait for them to resubmit.' });
+    }
+    if (application.revisionRequest?.open) {
+      return res.status(409).json({ success: false, message: 'Resubmit the revision you were asked for before asking someone else' });
+    }
+
+    const reason = String(req.body?.reason || '').trim();
+    if (!reason) return res.status(400).json({ success: false, message: 'Say what needs to change' });
+
+    const visibility = await commentVisibility(req.user, workflow);
+    const target = revisionTargets(application, workflow, stage, visibility)
+      .find(s => s.key === req.body?.targetStageKey);
+    if (!target) {
+      return res.status(400).json({ success: false, message: 'Choose an earlier admin who has already reviewed this application' });
+    }
+
+    const now = new Date();
+    application.revisionRequest = {
+      open: true,
+      reason,
+      fromStageKey: stage.key,
+      fromRoleKey: roleKeyOf(req.user),
+      fromName: actorLabel(req.user),
+      fromActorId: actorId(req.user),
+      toStageKey: target.key,
+      at: now,
+      resolvedAt: null
+    };
+    application.stageHistory.push({
+      stageKey: stage.key,
+      stageName: stage.name,
+      actorId: actorId(req.user),
+      actorRoleKey: roleKeyOf(req.user),
+      actorName: actorLabel(req.user),
+      action: 'revision_requested',
+      comment: reason,
+      toStageKey: target.key,
+      at: now
+    });
+    application.currentStageKey = target.key;
+    if (application.status === 'submitted') application.status = 'in_review';
+    await application.save();
+
+    await notifyRole({
+      roleKey: target.actorRoleKey,
+      scope: application.scope,
+      title: `Revise your comment on a ${labelOf(application)} application`,
+      body: `${actorLabel(req.user)} asked you to revise your comment on ${application.applicantName || 'an application'}: ${reason}`,
+      applicationId: application._id
+    });
+
+    res.json({ success: true, application });
+  } catch (error) {
+    console.error('Members request revision error:', error);
+    res.status(500).json({ success: false, message: 'Failed to request the revision' });
+  }
+});
+
+// ─── Reopening the form for the applicant ────────────────────────────────────
+
+/**
+ * PUT /:id/reopen — the admin right after the applicant (the workflow's first
+ * stage) hands the form back for correction. The applicant signs in through the
+ * same link with the same credential, finds their submitted answers filled in,
+ * and resubmits; the application then returns to this stage.
+ *
+ * body: { reason }
+ */
+router.put('/:id/reopen', async (req, res) => {
+  try {
+    const ctx = await loadContext(req.params.id, req.user);
+    if (ctx.error) return res.status(ctx.error.code).json({ success: false, message: ctx.error.message });
+
+    const { application, workflow } = ctx;
+    const stage = workflow.stageByKey(application.currentStageKey);
+    const firstStage = workflow.firstStage();
+    if (!ownsCurrentStage(req.user, stage) || stage.key !== firstStage?.key) {
+      return res.status(403).json({
+        success: false,
+        message: `Only the admin at "${firstStage?.name || 'the first stage'}" can reopen the form, while it is with them`
+      });
+    }
+    if (application.correction?.open) {
+      return res.status(409).json({ success: false, message: 'This form is already reopened for the applicant' });
+    }
+
+    const reason = String(req.body?.reason || '').trim();
+    if (!reason) return res.status(400).json({ success: false, message: 'Say what the applicant needs to correct' });
+
+    const link = application.accessLinkId ? await AccessLink.findById(application.accessLinkId) : null;
+    if (!link) {
+      return res.status(409).json({ success: false, message: 'This application did not come through a form link, so it cannot be reopened' });
+    }
+
+    const now = new Date();
+    const weekAhead = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    link.status = 'reopened';
+    link.blockedAt = undefined;
+    link.blockedBy = null;
+    if (!link.expiresAt || link.expiresAt < weekAhead) link.expiresAt = weekAhead;
+    link.draftData = {};
+    link.draftPage = 0;
+    link.markModified('draftData');
+
+    application.correction = {
+      open: true,
+      reason,
+      stageKey: stage.key,
+      requestedById: actorId(req.user),
+      requestedByName: actorLabel(req.user),
+      requestedByRoleKey: roleKeyOf(req.user),
+      requestedAt: now,
+      resolvedAt: null
+    };
+    application.stageHistory.push({
+      stageKey: stage.key,
+      stageName: stage.name,
+      actorId: actorId(req.user),
+      actorRoleKey: roleKeyOf(req.user),
+      actorName: actorLabel(req.user),
+      action: 'reopened',
+      comment: reason,
+      at: now
+    });
+
+    await link.save();
+    await application.save();
+
+    res.json({ success: true, application, linkExpiresAt: link.expiresAt });
+  } catch (error) {
+    console.error('Members reopen application error:', error);
+    res.status(500).json({ success: false, message: 'Failed to reopen the form' });
+  }
+});
+
+/** DELETE /:id/reopen — take the form back before the applicant resubmits. */
+router.delete('/:id/reopen', async (req, res) => {
+  try {
+    const ctx = await loadContext(req.params.id, req.user);
+    if (ctx.error) return res.status(ctx.error.code).json({ success: false, message: ctx.error.message });
+
+    const { application, workflow } = ctx;
+    const stage = workflow.stageByKey(application.currentStageKey);
+    if (!application.correction?.open) {
+      return res.status(409).json({ success: false, message: 'This form is not reopened' });
+    }
+    if (!ownsCurrentStage(req.user, stage) && !req.user.isSuperAdmin) {
+      return res.status(403).json({ success: false, message: 'This application is not at your stage' });
+    }
+
+    const link = application.accessLinkId ? await AccessLink.findById(application.accessLinkId) : null;
+    if (link && link.status === 'reopened') {
+      link.status = 'used';
+      link.draftData = {};
+      link.draftPage = 0;
+      link.markModified('draftData');
+      await link.save();
+    }
+
+    const now = new Date();
+    application.correction.open = false;
+    application.correction.resolvedAt = now;
+    application.stageHistory.push({
+      stageKey: application.currentStageKey,
+      stageName: stage?.name || '',
+      actorId: actorId(req.user),
+      actorRoleKey: roleKeyOf(req.user),
+      actorName: actorLabel(req.user),
+      action: 'reopen_withdrawn',
+      at: now
+    });
+    await application.save();
+
+    res.json({ success: true, application });
+  } catch (error) {
+    console.error('Members withdraw reopen error:', error);
+    res.status(500).json({ success: false, message: 'Failed to withdraw the reopen' });
   }
 });
 

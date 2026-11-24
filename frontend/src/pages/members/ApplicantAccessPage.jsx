@@ -1,12 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { AlertTriangle, ArrowRight, CheckCircle2, Lock, ShieldCheck, User } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Globe2, Lock, MapPin, PencilLine, ShieldCheck, User } from 'lucide-react'
 import { applicantApi, apiError, APPLICANT_TOKEN_KEY } from '../../utils/members/api'
 import DynamicFormRenderer from '../../components/reportRenderer/DynamicFormRenderer'
 import { Button, Field, Input, PasswordInput } from '../../components/members/ui'
 import AuthLayout from '../../components/members/AuthLayout'
 import BrandLogo from '../../components/branding/BrandLogo'
+import { GCC_COUNTRIES, ORIGIN_REGIONS, originLabel } from '../../utils/members/constants'
+import { cx, timeAgo } from '../../utils/members/format'
+
+// Shown on the Next button of a page that carries a declaration (accept) tick box.
+const ACCEPT_NEXT_LABEL = 'These are all my firm convictions'
 
 /**
  * The only members screen an applicant ever sees.
@@ -78,6 +83,11 @@ export default function ApplicantAccessPage() {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [blockedMessage, setBlockedMessage] = useState('')
+  // Where the form is filled from; the form stays closed until it is answered.
+  const [origin, setOrigin] = useState(null)
+  const [choosingOrigin, setChoosingOrigin] = useState(false)
+  // Set when an admin reopened a submitted application for corrections.
+  const [correction, setCorrection] = useState(null)
 
   const loadForm = useCallback(async () => {
     setLoading(true)
@@ -85,6 +95,9 @@ export default function ApplicantAccessPage() {
       const { data } = await applicantApi.get('/access/form')
       setTemplate(withImageAccept(data.template))
       setDraft(data.draft || { formData: {}, lastPage: 0 })
+      setOrigin(data.origin || null)
+      setChoosingOrigin(!data.origin?.region)
+      setCorrection(data.correction || null)
       setAuthed(true)
     } catch (error) {
       const status = error.response?.status
@@ -156,12 +169,20 @@ export default function ApplicantAccessPage() {
     }
   }
 
+  const saveOrigin = async (choice) => {
+    const { data } = await applicantApi.put('/access/origin', choice)
+    setOrigin(data.origin)
+    setChoosingOrigin(false)
+  }
+
   if (done) {
     return (
       <StatusScreen
         tone="success"
-        title="Application submitted"
-        message="Your application has been sent for verification. Your unit admin will contact you if anything else is needed. You can close this page."
+        title={correction ? 'Corrections submitted' : 'Application submitted'}
+        message={correction
+          ? 'Your corrected application has been sent back for verification. You can close this page.'
+          : 'Your application has been sent for verification. Your unit admin will contact you if anything else is needed. You can close this page.'}
       />
     )
   }
@@ -235,6 +256,16 @@ export default function ApplicantAccessPage() {
 
   if (loading || !template) return <StatusScreen tone="loading" title="Loading the form…" />
 
+  if (choosingOrigin) {
+    return (
+      <OriginGate
+        initial={origin}
+        onSave={saveOrigin}
+        onCancel={origin?.region ? () => setChoosingOrigin(false) : null}
+      />
+    )
+  }
+
   return (
     <div className="mbr mbr-canvas mobile-readable-content min-h-dvh">
       <header className="mbr-hero px-4 pb-12 pt-[calc(env(safe-area-inset-top)+1rem)] sm:px-6 sm:pb-16 sm:pt-8">
@@ -249,10 +280,34 @@ export default function ApplicantAccessPage() {
           {template.description && (
             <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-royal-100/80 [overflow-wrap:anywhere]">{template.description}</p>
           )}
+          {origin?.region && (
+            <button
+              type="button"
+              onClick={() => setChoosingOrigin(true)}
+              className="mt-3 inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white/[0.12] px-3 text-xs font-semibold text-white ring-1 ring-inset ring-white/20 hover:bg-white/20"
+            >
+              <MapPin size={13} /> {originLabel(origin)} <span className="font-medium text-royal-100/80">· Change</span>
+            </button>
+          )}
         </div>
       </header>
 
       <main className="relative z-[1] -mt-7 px-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:-mt-10 sm:px-6">
+        {correction && (
+          <div className="mx-auto mb-3 flex max-w-3xl items-start gap-3 rounded-[1.125rem] bg-amber-50 p-4 ring-1 ring-inset ring-amber-200 sm:p-5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+              <PencilLine size={18} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-amber-950">Your application was reopened for correction</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-amber-900 [overflow-wrap:anywhere]">{correction.reason}</p>
+              <p className="mt-1.5 text-xs text-amber-800/80">
+                {correction.requestedByName}{correction.requestedAt && ` · ${timeAgo(correction.requestedAt)}`}
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-amber-900/80">Your submitted answers are filled in below. Correct them and submit again.</p>
+            </div>
+          </div>
+        )}
         <div className="mbr-card mbr-form mx-auto max-w-3xl p-4 shadow-[0_8px_32px_rgba(11,20,48,0.08)] sm:p-6">
           <DynamicFormRenderer
             report={template}
@@ -261,12 +316,115 @@ export default function ApplicantAccessPage() {
             submitting={submitting}
             onSubmit={submit}
             onSaveDraft={saveDraft}
+            acceptNextLabel={ACCEPT_NEXT_LABEL}
           />
         </div>
         <p className="mx-auto mt-4 flex max-w-3xl items-center justify-center gap-1.5 text-center text-xs text-slate-500">
           <Lock size={13} className="shrink-0" /> Your answers are saved privately against your personal link.
         </p>
       </main>
+    </div>
+  )
+}
+
+const REGION_HINT = {
+  india: 'Filling in the form from India',
+  gcc: 'UAE, Bahrain, Qatar, Kuwait, KSA, Muscat or Salala',
+  international: 'Anywhere else, or online'
+}
+
+/**
+ * Asked before the form opens: where is it being filled from? India and
+ * International open the form straight away; GCC asks which part first.
+ */
+function OriginGate({ initial, onSave, onCancel }) {
+  const [step, setStep] = useState(initial?.region === 'gcc' ? 'gcc' : 'region')
+  const [saving, setSaving] = useState('')
+
+  const choose = async (choice) => {
+    setSaving(choice.country || choice.region)
+    try {
+      await onSave(choice)
+    } catch (error) {
+      toast.error(apiError(error, 'Could not save your answer'))
+      setSaving('')
+    }
+  }
+
+  const option = (key, label, hint, onClick, selected) => (
+    <button
+      key={key}
+      type="button"
+      onClick={onClick}
+      disabled={Boolean(saving)}
+      className={cx(
+        'flex min-h-[56px] w-full items-center gap-3 rounded-xl px-4 py-3 text-left ring-1 ring-inset transition-colors disabled:opacity-60',
+        selected ? 'bg-royal-50 ring-royal-500' : 'bg-[#fff] ring-slate-200 hover:bg-mist hover:ring-slate-300'
+      )}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-semibold text-ink">{label}</span>
+        {hint && <span className="mt-0.5 block text-xs text-slate-500">{hint}</span>}
+      </span>
+      {saving === key
+        ? <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-royal-200 border-t-royal-600" role="status" />
+        : <ArrowRight size={17} className="shrink-0 text-slate-400" />}
+    </button>
+  )
+
+  return (
+    <div className="mbr mbr-canvas mobile-readable-content flex min-h-dvh flex-col items-center justify-center px-4 py-10">
+      <div className="mbr-card w-full max-w-md p-5 sm:p-7">
+        <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-royal-50 text-royal-700">
+          <Globe2 size={22} />
+        </span>
+        {step === 'region' ? (
+          <>
+            <h1 className="text-xl font-bold tracking-tight text-ink">Where is this form from?</h1>
+            <p className="mt-1 text-sm leading-relaxed text-slate-500">Choose one to open the application form.</p>
+            <div className="mt-5 grid gap-2.5">
+              {ORIGIN_REGIONS.map(region => option(
+                region.value,
+                region.label,
+                REGION_HINT[region.value],
+                () => (region.value === 'gcc' ? setStep('gcc') : choose({ region: region.value })),
+                initial?.region === region.value
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 className="text-xl font-bold tracking-tight text-ink">Where in the GCC?</h1>
+            <p className="mt-1 text-sm leading-relaxed text-slate-500">Choose the place you are filling in the form from.</p>
+            <div className="mt-5 grid grid-cols-2 gap-2.5">
+              {GCC_COUNTRIES.map(country => option(
+                country,
+                country,
+                '',
+                () => choose({ region: 'gcc', country }),
+                initial?.country === country
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setStep('region')}
+              disabled={Boolean(saving)}
+              className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-royal-700 hover:underline"
+            >
+              <ArrowLeft size={15} /> Back
+            </button>
+          </>
+        )}
+        {onCancel && step === 'region' && (
+          <Button variant="secondary" className="mt-5 w-full" onClick={onCancel} disabled={Boolean(saving)}>
+            Keep {originLabel(initial)}
+          </Button>
+        )}
+      </div>
+      <div className="mt-6 flex items-center gap-2 text-xs text-slate-400">
+        <BrandLogo size="xs" alt="JIH Plus" className="!h-5 opacity-80" />
+        Members Application
+      </div>
     </div>
   )
 }

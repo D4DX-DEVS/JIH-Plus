@@ -1575,6 +1575,12 @@ input[type="number"] {
 .mbr-form :is([data-fr='next'], [data-fr='submit']):hover {
   background-color: #1f3bb0;
 }
+/* The declaration page's Next reads "These are all my firm convictions" and may wrap. */
+.mbr-form [data-fr='next'] {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  line-height: 1.3;
+}
 .mbr-form [data-fr='submit-any'] {
   background-color: #047857;
 }

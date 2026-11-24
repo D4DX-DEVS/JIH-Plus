@@ -7,7 +7,7 @@ import {
   Avatar, Button, Card, EmptyState, ErrorState, FilterBar, ListRow, ListSkeleton, PageHeader, Pagination, SearchInput, Select, StatusBadge, TableWrap, Th, TypeBadge, PAGE_SIZE
 } from '../../components/members/ui'
 import { TYPE_TONE, cx, shortDate, timeAgo } from '../../utils/members/format'
-import { FORM_TYPE_LABEL } from '../../utils/members/constants'
+import { FORM_TYPE_LABEL, GCC_COUNTRIES, ORIGIN_REGIONS, originLabel } from '../../utils/members/constants'
 
 const STATUS_CHIPS = [
   { value: '', label: 'All' },
@@ -37,6 +37,8 @@ export default function ApplicationsPage() {
   const status = params.get('status') || ''
   const mine = params.get('mine') || ''
   const search = params.get('search') || ''
+  const origin = params.get('origin') || ''
+  const country = params.get('country') || ''
   const page = Number(params.get('page') || 1)
   const [searchBox, setSearchBox] = useState(search)
 
@@ -51,7 +53,7 @@ export default function ApplicationsPage() {
   }, [setParams])
 
   const clearAll = () => { setParams(new URLSearchParams()); setSearchBox('') }
-  const filtering = Boolean(formType || status || search || mine)
+  const filtering = Boolean(formType || status || search || mine || origin)
 
   useEffect(() => {
     api.get('/workflows').then(({ data }) => setWorkflows(data.workflows || [])).catch(() => {})
@@ -66,7 +68,7 @@ export default function ApplicationsPage() {
 
   const load = useCallback(() => {
     setLoading(true)
-    api.get('/applications', { params: { formType, status, mine, search, page, limit: PAGE_SIZE } })
+    api.get('/applications', { params: { formType, status, mine, search, origin, country, page, limit: PAGE_SIZE } })
       .then(({ data }) => {
         setApplications(data.applications || [])
         setTotal(data.pagination?.total || 0)
@@ -74,7 +76,19 @@ export default function ApplicationsPage() {
       })
       .catch(err => setError(apiError(err, 'Failed to load applications')))
       .finally(() => setLoading(false))
-  }, [formType, status, mine, search, page])
+  }, [formType, status, mine, search, origin, country, page])
+
+  // A GCC country only narrows a GCC filter; changing the region drops it.
+  const setOrigin = (value) => {
+    setParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (value) next.set('origin', value)
+      else next.delete('origin')
+      next.delete('country')
+      next.delete('page')
+      return next
+    })
+  }
 
   useEffect(load, [load])
 
@@ -103,15 +117,33 @@ export default function ApplicationsPage() {
             onChange={e => setSearchBox(e.target.value)}
           />
         }
-        active={Boolean(formType || search)}
-        activeCount={formType ? 1 : 0}
-        onClear={() => { setParam('formType', ''); setSearchBox('') }}
+        active={Boolean(formType || search || origin)}
+        activeCount={(formType ? 1 : 0) + (origin ? 1 : 0) + (country ? 1 : 0)}
+        onClear={() => {
+          setParams(prev => {
+            const next = new URLSearchParams(prev)
+            ;['formType', 'origin', 'country', 'page'].forEach(key => next.delete(key))
+            return next
+          })
+          setSearchBox('')
+        }}
       >
         <Select className="col-span-2 sm:w-44" value={formType} onChange={e => setParam('formType', e.target.value)} aria-label="Application type">
           <option value="">All types</option>
           <option value="rukn">Rukn</option>
           <option value="karkoon">Karkun</option>
         </Select>
+        <Select className={cx(origin === 'gcc' ? 'col-span-1' : 'col-span-2', 'sm:w-52')} value={origin} onChange={e => setOrigin(e.target.value)} aria-label="Form from">
+          <option value="">From anywhere</option>
+          {ORIGIN_REGIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+          <option value="none">Not recorded</option>
+        </Select>
+        {origin === 'gcc' && (
+          <Select className="col-span-1 sm:w-40" value={country} onChange={e => setParam('country', e.target.value)} aria-label="GCC country">
+            <option value="">All GCC</option>
+            {GCC_COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </Select>
+        )}
       </FilterBar>
 
       {/* Queue toggle + status chips, one sideways-scrolling row */}
@@ -178,6 +210,7 @@ export default function ApplicationsPage() {
                   meta={[
                     FORM_TYPE_LABEL[app.formType],
                     app.scope?.unit,
+                    originLabel(app.origin),
                     stageName(app),
                     app.memberId && `ID ${app.memberId}`
                   ].filter(Boolean).join(' · ')}
@@ -200,6 +233,7 @@ export default function ApplicationsPage() {
                       <Th>Applicant</Th>
                       <Th>Type</Th>
                       <Th>Unit</Th>
+                      <Th>From</Th>
                       <Th>Current stage</Th>
                       <Th>Status</Th>
                       <Th>Submitted</Th>
@@ -220,6 +254,7 @@ export default function ApplicationsPage() {
                         </td>
                         <td className="px-4 py-3"><TypeBadge type={app.formType} /></td>
                         <td className="px-4 py-3 text-slate-600">{app.scope?.unit || '—'}</td>
+                        <td className="px-4 py-3 text-slate-600">{originLabel(app.origin) || '—'}</td>
                         <td className="px-4 py-3 text-slate-600">{stageName(app)}</td>
                         <td className="px-4 py-3"><StatusBadge status={app.status} /></td>
                         <td className="px-4 py-3 text-slate-500">{shortDate(app.submittedAt)}</td>

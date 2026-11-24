@@ -19,6 +19,39 @@ const { applicantAuth, requireMembersDb, signApplicantToken } = require('../../m
 const { applicantView, applicantFieldKeys, pickAllowed, flattenFields } = require('../../utils/members/formAccess');
 const { uploadToDigitalOcean } = require('../../middlewares/digitalOceanCdn');
 const { notifyRole } = require('../../utils/members/notify');
+const { normalizeOrigin } = require('../../utils/members/origin');
+
+const hasEntries = (value) => Boolean(value && typeof value === 'object' && Object.keys(value).length);
+const originOf = (link) => ({ region: link.origin?.region || '', country: link.origin?.country || '' });
+
+/**
+ * What the applicant is filling in through this link right now:
+ *   { mode: 'new', template }                       — the published form
+ *   { mode: 'correction', template, application }   — their submitted application,
+ *                                                     reopened for corrections
+ *   { error }                                        — nothing to fill in
+ * A correction is filled against the template the application was submitted
+ * with, so the saved answers line up with the fields.
+ */
+async function currentForm(link) {
+  if (link.applicationId) {
+    const application = await Application.findById(link.applicationId);
+    if (!application?.correction?.open) {
+      return { error: { code: 409, message: 'An application has already been submitted with this link' } };
+    }
+    const template = await FormTemplate.findById(application.formTemplateId).lean();
+    if (!template) return { error: { code: 404, message: 'This form is not available right now' } };
+    return { mode: 'correction', template, application };
+  }
+
+  const template = await FormTemplate.findOne({
+    formType: link.formType,
+    isPublished: true,
+    isActive: true
+  }).lean();
+  if (!template) return { error: { code: 404, message: 'This form is not available right now' } };
+  return { mode: 'new', template };
+}
 
 const DATA_URL = /^data:([a-zA-Z0-9/+.-]+);base64,(.+)$/;
 const MAX_UPLOADS_PER_SUBMISSION = 5;
@@ -90,7 +123,9 @@ router.post('/login', requireMembersDb, async (req, res) => {
         success: false,
         message: link.status === 'blocked'
           ? 'This form link has been closed by your unit admin'
-          : 'This form link is no longer active'
+          : link.status === 'used'
+            ? 'You have already submitted this form. If something needs correcting, your unit admin can reopen it for you.'
+            : 'This form link is no longer active'
       });
     }
 
@@ -106,32 +141,32 @@ router.post('/login', requireMembersDb, async (req, res) => {
   }
 });
 
-/** GET /form — the published template with every role-scoped page and field removed */
+/**
+ * GET /form — the template with every role-scoped page and field removed.
+ * For a reopened application the draft starts from the submitted answers and
+ * `correction` carries the admin's reason.
+ */
 router.get('/form', applicantAuth, async (req, res) => {
   try {
     const link = req.accessLink;
+    const form = await currentForm(link);
+    if (form.error) return res.status(form.error.code).json({ success: false, message: form.error.message });
 
-    if (link.applicationId) {
-      return res.status(409).json({
-        success: false,
-        message: 'An application has already been submitted with this link'
-      });
-    }
-
-    const template = await FormTemplate.findOne({
-      formType: link.formType,
-      isPublished: true,
-      isActive: true
-    }).lean();
-
-    if (!template) {
-      return res.status(404).json({ success: false, message: 'This form is not available right now' });
-    }
+    const correction = form.mode === 'correction' ? form.application.correction : null;
+    const draftData = hasEntries(link.draftData)
+      ? link.draftData
+      : (correction ? form.application.formData || {} : {});
 
     res.json({
       success: true,
-      template: applicantView(template),
-      draft: { formData: link.draftData || {}, lastPage: link.draftPage || 0 }
+      template: applicantView(form.template),
+      draft: { formData: draftData, lastPage: link.draftPage || 0 },
+      origin: originOf(link),
+      correction: correction ? {
+        reason: correction.reason,
+        requestedByName: correction.requestedByName,
+        requestedAt: correction.requestedAt
+      } : null
     });
   } catch (error) {
     console.error('Members applicant form error:', error);
@@ -139,20 +174,32 @@ router.get('/form', applicantAuth, async (req, res) => {
   }
 });
 
+/** PUT /origin — where the form is filled from; asked before the form opens */
+router.put('/origin', applicantAuth, async (req, res) => {
+  try {
+    const link = req.accessLink;
+    const form = await currentForm(link);
+    if (form.error) return res.status(form.error.code).json({ success: false, message: form.error.message });
+
+    const { origin, error } = normalizeOrigin(req.body);
+    if (error) return res.status(400).json({ success: false, message: error });
+
+    link.origin = origin;
+    await link.save();
+    res.json({ success: true, origin: originOf(link) });
+  } catch (error) {
+    console.error('Members applicant origin error:', error);
+    res.status(500).json({ success: false, message: 'Failed to save your answer' });
+  }
+});
+
 /** PUT /draft — save progress without submitting */
 router.put('/draft', applicantAuth, async (req, res) => {
   try {
     const link = req.accessLink;
-    if (link.applicationId) {
-      return res.status(409).json({ success: false, message: 'This application has already been submitted' });
-    }
-
-    const template = await FormTemplate.findOne({
-      formType: link.formType,
-      isPublished: true,
-      isActive: true
-    }).lean();
-    if (!template) return res.status(404).json({ success: false, message: 'This form is not available right now' });
+    const form = await currentForm(link);
+    if (form.error) return res.status(form.error.code).json({ success: false, message: form.error.message });
+    const { template } = form;
 
     link.draftData = pickAllowed(req.body?.formData, applicantFieldKeys(template));
     link.draftPage = Number(req.body?.lastPage) || 0;
@@ -165,23 +212,21 @@ router.put('/draft', applicantAuth, async (req, res) => {
   }
 });
 
-/** POST /submit — create the application and hand it to the first workflow stage */
+/**
+ * POST /submit — create the application and hand it to the first workflow stage.
+ * On a reopened application it replaces the answers instead, and the application
+ * goes back to the admin who reopened it.
+ */
 router.post('/submit', applicantAuth, async (req, res) => {
   try {
     const link = req.accessLink;
-    if (link.applicationId) {
-      return res.status(409).json({
-        success: false,
-        message: 'An application has already been submitted with this link'
-      });
-    }
+    const form = await currentForm(link);
+    if (form.error) return res.status(form.error.code).json({ success: false, message: form.error.message });
+    const { template } = form;
 
-    const template = await FormTemplate.findOne({
-      formType: link.formType,
-      isPublished: true,
-      isActive: true
-    }).lean();
-    if (!template) return res.status(404).json({ success: false, message: 'This form is not available right now' });
+    if (!link.origin?.region) {
+      return res.status(400).json({ success: false, message: 'Tell us where this form is from before you submit' });
+    }
 
     // Anything the applicant sent that is not an applicant-audience field is
     // dropped here, whatever the client claims.
@@ -193,6 +238,8 @@ router.post('/submit', applicantAuth, async (req, res) => {
     } catch (uploadError) {
       return res.status(400).json({ success: false, message: uploadError.message });
     }
+
+    if (form.mode === 'correction') return resubmitCorrection(req, res, link, form, uploaded);
 
     const workflow = await Workflow.findOne({ formType: link.formType, isActive: true });
     const firstStage = workflow?.firstStage();
@@ -213,6 +260,7 @@ router.post('/submit', applicantAuth, async (req, res) => {
       formData: uploaded,
       roleData: {},
       scope: link.scope,
+      origin: originOf(link),
       applicantName: name,
       applicantMobile: mobile,
       photo: typeof req.body?.photo === 'string' && !DATA_URL.test(req.body.photo) ? req.body.photo : '',
@@ -253,5 +301,51 @@ router.post('/submit', applicantAuth, async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to submit the application' });
   }
 });
+
+/** The corrected answers replace the submitted ones; the stage is unchanged. */
+async function resubmitCorrection(req, res, link, form, formData) {
+  const { application, template } = form;
+  const { name, mobile } = deriveIdentity(template, formData, link, req.body);
+  const workflow = await Workflow.findOne({ formType: application.formType });
+  const stage = workflow?.stageByKey(application.currentStageKey);
+  const now = new Date();
+
+  application.formData = formData;
+  application.markModified('formData');
+  if (name) application.applicantName = name;
+  if (mobile) application.applicantMobile = mobile;
+  application.origin = originOf(link);
+  application.correction.open = false;
+  application.correction.resolvedAt = now;
+  application.stageHistory.push({
+    stageKey: application.currentStageKey,
+    stageName: stage?.name || '',
+    actorName: name || application.applicantName || 'Applicant',
+    action: 'resubmitted',
+    at: now
+  });
+  await application.save();
+
+  link.status = 'used';
+  link.draftData = {};
+  link.draftPage = 0;
+  link.markModified('draftData');
+  await link.save();
+
+  await notifyRole({
+    roleKey: stage?.actorRoleKey,
+    scope: application.scope,
+    title: `${application.formType === 'rukn' ? 'Rukn' : 'Karkun'} application corrected`,
+    body: `${application.applicantName || 'The applicant'} resubmitted the form you reopened.`,
+    applicationId: application._id
+  });
+
+  res.json({
+    success: true,
+    message: 'Your corrections have been submitted',
+    applicationId: application._id,
+    resubmitted: true
+  });
+}
 
 module.exports = router;

@@ -15,7 +15,9 @@ const bcrypt = require('bcryptjs');
 const membersConnection = require('../../config/membersConnection');
 const { FORM_TYPES } = require('./FormTemplate');
 
-const STATUSES = ['active', 'used', 'blocked', 'expired'];
+// 'reopened': the application submitted through this link was sent back to the
+// applicant for corrections, so the same credential works again until they resubmit.
+const STATUSES = ['active', 'used', 'blocked', 'expired', 'reopened'];
 
 const accessLinkSchema = new mongoose.Schema({
   formType: {
@@ -73,6 +75,12 @@ const accessLinkSchema = new mongoose.Schema({
   // never see a half-filled submission.
   draftData: { type: mongoose.Schema.Types.Mixed, default: {} },
   draftPage: { type: Number, default: 0 },
+  // Where the form is filled from, answered before the form opens
+  // (utils/members/origin.js). Copied onto the Application at submission.
+  origin: {
+    region: { type: String, default: '' },
+    country: { type: String, default: '' }
+  },
   usedAt: { type: Date },
   applicationId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -109,7 +117,7 @@ accessLinkSchema.methods.comparePassword = async function (candidatePassword) {
 // A link is usable only while active and unexpired. Callers check this on every
 // applicant request, so blocking takes effect immediately rather than at next login.
 accessLinkSchema.methods.isUsable = function () {
-  if (this.status !== 'active') return false;
+  if (this.status !== 'active' && this.status !== 'reopened') return false;
   if (this.expiresAt && this.expiresAt.getTime() < Date.now()) return false;
   return true;
 };
