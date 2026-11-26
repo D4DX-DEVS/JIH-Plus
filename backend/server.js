@@ -8,13 +8,25 @@ const initializeQuarterlyReportScheduler = require('./schedulers/quarterlyReport
 const initializeIhthisabiDynamicReportScheduler = require('./schedulers/ihthisabiDynamicReportScheduler');
 const initializeIhthisabiAutoAlternativeScheduler = require('./schedulers/ihthisabiAutoAlternativeScheduler');
 
+require('dotenv').config({ quiet: true });
+
 const app = express();
-app.use(cors());
+
+// CORS: comma-separated exact origins, e.g. "https://jihkerala.info,http://localhost:5173".
+// Unset keeps the old allow-all behaviour so a deploy never locks out the frontend.
+const corsAllowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+if (corsAllowedOrigins.length) {
+  app.use(cors({ origin: corsAllowedOrigins }));
+} else {
+  console.warn('CORS_ALLOWED_ORIGINS not set: allowing requests from any origin.');
+  app.use(cors());
+}
 // Increase body parser limit to handle base64 image uploads (10MB limit)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-require('dotenv').config({ quiet: true });
 
 // Import JIH routes
 const adminRoutes = require('./routes/adminRoutes');
